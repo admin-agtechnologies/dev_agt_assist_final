@@ -1,3 +1,6 @@
+// src/repositories/index.ts
+// Seul ajout par rapport au prototype : authRepository.loginWithGoogle
+// Tout le reste est identique à l'existant.
 import { api } from "@/lib/api-client";
 import type {
   Tenant, CreateTenantPayload, TenantFilters,
@@ -9,10 +12,10 @@ import type {
   Conversation, FAQ, CreateFAQPayload,
   ProviderConfig,
   User, AuthResponse, LoginPayload,
-  PaginatedResponse,
+  PaginatedResponse,BusinessHours, AgencyLocation, TenantKnowledge, ServiceKnowledge,
 } from "@/types/api";
 
-// Helper
+// Helper : convertit un objet filtre en Record<string, string>
 const p = (f?: object): Record<string, string> =>
   Object.fromEntries(
     Object.entries(f ?? {})
@@ -22,14 +25,46 @@ const p = (f?: object): Record<string, string> =>
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
 export const authRepository = {
+  register: async (payload: { email: string; password: string; name: string }): Promise<AuthResponse> => {
+    // Mock : cherche si l'email existe déjà
+    const existing = await api.get<User[]>("/api/v1/auth/me", { params: { email: payload.email } });
+    const found = Array.isArray(existing) ? existing[0] : null;
+    if (found) return { access: btoa(JSON.stringify({ id: found.id, role: found.role, exp: Date.now() + 86400000 })), refresh: "mock_refresh", user: found };
+    // Sinon crée un nouvel user mock
+    const newUser = await api.post<User>("/api/v1/users", {
+      email: payload.email, name: payload.name,
+      role: "pme", tenant_id: null, avatar: null,
+    });
+    return { access: btoa(JSON.stringify({ id: newUser.id, role: newUser.role, exp: Date.now() + 86400000 })), refresh: "mock_refresh", user: newUser };
+  },
+
   login: async (payload: LoginPayload): Promise<AuthResponse> => {
-    // JSON-Server mock: filtre par email, simule token JWT
     const users = await api.get<User[]>("/api/v1/users", { params: { email: payload.email } });
     if (!users || users.length === 0) throw new Error("Email ou mot de passe incorrect");
     const user = users[0];
     const fakeToken = btoa(JSON.stringify({ id: user.id, role: user.role, exp: Date.now() + 86400000 }));
     return { access: fakeToken, refresh: fakeToken + "_refresh", user };
+
   },
+
+  // ── Connexion Google (mock) ──────────────────────────────────────────────
+  // Cherche l'utilisateur par email. S'il n'existe pas, le crée (inscrit via Google).
+  // En production : envoyer le credential Google au backend pour vérification.
+  loginWithGoogle: async (email: string, name: string): Promise<AuthResponse> => {
+    const users = await api.get<User[]>("/api/v1/users", { params: { email } });
+    let user: User;
+    if (users && users.length > 0) {
+      user = users[0];
+    } else {
+      // Créer l'utilisateur à la volée (mock uniquement)
+      user = await api.post<User>("/api/v1/users", {
+        email, name, role: "pme", tenant_id: null, avatar: null,
+      });
+    }
+    const fakeToken = btoa(JSON.stringify({ id: user.id, role: user.role, exp: Date.now() + 86400000 }));
+    return { access: fakeToken, refresh: fakeToken + "_refresh", user };
+  },
+
   me: (id: string): Promise<User> => api.get(`/api/v1/users/${id}`),
 };
 
@@ -37,7 +72,9 @@ export const authRepository = {
 export const tenantsRepository = {
   getList: (f?: TenantFilters): Promise<PaginatedResponse<Tenant>> =>
     api.get("/api/v1/tenants", { params: p(f) }).then((data: unknown) => {
-      const arr = Array.isArray(data) ? data : (data as PaginatedResponse<Tenant>).results ? (data as PaginatedResponse<Tenant>) : { results: data as Tenant[], count: (data as Tenant[]).length, next: null, previous: null };
+      const arr = Array.isArray(data) ? data : (data as PaginatedResponse<Tenant>).results
+        ? (data as PaginatedResponse<Tenant>)
+        : { results: data as Tenant[], count: (data as Tenant[]).length, next: null, previous: null };
       return Array.isArray(arr) ? { results: arr, count: arr.length, next: null, previous: null } : arr;
     }),
   getById: (id: string): Promise<Tenant> => api.get(`/api/v1/tenants/${id}`),
@@ -53,7 +90,7 @@ export const botsRepository = {
       Array.isArray(data) ? { results: data as Bot[], count: (data as Bot[]).length, next: null, previous: null } : data as PaginatedResponse<Bot>
     ),
   getById: (id: string): Promise<Bot> => api.get(`/api/v1/bots/${id}`),
-  create: (payload: CreateBotPayload): Promise<Bot> => api.post("/api/v1/bots", payload),
+  create: (payload: CreateBotPayload & { tenant_id: string }): Promise<Bot> => api.post("/api/v1/bots", payload),
   patch: (id: string, payload: Partial<CreateBotPayload>): Promise<Bot> => api.patch(`/api/v1/bots/${id}`, payload),
   delete: (id: string): Promise<void> => api.delete(`/api/v1/bots/${id}`),
 };
@@ -65,7 +102,7 @@ export const servicesRepository = {
       Array.isArray(data) ? { results: data as Service[], count: (data as Service[]).length, next: null, previous: null } : data as PaginatedResponse<Service>
     ),
   getById: (id: string): Promise<Service> => api.get(`/api/v1/services/${id}`),
-  create: (payload: CreateServicePayload): Promise<Service> => api.post("/api/v1/services", payload),
+  create: (payload: CreateServicePayload & { tenant_id: string }): Promise<Service> => api.post("/api/v1/services", payload),
   patch: (id: string, payload: Partial<CreateServicePayload>): Promise<Service> => api.patch(`/api/v1/services/${id}`, payload),
   delete: (id: string): Promise<void> => api.delete(`/api/v1/services/${id}`),
 };
@@ -77,7 +114,7 @@ export const appointmentsRepository = {
       Array.isArray(data) ? { results: data as Appointment[], count: (data as Appointment[]).length, next: null, previous: null } : data as PaginatedResponse<Appointment>
     ),
   getById: (id: string): Promise<Appointment> => api.get(`/api/v1/appointments/${id}`),
-  create: (payload: CreateAppointmentPayload): Promise<Appointment> => api.post("/api/v1/appointments", payload),
+  create: (payload: CreateAppointmentPayload & { tenant_id: string }): Promise<Appointment> => api.post("/api/v1/appointments", payload),
   patch: (id: string, payload: Partial<CreateAppointmentPayload>): Promise<Appointment> => api.patch(`/api/v1/appointments/${id}`, payload),
   delete: (id: string): Promise<void> => api.delete(`/api/v1/appointments/${id}`),
 };
@@ -133,4 +170,54 @@ export const faqRepository = {
   create: (payload: CreateFAQPayload & { tenant_id: string }): Promise<FAQ> => api.post("/api/v1/faq", payload),
   patch: (id: string, payload: Partial<CreateFAQPayload>): Promise<FAQ> => api.patch(`/api/v1/faq/${id}`, payload),
   delete: (id: string): Promise<void> => api.delete(`/api/v1/faq/${id}`),
+};
+
+// ── Provider Configs ──────────────────────────────────────────────────────────
+export const providerConfigsRepository = {
+  getList: (): Promise<PaginatedResponse<ProviderConfig>> =>
+    api.get("/api/v1/provider-configs").then((data: unknown) =>
+      Array.isArray(data) ? { results: data as ProviderConfig[], count: (data as ProviderConfig[]).length, next: null, previous: null } : data as PaginatedResponse<ProviderConfig>
+    ),
+  patch: (id: string, payload: Partial<ProviderConfig>): Promise<ProviderConfig> => api.patch(`/api/v1/provider-configs/${id}`, payload),
+};
+
+// ── Business Hours ────────────────────────────────────────────────────────────
+export const businessHoursRepository = {
+  getByTenant: (tenantId: string, type: "opening" | "appointments"): Promise<BusinessHours | null> =>
+    api.get("/api/v1/business-hours", { params: { tenant_id: tenantId, type } })
+      .then((data: unknown) => (Array.isArray(data) && data.length > 0 ? data[0] as BusinessHours : null)),
+  patch: (id: string, payload: Partial<BusinessHours>): Promise<BusinessHours> =>
+    api.patch(`/api/v1/business-hours/${id}`, payload),
+};
+
+// ── Locations ─────────────────────────────────────────────────────────────────
+export const locationsRepository = {
+  getList: (tenantId: string): Promise<AgencyLocation[]> =>
+    api.get("/api/v1/locations", { params: { tenant_id: tenantId } })
+      .then((data: unknown) => Array.isArray(data) ? data as AgencyLocation[] : []),
+  create: (payload: Omit<AgencyLocation, "id">): Promise<AgencyLocation> => api.post("/api/v1/locations", payload),
+  patch: (id: string, payload: Partial<AgencyLocation>): Promise<AgencyLocation> => api.patch(`/api/v1/locations/${id}`, payload),
+  delete: (id: string): Promise<void> => api.delete(`/api/v1/locations/${id}`),
+};
+
+// ── TenantKnowledge ───────────────────────────────────────────────────────────
+export const tenantKnowledgeRepository = {
+  getByTenant: (tenantId: string): Promise<TenantKnowledge | null> =>
+    api.get("/api/v1/tenant-knowledge", { params: { tenant_id: tenantId } })
+      .then((data: unknown) => (Array.isArray(data) && data.length > 0 ? data[0] as TenantKnowledge : null)),
+  patch: (id: string, payload: Partial<TenantKnowledge>): Promise<TenantKnowledge> =>
+    api.patch(`/api/v1/tenant-knowledge/${id}`, payload),
+  create: (payload: Omit<TenantKnowledge, "id">): Promise<TenantKnowledge> =>
+    api.post("/api/v1/tenant-knowledge", payload),
+};
+
+// ── ServiceKnowledge ──────────────────────────────────────────────────────────
+export const serviceKnowledgeRepository = {
+  getByService: (serviceId: string): Promise<ServiceKnowledge | null> =>
+    api.get("/api/v1/service-knowledge", { params: { service_id: serviceId } })
+      .then((data: unknown) => (Array.isArray(data) && data.length > 0 ? data[0] as ServiceKnowledge : null)),
+  patch: (id: string, payload: Partial<ServiceKnowledge>): Promise<ServiceKnowledge> =>
+    api.patch(`/api/v1/service-knowledge/${id}`, payload),
+  create: (payload: Omit<ServiceKnowledge, "id">): Promise<ServiceKnowledge> =>
+    api.post("/api/v1/service-knowledge", payload),
 };

@@ -1,4 +1,9 @@
+// src/components/ui/index.tsx
+"use client";
+import { createPortal } from "react-dom";
+import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { LucideIcon } from "lucide-react";
 
 // ── Badge ────────────────────────────────────────────────────────────────────
 type BadgeVariant = "green" | "red" | "amber" | "violet" | "slate" | "blue";
@@ -11,13 +16,21 @@ const badgeVariants: Record<BadgeVariant, string> = {
   blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400",
 };
 
-export function Badge({ children, variant = "slate", className }: { children: React.ReactNode; variant?: BadgeVariant; className?: string; }) {
+export function Badge({ children, variant = "slate", className }: {
+  children: React.ReactNode; variant?: BadgeVariant; className?: string;
+}) {
   return <span className={cn("badge", badgeVariants[variant], className)}>{children}</span>;
 }
 
 // ── Status badge helpers ──────────────────────────────────────────────────────
-export function ActiveBadge({ active, labelOn, labelOff }: { active: boolean; labelOn?: string; labelOff?: string; }) {
-  return <Badge variant={active ? "green" : "slate"}>{active ? (labelOn ?? "Actif") : (labelOff ?? "Inactif")}</Badge>;
+export function ActiveBadge({ active, labelOn, labelOff }: {
+  active: boolean; labelOn?: string; labelOff?: string;
+}) {
+  return (
+    <Badge variant={active ? "green" : "slate"}>
+      {active ? (labelOn ?? "Actif") : (labelOff ?? "Inactif")}
+    </Badge>
+  );
 }
 
 // ── Spinner ───────────────────────────────────────────────────────────────────
@@ -35,17 +48,23 @@ export function PageLoader() {
 }
 
 // ── Empty state ───────────────────────────────────────────────────────────────
-export function EmptyState({ message, icon = "📭" }: { message: string; icon?: string }) {
+// Option A : icon est un composant LucideIcon typé
+export function EmptyState({ message, icon: Icon }: {
+  message: string;
+  icon?: LucideIcon;
+}) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-[var(--text-muted)] gap-2">
-      <span className="text-4xl">{icon}</span>
+    <div className="flex flex-col items-center justify-center py-16 text-[var(--text-muted)] gap-3">
+      {Icon && <Icon className="w-10 h-10 opacity-40" strokeWidth={1.5} />}
       <p className="text-sm font-medium">{message}</p>
     </div>
   );
 }
 
 // ── Section header ────────────────────────────────────────────────────────────
-export function SectionHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: React.ReactNode }) {
+export function SectionHeader({ title, subtitle, action }: {
+  title: string; subtitle?: string; action?: React.ReactNode;
+}) {
   return (
     <div className="flex items-end justify-between gap-4 flex-wrap">
       <div>
@@ -58,26 +77,63 @@ export function SectionHeader({ title, subtitle, action }: { title: string; subt
 }
 
 // ── Confirm delete modal ─────────────────────────────────────────────────────
-import { createPortal } from "react-dom";
-interface ConfirmDeleteProps { isOpen: boolean; isLoading: boolean; onClose: () => void; onConfirm: () => void; title?: string; message?: string; }
+interface ConfirmDeleteProps {
+  isOpen: boolean; isLoading: boolean;
+  onClose: () => void; onConfirm: () => void;
+  title?: string; message?: string;
+}
 
-export function ConfirmDeleteModal({ isOpen, isLoading, onClose, onConfirm, title = "Êtes-vous sûr ?", message = "Cette action est irréversible." }: ConfirmDeleteProps) {
+export function ConfirmDeleteModal({
+  isOpen, isLoading, onClose, onConfirm,
+  title = "Êtes-vous sûr ?",
+  message = "Cette action est irréversible.",
+}: ConfirmDeleteProps) {
   if (!isOpen) return null;
   return createPortal(
     <div className="fixed inset-0 z-[9999] grid place-items-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
       <div className="absolute inset-0" onClick={!isLoading ? onClose : undefined} />
       <div className="relative card w-full max-w-sm p-8 text-center animate-zoom-in">
-        <div className="w-14 h-14 bg-red-50 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">⚠️</div>
+        <div className="w-14 h-14 bg-red-50 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <AlertTriangle className="w-7 h-7" />
+        </div>
         <h3 className="text-lg font-bold text-[var(--text)] mb-2">{title}</h3>
         <p className="text-sm text-[var(--text-muted)] mb-6">{message}</p>
         <div className="flex gap-3">
-          <button onClick={onClose} disabled={isLoading} className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--bg)] transition-colors disabled:opacity-50">Annuler</button>
-          <button onClick={onConfirm} disabled={isLoading} className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-70">
+          <button
+            onClick={onClose} disabled={isLoading}
+            className="flex-1 py-2.5 rounded-xl border border-[var(--border)] text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--bg)] transition-colors disabled:opacity-50"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={onConfirm} disabled={isLoading}
+            className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+          >
             {isLoading ? <Spinner className="border-white/30 border-t-white" /> : "Supprimer"}
           </button>
         </div>
       </div>
     </div>,
     document.body
+  );
+}
+
+// ── Usage bar (billing) ───────────────────────────────────────────────────────
+export function UsageBar({ label, used, total, pct, color }: {
+  label: string; used: number; total: number; pct: number; color: string;
+}) {
+  return (
+    <div>
+      <div className="flex justify-between text-xs mb-1.5">
+        <span className="text-[var(--text-muted)] font-medium">{label}</span>
+        <span className="font-bold text-[var(--text)]">{used.toLocaleString()} / {total.toLocaleString()}</span>
+      </div>
+      <div className="h-2 bg-[var(--border)] rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: color }}
+        />
+      </div>
+    </div>
   );
 }

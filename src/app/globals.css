@@ -88,3 +88,11 @@
 .animate-fade-in { animation: fadeIn 0.2s ease-out; }
 .animate-slide-up { animation: slideUp 0.25s ease-out; }
 .animate-zoom-in { animation: zoomIn 0.2s ease-out; }
+
+@keyframes progress {
+  from { width: 0% }
+  to { width: 100% }
+}
+.animate-progress {
+  animation: progress 4s linear forwards;
+}

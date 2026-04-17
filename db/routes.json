@@ -24,5 +24,13 @@
   "/api/v1/stats": "/stats",
   "/api/v1/admin-stats": "/admin_stats",
   "/api/v1/auth/login": "/users",
-  "/api/v1/auth/me": "/users"
+  "/api/v1/auth/me": "/users",
+  "/api/v1/business-hours": "/business_hours",
+  "/api/v1/business-hours/:id": "/business_hours/:id",
+  "/api/v1/locations": "/locations",
+  "/api/v1/locations/:id": "/locations/:id",
+  "/api/v1/tenant-knowledge": "/tenant_knowledge",
+  "/api/v1/tenant-knowledge/:id": "/tenant_knowledge/:id",
+  "/api/v1/service-knowledge": "/service_knowledge",
+  "/api/v1/service-knowledge/:id": "/service_knowledge/:id"
 }

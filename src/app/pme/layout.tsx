@@ -1,19 +1,28 @@
+// src/app/pme/layout.tsx
 "use client";
 import { useState, ReactNode } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { cn, initials } from "@/lib/utils";
+import { ROUTES } from "@/lib/constants";
+import {
+  LayoutDashboard, Bot, ConciergeBell, CalendarDays, CreditCard,
+  UserCircle, HelpCircle, Sun, Moon, Globe, LogOut, Menu, X, RefreshCw,
+  BookOpen,
+} from "lucide-react";
+import { SupportWidgets } from "@/components/SupportWidgets";
 
 const navItems = (t: ReturnType<typeof useLanguage>["dictionary"]) => [
-  { href: "/pme/dashboard", icon: "📊", label: t.nav.dashboard },
-  { href: "/pme/bots", icon: "🤖", label: t.nav.bots },
-  { href: "/pme/services", icon: "🛎️", label: t.nav.services },
-  { href: "/pme/appointments", icon: "📅", label: t.nav.appointments },
-  { href: "/pme/billing", icon: "💳", label: t.nav.billing },
-  { href: "/pme/profile", icon: "👤", label: t.nav.profile },
+  { href: ROUTES.dashboard, icon: LayoutDashboard, label: t.nav.dashboard },
+  { href: ROUTES.bots, icon: Bot, label: t.nav.bots },
+  { href: ROUTES.knowledge, label: t.nav.knowledge, icon: BookOpen },
+  { href: ROUTES.appointments, icon: CalendarDays, label: t.nav.appointments },
+  { href: ROUTES.billing, icon: CreditCard, label: t.nav.billing },
+  { href: ROUTES.faq, icon: HelpCircle, label: t.nav.faq },
+  { href: ROUTES.profile, icon: UserCircle, label: t.nav.profile },
 ];
 
 export default function PmeLayout({ children }: { children: ReactNode }) {
@@ -21,6 +30,7 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
   const { dictionary: d, locale, setLocale } = useLanguage();
   const { theme, toggle } = useTheme();
   const pathname = usePathname();
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const items = navItems(d);
@@ -33,7 +43,9 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
       {/* Logo */}
       <div className="p-6 border-b border-[var(--border)]">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-[#075E54] flex items-center justify-center text-white font-black text-sm">A</div>
+          <div className="w-8 h-8 rounded-xl bg-[#075E54] flex items-center justify-center text-white font-black text-sm">
+            A
+          </div>
           <div>
             <p className="font-bold text-sm text-[var(--text)]">AGT Platform</p>
             <p className="text-[10px] text-[var(--text-muted)] font-medium">Espace PME</p>
@@ -41,7 +53,7 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
         </div>
         {user && (
           <div className="mt-4 flex items-center gap-2.5 bg-[var(--bg)] rounded-xl p-3">
-            <div className="w-8 h-8 rounded-full bg-[#075E54]/10 flex items-center justify-center text-[#075E54] text-xs font-bold">
+            <div className="w-8 h-8 rounded-full bg-[#075E54]/10 flex items-center justify-center text-[#075E54] text-xs font-bold flex-shrink-0">
               {initials(user.name)}
             </div>
             <div className="min-w-0">
@@ -55,7 +67,8 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
       {/* Nav */}
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {items.map(item => {
-          const active = pathname === item.href;
+          const active = pathname === item.href || pathname.startsWith(item.href + "/");
+          const Icon = item.icon;
           return (
             <Link key={item.href} href={item.href}
               onClick={() => setSidebarOpen(false)}
@@ -65,7 +78,7 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
                   ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)] font-semibold"
                   : "text-[var(--text-sidebar)] hover:bg-[var(--bg)] hover:text-[var(--text)]"
               )}>
-              <span className="text-base">{item.icon}</span>
+              <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={active ? 2.5 : 2} />
               {item.label}
             </Link>
           );
@@ -74,18 +87,36 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
 
       {/* Footer */}
       <div className="p-4 border-t border-[var(--border)] space-y-1">
+        {/* Relancer onboarding */}
+        <button
+          onClick={() => { setSidebarOpen(false); router.push(ROUTES.onboarding); }}
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-[var(--text-sidebar)] hover:bg-[var(--bg)] transition-colors"
+        >
+          <RefreshCw className="w-4 h-4 flex-shrink-0" />
+          {d.nav.restartOnboarding}
+        </button>
+
+        {/* Thème */}
         <button onClick={toggle}
           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-[var(--text-sidebar)] hover:bg-[var(--bg)] transition-colors">
-          <span>{theme === "dark" ? "☀️" : "🌙"}</span>
+          {theme === "dark"
+            ? <Sun className="w-4 h-4 flex-shrink-0" />
+            : <Moon className="w-4 h-4 flex-shrink-0" />}
           {theme === "dark" ? "Mode clair" : "Mode sombre"}
         </button>
+
+        {/* Langue */}
         <button onClick={() => setLocale(locale === "fr" ? "en" : "fr")}
           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-[var(--text-sidebar)] hover:bg-[var(--bg)] transition-colors">
-          <span>🌐</span>{locale === "fr" ? "English" : "Français"}
+          <Globe className="w-4 h-4 flex-shrink-0" />
+          {locale === "fr" ? "English" : "Français"}
         </button>
+
+        {/* Logout */}
         <button onClick={logout}
           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-          <span>🚪</span>{d.common.logout}
+          <LogOut className="w-4 h-4 flex-shrink-0" />
+          {d.common.logout}
         </button>
       </div>
     </aside>
@@ -107,8 +138,8 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile header */}
         <header className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-card)]">
-          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-xl hover:bg-[var(--bg)] transition-colors">
-            <span className="text-xl">☰</span>
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 rounded-xl hover:bg-[var(--bg)] transition-colors">
+            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
           <span className="font-bold text-[var(--text)]">AGT Platform</span>
         </header>
@@ -116,6 +147,7 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
         <main className="flex-1 overflow-y-auto p-6 lg:p-8">
           {children}
         </main>
+        <SupportWidgets />
       </div>
     </div>
   );

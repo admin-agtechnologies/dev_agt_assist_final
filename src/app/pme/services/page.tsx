@@ -1,3 +1,4 @@
+// src/app/pme/services/page.tsx
 "use client";
 import { useState, useEffect, useCallback, useTransition } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,6 +8,7 @@ import { servicesRepository } from "@/repositories";
 import { formatCurrency, cn } from "@/lib/utils";
 import { ActiveBadge, SectionHeader, EmptyState, ConfirmDeleteModal, Spinner } from "@/components/ui";
 import { createPortal } from "react-dom";
+import { ConciergeBell, Pencil, Trash2, Plus } from "lucide-react";
 import type { Service, CreateServicePayload } from "@/types/api";
 
 export default function PmeServicesPage() {
@@ -37,22 +39,32 @@ export default function PmeServicesPage() {
   const handleDelete = async () => {
     if (!deleteId) return;
     setIsDeleting(true);
-    try { await servicesRepository.delete(deleteId); toast.success(t.deleteSuccess); setDeleteId(null); fetchServices(); }
-    catch { toast.error(t.deleteError); } finally { setIsDeleting(false); }
+    try {
+      await servicesRepository.delete(deleteId);
+      toast.success(t.deleteSuccess);
+      setDeleteId(null);
+      fetchServices();
+    } catch { toast.error(t.deleteError); } finally { setIsDeleting(false); }
   };
 
-  if (loading) return <div className="space-y-4 animate-pulse">{[...Array(4)].map((_, i) => <div key={i} className="h-20 card bg-[var(--bg)]" />)}</div>;
+  if (loading) return (
+    <div className="space-y-4 animate-pulse">
+      {[...Array(4)].map((_, i) => <div key={i} className="h-20 card bg-[var(--bg)]" />)}
+    </div>
+  );
 
   return (
     <>
       <div className="space-y-6 animate-fade-in">
         <SectionHeader title={t.title} subtitle={t.subtitle} action={
-          <button onClick={() => { setEditingId(null); setModalOpen(true); }} className="btn-primary">{t.newBtn}</button>
+          <button onClick={() => { setEditingId(null); setModalOpen(true); }} className="btn-primary">
+            <Plus className="w-4 h-4" />{t.newBtn}
+          </button>
         } />
 
         <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 transition-opacity", isPending && "opacity-50 pointer-events-none")}>
           {services.length === 0 ? (
-            <div className="col-span-3"><EmptyState message={t.noData} icon="🛎️" /></div>
+            <div className="col-span-3"><EmptyState message={t.noData} icon={ConciergeBell} /></div>
           ) : services.map(svc => (
             <div key={svc.id} className="card p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between gap-2">
@@ -64,12 +76,22 @@ export default function PmeServicesPage() {
               </div>
               <div className="flex items-center justify-between pt-2 border-t border-[var(--border)]">
                 <div>
-                  <p className="text-lg font-black text-[#075E54]">{svc.price === 0 ? t.free : formatCurrency(svc.price)}</p>
-                  {svc.duration_min && <p className="text-[10px] text-[var(--text-muted)]">{svc.duration_min} min</p>}
+                  <p className="text-lg font-black text-[#075E54]">
+                    {svc.price === 0 ? t.free : formatCurrency(svc.price)}
+                  </p>
+                  {svc.duration_min && (
+                    <p className="text-[10px] text-[var(--text-muted)]">{svc.duration_min} min</p>
+                  )}
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => { setEditingId(svc.id); setModalOpen(true); }} className="p-1.5 rounded-lg hover:bg-[var(--bg)] text-[var(--text-muted)] transition-colors">✏️</button>
-                  <button onClick={() => setDeleteId(svc.id)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-400 transition-colors">🗑️</button>
+                  <button onClick={() => { setEditingId(svc.id); setModalOpen(true); }}
+                    className="p-1.5 rounded-lg hover:bg-[var(--bg)] text-[var(--text-muted)] transition-colors">
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => setDeleteId(svc.id)}
+                    className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-400 transition-colors">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             </div>
@@ -77,35 +99,52 @@ export default function PmeServicesPage() {
         </div>
       </div>
 
-      <ServiceModal isOpen={modalOpen} itemId={editingId} tenantId={user?.tenant_id ?? ""}
-        onClose={() => setModalOpen(false)} onSave={fetchServices} t={t} toast={toast} />
-      <ConfirmDeleteModal isOpen={!!deleteId} isLoading={isDeleting}
-        onClose={() => !isDeleting && setDeleteId(null)} onConfirm={handleDelete} message={t.confirmDelete} />
+      <ServiceModal
+        isOpen={modalOpen} itemId={editingId} tenantId={user?.tenant_id ?? ""}
+        onClose={() => setModalOpen(false)} onSave={fetchServices}
+      />
+      <ConfirmDeleteModal
+        isOpen={!!deleteId} isLoading={isDeleting}
+        onClose={() => !isDeleting && setDeleteId(null)}
+        onConfirm={handleDelete} message={t.confirmDelete}
+      />
     </>
   );
 }
 
-function ServiceModal({ isOpen, itemId, tenantId, onClose, onSave, t, toast }: { isOpen: boolean; itemId: string | null; tenantId: string; onClose: () => void; onSave: () => void; t: any; toast: any }) {
+// ── ServiceModal ──────────────────────────────────────────────────────────────
+function ServiceModal({ isOpen, itemId, tenantId, onClose, onSave }: {
+  isOpen: boolean; itemId: string | null; tenantId: string;
+  onClose: () => void; onSave: () => void;
+}) {
+  const { dictionary: d } = useLanguage();
+  const t = d.services;
+  const tf = t.modal.fields;
+  const toast = useToast();
   const isEdit = !!itemId;
   const DEF: CreateServicePayload = { name: "", description: "", price: 0, duration_min: null, is_active: true };
   const [form, setForm] = useState<CreateServicePayload>(DEF);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const tf = t.modal.fields;
 
   useEffect(() => {
     if (!isOpen) return;
-    if (itemId) { setLoading(true); servicesRepository.getById(itemId).then(d => setForm({ name: d.name, description: d.description, price: d.price, duration_min: d.duration_min, is_active: d.is_active })).catch(() => toast.error("Erreur")).finally(() => setLoading(false)); }
-    else setForm(DEF);
+    if (itemId) {
+      setLoading(true);
+      servicesRepository.getById(itemId)
+        .then(s => setForm({ name: s.name, description: s.description, price: s.price, duration_min: s.duration_min, is_active: s.is_active }))
+        .catch(() => toast.error(d.common.error))
+        .finally(() => setLoading(false));
+    } else setForm(DEF);
   }, [isOpen, itemId]); // eslint-disable-line
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true);
     try {
       if (isEdit) await servicesRepository.patch(itemId!, form);
-      else await servicesRepository.create({ ...form, tenant_id: tenantId } as any);
+      else await servicesRepository.create({ ...form, tenant_id: tenantId });
       toast.success(t.createSuccess); onSave(); onClose();
-    } catch { toast.error("Erreur."); } finally { setSaving(false); }
+    } catch { toast.error(d.common.error); } finally { setSaving(false); }
   };
 
   if (!isOpen) return null;
@@ -118,25 +157,31 @@ function ServiceModal({ isOpen, itemId, tenantId, onClose, onSave, t, toast }: {
           <button type="button" onClick={onClose} className="w-8 h-8 rounded-full bg-[var(--bg)] flex items-center justify-center text-[var(--text-muted)]">✕</button>
         </div>
         <div className="p-6 overflow-y-auto flex-1 space-y-4">
-          {loading ? <div className="flex justify-center py-8"><Spinner className="w-6 h-6 border-[#25D366] border-t-transparent" /></div> : <>
-            <div><label className="label-base">{tf.name}</label><input required className="input-base" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
-            <div><label className="label-base">{tf.description}</label><textarea rows={3} className="input-base resize-none" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
-            <div className="grid grid-cols-2 gap-4">
-              <div><label className="label-base">{tf.price}</label><input type="number" min={0} className="input-base" value={form.price} onChange={e => setForm({ ...form, price: Number(e.target.value) })} /></div>
-              <div><label className="label-base">{tf.duration}</label><input type="number" min={1} className="input-base" value={form.duration_min ?? ""} onChange={e => setForm({ ...form, duration_min: e.target.value ? Number(e.target.value) : null })} /></div>
-            </div>
-            <label className="flex items-center gap-3 cursor-pointer">
-              <div className={cn("w-11 h-6 rounded-full p-1 transition-colors", form.is_active ? "bg-[#25D366]" : "bg-[var(--border)]")}>
-                <div className={cn("w-4 h-4 bg-white rounded-full shadow transition-transform", form.is_active ? "translate-x-5" : "translate-x-0")} />
+          {loading
+            ? <div className="flex justify-center py-8"><Spinner className="w-6 h-6 border-[#25D366] border-t-transparent" /></div>
+            : <>
+              <div><label className="label-base">{tf.name}</label><input required className="input-base" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
+              <div><label className="label-base">{tf.description}</label><textarea rows={3} className="input-base resize-none" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className="label-base">{tf.price}</label><input type="number" min={0} className="input-base" value={form.price} onChange={e => setForm({ ...form, price: Number(e.target.value) })} /></div>
+                <div><label className="label-base">{tf.duration}</label><input type="number" min={1} className="input-base" value={form.duration_min ?? ""} onChange={e => setForm({ ...form, duration_min: e.target.value ? Number(e.target.value) : null })} /></div>
               </div>
-              <input type="checkbox" className="hidden" checked={form.is_active!} onChange={e => setForm({ ...form, is_active: e.target.checked })} />
-              <span className="text-sm font-medium text-[var(--text)]">{tf.isActive}</span>
-            </label>
-          </>}
+              <label className="flex items-center gap-3 cursor-pointer">
+                <div className={`w-11 h-6 rounded-full p-1 transition-colors ${form.is_active ? "bg-[#25D366]" : "bg-[var(--border)]"}`}>
+                  <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${form.is_active ? "translate-x-5" : "translate-x-0"}`} />
+                </div>
+                <input type="checkbox" className="hidden" checked={form.is_active!} onChange={e => setForm({ ...form, is_active: e.target.checked })} />
+                <span className="text-sm font-medium text-[var(--text)]">{tf.isActive}</span>
+              </label>
+            </>
+          }
         </div>
         <div className="p-5 border-t border-[var(--border)] flex justify-end gap-3">
-          <button type="button" onClick={onClose} className="btn-ghost">Annuler</button>
-          <button type="submit" disabled={saving} className="btn-primary">{saving && <Spinner className="border-white/30 border-t-white" />}{isEdit ? t.modal.btnUpdate : t.modal.btnCreate}</button>
+          <button type="button" onClick={onClose} className="btn-ghost">{d.common.cancel}</button>
+          <button type="submit" disabled={saving} className="btn-primary">
+            {saving && <Spinner className="border-white/30 border-t-white" />}
+            {isEdit ? t.modal.btnUpdate : t.modal.btnCreate}
+          </button>
         </div>
       </form>
     </div>,

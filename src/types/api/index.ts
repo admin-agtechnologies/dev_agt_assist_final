@@ -14,8 +14,8 @@ export interface User {
   role: "pme" | "admin";
   tenant_id: string | null;
   avatar: string | null;
+  is_active: boolean;
 }
-
 export interface LoginPayload { email: string; password: string; }
 export interface AuthResponse { access: string; refresh: string; user: User; }
 
@@ -105,6 +105,7 @@ export interface Subscription {
   tenant_id: string;
   plan_name: string;
   plan_slug: string;
+  renewal_date: string | null;
   status: SubscriptionStatus;
   billing_cycle: "monthly" | "yearly";
   price: number;
@@ -115,6 +116,7 @@ export interface Subscription {
   messages_limit: number;
   calls_used: number;
   calls_limit: number;
+  
 }
 
 // ── Wallet ────────────────────────────────────────────────────────────────────
@@ -124,11 +126,23 @@ export interface Wallet { id: string; tenant_id: string; balance: number; curren
 export interface Plan { id: string; name: string; slug: string; price: number; currency: string; billing_cycle: string; messages_limit: number; calls_limit: number; features: string[]; }
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
-export interface TenantStats { id: string; tenant_id: string; messages_today: number; calls_today: number; appointments_today: number; active_conversations: number; messages_week: number; calls_week: number; appointments_week: number; }
+export interface TenantStats {
+  messages_today: number;
+  messages_week: number;
+  calls_today: number;
+  calls_week: number;
+  appointments_today: number;
+  appointments_week: number;
+  active_conversations: number;
+  emails_sent_week: number;
+  week_data: { day: string; messages: number; calls: number }[];
+}
+
 export interface AdminStats { id: string; total_tenants: number; active_tenants: number; total_bots: number; active_bots: number; total_messages_today: number; total_calls_today: number; mrr: number; tenants_growth_week: number; }
 
 // ── Conversation ──────────────────────────────────────────────────────────────
-export interface Conversation { id: string; tenant_id: string; bot_id: string; client_identifier: string; client_name: string; channel: "whatsapp" | "voice"; last_message: string; last_message_at: string; messages_count: number; }
+export interface Conversation { id: string; tenant_id: string; bot_id: string; client_identifier: string; client_name: string; channel: "whatsapp" | "voice"; last_message: string; last_message_at: string; messages_count: number; // Ajouter dans l'interface Conversation :
+  appointment_id: string | null;}
 
 // ── FAQ ──────────────────────────────────────────────────────────────────────
 export interface FAQ { id: string; tenant_id: string; question_fr: string; question_en: string; answer_fr: string; answer_en: string; category: string; is_active: boolean; }
@@ -137,3 +151,39 @@ export interface CreateFAQPayload { question_fr: string; question_en: string; an
 // ── ProviderConfig ────────────────────────────────────────────────────────────
 export type ProviderType = "whatsapp" | "voice_ai" | "phone_operator";
 export interface ProviderConfig { id: string; provider_type: ProviderType; provider_name: string; is_active: boolean; config: Record<string, string>; }
+// ── Business Hours ────────────────────────────────────────────────────────────
+export interface DayHours { open: boolean; start: string; end: string; }
+export interface BusinessHours {
+  id: string; tenant_id: string;
+  type: "opening" | "appointments";
+  monday: DayHours; tuesday: DayHours; wednesday: DayHours;
+  thursday: DayHours; friday: DayHours; saturday: DayHours; sunday: DayHours;
+}
+
+// ── Location (agence) ─────────────────────────────────────────────────────────
+export interface AgencyLocation {
+  id: string; tenant_id: string; name: string; address: string;
+  whatsapp: string; phone: string; email: string;
+  transfer_whatsapp: string; transfer_phone: string;
+  hours: BusinessHours | null; extra_info: string; is_active: boolean;
+}
+
+// ── TenantKnowledge ───────────────────────────────────────────────────────────
+export interface TenantKnowledge {
+  id: string; tenant_id: string;
+  slogan: string; website: string; email: string;
+  transfer_whatsapp: string; transfer_phone: string;
+  transfer_email: string; transfer_message: string;
+  welcome_message: string;
+  bot_tone: "formal" | "semi_formal" | "casual";
+  bot_personality: string; bot_languages: string[]; bot_signature: string;
+  extra_info: string;
+}
+
+// ── ServiceKnowledge ──────────────────────────────────────────────────────────
+export interface ServiceKnowledge {
+  id: string; service_id: string; tenant_id: string;
+  welcome_message: string; bot_description: string;
+  bot_tone: "formal" | "semi_formal" | "casual" | "inherit";
+  conditions: string; confirmation_message: string; extra_info: string;
+}

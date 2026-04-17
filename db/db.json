@@ -1,64 +1,475 @@
 {
   "tenants": [
-    { "id": "t1", "auth_user_id": "u1", "name": "Pharmacie du Centre", "slug": "pharmacie-du-centre", "sector": "Santé", "description": "Pharmacie moderne en plein centre-ville de Yaoundé.", "whatsapp_number": "+237699000001", "phone_number": "+237699000001", "subscription_id": "sub1", "wallet_id": "w1", "is_active": true, "created_at": "2026-01-10T10:00:00Z" },
-    { "id": "t2", "auth_user_id": "u2", "name": "Cabinet Juridique Mvondo", "slug": "cabinet-mvondo", "sector": "Juridique", "description": "Cabinet d'avocats spécialisé en droit des affaires.", "whatsapp_number": "+237699000002", "phone_number": "+237699000002", "subscription_id": "sub2", "wallet_id": "w2", "is_active": true, "created_at": "2026-01-15T10:00:00Z" },
-    { "id": "t3", "auth_user_id": "u3", "name": "Salon Beauté Élégance", "slug": "salon-elegance", "sector": "Beauté", "description": "Salon de coiffure et esthétique haut de gamme.", "whatsapp_number": "+237699000003", "phone_number": "+237699000003", "subscription_id": "sub3", "wallet_id": "w3", "is_active": false, "created_at": "2026-02-01T10:00:00Z" }
+    {
+      "id": "t1",
+      "auth_user_id": "u1",
+      "name": "Pharmacie du Centre",
+      "slug": "pharmacie-du-centre",
+      "sector": "Santé",
+      "description": "Pharmacie moderne en plein centre-ville de Yaoundé.",
+      "whatsapp_number": "+237699000001",
+      "phone_number": "+237699000001",
+      "subscription_id": "sub1",
+      "wallet_id": "w1",
+      "is_active": true,
+      "created_at": "2026-01-10T10:00:00Z"
+    },
+    {
+      "id": "t2",
+      "auth_user_id": "u2",
+      "name": "Cabinet Juridique Mvondo",
+      "slug": "cabinet-mvondo",
+      "sector": "Juridique",
+      "description": "Cabinet d'avocats spécialisé en droit des affaires.",
+      "whatsapp_number": "+237699000002",
+      "phone_number": "+237699000002",
+      "subscription_id": "sub2",
+      "wallet_id": "w2",
+      "is_active": true,
+      "created_at": "2026-01-15T10:00:00Z"
+    },
+    {
+      "id": "t3",
+      "auth_user_id": "u3",
+      "name": "Salon Beauté Élégance",
+      "slug": "salon-elegance",
+      "sector": "Beauté",
+      "description": "Salon de coiffure et esthétique haut de gamme.",
+      "whatsapp_number": "+237699000003",
+      "phone_number": "+237699000003",
+      "subscription_id": "sub3",
+      "wallet_id": "w3",
+      "is_active": false,
+      "created_at": "2026-02-01T10:00:00Z"
+    }
   ],
   "bots": [
-    { "id": "b1", "tenant_id": "t1", "chatbot_service_bot_id": "cs1", "name": "Pharma Assistant", "welcome_message": "Bonjour ! Je suis l'assistant de la Pharmacie du Centre. Comment puis-je vous aider ?", "personality": "Professionnel, chaleureux et précis.", "languages": ["fr", "en"], "whatsapp_provider": "waha", "voice_ai_provider": "gemini", "phone_operator": null, "is_active": true, "status": "active", "created_at": "2026-01-12T10:00:00Z" },
-    { "id": "b2", "tenant_id": "t2", "chatbot_service_bot_id": "cs2", "name": "Legal Assistant", "welcome_message": "Bonjour, Cabinet Mvondo. Quelle est votre demande ?", "personality": "Formel et rigoureux.", "languages": ["fr"], "whatsapp_provider": "waha", "voice_ai_provider": "openai", "phone_operator": null, "is_active": true, "status": "active", "created_at": "2026-01-18T10:00:00Z" },
-    { "id": "b3", "tenant_id": "t3", "chatbot_service_bot_id": "cs3", "name": "Beauty Bot", "welcome_message": "Bienvenue au Salon Élégance !", "personality": "Sympathique et glamour.", "languages": ["fr"], "whatsapp_provider": "meta_api", "voice_ai_provider": "gemini", "phone_operator": null, "is_active": false, "status": "paused", "created_at": "2026-02-05T10:00:00Z" }
+    {
+      "id": "b1",
+      "tenant_id": "t1",
+      "chatbot_service_bot_id": "cs1",
+      "name": "Pharma Assistant",
+      "welcome_message": "Bonjour ! Je suis l'assistant de la Pharmacie du Centre. Comment puis-je vous aider ?",
+      "personality": "Professionnel, chaleureux et précis.",
+      "languages": [
+        "fr",
+        "en"
+      ],
+      "whatsapp_provider": "waha",
+      "voice_ai_provider": "gemini",
+      "phone_operator": null,
+      "is_active": true,
+      "status": "active",
+      "created_at": "2026-01-12T10:00:00Z"
+    },
+    {
+      "id": "b2",
+      "tenant_id": "t2",
+      "chatbot_service_bot_id": "cs2",
+      "name": "Legal Assistant",
+      "welcome_message": "Bonjour, Cabinet Mvondo. Quelle est votre demande ?",
+      "personality": "Formel et rigoureux.",
+      "languages": [
+        "fr"
+      ],
+      "whatsapp_provider": "waha",
+      "voice_ai_provider": "openai",
+      "phone_operator": null,
+      "is_active": true,
+      "status": "active",
+      "created_at": "2026-01-18T10:00:00Z"
+    },
+    {
+      "id": "b3",
+      "tenant_id": "t3",
+      "chatbot_service_bot_id": "cs3",
+      "name": "Beauty Bot",
+      "welcome_message": "Bienvenue au Salon Élégance !",
+      "personality": "Sympathique et glamour.",
+      "languages": [
+        "fr"
+      ],
+      "whatsapp_provider": "meta_api",
+      "voice_ai_provider": "gemini",
+      "phone_operator": null,
+      "is_active": false,
+      "status": "paused",
+      "created_at": "2026-02-05T10:00:00Z"
+    }
   ],
   "services": [
-    { "id": "s1", "tenant_id": "t1", "name": "Ordonnances", "description": "Traitement et délivrance d'ordonnances médicales.", "price": 0, "duration_min": 15, "is_active": true },
-    { "id": "s2", "tenant_id": "t1", "name": "Conseil Pharmaceutique", "description": "Consultation avec un pharmacien diplômé.", "price": 2000, "duration_min": 20, "is_active": true },
-    { "id": "s3", "tenant_id": "t2", "name": "Consultation Juridique", "description": "Première consultation gratuite de 30 minutes.", "price": 0, "duration_min": 30, "is_active": true },
-    { "id": "s4", "tenant_id": "t2", "name": "Rédaction de Contrats", "description": "Rédaction et révision de contrats commerciaux.", "price": 50000, "duration_min": null, "is_active": true },
-    { "id": "s5", "tenant_id": "t3", "name": "Coupe Femme", "description": "Coupe, brushing et mise en forme.", "price": 15000, "duration_min": 60, "is_active": true }
+    {
+      "id": "s1",
+      "tenant_id": "t1",
+      "name": "Ordonnances",
+      "description": "Traitement et délivrance d'ordonnances médicales.",
+      "price": 0,
+      "duration_min": 15,
+      "is_active": true
+    },
+    {
+      "id": "s2",
+      "tenant_id": "t1",
+      "name": "Conseil Pharmaceutique",
+      "description": "Consultation avec un pharmacien diplômé.",
+      "price": 2000,
+      "duration_min": 20,
+      "is_active": true
+    },
+    {
+      "id": "s3",
+      "tenant_id": "t2",
+      "name": "Consultation Juridique",
+      "description": "Première consultation gratuite de 30 minutes.",
+      "price": 0,
+      "duration_min": 30,
+      "is_active": true
+    },
+    {
+      "id": "s4",
+      "tenant_id": "t2",
+      "name": "Rédaction de Contrats",
+      "description": "Rédaction et révision de contrats commerciaux.",
+      "price": 50000,
+      "duration_min": null,
+      "is_active": true
+    },
+    {
+      "id": "s5",
+      "tenant_id": "t3",
+      "name": "Coupe Femme",
+      "description": "Coupe, brushing et mise en forme.",
+      "price": 15000,
+      "duration_min": 60,
+      "is_active": true
+    }
   ],
   "appointments": [
-    { "id": "a1", "tenant_id": "t1", "service_id": "s2", "client_name": "Marie Nkodo", "client_phone": "+237690000001", "client_email": "marie@example.com", "scheduled_at": "2026-05-20T10:00:00Z", "status": "confirmed", "channel": "whatsapp", "reminder_sent": true, "notes": "" },
-    { "id": "a2", "tenant_id": "t1", "service_id": "s1", "client_name": "Paul Biya Jr", "client_phone": "+237690000002", "client_email": "", "scheduled_at": "2026-05-21T14:30:00Z", "status": "pending", "channel": "whatsapp", "reminder_sent": false, "notes": "" },
-    { "id": "a3", "tenant_id": "t2", "service_id": "s3", "client_name": "Alain Mbarga", "client_phone": "+237690000003", "client_email": "alain@example.com", "scheduled_at": "2026-05-22T09:00:00Z", "status": "confirmed", "channel": "voice", "reminder_sent": true, "notes": "Premier contact" },
-    { "id": "a4", "tenant_id": "t1", "service_id": "s2", "client_name": "Sophie Tchoupo", "client_phone": "+237690000004", "client_email": "", "scheduled_at": "2026-05-19T11:00:00Z", "status": "done", "channel": "whatsapp", "reminder_sent": true, "notes": "" }
+    {
+      "id": "a1",
+      "tenant_id": "t1",
+      "service_id": "s2",
+      "client_name": "Marie Nkodo",
+      "client_phone": "+237690000001",
+      "client_email": "marie@example.com",
+      "scheduled_at": "2026-05-20T10:00:00Z",
+      "status": "confirmed",
+      "channel": "whatsapp",
+      "reminder_sent": true,
+      "notes": ""
+    },
+    {
+      "id": "a2",
+      "tenant_id": "t1",
+      "service_id": "s1",
+      "client_name": "Paul Biya Jr",
+      "client_phone": "+237690000002",
+      "client_email": "",
+      "scheduled_at": "2026-05-21T14:30:00Z",
+      "status": "pending",
+      "channel": "whatsapp",
+      "reminder_sent": false,
+      "notes": ""
+    },
+    {
+      "id": "a3",
+      "tenant_id": "t2",
+      "service_id": "s3",
+      "client_name": "Alain Mbarga",
+      "client_phone": "+237690000003",
+      "client_email": "alain@example.com",
+      "scheduled_at": "2026-05-22T09:00:00Z",
+      "status": "confirmed",
+      "channel": "voice",
+      "reminder_sent": true,
+      "notes": "Premier contact"
+    },
+    {
+      "id": "a4",
+      "tenant_id": "t1",
+      "service_id": "s2",
+      "client_name": "Sophie Tchoupo",
+      "client_phone": "+237690000004",
+      "client_email": "",
+      "scheduled_at": "2026-05-19T11:00:00Z",
+      "status": "done",
+      "channel": "whatsapp",
+      "reminder_sent": true,
+      "notes": ""
+    }
   ],
   "subscriptions": [
-    { "id": "sub1", "tenant_id": "t1", "plan_name": "Pro", "plan_slug": "pro", "status": "active", "billing_cycle": "monthly", "price": 75000, "currency": "XAF", "current_period_start": "2026-05-01T00:00:00Z", "current_period_end": "2026-06-01T00:00:00Z", "messages_used": 1240, "messages_limit": 5000, "calls_used": 48, "calls_limit": 200 },
-    { "id": "sub2", "tenant_id": "t2", "plan_name": "Basic", "plan_slug": "basic", "status": "active", "billing_cycle": "monthly", "price": 25000, "currency": "XAF", "current_period_start": "2026-05-01T00:00:00Z", "current_period_end": "2026-06-01T00:00:00Z", "messages_used": 320, "messages_limit": 1000, "calls_used": 5, "calls_limit": 50 },
-    { "id": "sub3", "tenant_id": "t3", "plan_name": "Pro", "plan_slug": "pro", "status": "suspended", "billing_cycle": "monthly", "price": 75000, "currency": "XAF", "current_period_start": "2026-04-01T00:00:00Z", "current_period_end": "2026-05-01T00:00:00Z", "messages_used": 2100, "messages_limit": 5000, "calls_used": 80, "calls_limit": 200 }
+    {
+      "id": "sub1",
+      "tenant_id": "t1",
+      "plan_name": "Pro",
+      "plan_slug": "pro",
+      "status": "active",
+      "billing_cycle": "monthly",
+      "price": 75000,
+      "currency": "XAF",
+      "current_period_start": "2026-05-01T00:00:00Z",
+      "current_period_end": "2026-06-01T00:00:00Z",
+      "messages_used": 1240,
+      "messages_limit": 5000,
+      "calls_used": 48,
+      "calls_limit": 200
+    },
+    {
+      "id": "sub2",
+      "tenant_id": "t2",
+      "plan_name": "Basic",
+      "plan_slug": "basic",
+      "status": "active",
+      "billing_cycle": "monthly",
+      "price": 25000,
+      "currency": "XAF",
+      "current_period_start": "2026-05-01T00:00:00Z",
+      "current_period_end": "2026-06-01T00:00:00Z",
+      "messages_used": 320,
+      "messages_limit": 1000,
+      "calls_used": 5,
+      "calls_limit": 50
+    },
+    {
+      "id": "sub3",
+      "tenant_id": "t3",
+      "plan_name": "Pro",
+      "plan_slug": "pro",
+      "status": "suspended",
+      "billing_cycle": "monthly",
+      "price": 75000,
+      "currency": "XAF",
+      "current_period_start": "2026-04-01T00:00:00Z",
+      "current_period_end": "2026-05-01T00:00:00Z",
+      "messages_used": 2100,
+      "messages_limit": 5000,
+      "calls_used": 80,
+      "calls_limit": 200
+    }
   ],
   "wallets": [
-    { "id": "w1", "tenant_id": "t1", "balance": 125000, "currency": "XAF", "updated_at": "2026-05-15T10:00:00Z" },
-    { "id": "w2", "tenant_id": "t2", "balance": 50000, "currency": "XAF", "updated_at": "2026-05-10T10:00:00Z" },
-    { "id": "w3", "tenant_id": "t3", "balance": 0, "currency": "XAF", "updated_at": "2026-04-30T10:00:00Z" }
+    {
+      "id": "w1",
+      "tenant_id": "t1",
+      "balance": 125000,
+      "currency": "XAF",
+      "updated_at": "2026-05-15T10:00:00Z"
+    },
+    {
+      "id": "w2",
+      "tenant_id": "t2",
+      "balance": 50000,
+      "currency": "XAF",
+      "updated_at": "2026-05-10T10:00:00Z"
+    },
+    {
+      "id": "w3",
+      "tenant_id": "t3",
+      "balance": 0,
+      "currency": "XAF",
+      "updated_at": "2026-04-30T10:00:00Z"
+    }
   ],
   "plans": [
-    { "id": "plan1", "name": "Basic", "slug": "basic", "price": 25000, "currency": "XAF", "billing_cycle": "monthly", "messages_limit": 1000, "calls_limit": 50, "features": ["WhatsApp", "Email", "1 Bot", "Dashboard PME"] },
-    { "id": "plan2", "name": "Pro", "slug": "pro", "price": 75000, "currency": "XAF", "billing_cycle": "monthly", "messages_limit": 5000, "calls_limit": 200, "features": ["WhatsApp", "Agent Vocal", "Email", "3 Bots", "Dashboard PME", "Statistiques avancées"] },
-    { "id": "plan3", "name": "Premium", "slug": "premium", "price": 150000, "currency": "XAF", "billing_cycle": "monthly", "messages_limit": 20000, "calls_limit": 1000, "features": ["WhatsApp", "Agent Vocal", "Email", "Bots illimités", "Dashboard PME", "Statistiques avancées", "Support prioritaire"] }
+    {
+      "id": "plan1",
+      "name": "Basic",
+      "slug": "basic",
+      "price": 25000,
+      "currency": "XAF",
+      "billing_cycle": "monthly",
+      "messages_limit": 1000,
+      "calls_limit": 50,
+      "features": [
+        "WhatsApp",
+        "Email",
+        "1 Bot",
+        "Dashboard PME"
+      ]
+    },
+    {
+      "id": "plan2",
+      "name": "Pro",
+      "slug": "pro",
+      "price": 75000,
+      "currency": "XAF",
+      "billing_cycle": "monthly",
+      "messages_limit": 5000,
+      "calls_limit": 200,
+      "features": [
+        "WhatsApp",
+        "Agent Vocal",
+        "Email",
+        "3 Bots",
+        "Dashboard PME",
+        "Statistiques avancées"
+      ]
+    },
+    {
+      "id": "plan3",
+      "name": "Premium",
+      "slug": "premium",
+      "price": 150000,
+      "currency": "XAF",
+      "billing_cycle": "monthly",
+      "messages_limit": 20000,
+      "calls_limit": 1000,
+      "features": [
+        "WhatsApp",
+        "Agent Vocal",
+        "Email",
+        "Bots illimités",
+        "Dashboard PME",
+        "Statistiques avancées",
+        "Support prioritaire"
+      ]
+    }
   ],
   "provider_configs": [
-    { "id": "pc1", "provider_type": "whatsapp", "provider_name": "waha", "is_active": true, "config": {} },
-    { "id": "pc2", "provider_type": "whatsapp", "provider_name": "meta_api", "is_active": true, "config": {} },
-    { "id": "pc3", "provider_type": "voice_ai", "provider_name": "gemini", "is_active": true, "config": {} },
-    { "id": "pc4", "provider_type": "voice_ai", "provider_name": "openai", "is_active": true, "config": {} },
-    { "id": "pc5", "provider_type": "phone_operator", "provider_name": "twilio", "is_active": true, "config": {} },
-    { "id": "pc6", "provider_type": "phone_operator", "provider_name": "orange", "is_active": false, "config": {} }
+    {
+      "id": "pc1",
+      "provider_type": "whatsapp",
+      "provider_name": "waha",
+      "is_active": true,
+      "config": {}
+    },
+    {
+      "id": "pc2",
+      "provider_type": "whatsapp",
+      "provider_name": "meta_api",
+      "is_active": true,
+      "config": {}
+    },
+    {
+      "id": "pc3",
+      "provider_type": "voice_ai",
+      "provider_name": "gemini",
+      "is_active": true,
+      "config": {}
+    },
+    {
+      "id": "pc4",
+      "provider_type": "voice_ai",
+      "provider_name": "openai",
+      "is_active": true,
+      "config": {}
+    },
+    {
+      "id": "pc5",
+      "provider_type": "phone_operator",
+      "provider_name": "twilio",
+      "is_active": true,
+      "config": {}
+    },
+    {
+      "id": "pc6",
+      "provider_type": "phone_operator",
+      "provider_name": "orange",
+      "is_active": false,
+      "config": {}
+    }
   ],
   "users": [
-    { "id": "u1", "email": "pharmacie@example.com", "name": "Jean Pharmacien", "role": "pme", "tenant_id": "t1", "avatar": null },
-    { "id": "u2", "email": "cabinet@example.com", "name": "Maître Mvondo", "role": "pme", "tenant_id": "t2", "avatar": null },
-    { "id": "u3", "email": "salon@example.com", "name": "Sophie Beauté", "role": "pme", "tenant_id": "t3", "avatar": null },
-    { "id": "admin1", "email": "admin@agt.com", "name": "Gabriel NOMO", "role": "admin", "tenant_id": null, "avatar": null }
+    {
+      "id": "u1",
+      "email": "pharmacie@example.com",
+      "name": "Jean Pharmacien",
+      "role": "pme",
+      "tenant_id": "t1",
+      "avatar": null
+    },
+    {
+      "id": "u2",
+      "email": "cabinet@example.com",
+      "name": "Maître Mvondo",
+      "role": "pme",
+      "tenant_id": "t2",
+      "avatar": null
+    },
+    {
+      "id": "u3",
+      "email": "salon@example.com",
+      "name": "Sophie Beauté",
+      "role": "pme",
+      "tenant_id": "t3",
+      "avatar": null
+    },
+    {
+      "id": "admin1",
+      "email": "admin@agt.com",
+      "name": "Gabriel NOMO",
+      "role": "admin",
+      "tenant_id": null,
+      "avatar": null
+    },
+    {
+      "email": "steven.mbiamy.agtechnologies@gmail.com",
+      "name": "MBIAMY",
+      "role": "pme",
+      "tenant_id": null,
+      "avatar": null,
+      "id": "ulGJraU"
+    }
   ],
   "conversations": [
-    { "id": "c1", "tenant_id": "t1", "bot_id": "b1", "client_identifier": "+237690000010", "client_name": "Client WhatsApp", "channel": "whatsapp", "last_message": "Avez-vous du paracétamol ?", "last_message_at": "2026-05-16T09:30:00Z", "messages_count": 8 },
-    { "id": "c2", "tenant_id": "t1", "bot_id": "b1", "client_identifier": "+237690000011", "client_name": "Appelant", "channel": "voice", "last_message": "Appel entrant traité", "last_message_at": "2026-05-16T08:15:00Z", "messages_count": 1 },
-    { "id": "c3", "tenant_id": "t2", "bot_id": "b2", "client_identifier": "+237690000012", "client_name": "Client Juridique", "channel": "whatsapp", "last_message": "Je cherche un avocat pour un contrat.", "last_message_at": "2026-05-15T14:00:00Z", "messages_count": 5 }
+    {
+      "id": "c1",
+      "tenant_id": "t1",
+      "bot_id": "b1",
+      "client_identifier": "+237690000010",
+      "client_name": "Client WhatsApp",
+      "channel": "whatsapp",
+      "last_message": "Avez-vous du paracétamol ?",
+      "last_message_at": "2026-05-16T09:30:00Z",
+      "messages_count": 8
+    },
+    {
+      "id": "c2",
+      "tenant_id": "t1",
+      "bot_id": "b1",
+      "client_identifier": "+237690000011",
+      "client_name": "Appelant",
+      "channel": "voice",
+      "last_message": "Appel entrant traité",
+      "last_message_at": "2026-05-16T08:15:00Z",
+      "messages_count": 1
+    },
+    {
+      "id": "c3",
+      "tenant_id": "t2",
+      "bot_id": "b2",
+      "client_identifier": "+237690000012",
+      "client_name": "Client Juridique",
+      "channel": "whatsapp",
+      "last_message": "Je cherche un avocat pour un contrat.",
+      "last_message_at": "2026-05-15T14:00:00Z",
+      "messages_count": 5
+    }
   ],
   "stats": [
-    { "id": "st1", "tenant_id": "t1", "messages_today": 47, "calls_today": 3, "appointments_today": 2, "active_conversations": 4, "messages_week": 312, "calls_week": 18, "appointments_week": 14 },
-    { "id": "st2", "tenant_id": "t2", "messages_today": 12, "calls_today": 1, "appointments_today": 1, "active_conversations": 2, "messages_week": 89, "calls_week": 5, "appointments_week": 6 }
+    {
+      "id": "st1",
+      "tenant_id": "t1",
+      "messages_today": 47,
+      "calls_today": 3,
+      "appointments_today": 2,
+      "active_conversations": 4,
+      "messages_week": 312,
+      "calls_week": 18,
+      "appointments_week": 14
+    },
+    {
+      "id": "st2",
+      "tenant_id": "t2",
+      "messages_today": 12,
+      "calls_today": 1,
+      "appointments_today": 1,
+      "active_conversations": 2,
+      "messages_week": 89,
+      "calls_week": 5,
+      "appointments_week": 6
+    }
   ],
   "admin_stats": {
     "id": "as1",
@@ -72,7 +483,85 @@
     "tenants_growth_week": 1
   },
   "faq": [
-    { "id": "f1", "tenant_id": "t1", "question_fr": "Quelles sont vos heures d'ouverture ?", "question_en": "What are your opening hours?", "answer_fr": "Nous sommes ouverts du lundi au samedi de 7h30 à 20h.", "answer_en": "We are open Monday to Saturday from 7:30am to 8pm.", "category": "Général", "is_active": true },
-    { "id": "f2", "tenant_id": "t1", "question_fr": "Acceptez-vous les ordonnances électroniques ?", "question_en": "Do you accept electronic prescriptions?", "answer_fr": "Oui, nous acceptons les ordonnances électroniques signées par un médecin agréé.", "answer_en": "Yes, we accept electronic prescriptions signed by a licensed physician.", "category": "Services", "is_active": true }
-  ]
+    {
+      "id": "f1",
+      "tenant_id": "t1",
+      "question_fr": "Quelles sont vos heures d'ouverture ?",
+      "question_en": "What are your opening hours?",
+      "answer_fr": "Nous sommes ouverts du lundi au samedi de 7h30 à 20h.",
+      "answer_en": "We are open Monday to Saturday from 7:30am to 8pm.",
+      "category": "Général",
+      "is_active": true
+    },
+    {
+      "id": "f2",
+      "tenant_id": "t1",
+      "question_fr": "Acceptez-vous les ordonnances électroniques ?",
+      "question_en": "Do you accept electronic prescriptions?",
+      "answer_fr": "Oui, nous acceptons les ordonnances électroniques signées par un médecin agréé.",
+      "answer_en": "Yes, we accept electronic prescriptions signed by a licensed physician.",
+      "category": "Services",
+      "is_active": true
+    }
+  ],
+  "business_hours": [
+  {
+    "id": "bh1", "tenant_id": "t1", "type": "opening",
+    "monday":    { "open": true,  "start": "08:00", "end": "18:00" },
+    "tuesday":   { "open": true,  "start": "08:00", "end": "18:00" },
+    "wednesday": { "open": true,  "start": "08:00", "end": "18:00" },
+    "thursday":  { "open": true,  "start": "08:00", "end": "18:00" },
+    "friday":    { "open": true,  "start": "08:00", "end": "17:00" },
+    "saturday":  { "open": true,  "start": "09:00", "end": "13:00" },
+    "sunday":    { "open": false, "start": "09:00", "end": "13:00" }
+  },
+  {
+    "id": "bh2", "tenant_id": "t1", "type": "appointments",
+    "monday":    { "open": true,  "start": "09:00", "end": "17:00" },
+    "tuesday":   { "open": true,  "start": "09:00", "end": "17:00" },
+    "wednesday": { "open": true,  "start": "09:00", "end": "17:00" },
+    "thursday":  { "open": true,  "start": "09:00", "end": "17:00" },
+    "friday":    { "open": true,  "start": "09:00", "end": "16:00" },
+    "saturday":  { "open": false, "start": "09:00", "end": "12:00" },
+    "sunday":    { "open": false, "start": "09:00", "end": "12:00" }
+  }
+],
+"locations": [
+  {
+    "id": "loc1", "tenant_id": "t1",
+    "name": "Agence Centre-ville", "address": "Avenue Kennedy, Yaoundé",
+    "whatsapp": "+237699000001", "phone": "+237699000001", "email": "centre@pharmacie.cm",
+    "transfer_whatsapp": "+237699000099", "transfer_phone": "+237699000099",
+    "hours": null, "extra_info": "Parking disponible. Accès PMR.", "is_active": true
+  }
+],
+"tenant_knowledge": [
+  {
+    "id": "tk1", "tenant_id": "t1",
+    "slogan": "Votre santé, notre priorité.",
+    "website": "https://pharmacie-centre.cm",
+    "email": "contact@pharmacie-centre.cm",
+    "transfer_whatsapp": "+237699000099",
+    "transfer_phone": "+237699000099",
+    "transfer_email": "support@pharmacie-centre.cm",
+    "transfer_message": "Je vous transfère à notre équipe. Un agent vous répondra dans les plus brefs délais.",
+    "welcome_message": "Bonjour ! Bienvenue à la Pharmacie du Centre. Comment puis-je vous aider aujourd'hui ?",
+    "bot_tone": "semi_formal",
+    "bot_personality": "Professionnel, rassurant et à l'écoute",
+    "bot_languages": ["fr", "en"],
+    "bot_signature": "— L'équipe Pharmacie du Centre",
+    "extra_info": "Langues parlées : Français, Anglais. Parking gratuit disponible."
+  }
+],
+"service_knowledge": [
+  {
+    "id": "sk1", "service_id": "s1", "tenant_id": "t1",
+    "welcome_message": "Pour une consultation médicale, voici ce dont vous avez besoin.",
+    "bot_description": "Consultation médicale générale disponible sur rendez-vous.",
+    "bot_tone": "inherit",
+    "conditions": "Apportez votre carnet de santé. Réservation obligatoire.",
+    "confirmation_message": "Votre RDV est confirmé. Pensez à apporter votre carnet de santé.",
+    "extra_info": "Durée moyenne : 30 minutes."
+  }
+]
 }
