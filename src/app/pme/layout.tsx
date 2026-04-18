@@ -9,20 +9,19 @@ import { useTheme } from "@/components/ui/ThemeProvider";
 import { cn, initials } from "@/lib/utils";
 import { ROUTES } from "@/lib/constants";
 import {
-  LayoutDashboard, Bot, ConciergeBell, CalendarDays, CreditCard,
+  LayoutDashboard, Bot, CalendarDays, CreditCard,
   UserCircle, HelpCircle, Sun, Moon, Globe, LogOut, Menu, X, RefreshCw,
-  BookOpen,
+  BookOpen, GraduationCap,
 } from "lucide-react";
 import { SupportWidgets } from "@/components/SupportWidgets";
 
 const navItems = (t: ReturnType<typeof useLanguage>["dictionary"]) => [
-  { href: ROUTES.dashboard, icon: LayoutDashboard, label: t.nav.dashboard },
-  { href: ROUTES.bots, icon: Bot, label: t.nav.bots },
-  { href: ROUTES.knowledge, label: t.nav.knowledge, icon: BookOpen },
-  { href: ROUTES.appointments, icon: CalendarDays, label: t.nav.appointments },
-  { href: ROUTES.billing, icon: CreditCard, label: t.nav.billing },
-  { href: ROUTES.faq, icon: HelpCircle, label: t.nav.faq },
-  { href: ROUTES.profile, icon: UserCircle, label: t.nav.profile },
+  { href: ROUTES.dashboard,    icon: LayoutDashboard, label: t.nav.dashboard },
+  { href: ROUTES.bots,         icon: Bot,             label: t.nav.bots },
+  { href: ROUTES.knowledge,    icon: BookOpen,        label: t.nav.knowledge },
+  { href: ROUTES.appointments, icon: CalendarDays,    label: t.nav.appointments },
+  { href: ROUTES.billing,      icon: CreditCard,      label: t.nav.billing },
+  { href: ROUTES.profile,      icon: UserCircle,      label: t.nav.profile },
 ];
 
 export default function PmeLayout({ children }: { children: ReactNode }) {
@@ -64,7 +63,7 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
         )}
       </div>
 
-      {/* Nav */}
+      {/* Nav principale */}
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {items.map(item => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
@@ -87,14 +86,48 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
 
       {/* Footer */}
       <div className="p-4 border-t border-[var(--border)] space-y-1">
-        {/* Relancer onboarding */}
+
+        {/* Configuration rapide (onboarding) */}
         <button
           onClick={() => { setSidebarOpen(false); router.push(ROUTES.onboarding); }}
           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-[var(--text-sidebar)] hover:bg-[var(--bg)] transition-colors"
         >
           <RefreshCw className="w-4 h-4 flex-shrink-0" />
-          {d.nav.restartOnboarding}
+          {d.nav.quickSetup}
         </button>
+
+        {/* Tutoriel interface */}
+        <Link
+          href={ROUTES.tutorial}
+          onClick={() => setSidebarOpen(false)}
+          className={cn(
+            "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-colors",
+            pathname === ROUTES.tutorial
+              ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)] font-semibold"
+              : "text-[var(--text-sidebar)] hover:bg-[var(--bg)]"
+          )}
+        >
+          <GraduationCap className="w-4 h-4 flex-shrink-0" />
+          {d.nav.tutorial}
+        </Link>
+
+        {/* Demander de l'aide */}
+        <Link
+          href={ROUTES.help}
+          onClick={() => setSidebarOpen(false)}
+          className={cn(
+            "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-colors",
+            pathname === ROUTES.help
+              ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)] font-semibold"
+              : "text-[var(--text-sidebar)] hover:bg-[var(--bg)]"
+          )}
+        >
+          <HelpCircle className="w-4 h-4 flex-shrink-0" />
+          {d.nav.help}
+        </Link>
+
+        {/* Séparateur */}
+        <div className="border-t border-[var(--border)] my-1" />
 
         {/* Thème */}
         <button onClick={toggle}
