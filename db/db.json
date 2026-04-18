@@ -45,39 +45,91 @@
   ],
   "bots": [
     {
-      "id": "b1", "tenant_id": "t1", "chatbot_service_bot_id": "cs1",
-      "name": "Pharma Assistant", "welcome_message": "Bonjour ! Bienvenue à la Pharmacie du Centre. Comment puis-je vous aider ?",
-      "personality": "Professionnel, chaleureux et précis.", "languages": ["fr", "en"],
-      "whatsapp_provider": "waha", "voice_ai_provider": "gemini", "phone_operator": null,
-      "is_active": true, "status": "active", "created_at": "2026-01-12T10:00:00Z"
+      "id": "b1",
+      "tenant_id": "t1",
+      "chatbot_service_bot_id": "cs1",
+      "name": "Pharma Assistant",
+      "welcome_message": "Bonjour ! Bienvenue à la Pharmacie du Centre. Comment puis-je vous aider ?",
+      "personality": "Professionnel, chaleureux et précis.",
+      "languages": [
+        "fr",
+        "en"
+      ],
+      "whatsapp_provider": "waha",
+      "voice_ai_provider": "gemini",
+      "phone_operator": null,
+      "is_active": false,
+      "status": "active",
+      "created_at": "2026-01-12T10:00:00Z"
     },
     {
-      "id": "b2", "tenant_id": "t1", "chatbot_service_bot_id": "cs2",
-      "name": "Pharma Vocal", "welcome_message": "Pharmacie du Centre, bonjour. En quoi puis-je vous aider ?",
-      "personality": "Rassurant, clair et concis.", "languages": ["fr"],
-      "whatsapp_provider": "waha", "voice_ai_provider": "openai", "phone_operator": "orange",
-      "is_active": false, "status": "paused", "created_at": "2026-02-01T10:00:00Z"
+      "id": "b2",
+      "tenant_id": "t1",
+      "chatbot_service_bot_id": "cs2",
+      "name": "Pharma Vocal",
+      "welcome_message": "Pharmacie du Centre, bonjour. En quoi puis-je vous aider ?",
+      "personality": "Rassurant, clair et concis.",
+      "languages": [
+        "fr"
+      ],
+      "whatsapp_provider": "waha",
+      "voice_ai_provider": "openai",
+      "phone_operator": "orange",
+      "is_active": false,
+      "status": "paused",
+      "created_at": "2026-02-01T10:00:00Z"
     },
     {
-      "id": "b3", "tenant_id": "t1", "chatbot_service_bot_id": "cs3",
-      "name": "Pharma RDV", "welcome_message": "Bonjour ! Je gère vos rendez-vous à la Pharmacie du Centre.",
-      "personality": "Efficace, organisé et ponctuel.", "languages": ["fr", "en"],
-      "whatsapp_provider": "meta_api", "voice_ai_provider": "gemini", "phone_operator": null,
-      "is_active": true, "status": "active", "created_at": "2026-03-10T10:00:00Z"
+      "id": "b3",
+      "tenant_id": "t1",
+      "chatbot_service_bot_id": "cs3",
+      "name": "Pharma RDV",
+      "welcome_message": "Bonjour ! Je gère vos rendez-vous à la Pharmacie du Centre.",
+      "personality": "Efficace, organisé et ponctuel.",
+      "languages": [
+        "fr",
+        "en"
+      ],
+      "whatsapp_provider": "meta_api",
+      "voice_ai_provider": "gemini",
+      "phone_operator": null,
+      "is_active": true,
+      "status": "active",
+      "created_at": "2026-03-10T10:00:00Z"
     },
     {
-      "id": "b4", "tenant_id": "t2", "chatbot_service_bot_id": "cs4",
-      "name": "Legal Assistant", "welcome_message": "Bonjour, Cabinet Mvondo. Quelle est votre demande ?",
-      "personality": "Formel et rigoureux.", "languages": ["fr"],
-      "whatsapp_provider": "waha", "voice_ai_provider": "openai", "phone_operator": null,
-      "is_active": true, "status": "active", "created_at": "2026-01-18T10:00:00Z"
+      "id": "b4",
+      "tenant_id": "t2",
+      "chatbot_service_bot_id": "cs4",
+      "name": "Legal Assistant",
+      "welcome_message": "Bonjour, Cabinet Mvondo. Quelle est votre demande ?",
+      "personality": "Formel et rigoureux.",
+      "languages": [
+        "fr"
+      ],
+      "whatsapp_provider": "waha",
+      "voice_ai_provider": "openai",
+      "phone_operator": null,
+      "is_active": true,
+      "status": "active",
+      "created_at": "2026-01-18T10:00:00Z"
     },
     {
-      "id": "b5", "tenant_id": "t3", "chatbot_service_bot_id": "cs5",
-      "name": "Beauty Bot", "welcome_message": "Bienvenue au Salon Élégance !",
-      "personality": "Sympathique et glamour.", "languages": ["fr"],
-      "whatsapp_provider": "meta_api", "voice_ai_provider": "gemini", "phone_operator": null,
-      "is_active": false, "status": "paused", "created_at": "2026-02-05T10:00:00Z"
+      "id": "b5",
+      "tenant_id": "t3",
+      "chatbot_service_bot_id": "cs5",
+      "name": "Beauty Bot",
+      "welcome_message": "Bienvenue au Salon Élégance !",
+      "personality": "Sympathique et glamour.",
+      "languages": [
+        "fr"
+      ],
+      "whatsapp_provider": "meta_api",
+      "voice_ai_provider": "gemini",
+      "phone_operator": null,
+      "is_active": false,
+      "status": "paused",
+      "created_at": "2026-02-05T10:00:00Z"
     }
   ],
   "services": [
@@ -1100,18 +1152,84 @@
       "content": "Transfert en cours vers notre pharmacien de garde. — L'équipe Pharmacie du Centre",
       "created_at": "2026-04-18T08:20:00Z"
     },
-    { "id": "msg17", "conversation_id": "c3", "role": "bot", "content": "Bonjour ! Bienvenue à la Pharmacie du Centre. Comment puis-je vous aider ?", "created_at": "2026-04-17T16:20:00Z" },
-    { "id": "msg18", "conversation_id": "c3", "role": "client", "content": "Bonjour, quels sont vos horaires d'ouverture ?", "created_at": "2026-04-17T16:21:00Z" },
-    { "id": "msg19", "conversation_id": "c3", "role": "bot", "content": "Nous sommes ouverts du lundi au samedi de 7h30 à 20h. Le dimanche nous sommes fermés.", "created_at": "2026-04-17T16:21:10Z" },
-    { "id": "msg20", "conversation_id": "c3", "role": "client", "content": "Je voudrais prendre un rendez-vous pour un conseil pharmaceutique.", "created_at": "2026-04-17T16:22:00Z" },
-    { "id": "msg21", "conversation_id": "c3", "role": "bot", "content": "Bien sûr ! Le conseil pharmaceutique est à 2 000 XAF pour 20 minutes. Quelle date vous convient ?", "created_at": "2026-04-17T16:22:15Z" },
-    { "id": "msg22", "conversation_id": "c3", "role": "client", "content": "Demain matin si possible.", "created_at": "2026-04-17T16:23:00Z" },
-    { "id": "msg23", "conversation_id": "c3", "role": "bot", "content": "J'ai un créneau disponible dimanche 19 avril à 10h30. Je confirme votre RDV ?", "created_at": "2026-04-17T16:23:10Z" },
-    { "id": "msg24", "conversation_id": "c3", "role": "client", "content": "Oui parfait !", "created_at": "2026-04-17T16:24:00Z" },
-    { "id": "msg25", "conversation_id": "c3", "role": "bot", "content": "RDV confirmé ! Puis-je noter votre email pour le rappel ?", "created_at": "2026-04-17T16:24:10Z" },
-    { "id": "msg26", "conversation_id": "c3", "role": "client", "content": "blandine@yahoo.fr", "created_at": "2026-04-17T16:25:00Z" },
-    { "id": "msg27", "conversation_id": "c3", "role": "bot", "content": "Parfait Blandine ! RDV de suivi confirmé pour demain à 10h30. — L'équipe Pharmacie du Centre", "created_at": "2026-04-17T16:30:00Z" }
-      ],
+    {
+      "id": "msg17",
+      "conversation_id": "c3",
+      "role": "bot",
+      "content": "Bonjour ! Bienvenue à la Pharmacie du Centre. Comment puis-je vous aider ?",
+      "created_at": "2026-04-17T16:20:00Z"
+    },
+    {
+      "id": "msg18",
+      "conversation_id": "c3",
+      "role": "client",
+      "content": "Bonjour, quels sont vos horaires d'ouverture ?",
+      "created_at": "2026-04-17T16:21:00Z"
+    },
+    {
+      "id": "msg19",
+      "conversation_id": "c3",
+      "role": "bot",
+      "content": "Nous sommes ouverts du lundi au samedi de 7h30 à 20h. Le dimanche nous sommes fermés.",
+      "created_at": "2026-04-17T16:21:10Z"
+    },
+    {
+      "id": "msg20",
+      "conversation_id": "c3",
+      "role": "client",
+      "content": "Je voudrais prendre un rendez-vous pour un conseil pharmaceutique.",
+      "created_at": "2026-04-17T16:22:00Z"
+    },
+    {
+      "id": "msg21",
+      "conversation_id": "c3",
+      "role": "bot",
+      "content": "Bien sûr ! Le conseil pharmaceutique est à 2 000 XAF pour 20 minutes. Quelle date vous convient ?",
+      "created_at": "2026-04-17T16:22:15Z"
+    },
+    {
+      "id": "msg22",
+      "conversation_id": "c3",
+      "role": "client",
+      "content": "Demain matin si possible.",
+      "created_at": "2026-04-17T16:23:00Z"
+    },
+    {
+      "id": "msg23",
+      "conversation_id": "c3",
+      "role": "bot",
+      "content": "J'ai un créneau disponible dimanche 19 avril à 10h30. Je confirme votre RDV ?",
+      "created_at": "2026-04-17T16:23:10Z"
+    },
+    {
+      "id": "msg24",
+      "conversation_id": "c3",
+      "role": "client",
+      "content": "Oui parfait !",
+      "created_at": "2026-04-17T16:24:00Z"
+    },
+    {
+      "id": "msg25",
+      "conversation_id": "c3",
+      "role": "bot",
+      "content": "RDV confirmé ! Puis-je noter votre email pour le rappel ?",
+      "created_at": "2026-04-17T16:24:10Z"
+    },
+    {
+      "id": "msg26",
+      "conversation_id": "c3",
+      "role": "client",
+      "content": "blandine@yahoo.fr",
+      "created_at": "2026-04-17T16:25:00Z"
+    },
+    {
+      "id": "msg27",
+      "conversation_id": "c3",
+      "role": "bot",
+      "content": "Parfait Blandine ! RDV de suivi confirmé pour demain à 10h30. — L'équipe Pharmacie du Centre",
+      "created_at": "2026-04-17T16:30:00Z"
+    }
+  ],
   "stats": [
     {
       "id": "st1",
@@ -1287,7 +1405,7 @@
       ],
       "bot_signature": "— L'équipe Pharmacie du Centre",
       "extra_info": "Langues parlées : Français, Anglais. Parking gratuit disponible.",
-      "appointment_duration_min": 45,
+      "appointment_duration_min": 30,
       "slot_buffer_min": 15
     }
   ],
