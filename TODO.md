@@ -99,19 +99,19 @@
 
 ## PHASE 4 — Support & UX
 
-- [ ] **PME-11** — FAQ PME (`/pme/faq`)
+- [x] **PME-11** — FAQ PME (`/pme/faq`)
   - CRUD bilingue (question/réponse fr + en)
   - Catégories, activation/désactivation
 
-- [ ] **PME-12** — Widget chatbot de support
+- [x] **PME-12** — Widget chatbot de support
   - Bouton fixe bas droite (premier widget)
   - Chatbot interactif pour aide à l'utilisation de la plateforme qui proposen de façon intélligente les racourcus au user
 
-- [ ] **PME-13** — Widget AGT-BOT WhatsApp
+- [x] **PME-13** — Widget AGT-BOT WhatsApp
   - Bouton fixe bas droite (sous le chatbot)
   - Lien vers le bot WhatsApp AGT Technologies (pub de l'entreprise),numéro configurable depuis le dashboard admin
 
-- [ ] **PME-14** — Icône relance onboarding
+- [x] **PME-14** — Icône relance onboarding
   - Accessible en permanence depuis le layout PME
   - Relance le tunnel `/onboarding` à l'étape souhaitée
 
