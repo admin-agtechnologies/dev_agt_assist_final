@@ -2,60 +2,54 @@
 
 ## 1. CE QUI A ÉTÉ COMPLÉTÉ
 
-- [PME-00] Lucide React partout — zéro emoji JSX
-- [PME-01] Landing page publique `/` — hero, features, plans, CTA, footer, i18n FR/EN
-- [PME-02] Login enrichi `/login` — layout 2 colonnes, Google OAuth, magic link, forgot password, switch langue
-- [PME-03] Page pending `/pending` — wrappée AuthShell, renvoyer email, contact support
-- [PME-04] Pages système — 404 + error.tsx
-- [PME-05] Onboarding `/onboarding` — étape compte + validation email simulée + profil + plan + paiement + succès
-- [PME-06] Dashboard PME enrichi — KPI cards, graphique, accès rapides, abonnement + usage, RDV du jour, emails rappel, modale conversation détail
-- [PME-07] Profil `/pme/profile` — édition profil + mot de passe + entreprise, layout 2 colonnes
-- [PME-08] Base de connaissance `/pme/knowledge` — 4 onglets : infos générales (branding, contacts, transfert, horaires), agences CRUD, FAQ accordéon, services CRUD + knowledge
-- [REFACTOR] `AuthShell`, `AuthLeftPanel`, `AuthTopBar`, `GoogleButton` extraits dans `src/components/auth/AuthShell.tsx`
-- [FIX] Hydration error Toast corrigée — `mounted` pattern
-- [FIX] `suppressHydrationWarning` sur `<body>`
-- [FIX] Hot reload Windows — `webpack.watchOptions` dans `next.config.js`
-- [FIX] `Location` → `AgencyLocation` pour éviter conflit avec type browser natif
+- [PME-08~] Knowledge base — `fetchAll` robustifié, types enrichis (`appointment_duration_min` + `slot_buffer_min`)
+- [PME-09] Agenda RDV `/pme/appointments` — vue semaine/jour, grille CSS, blocs colorés, config créneaux, modales détail/formulaire, 27 RDV mock
+- [PME-10] Billing `/pme/billing` — wallet, abonnement + quotas, plans (alignés PLANS_CONFIG), modale recharge Mobile Money, modale changement plan, historique transactions
+- [PME-11] Bots enrichis `/pme/bots` — panneau détail par bot (stats, conversations paginées, agenda, rapport conversation complet), bouton Publier/Dépublier, 3 bots mock pour t1
+- [PME-12] Interface test `/pme/bots/[id]/test` — layout 3 colonnes, design dynamique par secteur, simulateur WhatsApp (mock intelligent : RDV, services, horaires, confirmation), simulateur vocal (appel, timer, mute), agenda temps réel avec vrais RDV + RDV simulés en amber pointillés
+- [DATA] `db.json` enrichi : transactions, conversation_messages, 6 conversations avec rapports complets, 5 bots, plans corrigés (Starter/Pro/Premium/Gold)
+- [TYPES] Transaction, ConversationMessage, ConversationAction, ConversationReport, Conversation enrichie
+- [REPO] transactionsRepository, conversationMessagesRepository, walletsRepository.patch, conversationsRepository enrichi
+- [I18N] Clés appointments, billing, bots enrichies — fr.ts + en.ts
 
 ## 2. EN COURS (non terminé)
 
-- [~] PME-08 — Les horaires d'ouverture/RDV ne s'affichent pas dans l'onglet Infos générales malgré les données en `db.json` — cause probable : `tenant_knowledge` pour `t1` non chargé (données vides dans le formulaire), le fetch `tenantKnowledgeRepository.getByTenant` retourne null et les `hoursOpening`/`hoursAppt` ne s'affichent pas
+- [ ] `npx tsc --noEmit` sur la dernière version de `/pme/bots/[id]/test/page.tsx` — à vérifier au démarrage de session
 
 ## 3. PROCHAINE ÉTAPE IMMÉDIATE
 
-Débugger le fetch `TabGeneral` dans `knowledge/page.tsx` :
-- Vérifier que `GET /api/v1/tenant-knowledge?tenant_id=t1` retourne bien des données depuis JSON Server
-- Vérifier que `GET /api/v1/business-hours?tenant_id=t1&type=opening` fonctionne
-- Si les données arrivent mais le form reste vide → vérifier le mapping dans `fetchAll`
+Enrichissement interface test `/pme/bots/[id]/test/page.tsx` :
+
+**Dans l'ordre :**
+1. Switcher WhatsApp/Vocal (un seul affiché à la fois, toggle en haut)
+2. Infos bot en accordéon/dropdown (alléger la colonne gauche)
+3. Transcription vocale en temps réel (affichage texte pendant appel simulé)
+4. Bilan conversation dynamique (résumé live : contacts collectés, RDV, services mentionnés)
+5. Bloc envoi email (simuler envoi rappel/confirmation au client)
+6. Enrichissement mock IA (réponses plus intelligentes, détection intention plus fine)
 
 ## 4. BUGS CONNUS / POINTS D'ATTENTION
 
-- Horaires knowledge non affichés — voir section 2
-- `loginWithGoogle` dans `AuthContext` retourne maintenant `AuthResponse` — vérifier compatibilité avec `onboarding/page.tsx` ligne `handleGoogleSuccess`
-- Les widgets SupportWidgets bas droite pointent sur `+237600000000` (placeholder) — à remplacer par vrai numéro AGT
-- Le dossier `wisp/` est peut-être encore présent — peut être supprimé
-- `pme/services` retiré de la sidebar — géré exclusivement via Base de connaissance
-- `pme/faq` reste dans la sidebar mais aussi accessible depuis Base de connaissance onglet FAQ
+- `npx tsc --noEmit` à relancer sur `/pme/bots/[id]/test/page.tsx` — dernière version non vérifiée
+- `loginWithGoogle` dans `AuthContext` → vérifier compatibilité `onboarding/page.tsx` `handleGoogleSuccess`
+- Conversations c4, c5 (bot b1) n'ont pas de `conversation_messages` dans db.json — ok pour le mock mais à enrichir si besoin
+- SupportWidgets bas droite pointent sur `+237600000000` (placeholder)
+- `pme/services` retiré de la sidebar — géré via Base de connaissance uniquement
 
 ## 5. COMMANDES UTILES
 
 ```bash
-# Lancer le projet
 npm run dev:mock
-
-# URLs à tester
-http://localhost:3000              # Landing
-http://localhost:3000/login        # Login
-http://localhost:3000/pme/dashboard
-http://localhost:3000/pme/knowledge
+# URLs clés
+http://localhost:3000/pme/bots
+http://localhost:3000/pme/bots/b1/test
+http://localhost:3000/pme/appointments
+http://localhost:3000/pme/billing
 
 # Comptes démo
-pharmacie@example.com / n'importe quel mot de passe  (PME, tenant t1)
-admin@agt.com / n'importe quel mot de passe           (Admin)
+pharmacie@example.com  → PME tenant t1 (3 bots)
+admin@agt.com          → Admin
 
-# Vérifier TypeScript
 npx tsc --noEmit
-
-# Build complet
 npm run build
 ```

@@ -113,27 +113,43 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
 
     const fetchAll = useCallback(async () => {
         setLoading(true);
-        try {
-            const [k, ho, ha] = await Promise.all([
-                tenantKnowledgeRepository.getByTenant(tenantId),
-                businessHoursRepository.getByTenant(tenantId, "opening"),
-                businessHoursRepository.getByTenant(tenantId, "appointments"),
-            ]);
-            if (k) {
-                setKnowledge(k);
-                setForm({
-                    slogan: k.slogan, website: k.website, email: k.email,
-                    transfer_whatsapp: k.transfer_whatsapp, transfer_phone: k.transfer_phone,
-                    transfer_email: k.transfer_email, transfer_message: k.transfer_message,
-                    welcome_message: k.welcome_message, bot_tone: k.bot_tone,
-                    bot_personality: k.bot_personality, bot_signature: k.bot_signature,
-                    extra_info: k.extra_info, bot_languages: k.bot_languages,
-                });
-            }
-            setHoursOpening(ho);
-            setHoursAppt(ha);
-        } catch { /* silencieux */ }
-        finally { setLoading(false); }
+
+        // ── 1. TenantKnowledge ─────────────────────────────────────────────────
+        const k = await tenantKnowledgeRepository
+            .getByTenant(tenantId)
+            .catch(() => null);
+
+        if (k) {
+            setKnowledge(k);
+            setForm({
+                slogan:            k.slogan,
+                website:           k.website,
+                email:             k.email,
+                transfer_whatsapp: k.transfer_whatsapp,
+                transfer_phone:    k.transfer_phone,
+                transfer_email:    k.transfer_email,
+                transfer_message:  k.transfer_message,
+                welcome_message:   k.welcome_message,
+                bot_tone:          k.bot_tone,
+                bot_personality:   k.bot_personality,
+                bot_signature:     k.bot_signature,
+                extra_info:        k.extra_info,
+                bot_languages:     k.bot_languages,
+            });
+        }
+
+        // ── 2. Horaires (indépendants — ne bloquent pas le formulaire) ─────────
+        const [ho, ha] = await Promise.allSettled([
+            businessHoursRepository.getByTenant(tenantId, "opening"),
+            businessHoursRepository.getByTenant(tenantId, "appointments"),
+        ]).then(([r1, r2]) => [
+            r1.status === "fulfilled" ? r1.value : null,
+            r2.status === "fulfilled" ? r2.value : null,
+        ]);
+
+        setHoursOpening(ho);
+        setHoursAppt(ha);
+        setLoading(false);
     }, [tenantId]);
 
     useEffect(() => { fetchAll(); }, [fetchAll]);
@@ -145,7 +161,12 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
                 if (knowledge) {
                     await tenantKnowledgeRepository.patch(knowledge.id, form);
                 } else {
-                    await tenantKnowledgeRepository.create({ ...form, tenant_id: tenantId });
+                    await tenantKnowledgeRepository.create({
+                    ...form,
+                    tenant_id: tenantId,
+                    appointment_duration_min: 30,
+                    slot_buffer_min: 10,
+                    });
                 }
                 toast.success(t.saveSuccess);
                 fetchAll();

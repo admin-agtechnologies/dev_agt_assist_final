@@ -4,44 +4,172 @@ import { useState, useEffect, useCallback, useTransition } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/components/ui/Toast";
-import { appointmentsRepository, servicesRepository } from "@/repositories";
+import { appointmentsRepository, servicesRepository, tenantKnowledgeRepository } from "@/repositories";
 import { formatDateTime, cn } from "@/lib/utils";
 import { Badge, SectionHeader, EmptyState, ConfirmDeleteModal, Spinner } from "@/components/ui";
 import { createPortal } from "react-dom";
-import { CalendarDays, Pencil, Trash2, Plus } from "lucide-react";
-import type { Appointment, CreateAppointmentPayload, AppointmentStatus, Service } from "@/types/api";
+import {
+  CalendarDays, ChevronLeft, ChevronRight, Plus,
+  Pencil, Trash2, X, Clock, User, Phone,
+  Wrench, MessageSquare, Save, Settings,
+  ChevronDown, ChevronUp,
+} from "lucide-react";
+import type {
+  Appointment, CreateAppointmentPayload,
+  AppointmentStatus, Service, TenantKnowledge,
+} from "@/types/api";
+
+// ── Constantes ────────────────────────────────────────────────────────────────
+const SLOT_MIN = 30;           // granularité grille en minutes
+const HOUR_START = 7;          // 7h00
+const HOUR_END = 20;           // 20h00
+const SLOT_HEIGHT_PX = 56;     // hauteur d'une tranche de 30min en px
+
+type ViewMode = "week" | "day";
 
 type StatusColor = "green" | "amber" | "blue" | "slate";
 const STATUS_COLOR: Record<AppointmentStatus, StatusColor> = {
   confirmed: "green", pending: "amber", done: "blue", cancelled: "slate",
 };
+const STATUS_BG: Record<AppointmentStatus, string> = {
+  confirmed: "bg-[#25D366]/20 border-[#25D366] text-[#075E54] dark:text-[#25D366]",
+  pending:   "bg-amber-100 border-amber-400 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
+  done:      "bg-blue-100 border-blue-400 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+  cancelled: "bg-[var(--bg)] border-[var(--border)] text-[var(--text-muted)] line-through",
+};
 
+// ── Helpers date ──────────────────────────────────────────────────────────────
+function startOfWeek(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay(); // 0=dim
+  const diff = day === 0 ? -6 : 1 - day; // lundi = début
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function addDays(date: Date, n: number): Date {
+  const d = new Date(date);
+  d.setDate(d.getDate() + n);
+  return d;
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+}
+
+function slotTop(date: Date): number {
+  const minutes = (date.getHours() - HOUR_START) * 60 + date.getMinutes();
+  return (minutes / SLOT_MIN) * SLOT_HEIGHT_PX;
+}
+
+function slotHeight(durationMin: number): number {
+  return (durationMin / SLOT_MIN) * SLOT_HEIGHT_PX;
+}
+
+const DAYS_FR = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+const DAYS_EN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const MONTHS_FR = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"];
+const MONTHS_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// ════════════════════════════════════════════════════════════════════════════
+// PAGE PRINCIPALE
+// ════════════════════════════════════════════════════════════════════════════
 export default function PmeAppointmentsPage() {
   const { user } = useAuth();
-  const { dictionary: d } = useLanguage();
+  const { dictionary: d, locale } = useLanguage();
   const t = d.appointments;
   const toast = useToast();
+
+  // ── État agenda ───────────────────────────────────────────────────────────
+  const [viewMode, setViewMode] = useState<ViewMode>("week");
+  const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
   const [items, setItems] = useState<Appointment[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [knowledge, setKnowledge] = useState<TenantKnowledge | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isPending, startTransition] = useTransition();
-  const [filterStatus, setFilterStatus] = useState<AppointmentStatus | "">("");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
+
+  // ── Config créneaux ───────────────────────────────────────────────────────
+  const [configOpen, setConfigOpen] = useState(false);
+  const [durationMin, setDurationMin] = useState(30);
+  const [bufferMin, setBufferMin] = useState(10);
+  const [isSavingConfig, startSaveConfig] = useTransition();
+
+  // ── Modales ───────────────────────────────────────────────────────────────
+  const [mounted, setMounted] = useState(false);
+  const [formModal, setFormModal] = useState<{ open: boolean; editId: string | null; prefillDate?: string }>
+    ({ open: false, editId: null });
+  const [detailId, setDetailId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  useEffect(() => { setMounted(true); }, []);
+
+  // ── Fetch ─────────────────────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
     if (!user?.tenant_id) return;
     startTransition(async () => {
       try {
-        const res = await appointmentsRepository.getList({ tenant_id: user.tenant_id!, status: filterStatus || undefined });
-        setItems(res.results);
-      } catch { toast.error(t.errorLoad); } finally { setLoading(false); }
+        const [aptsRes, svcsRes, kRes] = await Promise.all([
+          appointmentsRepository.getList({ tenant_id: user.tenant_id! }),
+          servicesRepository.getList({ tenant_id: user.tenant_id! }),
+          tenantKnowledgeRepository.getByTenant(user.tenant_id!).catch(() => null),
+        ]);
+        setItems(aptsRes.results);
+        setServices(svcsRes.results);
+        if (kRes) {
+          setKnowledge(kRes);
+          setDurationMin(kRes.appointment_duration_min ?? 30);
+          setBufferMin(kRes.slot_buffer_min ?? 10);
+        }
+      } catch {
+        toast.error(t.errorLoad);
+      } finally {
+        setLoading(false);
+      }
     });
-  }, [user?.tenant_id, filterStatus, t.errorLoad, toast]);
+  }, [user?.tenant_id, t.errorLoad, toast]);
 
-  useEffect(() => { fetchData(); }, [filterStatus]); // eslint-disable-line
+  useEffect(() => { fetchData(); }, [fetchData]);
 
+  // ── Map serviceId → name ──────────────────────────────────────────────────
+  const serviceMap = Object.fromEntries(services.map(s => [s.id, s.name]));
+
+  // ── Navigation ────────────────────────────────────────────────────────────
+  const goToday = () => setCurrentDate(new Date());
+  const goPrev = () => setCurrentDate(d => addDays(d, viewMode === "week" ? -7 : -1));
+  const goNext = () => setCurrentDate(d => addDays(d, viewMode === "week" ? 7 : 1));
+
+  // ── Jours affichés ────────────────────────────────────────────────────────
+  const weekStart = startOfWeek(currentDate);
+  const displayDays = viewMode === "week"
+    ? Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
+    : [new Date(currentDate)];
+
+  // ── RDV par jour ──────────────────────────────────────────────────────────
+  const aptsByDay = (day: Date) =>
+    items.filter(a => isSameDay(new Date(a.scheduled_at), day));
+
+  // ── Save config ───────────────────────────────────────────────────────────
+  const handleSaveConfig = () => {
+    if (!knowledge) return;
+    startSaveConfig(async () => {
+      try {
+        await tenantKnowledgeRepository.patch(knowledge.id, {
+          appointment_duration_min: durationMin,
+          slot_buffer_min: bufferMin,
+        });
+        toast.success(t.configSaved);
+        setConfigOpen(false);
+        fetchData();
+      } catch { toast.error(d.common.error); }
+    });
+  };
+
+  // ── Delete ────────────────────────────────────────────────────────────────
   const handleDelete = async () => {
     if (!deleteId) return;
     setIsDeleting(true);
@@ -49,87 +177,360 @@ export default function PmeAppointmentsPage() {
       await appointmentsRepository.delete(deleteId);
       toast.success(t.deleteSuccess);
       setDeleteId(null);
+      setDetailId(null);
       fetchData();
-    } catch { toast.error(t.deleteError); } finally { setIsDeleting(false); }
+    } catch { toast.error(t.deleteError); }
+    finally { setIsDeleting(false); }
   };
 
-  const STATUSES: AppointmentStatus[] = ["pending", "confirmed", "done", "cancelled"];
+  // ── Label période ─────────────────────────────────────────────────────────
+  const DAYS_LABELS = locale === "fr" ? DAYS_FR : DAYS_EN;
+  const MONTHS = locale === "fr" ? MONTHS_FR : MONTHS_EN;
+
+  const periodLabel = viewMode === "week"
+    ? `${weekStart.getDate()} ${MONTHS[weekStart.getMonth()]} — ${addDays(weekStart, 6).getDate()} ${MONTHS[addDays(weekStart, 6).getMonth()]} ${weekStart.getFullYear()}`
+    : `${DAYS_LABELS[currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1]} ${currentDate.getDate()} ${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+
+  // ── Tranches horaires ─────────────────────────────────────────────────────
+  const timeSlots = Array.from(
+    { length: ((HOUR_END - HOUR_START) * 60) / SLOT_MIN },
+    (_, i) => {
+      const totalMin = HOUR_START * 60 + i * SLOT_MIN;
+      const h = Math.floor(totalMin / 60);
+      const m = totalMin % 60;
+      return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    }
+  );
 
   if (loading) return (
     <div className="space-y-4 animate-pulse">
-      {[...Array(3)].map((_, i) => <div key={i} className="h-20 card bg-[var(--bg)]" />)}
+      {[...Array(4)].map((_, i) => <div key={i} className="h-20 card bg-[var(--bg)]" />)}
     </div>
   );
 
+  const detailItem = items.find(a => a.id === detailId) ?? null;
+
   return (
     <>
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-4 animate-fade-in">
         <SectionHeader title={t.title} subtitle={t.subtitle} action={
-          <button onClick={() => { setEditingId(null); setModalOpen(true); }} className="btn-primary">
-            <Plus className="w-4 h-4" />{t.newBtn}
+          <button onClick={() => setFormModal({ open: true, editId: null })} className="btn-primary">
+            <Plus className="w-4 h-4" /> {t.newBtn}
           </button>
         } />
 
-        {/* Filtres statut */}
-        <div className="card p-4 flex flex-wrap gap-2">
-          <button onClick={() => setFilterStatus("")}
-            className={cn("px-4 py-2 rounded-xl text-xs font-bold transition-colors", filterStatus === "" ? "bg-[#075E54] text-white" : "bg-[var(--bg)] text-[var(--text-muted)] hover:text-[var(--text)]")}>
-            {d.common.all}
-          </button>
-          {STATUSES.map(s => (
-            <button key={s} onClick={() => setFilterStatus(s)}
-              className={cn("px-4 py-2 rounded-xl text-xs font-bold transition-colors", filterStatus === s ? "bg-[#075E54] text-white" : "bg-[var(--bg)] text-[var(--text-muted)] hover:text-[var(--text)]")}>
-              {t.statuses[s]}
-            </button>
-          ))}
-        </div>
-
-        {/* Table */}
-        <div className={cn("card overflow-hidden transition-opacity", isPending && "opacity-50 pointer-events-none")}>
-          {items.length === 0 ? <EmptyState message={t.noData} icon={CalendarDays} /> : (
-            <>
-              <div className="hidden md:grid grid-cols-5 px-6 py-3 bg-[var(--bg)] border-b border-[var(--border)] text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
-                <span>{t.table.client}</span>
-                <span>{t.table.service}</span>
-                <span>{t.table.date}</span>
-                <span>{t.table.channel}</span>
-                <span>{t.table.status}</span>
+        {/* ── Config créneaux (accordéon) ─────────────────────────────────── */}
+        <div className="card overflow-hidden">
+          <button
+            onClick={() => setConfigOpen(o => !o)}
+            className="w-full flex items-center justify-between px-5 py-4 hover:bg-[var(--bg)] transition-colors">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-[#6C3CE1]/10 flex items-center justify-center">
+                <Settings className="w-4 h-4 text-[#6C3CE1]" />
               </div>
-              {items.map(apt => (
-                <div key={apt.id} className="grid grid-cols-1 md:grid-cols-5 px-6 py-4 border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg)] transition-colors items-center gap-2">
-                  <div>
-                    <p className="text-sm font-semibold text-[var(--text)]">{apt.client_name}</p>
-                    <p className="text-[10px] text-[var(--text-muted)]">{apt.client_phone}</p>
-                  </div>
-                  <p className="text-xs text-[var(--text-muted)]">{apt.service_id}</p>
-                  <p className="text-xs text-[var(--text-muted)]">{formatDateTime(apt.scheduled_at)}</p>
-                  <Badge variant={apt.channel === "whatsapp" ? "green" : "violet"}>
-                    {t.channels[apt.channel] ?? apt.channel}
-                  </Badge>
-                  <div className="flex items-center justify-between md:justify-start gap-3">
-                    <Badge variant={STATUS_COLOR[apt.status]}>{t.statuses[apt.status]}</Badge>
-                    <div className="flex gap-2">
-                      <button onClick={() => { setEditingId(apt.id); setModalOpen(true); }}
-                        className="p-1.5 rounded-lg hover:bg-[var(--bg)] text-[var(--text-muted)] transition-colors">
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => setDeleteId(apt.id)}
-                        className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-400 transition-colors">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+              <div className="text-left">
+                <p className="text-sm font-bold text-[var(--text)]">{t.configTitle}</p>
+                <p className="text-xs text-[var(--text-muted)]">
+                  {durationMin} min · +{bufferMin} min tampon
+                </p>
+              </div>
+            </div>
+            {configOpen
+              ? <ChevronUp className="w-4 h-4 text-[var(--text-muted)]" />
+              : <ChevronDown className="w-4 h-4 text-[var(--text-muted)]" />}
+          </button>
+
+          {configOpen && (
+            <div className="px-5 pb-5 border-t border-[var(--border)] pt-4 animate-fade-in">
+              <p className="text-xs text-[var(--text-muted)] mb-4">{t.configSubtitle}</p>
+              <div className="flex flex-wrap gap-6 items-end">
+                <div>
+                  <label className="label-base">{t.durationLabel}</label>
+                  <div className="flex items-center gap-2">
+                    <input type="number" min={10} max={240} step={5}
+                      className="input-base w-24 text-center"
+                      value={durationMin}
+                      onChange={e => setDurationMin(Number(e.target.value))} />
+                    <span className="text-sm text-[var(--text-muted)]">{t.durationUnit}</span>
                   </div>
                 </div>
-              ))}
-            </>
+                <div>
+                  <label className="label-base">{t.bufferLabel}</label>
+                  <div className="flex items-center gap-2">
+                    <input type="number" min={0} max={60} step={5}
+                      className="input-base w-24 text-center"
+                      value={bufferMin}
+                      onChange={e => setBufferMin(Number(e.target.value))} />
+                    <span className="text-sm text-[var(--text-muted)]">{t.bufferUnit}</span>
+                  </div>
+                </div>
+                <button onClick={handleSaveConfig} disabled={isSavingConfig} className="btn-primary">
+                  {isSavingConfig
+                    ? <Spinner className="border-white/30 border-t-white" />
+                    : <Save className="w-4 h-4" />}
+                  {d.common.save}
+                </button>
+              </div>
+            </div>
           )}
+        </div>
+
+        {/* ── Contrôles agenda ────────────────────────────────────────────── */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* Toggle vue */}
+          <div className="flex gap-1 p-1 bg-[var(--bg)] rounded-xl border border-[var(--border)]">
+            {(["week", "day"] as ViewMode[]).map(v => (
+              <button key={v} onClick={() => setViewMode(v)}
+                className={cn(
+                  "px-4 py-1.5 rounded-lg text-xs font-bold transition-all",
+                  viewMode === v
+                    ? "bg-[var(--bg-card)] text-[var(--text)] shadow-sm"
+                    : "text-[var(--text-muted)] hover:text-[var(--text)]"
+                )}>
+                {v === "week" ? t.viewWeek : t.viewDay}
+              </button>
+            ))}
+          </div>
+
+          {/* Navigation période */}
+          <div className="flex items-center gap-2">
+            <button onClick={goPrev}
+              className="w-8 h-8 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] flex items-center justify-center hover:border-[#25D366] transition-colors">
+              <ChevronLeft className="w-4 h-4 text-[var(--text-muted)]" />
+            </button>
+            <button onClick={goToday}
+              className="px-3 py-1.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] text-xs font-bold text-[var(--text)] hover:border-[#25D366] transition-colors">
+              {t.today}
+            </button>
+            <button onClick={goNext}
+              className="w-8 h-8 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] flex items-center justify-center hover:border-[#25D366] transition-colors">
+              <ChevronRight className="w-4 h-4 text-[var(--text-muted)]" />
+            </button>
+            <span className="text-sm font-semibold text-[var(--text)] ml-2">{periodLabel}</span>
+          </div>
+        </div>
+
+        {/* ── Grille agenda ────────────────────────────────────────────────── */}
+        <div className="card overflow-hidden">
+          {/* En-têtes colonnes jours */}
+          <div className={cn(
+            "grid border-b border-[var(--border)] bg-[var(--bg)]",
+            viewMode === "week" ? "grid-cols-[56px_repeat(7,1fr)]" : "grid-cols-[56px_1fr]"
+          )}>
+            <div className="border-r border-[var(--border)]" /> {/* coin vide */}
+            {displayDays.map((day, i) => {
+              const isToday = isSameDay(day, new Date());
+              const dayLabel = DAYS_LABELS[day.getDay() === 0 ? 6 : day.getDay() - 1];
+              return (
+                <div key={i} className={cn(
+                  "py-3 text-center border-r border-[var(--border)] last:border-r-0",
+                  isToday && "bg-[#25D366]/5"
+                )}>
+                  <p className={cn("text-[10px] font-black uppercase tracking-widest",
+                    isToday ? "text-[#25D366]" : "text-[var(--text-muted)]")}>
+                    {dayLabel}
+                  </p>
+                  <p className={cn(
+                    "text-lg font-bold mt-0.5",
+                    isToday
+                      ? "w-8 h-8 rounded-full bg-[#25D366] text-white flex items-center justify-center mx-auto text-sm"
+                      : "text-[var(--text)]"
+                  )}>
+                    {day.getDate()}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Corps grille */}
+          <div className="overflow-y-auto max-h-[600px]">
+            <div className={cn(
+              "grid",
+              viewMode === "week" ? "grid-cols-[56px_repeat(7,1fr)]" : "grid-cols-[56px_1fr]"
+            )}>
+              {/* Colonne heures */}
+              <div className="border-r border-[var(--border)]">
+                {timeSlots.map(slot => (
+                  <div key={slot}
+                    style={{ height: SLOT_HEIGHT_PX }}
+                    className="border-b border-[var(--border)] flex items-start justify-end pr-2 pt-1">
+                    <span className="text-[10px] text-[var(--text-muted)] font-mono">{slot}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Colonnes jours */}
+              {displayDays.map((day, di) => {
+                const dayApts = aptsByDay(day);
+                const isToday = isSameDay(day, new Date());
+                const totalHeight = timeSlots.length * SLOT_HEIGHT_PX;
+
+                return (
+                  <div key={di}
+                    className={cn(
+                      "relative border-r border-[var(--border)] last:border-r-0",
+                      isToday && "bg-[#25D366]/[0.02]"
+                    )}
+                    style={{ height: totalHeight }}>
+
+                    {/* Lignes horaires */}
+                    {timeSlots.map((_, si) => (
+                      <div key={si}
+                        style={{ top: si * SLOT_HEIGHT_PX, height: SLOT_HEIGHT_PX }}
+                        className="absolute inset-x-0 border-b border-[var(--border)] cursor-pointer hover:bg-[#25D366]/5 transition-colors"
+                        onClick={() => {
+                          const totalMin = HOUR_START * 60 + si * SLOT_MIN;
+                          const h = Math.floor(totalMin / 60);
+                          const m = totalMin % 60;
+                          const d2 = new Date(day);
+                          d2.setHours(h, m, 0, 0);
+                          const iso = `${d2.getFullYear()}-${String(d2.getMonth() + 1).padStart(2, "0")}-${String(d2.getDate()).padStart(2, "0")}T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+                          setFormModal({ open: true, editId: null, prefillDate: iso });
+                        }}
+                      />
+                    ))}
+
+                    {/* Blocs RDV */}
+                    {dayApts.map(apt => {
+                      const top = slotTop(new Date(apt.scheduled_at));
+                      const height = Math.max(slotHeight(durationMin), SLOT_HEIGHT_PX * 0.8);
+                      return (
+                        <div key={apt.id}
+                          style={{ top, height, left: 2, right: 2 }}
+                          className={cn(
+                            "absolute rounded-lg border-l-4 px-2 py-1 cursor-pointer overflow-hidden",
+                            "shadow-sm hover:shadow-md transition-shadow z-10",
+                            STATUS_BG[apt.status]
+                          )}
+                          onClick={() => setDetailId(apt.id)}>
+                          <p className="text-[10px] font-black truncate leading-tight">
+                            {apt.client_name}
+                          </p>
+                          <p className="text-[9px] truncate opacity-80 flex items-center gap-0.5">
+                            <Clock className="w-2.5 h-2.5 inline" />
+                            {new Date(apt.scheduled_at).toLocaleTimeString(locale === "fr" ? "fr-FR" : "en-US", { hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                          {height >= SLOT_HEIGHT_PX * 1.5 && (
+                            <p className="text-[9px] truncate opacity-70">
+                              {serviceMap[apt.service_id] ?? apt.service_id}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 
-      <AppointmentModal
-        isOpen={modalOpen} itemId={editingId} tenantId={user?.tenant_id ?? ""}
-        onClose={() => setModalOpen(false)} onSave={fetchData}
-      />
+      {/* ── Modale détail RDV ──────────────────────────────────────────────── */}
+      {mounted && detailId && detailItem && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="absolute inset-0" onClick={() => setDetailId(null)} />
+          <div className="relative bg-[var(--bg-card)] rounded-3xl w-full max-w-md shadow-2xl border border-[var(--border)] animate-zoom-in">
+            {/* Header */}
+            <div className="p-5 border-b border-[var(--border)] flex justify-between items-center">
+              <h2 className="text-lg font-bold text-[var(--text)]">{t.detailTitle}</h2>
+              <button onClick={() => setDetailId(null)}
+                className="w-8 h-8 rounded-full bg-[var(--bg)] flex items-center justify-center text-[var(--text-muted)]">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Corps */}
+            <div className="p-5 space-y-3">
+              <div className="flex items-center gap-3 p-3 bg-[var(--bg)] rounded-xl">
+                <div className="w-9 h-9 rounded-xl bg-[#25D366]/10 flex items-center justify-center flex-shrink-0">
+                  <User className="w-4 h-4 text-[#25D366]" />
+                </div>
+                <div>
+                  <p className="text-xs text-[var(--text-muted)]">{t.detailClient}</p>
+                  <p className="text-sm font-bold text-[var(--text)]">{detailItem.client_name}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-[var(--bg)] rounded-xl">
+                  <p className="text-xs text-[var(--text-muted)] mb-1">{t.detailPhone}</p>
+                  <p className="text-sm font-semibold text-[var(--text)] flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                    {detailItem.client_phone}
+                  </p>
+                </div>
+                <div className="p-3 bg-[var(--bg)] rounded-xl">
+                  <p className="text-xs text-[var(--text-muted)] mb-1">{t.detailChannel}</p>
+                  <Badge variant={detailItem.channel === "whatsapp" ? "green" : "violet"}>
+                    {t.channels[detailItem.channel] ?? detailItem.channel}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="p-3 bg-[var(--bg)] rounded-xl">
+                <p className="text-xs text-[var(--text-muted)] mb-1">{t.detailService}</p>
+                <p className="text-sm font-semibold text-[var(--text)] flex items-center gap-1.5">
+                  <Wrench className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                  {serviceMap[detailItem.service_id] ?? detailItem.service_id}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-[var(--bg)] rounded-xl">
+                  <p className="text-xs text-[var(--text-muted)] mb-1">{t.detailDate}</p>
+                  <p className="text-sm font-semibold text-[var(--text)] flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                    {formatDateTime(detailItem.scheduled_at)}
+                  </p>
+                </div>
+                <div className="p-3 bg-[var(--bg)] rounded-xl">
+                  <p className="text-xs text-[var(--text-muted)] mb-1">{t.detailStatus}</p>
+                  <Badge variant={STATUS_COLOR[detailItem.status]}>
+                    {t.statuses[detailItem.status]}
+                  </Badge>
+                </div>
+              </div>
+
+              {detailItem.notes && (
+                <div className="p-3 bg-[var(--bg)] rounded-xl">
+                  <p className="text-xs text-[var(--text-muted)] mb-1">{t.detailNotes}</p>
+                  <p className="text-sm text-[var(--text)]">{detailItem.notes}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer actions */}
+            <div className="p-5 border-t border-[var(--border)] flex justify-between items-center">
+              <button onClick={() => setDeleteId(detailItem.id)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-semibold transition-colors">
+                <Trash2 className="w-4 h-4" /> {d.common.delete}
+              </button>
+              <button onClick={() => { setDetailId(null); setFormModal({ open: true, editId: detailItem.id }); }}
+                className="btn-primary">
+                <Pencil className="w-4 h-4" /> {d.common.edit}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── Modale formulaire création/édition ─────────────────────────────── */}
+      {mounted && formModal.open && createPortal(
+        <AppointmentFormModal
+          itemId={formModal.editId}
+          tenantId={user?.tenant_id ?? ""}
+          prefillDate={formModal.prefillDate}
+          services={services}
+          onClose={() => setFormModal({ open: false, editId: null })}
+          onSave={fetchData}
+        />,
+        document.body
+      )}
+
+      {/* ── Modale suppression ─────────────────────────────────────────────── */}
       <ConfirmDeleteModal
         isOpen={!!deleteId} isLoading={isDeleting}
         onClose={() => !isDeleting && setDeleteId(null)}
@@ -139,76 +540,134 @@ export default function PmeAppointmentsPage() {
   );
 }
 
-// ── AppointmentModal ──────────────────────────────────────────────────────────
-function AppointmentModal({ isOpen, itemId, tenantId, onClose, onSave }: {
-  isOpen: boolean; itemId: string | null; tenantId: string;
-  onClose: () => void; onSave: () => void;
-}) {
+// ════════════════════════════════════════════════════════════════════════════
+// MODALE FORMULAIRE
+// ════════════════════════════════════════════════════════════════════════════
+interface AppointmentFormModalProps {
+  itemId: string | null;
+  tenantId: string;
+  prefillDate?: string;
+  services: Service[];
+  onClose: () => void;
+  onSave: () => void;
+}
+
+function AppointmentFormModal({ itemId, tenantId, prefillDate, services, onClose, onSave }: AppointmentFormModalProps) {
   const { dictionary: d } = useLanguage();
   const t = d.appointments;
   const tf = t.modal.fields;
   const toast = useToast();
   const isEdit = !!itemId;
-  const DEF: CreateAppointmentPayload = { service_id: "", client_name: "", client_phone: "", scheduled_at: "", status: "pending", notes: "" };
+
+  const DEF: CreateAppointmentPayload = {
+    service_id: "", client_name: "", client_phone: "",
+    client_email: "", scheduled_at: prefillDate ?? "", status: "pending", notes: "",
+  };
   const [form, setForm] = useState<CreateAppointmentPayload>(DEF);
-  const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingItem, setLoadingItem] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!isOpen) return;
-    servicesRepository.getList({ tenant_id: tenantId }).then(r => setServices(r.results));
     if (itemId) {
-      setLoading(true);
+      setLoadingItem(true);
       appointmentsRepository.getById(itemId)
-        .then(a => setForm({ service_id: a.service_id, client_name: a.client_name, client_phone: a.client_phone, scheduled_at: a.scheduled_at.slice(0, 16), status: a.status, notes: a.notes }))
-        .finally(() => setLoading(false));
-    } else setForm(DEF);
-  }, [isOpen, itemId]); // eslint-disable-line
+        .then(a => setForm({
+          service_id: a.service_id, client_name: a.client_name,
+          client_phone: a.client_phone, client_email: a.client_email ?? "",
+          scheduled_at: a.scheduled_at.slice(0, 16),
+          status: a.status, notes: a.notes,
+        }))
+        .finally(() => setLoadingItem(false));
+    }
+  }, [itemId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setSaving(true);
+    e.preventDefault();
+    setSaving(true);
     try {
       const payload = { ...form, scheduled_at: new Date(form.scheduled_at).toISOString() };
-      if (isEdit) await appointmentsRepository.patch(itemId!, payload);
-      else await appointmentsRepository.create({ ...payload, tenant_id: tenantId });
-      toast.success(t.createSuccess); onSave(); onClose();
-    } catch { toast.error(d.common.error); } finally { setSaving(false); }
+      if (isEdit) {
+        await appointmentsRepository.patch(itemId!, payload);
+      } else {
+        await appointmentsRepository.create({ ...payload, tenant_id: tenantId });
+      }
+      toast.success(t.createSuccess);
+      onSave();
+      onClose();
+    } catch { toast.error(d.common.error); }
+    finally { setSaving(false); }
   };
 
-  if (!isOpen) return null;
-  return createPortal(
-    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
       <div className="absolute inset-0" onClick={!saving ? onClose : undefined} />
-      <form onSubmit={handleSubmit} className="relative bg-[var(--bg-card)] rounded-3xl w-full max-w-lg shadow-2xl border border-[var(--border)] flex flex-col max-h-[90vh] animate-zoom-in">
+      <form onSubmit={handleSubmit}
+        className="relative bg-[var(--bg-card)] rounded-3xl w-full max-w-lg shadow-2xl border border-[var(--border)] flex flex-col max-h-[90vh] animate-zoom-in">
+
         <div className="p-6 border-b border-[var(--border)] flex justify-between items-center">
-          <h2 className="text-lg font-bold text-[var(--text)]">{isEdit ? t.modal.editTitle : t.modal.createTitle}</h2>
-          <button type="button" onClick={onClose} className="w-8 h-8 rounded-full bg-[var(--bg)] flex items-center justify-center text-[var(--text-muted)]">✕</button>
+          <h2 className="text-lg font-bold text-[var(--text)]">
+            {isEdit ? t.modal.editTitle : t.modal.createTitle}
+          </h2>
+          <button type="button" onClick={onClose}
+            className="w-8 h-8 rounded-full bg-[var(--bg)] flex items-center justify-center text-[var(--text-muted)]">
+            <X className="w-4 h-4" />
+          </button>
         </div>
+
         <div className="p-6 overflow-y-auto flex-1 space-y-4">
-          {loading
+          {loadingItem
             ? <div className="flex justify-center py-8"><Spinner className="w-6 h-6 border-[#25D366] border-t-transparent" /></div>
             : <>
-              <div><label className="label-base">{tf.service}</label>
-                <select required className="input-base" value={form.service_id} onChange={e => setForm({ ...form, service_id: e.target.value })}>
+              <div>
+                <label className="label-base">{tf.service}</label>
+                <select required className="input-base" value={form.service_id}
+                  onChange={e => setForm({ ...form, service_id: e.target.value })}>
                   <option value="">—</option>
                   {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
-              <div><label className="label-base">{tf.clientName}</label><input required className="input-base" value={form.client_name} onChange={e => setForm({ ...form, client_name: e.target.value })} /></div>
-              <div><label className="label-base">{tf.clientPhone}</label><input required className="input-base" value={form.client_phone} onChange={e => setForm({ ...form, client_phone: e.target.value })} /></div>
-              <div><label className="label-base">{tf.scheduledAt}</label><input required type="datetime-local" className="input-base" value={form.scheduled_at} onChange={e => setForm({ ...form, scheduled_at: e.target.value })} /></div>
-              <div><label className="label-base">{tf.status}</label>
-                <select className="input-base" value={form.status} onChange={e => setForm({ ...form, status: e.target.value as AppointmentStatus })}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="label-base">{tf.clientName}</label>
+                  <input required className="input-base" value={form.client_name}
+                    onChange={e => setForm({ ...form, client_name: e.target.value })} />
+                </div>
+                <div>
+                  <label className="label-base">{tf.clientPhone}</label>
+                  <input required className="input-base" value={form.client_phone}
+                    onChange={e => setForm({ ...form, client_phone: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <label className="label-base">{tf.clientEmail}</label>
+                <input type="email" className="input-base" value={form.client_email ?? ""}
+                  onChange={e => setForm({ ...form, client_email: e.target.value })} />
+              </div>
+              <div>
+                <label className="label-base">{tf.scheduledAt}</label>
+                <input required type="datetime-local" className="input-base"
+                  value={form.scheduled_at}
+                  onChange={e => setForm({ ...form, scheduled_at: e.target.value })} />
+              </div>
+              <div>
+                <label className="label-base">{tf.status}</label>
+                <select className="input-base" value={form.status}
+                  onChange={e => setForm({ ...form, status: e.target.value as AppointmentStatus })}>
                   {(["pending", "confirmed", "done", "cancelled"] as AppointmentStatus[]).map(s => (
                     <option key={s} value={s}>{t.statuses[s]}</option>
                   ))}
                 </select>
               </div>
-              <div><label className="label-base">{tf.notes}</label><textarea rows={2} className="input-base resize-none" value={form.notes ?? ""} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
+              <div>
+                <label className="label-base">{tf.notes}</label>
+                <textarea rows={2} className="input-base resize-none"
+                  value={form.notes ?? ""}
+                  onChange={e => setForm({ ...form, notes: e.target.value })} />
+              </div>
             </>
           }
         </div>
+
         <div className="p-5 border-t border-[var(--border)] flex justify-end gap-3">
           <button type="button" onClick={onClose} className="btn-ghost">{d.common.cancel}</button>
           <button type="submit" disabled={saving} className="btn-primary">
@@ -217,7 +676,6 @@ function AppointmentModal({ isOpen, itemId, tenantId, onClose, onSave }: {
           </button>
         </div>
       </form>
-    </div>,
-    document.body
+    </div>
   );
 }

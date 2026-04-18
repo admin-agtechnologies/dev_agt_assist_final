@@ -141,9 +141,21 @@ export interface TenantStats {
 export interface AdminStats { id: string; total_tenants: number; active_tenants: number; total_bots: number; active_bots: number; total_messages_today: number; total_calls_today: number; mrr: number; tenants_growth_week: number; }
 
 // ── Conversation ──────────────────────────────────────────────────────────────
-export interface Conversation { id: string; tenant_id: string; bot_id: string; client_identifier: string; client_name: string; channel: "whatsapp" | "voice"; last_message: string; last_message_at: string; messages_count: number; // Ajouter dans l'interface Conversation :
-  appointment_id: string | null;}
-
+export interface Conversation {
+  id: string;
+  tenant_id: string;
+  bot_id: string;
+  client_identifier: string;
+  client_name: string;
+  client_phone: string;
+  client_email: string | null;
+  channel: "whatsapp" | "voice";
+  last_message: string;
+  last_message_at: string;
+  messages_count: number;
+  appointment_id: string | null;
+  report: ConversationReport | null;
+}
 // ── FAQ ──────────────────────────────────────────────────────────────────────
 export interface FAQ { id: string; tenant_id: string; question_fr: string; question_en: string; answer_fr: string; answer_en: string; category: string; is_active: boolean; }
 export interface CreateFAQPayload { question_fr: string; question_en: string; answer_fr: string; answer_en: string; category: string; is_active?: boolean; }
@@ -178,6 +190,8 @@ export interface TenantKnowledge {
   bot_tone: "formal" | "semi_formal" | "casual";
   bot_personality: string; bot_languages: string[]; bot_signature: string;
   extra_info: string;
+  appointment_duration_min: number;  
+  slot_buffer_min: number;          
 }
 
 // ── ServiceKnowledge ──────────────────────────────────────────────────────────
@@ -187,3 +201,65 @@ export interface ServiceKnowledge {
   bot_tone: "formal" | "semi_formal" | "casual" | "inherit";
   conditions: string; confirmation_message: string; extra_info: string;
 }
+// ── Transaction ───────────────────────────────────────────────────────────────
+export type TransactionType = "credit" | "debit";
+export type TransactionOperator = "orange" | "mtn" | null;
+
+export interface Transaction {
+  id: string;
+  tenant_id: string;
+  wallet_id: string;
+  type: TransactionType;
+  amount: number;
+  balance_after: number;
+  label: string;
+  operator: TransactionOperator;
+  reference: string;
+  created_at: string;
+}
+
+export interface CreateTransactionPayload {
+  tenant_id: string;
+  wallet_id: string;
+  type: TransactionType;
+  amount: number;
+  balance_after: number;
+  label: string;
+  operator: TransactionOperator;
+  reference: string;
+}
+// ── ConversationMessage ───────────────────────────────────────────────────────
+export interface ConversationMessage {
+  id: string;
+  conversation_id: string;
+  role: "bot" | "client";
+  content: string;
+  created_at: string;
+}
+
+// ── ConversationAction ────────────────────────────────────────────────────────
+export type ConversationActionType =
+  | "appointment"
+  | "handoff"
+  | "faq"
+  | "service_info"
+  | "contact_collected";
+
+export interface ConversationAction {
+  type: ConversationActionType;
+  label: string;
+  detail: string;
+}
+
+// ── ConversationReport ────────────────────────────────────────────────────────
+export interface ConversationReport {
+  summary: string;
+  key_takeaways: string[];
+  actions: ConversationAction[];
+  appointment_scheduled: boolean;
+  appointment_id: string | null;
+  human_handoff: boolean;
+  handoff_reason: string | null;
+  services_discussed: string[];
+}
+

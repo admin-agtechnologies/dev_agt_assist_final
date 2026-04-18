@@ -45,56 +45,39 @@
   ],
   "bots": [
     {
-      "id": "b1",
-      "tenant_id": "t1",
-      "chatbot_service_bot_id": "cs1",
-      "name": "Pharma Assistant",
-      "welcome_message": "Bonjour ! Je suis l'assistant de la Pharmacie du Centre. Comment puis-je vous aider ?",
-      "personality": "Professionnel, chaleureux et précis.",
-      "languages": [
-        "fr",
-        "en"
-      ],
-      "whatsapp_provider": "waha",
-      "voice_ai_provider": "gemini",
-      "phone_operator": null,
-      "is_active": true,
-      "status": "active",
-      "created_at": "2026-01-12T10:00:00Z"
+      "id": "b1", "tenant_id": "t1", "chatbot_service_bot_id": "cs1",
+      "name": "Pharma Assistant", "welcome_message": "Bonjour ! Bienvenue à la Pharmacie du Centre. Comment puis-je vous aider ?",
+      "personality": "Professionnel, chaleureux et précis.", "languages": ["fr", "en"],
+      "whatsapp_provider": "waha", "voice_ai_provider": "gemini", "phone_operator": null,
+      "is_active": true, "status": "active", "created_at": "2026-01-12T10:00:00Z"
     },
     {
-      "id": "b2",
-      "tenant_id": "t2",
-      "chatbot_service_bot_id": "cs2",
-      "name": "Legal Assistant",
-      "welcome_message": "Bonjour, Cabinet Mvondo. Quelle est votre demande ?",
-      "personality": "Formel et rigoureux.",
-      "languages": [
-        "fr"
-      ],
-      "whatsapp_provider": "waha",
-      "voice_ai_provider": "openai",
-      "phone_operator": null,
-      "is_active": true,
-      "status": "active",
-      "created_at": "2026-01-18T10:00:00Z"
+      "id": "b2", "tenant_id": "t1", "chatbot_service_bot_id": "cs2",
+      "name": "Pharma Vocal", "welcome_message": "Pharmacie du Centre, bonjour. En quoi puis-je vous aider ?",
+      "personality": "Rassurant, clair et concis.", "languages": ["fr"],
+      "whatsapp_provider": "waha", "voice_ai_provider": "openai", "phone_operator": "orange",
+      "is_active": false, "status": "paused", "created_at": "2026-02-01T10:00:00Z"
     },
     {
-      "id": "b3",
-      "tenant_id": "t3",
-      "chatbot_service_bot_id": "cs3",
-      "name": "Beauty Bot",
-      "welcome_message": "Bienvenue au Salon Élégance !",
-      "personality": "Sympathique et glamour.",
-      "languages": [
-        "fr"
-      ],
-      "whatsapp_provider": "meta_api",
-      "voice_ai_provider": "gemini",
-      "phone_operator": null,
-      "is_active": false,
-      "status": "paused",
-      "created_at": "2026-02-05T10:00:00Z"
+      "id": "b3", "tenant_id": "t1", "chatbot_service_bot_id": "cs3",
+      "name": "Pharma RDV", "welcome_message": "Bonjour ! Je gère vos rendez-vous à la Pharmacie du Centre.",
+      "personality": "Efficace, organisé et ponctuel.", "languages": ["fr", "en"],
+      "whatsapp_provider": "meta_api", "voice_ai_provider": "gemini", "phone_operator": null,
+      "is_active": true, "status": "active", "created_at": "2026-03-10T10:00:00Z"
+    },
+    {
+      "id": "b4", "tenant_id": "t2", "chatbot_service_bot_id": "cs4",
+      "name": "Legal Assistant", "welcome_message": "Bonjour, Cabinet Mvondo. Quelle est votre demande ?",
+      "personality": "Formel et rigoureux.", "languages": ["fr"],
+      "whatsapp_provider": "waha", "voice_ai_provider": "openai", "phone_operator": null,
+      "is_active": true, "status": "active", "created_at": "2026-01-18T10:00:00Z"
+    },
+    {
+      "id": "b5", "tenant_id": "t3", "chatbot_service_bot_id": "cs5",
+      "name": "Beauty Bot", "welcome_message": "Bienvenue au Salon Élégance !",
+      "personality": "Sympathique et glamour.", "languages": ["fr"],
+      "whatsapp_provider": "meta_api", "voice_ai_provider": "gemini", "phone_operator": null,
+      "is_active": false, "status": "paused", "created_at": "2026-02-05T10:00:00Z"
     }
   ],
   "services": [
@@ -148,24 +131,24 @@
     {
       "id": "a1",
       "tenant_id": "t1",
-      "service_id": "s2",
-      "client_name": "Marie Nkodo",
-      "client_phone": "+237690000001",
+      "service_id": "s1",
+      "client_name": "Marie Dupont",
+      "client_phone": "+237691001001",
       "client_email": "marie@example.com",
-      "scheduled_at": "2026-05-20T10:00:00Z",
+      "scheduled_at": "2026-04-18T07:00:00.000Z",
       "status": "confirmed",
       "channel": "whatsapp",
       "reminder_sent": true,
-      "notes": ""
+      "notes": "Apporter ordonnance"
     },
     {
       "id": "a2",
       "tenant_id": "t1",
-      "service_id": "s1",
+      "service_id": "s2",
       "client_name": "Paul Biya Jr",
-      "client_phone": "+237690000002",
+      "client_phone": "+237691001002",
       "client_email": "",
-      "scheduled_at": "2026-05-21T14:30:00Z",
+      "scheduled_at": "2026-04-18T09:30:00.000Z",
       "status": "pending",
       "channel": "whatsapp",
       "reminder_sent": false,
@@ -173,29 +156,328 @@
     },
     {
       "id": "a3",
-      "tenant_id": "t2",
-      "service_id": "s3",
-      "client_name": "Alain Mbarga",
-      "client_phone": "+237690000003",
-      "client_email": "alain@example.com",
-      "scheduled_at": "2026-05-22T09:00:00Z",
+      "tenant_id": "t1",
+      "service_id": "s1",
+      "client_name": "Chantal Mbarga",
+      "client_phone": "+237691001003",
+      "client_email": "",
+      "scheduled_at": "2026-04-18T12:00:00.000Z",
       "status": "confirmed",
       "channel": "voice",
       "reminder_sent": true,
-      "notes": "Premier contact"
+      "notes": "Première visite"
     },
     {
       "id": "a4",
       "tenant_id": "t1",
       "service_id": "s2",
-      "client_name": "Sophie Tchoupo",
-      "client_phone": "+237690000004",
+      "client_name": "Jean-Claude Eto",
+      "client_phone": "+237691001004",
       "client_email": "",
-      "scheduled_at": "2026-05-19T11:00:00Z",
+      "scheduled_at": "2026-04-19T08:00:00.000Z",
+      "status": "pending",
+      "channel": "manual",
+      "reminder_sent": false,
+      "notes": ""
+    },
+    {
+      "id": "a5",
+      "tenant_id": "t1",
+      "service_id": "s1",
+      "client_name": "Brigitte Ngo",
+      "client_phone": "+237691001005",
+      "client_email": "",
+      "scheduled_at": "2026-04-19T10:30:00.000Z",
+      "status": "confirmed",
+      "channel": "whatsapp",
+      "reminder_sent": true,
+      "notes": ""
+    },
+    {
+      "id": "a6",
+      "tenant_id": "t1",
+      "service_id": "s1",
+      "client_name": "Roger Ateba",
+      "client_phone": "+237691001006",
+      "client_email": "",
+      "scheduled_at": "2026-04-19T14:00:00.000Z",
+      "status": "cancelled",
+      "channel": "whatsapp",
+      "reminder_sent": false,
+      "notes": "Annulé par le client"
+    },
+    {
+      "id": "a7",
+      "tenant_id": "t1",
+      "service_id": "s2",
+      "client_name": "Sylvie Kamga",
+      "client_phone": "+237691001007",
+      "client_email": "",
+      "scheduled_at": "2026-04-20T07:30:00.000Z",
+      "status": "confirmed",
+      "channel": "whatsapp",
+      "reminder_sent": true,
+      "notes": ""
+    },
+    {
+      "id": "a8",
+      "tenant_id": "t1",
+      "service_id": "s1",
+      "client_name": "Patrick Essomba",
+      "client_phone": "+237691001008",
+      "client_email": "",
+      "scheduled_at": "2026-04-20T11:00:00.000Z",
+      "status": "pending",
+      "channel": "voice",
+      "reminder_sent": false,
+      "notes": ""
+    },
+    {
+      "id": "a9",
+      "tenant_id": "t1",
+      "service_id": "s1",
+      "client_name": "Nadège Fopa",
+      "client_phone": "+237691001009",
+      "client_email": "",
+      "scheduled_at": "2026-04-20T15:00:00.000Z",
+      "status": "confirmed",
+      "channel": "whatsapp",
+      "reminder_sent": true,
+      "notes": "Rappel envoyé"
+    },
+    {
+      "id": "a10",
+      "tenant_id": "t1",
+      "service_id": "s2",
+      "client_name": "Hervé Tsanga",
+      "client_phone": "+237691001010",
+      "client_email": "",
+      "scheduled_at": "2026-04-21T08:30:00.000Z",
+      "status": "confirmed",
+      "channel": "whatsapp",
+      "reminder_sent": true,
+      "notes": ""
+    },
+    {
+      "id": "a11",
+      "tenant_id": "t1",
+      "service_id": "s1",
+      "client_name": "Estelle Manga",
+      "client_phone": "+237691001011",
+      "client_email": "",
+      "scheduled_at": "2026-04-21T10:00:00.000Z",
+      "status": "pending",
+      "channel": "manual",
+      "reminder_sent": false,
+      "notes": ""
+    },
+    {
+      "id": "a12",
+      "tenant_id": "t1",
+      "service_id": "s1",
+      "client_name": "Alain Mbono",
+      "client_phone": "+237691001012",
+      "client_email": "",
+      "scheduled_at": "2026-04-21T13:30:00.000Z",
+      "status": "done",
+      "channel": "whatsapp",
+      "reminder_sent": true,
+      "notes": "Terminé sans problème"
+    },
+    {
+      "id": "a13",
+      "tenant_id": "t1",
+      "service_id": "s2",
+      "client_name": "Cécile Nkoulou",
+      "client_phone": "+237691001013",
+      "client_email": "",
+      "scheduled_at": "2026-04-22T09:00:00.000Z",
+      "status": "confirmed",
+      "channel": "whatsapp",
+      "reminder_sent": true,
+      "notes": ""
+    },
+    {
+      "id": "a14",
+      "tenant_id": "t1",
+      "service_id": "s1",
+      "client_name": "Bruno Fouda",
+      "client_phone": "+237691001014",
+      "client_email": "",
+      "scheduled_at": "2026-04-22T11:30:00.000Z",
+      "status": "pending",
+      "channel": "voice",
+      "reminder_sent": false,
+      "notes": ""
+    },
+    {
+      "id": "a15",
+      "tenant_id": "t1",
+      "service_id": "s1",
+      "client_name": "Isabelle Talla",
+      "client_phone": "+237691001015",
+      "client_email": "",
+      "scheduled_at": "2026-04-22T14:30:00.000Z",
+      "status": "confirmed",
+      "channel": "whatsapp",
+      "reminder_sent": true,
+      "notes": ""
+    },
+    {
+      "id": "a16",
+      "tenant_id": "t1",
+      "service_id": "s2",
+      "client_name": "Maurice Owona",
+      "client_phone": "+237691001016",
+      "client_email": "",
+      "scheduled_at": "2026-04-23T07:30:00.000Z",
+      "status": "pending",
+      "channel": "whatsapp",
+      "reminder_sent": false,
+      "notes": ""
+    },
+    {
+      "id": "a17",
+      "tenant_id": "t1",
+      "service_id": "s1",
+      "client_name": "Solange Bello",
+      "client_phone": "+237691001017",
+      "client_email": "",
+      "scheduled_at": "2026-04-23T10:00:00.000Z",
+      "status": "confirmed",
+      "channel": "manual",
+      "reminder_sent": true,
+      "notes": ""
+    },
+    {
+      "id": "a18",
+      "tenant_id": "t1",
+      "service_id": "s1",
+      "client_name": "Thierry Abomo",
+      "client_phone": "+237691001018",
+      "client_email": "",
+      "scheduled_at": "2026-04-23T13:00:00.000Z",
+      "status": "cancelled",
+      "channel": "whatsapp",
+      "reminder_sent": false,
+      "notes": "Report demandé"
+    },
+    {
+      "id": "a19",
+      "tenant_id": "t1",
+      "service_id": "s2",
+      "client_name": "Florence Nsom",
+      "client_phone": "+237691001019",
+      "client_email": "",
+      "scheduled_at": "2026-04-24T08:00:00.000Z",
+      "status": "confirmed",
+      "channel": "whatsapp",
+      "reminder_sent": true,
+      "notes": ""
+    },
+    {
+      "id": "a20",
+      "tenant_id": "t1",
+      "service_id": "s1",
+      "client_name": "Didier Beyala",
+      "client_phone": "+237691001020",
+      "client_email": "",
+      "scheduled_at": "2026-04-24T11:00:00.000Z",
+      "status": "pending",
+      "channel": "voice",
+      "reminder_sent": false,
+      "notes": ""
+    },
+    {
+      "id": "a21",
+      "tenant_id": "t1",
+      "service_id": "s1",
+      "client_name": "Armelle Tchamba",
+      "client_phone": "+237691001021",
+      "client_email": "",
+      "scheduled_at": "2026-04-24T15:00:00.000Z",
       "status": "done",
       "channel": "whatsapp",
       "reminder_sent": true,
       "notes": ""
+    },
+    {
+      "id": "a22",
+      "tenant_id": "t1",
+      "service_id": "s2",
+      "client_name": "Serge Ndjock",
+      "client_phone": "+237691001022",
+      "client_email": "",
+      "scheduled_at": "2026-04-25T09:00:00.000Z",
+      "status": "confirmed",
+      "channel": "whatsapp",
+      "reminder_sent": true,
+      "notes": ""
+    },
+    {
+      "id": "a23",
+      "tenant_id": "t1",
+      "service_id": "s1",
+      "client_name": "Vanessa Ekoto",
+      "client_phone": "+237691001023",
+      "client_email": "",
+      "scheduled_at": "2026-04-25T11:30:00.000Z",
+      "status": "pending",
+      "channel": "manual",
+      "reminder_sent": false,
+      "notes": ""
+    },
+    {
+      "id": "a24",
+      "tenant_id": "t1",
+      "service_id": "s1",
+      "client_name": "Lionel Mbida",
+      "client_phone": "+237691001024",
+      "client_email": "",
+      "scheduled_at": "2026-04-25T14:00:00.000Z",
+      "status": "confirmed",
+      "channel": "whatsapp",
+      "reminder_sent": true,
+      "notes": ""
+    },
+    {
+      "id": "a25",
+      "tenant_id": "t1",
+      "service_id": "s2",
+      "client_name": "Pascaline Abena",
+      "client_phone": "+237691001025",
+      "client_email": "",
+      "scheduled_at": "2026-04-26T08:30:00.000Z",
+      "status": "pending",
+      "channel": "whatsapp",
+      "reminder_sent": false,
+      "notes": ""
+    },
+    {
+      "id": "a26",
+      "tenant_id": "t1",
+      "service_id": "s1",
+      "client_name": "Franck Owona",
+      "client_phone": "+237691001026",
+      "client_email": "",
+      "scheduled_at": "2026-04-26T10:30:00.000Z",
+      "status": "confirmed",
+      "channel": "voice",
+      "reminder_sent": true,
+      "notes": ""
+    },
+    {
+      "id": "a27",
+      "tenant_id": "t1",
+      "service_id": "s1",
+      "client_name": "Sandrine Ntolo",
+      "client_phone": "+237691001027",
+      "client_email": "",
+      "scheduled_at": "2026-04-26T13:30:00.000Z",
+      "status": "done",
+      "channel": "whatsapp",
+      "reminder_sent": true,
+      "notes": "RDV de suivi"
     }
   ],
   "subscriptions": [
@@ -206,14 +488,14 @@
       "plan_slug": "pro",
       "status": "active",
       "billing_cycle": "monthly",
-      "price": 75000,
+      "price": 25000,
       "currency": "XAF",
       "current_period_start": "2026-05-01T00:00:00Z",
       "current_period_end": "2026-06-01T00:00:00Z",
       "messages_used": 1240,
       "messages_limit": 5000,
       "calls_used": 48,
-      "calls_limit": 200
+      "calls_limit": 100
     },
     {
       "id": "sub2",
@@ -274,17 +556,18 @@
   "plans": [
     {
       "id": "plan1",
-      "name": "Basic",
-      "slug": "basic",
-      "price": 25000,
+      "name": "Starter",
+      "slug": "starter",
+      "price": 10000,
       "currency": "XAF",
       "billing_cycle": "monthly",
-      "messages_limit": 1000,
-      "calls_limit": 50,
+      "messages_limit": 2000,
+      "calls_limit": 0,
       "features": [
-        "WhatsApp",
-        "Email",
-        "1 Bot",
+        "Bot WhatsApp",
+        "2 Bots",
+        "10 RDV / mois",
+        "50 emails rappel",
         "Dashboard PME"
       ]
     },
@@ -292,16 +575,17 @@
       "id": "plan2",
       "name": "Pro",
       "slug": "pro",
-      "price": 75000,
+      "price": 25000,
       "currency": "XAF",
       "billing_cycle": "monthly",
       "messages_limit": 5000,
-      "calls_limit": 200,
+      "calls_limit": 100,
       "features": [
-        "WhatsApp",
-        "Agent Vocal",
-        "Email",
+        "Bot WhatsApp",
+        "Agent Vocal IA",
         "3 Bots",
+        "100 RDV / mois",
+        "500 emails rappel",
         "Dashboard PME",
         "Statistiques avancées"
       ]
@@ -310,19 +594,39 @@
       "id": "plan3",
       "name": "Premium",
       "slug": "premium",
-      "price": 150000,
+      "price": 75000,
       "currency": "XAF",
       "billing_cycle": "monthly",
       "messages_limit": 20000,
-      "calls_limit": 1000,
+      "calls_limit": 500,
       "features": [
-        "WhatsApp",
-        "Agent Vocal",
-        "Email",
-        "Bots illimités",
+        "Bot WhatsApp",
+        "Agent Vocal IA",
+        "10 Bots",
+        "500 RDV / mois",
+        "2 000 emails rappel",
         "Dashboard PME",
         "Statistiques avancées",
         "Support prioritaire"
+      ]
+    },
+    {
+      "id": "plan4",
+      "name": "Gold",
+      "slug": "gold",
+      "price": 150000,
+      "currency": "XAF",
+      "billing_cycle": "monthly",
+      "messages_limit": -1,
+      "calls_limit": -1,
+      "features": [
+        "Tout illimité",
+        "Bot WhatsApp",
+        "Agent Vocal IA",
+        "Dashboard PME",
+        "Statistiques avancées",
+        "Support prioritaire",
+        "Account manager dédié"
       ]
     }
   ],
@@ -418,35 +722,396 @@
       "tenant_id": "t1",
       "bot_id": "b1",
       "client_identifier": "+237690000010",
-      "client_name": "Client WhatsApp",
+      "client_name": "Adjoua Konan",
+      "client_phone": "+237690000010",
+      "client_email": "adjoua.konan@gmail.com",
       "channel": "whatsapp",
-      "last_message": "Avez-vous du paracétamol ?",
-      "last_message_at": "2026-05-16T09:30:00Z",
-      "messages_count": 8
+      "last_message": "Merci beaucoup, à bientôt !",
+      "last_message_at": "2026-04-18T09:45:00Z",
+      "messages_count": 12,
+      "appointment_id": "a1",
+      "report": {
+        "summary": "Le client a demandé des informations sur les ordonnances électroniques, puis a pris un rendez-vous pour récupérer ses médicaments. Ses coordonnées ont été collectées.",
+        "key_takeaways": [
+          "Client fidèle, déjà venu 2 fois ce mois",
+          "Intéressé par le service de livraison à domicile",
+          "Préfère être contacté le matin"
+        ],
+        "actions": [
+          {
+            "type": "appointment",
+            "label": "RDV planifié",
+            "detail": "Lundi 18 avril à 08:00 — Ordonnances"
+          },
+          {
+            "type": "faq",
+            "label": "FAQ répondue",
+            "detail": "Acceptez-vous les ordonnances électroniques ?"
+          },
+          {
+            "type": "contact_collected",
+            "label": "Contact collecté",
+            "detail": "Email : adjoua.konan@gmail.com"
+          }
+        ],
+        "appointment_scheduled": true,
+        "appointment_id": "a1",
+        "human_handoff": false,
+        "handoff_reason": null,
+        "services_discussed": [
+          "Ordonnances",
+          "Conseil Pharmaceutique"
+        ]
+      }
     },
     {
       "id": "c2",
       "tenant_id": "t1",
       "bot_id": "b1",
       "client_identifier": "+237690000011",
-      "client_name": "Appelant",
+      "client_name": "Martial Essogo",
+      "client_phone": "+237690000011",
+      "client_email": null,
       "channel": "voice",
-      "last_message": "Appel entrant traité",
-      "last_message_at": "2026-05-16T08:15:00Z",
-      "messages_count": 1
+      "last_message": "Appel transféré à l'équipe",
+      "last_message_at": "2026-04-18T08:20:00Z",
+      "messages_count": 4,
+      "appointment_id": null,
+      "report": {
+        "summary": "Appel vocal entrant. Le client avait une question complexe sur une interaction médicamenteuse. Le bot a transféré vers un pharmacien.",
+        "key_takeaways": [
+          "Question hors périmètre bot — interaction médicaments",
+          "Client pressé, pas de temps pour RDV",
+          "Numéro enregistré pour suivi"
+        ],
+        "actions": [
+          {
+            "type": "handoff",
+            "label": "Transfert humain",
+            "detail": "Transféré au pharmacien de garde — question médicale complexe"
+          },
+          {
+            "type": "contact_collected",
+            "label": "Contact collecté",
+            "detail": "Téléphone : +237690000011"
+          }
+        ],
+        "appointment_scheduled": false,
+        "appointment_id": null,
+        "human_handoff": true,
+        "handoff_reason": "Question médicale complexe hors périmètre",
+        "services_discussed": [
+          "Conseil Pharmaceutique"
+        ]
+      }
     },
     {
       "id": "c3",
+      "tenant_id": "t1",
+      "bot_id": "b1",
+      "client_identifier": "+237690000012",
+      "client_name": "Blandine Nkomo",
+      "client_phone": "+237690000012",
+      "client_email": "blandine@yahoo.fr",
+      "channel": "whatsapp",
+      "last_message": "RDV confirmé pour demain, merci !",
+      "last_message_at": "2026-04-17T16:30:00Z",
+      "messages_count": 9,
+      "appointment_id": "a5",
+      "report": {
+        "summary": "La cliente a demandé les horaires d'ouverture, puis a réservé un conseil pharmaceutique pour le lendemain matin.",
+        "key_takeaways": [
+          "Nouvelle cliente",
+          "Venue recommandée par une amie",
+          "Intéressée par les produits cosmétiques en pharmacie"
+        ],
+        "actions": [
+          {
+            "type": "appointment",
+            "label": "RDV planifié",
+            "detail": "Dimanche 19 avril à 10:30 — Conseil Pharmaceutique"
+          },
+          {
+            "type": "faq",
+            "label": "FAQ répondue",
+            "detail": "Quelles sont vos heures d'ouverture ?"
+          },
+          {
+            "type": "contact_collected",
+            "label": "Contact collecté",
+            "detail": "Email : blandine@yahoo.fr"
+          },
+          {
+            "type": "service_info",
+            "label": "Info service",
+            "detail": "Conseil Pharmaceutique — 2 000 XAF / 20 min"
+          }
+        ],
+        "appointment_scheduled": true,
+        "appointment_id": "a5",
+        "human_handoff": false,
+        "handoff_reason": null,
+        "services_discussed": [
+          "Conseil Pharmaceutique",
+          "Ordonnances"
+        ]
+      }
+    },
+    {
+      "id": "c4",
+      "tenant_id": "t1",
+      "bot_id": "b1",
+      "client_identifier": "+237690000013",
+      "client_name": "Rodrigue Mba",
+      "client_phone": "+237690000013",
+      "client_email": null,
+      "channel": "whatsapp",
+      "last_message": "D'accord, je passerai demain.",
+      "last_message_at": "2026-04-17T14:10:00Z",
+      "messages_count": 6,
+      "appointment_id": null,
+      "report": {
+        "summary": "Le client a posé des questions sur la disponibilité de médicaments spécifiques. Pas de RDV pris, visite libre prévue.",
+        "key_takeaways": [
+          "Cherche médicaments pour tension artérielle",
+          "Veut vérifier stock avant de se déplacer",
+          "Pas de compte client existant"
+        ],
+        "actions": [
+          {
+            "type": "service_info",
+            "label": "Info service",
+            "detail": "Ordonnances — Gratuit"
+          },
+          {
+            "type": "faq",
+            "label": "FAQ répondue",
+            "detail": "Acceptez-vous les ordonnances électroniques ?"
+          }
+        ],
+        "appointment_scheduled": false,
+        "appointment_id": null,
+        "human_handoff": false,
+        "handoff_reason": null,
+        "services_discussed": [
+          "Ordonnances"
+        ]
+      }
+    },
+    {
+      "id": "c5",
+      "tenant_id": "t1",
+      "bot_id": "b1",
+      "client_identifier": "+237690000014",
+      "client_name": "Solange Eba",
+      "client_phone": "+237690000014",
+      "client_email": "solange.eba@outlook.com",
+      "channel": "whatsapp",
+      "last_message": "Parfait, merci pour l'info.",
+      "last_message_at": "2026-04-16T11:00:00Z",
+      "messages_count": 7,
+      "appointment_id": "a10",
+      "report": {
+        "summary": "Cliente ayant demandé un conseil pharmaceutique urgent. RDV planifié pour lundi matin. Email collecté pour rappel automatique.",
+        "key_takeaways": [
+          "Cliente régulière",
+          "Souhaite rappels par email",
+          "Intéressée par abonnement fidélité"
+        ],
+        "actions": [
+          {
+            "type": "appointment",
+            "label": "RDV planifié",
+            "detail": "Lundi 21 avril à 08:30 — Conseil Pharmaceutique"
+          },
+          {
+            "type": "contact_collected",
+            "label": "Contact collecté",
+            "detail": "Email : solange.eba@outlook.com"
+          },
+          {
+            "type": "service_info",
+            "label": "Info service",
+            "detail": "Conseil Pharmaceutique — 2 000 XAF / 20 min"
+          }
+        ],
+        "appointment_scheduled": true,
+        "appointment_id": "a10",
+        "human_handoff": false,
+        "handoff_reason": null,
+        "services_discussed": [
+          "Conseil Pharmaceutique"
+        ]
+      }
+    },
+    {
+      "id": "c6",
       "tenant_id": "t2",
       "bot_id": "b2",
-      "client_identifier": "+237690000012",
-      "client_name": "Client Juridique",
+      "client_identifier": "+237690000015",
+      "client_name": "Henri Foé",
+      "client_phone": "+237690000015",
+      "client_email": "h.foe@entreprise.cm",
       "channel": "whatsapp",
-      "last_message": "Je cherche un avocat pour un contrat.",
-      "last_message_at": "2026-05-15T14:00:00Z",
-      "messages_count": 5
+      "last_message": "Je vous enverrai les documents ce soir.",
+      "last_message_at": "2026-04-18T10:00:00Z",
+      "messages_count": 14,
+      "appointment_id": null,
+      "report": {
+        "summary": "Client entreprise souhaitant une consultation juridique pour rédaction de contrat commercial. RDV pris avec Maître Mvondo.",
+        "key_takeaways": [
+          "PME de 15 employés",
+          "Besoin urgent contrat fournisseur",
+          "Budget disponible pour mission complète"
+        ],
+        "actions": [
+          {
+            "type": "service_info",
+            "label": "Info service",
+            "detail": "Rédaction de Contrats — 50 000 XAF"
+          },
+          {
+            "type": "contact_collected",
+            "label": "Contact collecté",
+            "detail": "Email pro : h.foe@entreprise.cm"
+          }
+        ],
+        "appointment_scheduled": false,
+        "appointment_id": null,
+        "human_handoff": false,
+        "handoff_reason": null,
+        "services_discussed": [
+          "Rédaction de Contrats",
+          "Consultation Juridique"
+        ]
+      }
     }
   ],
+  "conversation_messages": [
+    {
+      "id": "msg1",
+      "conversation_id": "c1",
+      "role": "client",
+      "content": "Bonjour, acceptez-vous les ordonnances électroniques ?",
+      "created_at": "2026-04-18T09:30:00Z"
+    },
+    {
+      "id": "msg2",
+      "conversation_id": "c1",
+      "role": "bot",
+      "content": "Bonjour Adjoua ! Oui, nous acceptons les ordonnances électroniques signées par un médecin agréé. Puis-je vous aider avec autre chose ?",
+      "created_at": "2026-04-18T09:30:15Z"
+    },
+    {
+      "id": "msg3",
+      "conversation_id": "c1",
+      "role": "client",
+      "content": "Je voudrais prendre un rendez-vous pour récupérer mes médicaments.",
+      "created_at": "2026-04-18T09:31:00Z"
+    },
+    {
+      "id": "msg4",
+      "conversation_id": "c1",
+      "role": "bot",
+      "content": "Bien sûr ! Quel jour vous convient le mieux ? Nous sommes disponibles du lundi au samedi.",
+      "created_at": "2026-04-18T09:31:10Z"
+    },
+    {
+      "id": "msg5",
+      "conversation_id": "c1",
+      "role": "client",
+      "content": "Lundi matin si possible.",
+      "created_at": "2026-04-18T09:32:00Z"
+    },
+    {
+      "id": "msg6",
+      "conversation_id": "c1",
+      "role": "bot",
+      "content": "Parfait ! J'ai un créneau disponible lundi 18 avril à 08h00. Je confirme votre RDV ?",
+      "created_at": "2026-04-18T09:32:10Z"
+    },
+    {
+      "id": "msg7",
+      "conversation_id": "c1",
+      "role": "client",
+      "content": "Oui, c'est parfait.",
+      "created_at": "2026-04-18T09:33:00Z"
+    },
+    {
+      "id": "msg8",
+      "conversation_id": "c1",
+      "role": "bot",
+      "content": "RDV confirmé pour lundi 18 avril à 08h00 — Service Ordonnances. Vous recevrez un rappel la veille. Puis-je noter votre email pour les rappels ?",
+      "created_at": "2026-04-18T09:33:10Z"
+    },
+    {
+      "id": "msg9",
+      "conversation_id": "c1",
+      "role": "client",
+      "content": "adjoua.konan@gmail.com",
+      "created_at": "2026-04-18T09:34:00Z"
+    },
+    {
+      "id": "msg10",
+      "conversation_id": "c1",
+      "role": "bot",
+      "content": "Noté ! Email enregistré pour vos rappels. Y a-t-il autre chose que je puisse faire pour vous ?",
+      "created_at": "2026-04-18T09:34:10Z"
+    },
+    {
+      "id": "msg11",
+      "conversation_id": "c1",
+      "role": "client",
+      "content": "Non c'est tout.",
+      "created_at": "2026-04-18T09:45:00Z"
+    },
+    {
+      "id": "msg12",
+      "conversation_id": "c1",
+      "role": "bot",
+      "content": "Merci Adjoua ! À lundi. — L'équipe Pharmacie du Centre",
+      "created_at": "2026-04-18T09:45:05Z"
+    },
+    {
+      "id": "msg13",
+      "conversation_id": "c2",
+      "role": "bot",
+      "content": "Bonjour, Pharmacie du Centre. Comment puis-je vous aider ?",
+      "created_at": "2026-04-18T08:18:00Z"
+    },
+    {
+      "id": "msg14",
+      "conversation_id": "c2",
+      "role": "client",
+      "content": "J'ai une question sur une interaction entre deux médicaments.",
+      "created_at": "2026-04-18T08:19:00Z"
+    },
+    {
+      "id": "msg15",
+      "conversation_id": "c2",
+      "role": "bot",
+      "content": "Cette question nécessite l'expertise d'un pharmacien. Je vous transfère immédiatement.",
+      "created_at": "2026-04-18T08:19:30Z"
+    },
+    {
+      "id": "msg16",
+      "conversation_id": "c2",
+      "role": "bot",
+      "content": "Transfert en cours vers notre pharmacien de garde. — L'équipe Pharmacie du Centre",
+      "created_at": "2026-04-18T08:20:00Z"
+    },
+    { "id": "msg17", "conversation_id": "c3", "role": "bot", "content": "Bonjour ! Bienvenue à la Pharmacie du Centre. Comment puis-je vous aider ?", "created_at": "2026-04-17T16:20:00Z" },
+    { "id": "msg18", "conversation_id": "c3", "role": "client", "content": "Bonjour, quels sont vos horaires d'ouverture ?", "created_at": "2026-04-17T16:21:00Z" },
+    { "id": "msg19", "conversation_id": "c3", "role": "bot", "content": "Nous sommes ouverts du lundi au samedi de 7h30 à 20h. Le dimanche nous sommes fermés.", "created_at": "2026-04-17T16:21:10Z" },
+    { "id": "msg20", "conversation_id": "c3", "role": "client", "content": "Je voudrais prendre un rendez-vous pour un conseil pharmaceutique.", "created_at": "2026-04-17T16:22:00Z" },
+    { "id": "msg21", "conversation_id": "c3", "role": "bot", "content": "Bien sûr ! Le conseil pharmaceutique est à 2 000 XAF pour 20 minutes. Quelle date vous convient ?", "created_at": "2026-04-17T16:22:15Z" },
+    { "id": "msg22", "conversation_id": "c3", "role": "client", "content": "Demain matin si possible.", "created_at": "2026-04-17T16:23:00Z" },
+    { "id": "msg23", "conversation_id": "c3", "role": "bot", "content": "J'ai un créneau disponible dimanche 19 avril à 10h30. Je confirme votre RDV ?", "created_at": "2026-04-17T16:23:10Z" },
+    { "id": "msg24", "conversation_id": "c3", "role": "client", "content": "Oui parfait !", "created_at": "2026-04-17T16:24:00Z" },
+    { "id": "msg25", "conversation_id": "c3", "role": "bot", "content": "RDV confirmé ! Puis-je noter votre email pour le rappel ?", "created_at": "2026-04-17T16:24:10Z" },
+    { "id": "msg26", "conversation_id": "c3", "role": "client", "content": "blandine@yahoo.fr", "created_at": "2026-04-17T16:25:00Z" },
+    { "id": "msg27", "conversation_id": "c3", "role": "bot", "content": "Parfait Blandine ! RDV de suivi confirmé pour demain à 10h30. — L'équipe Pharmacie du Centre", "created_at": "2026-04-17T16:30:00Z" }
+      ],
   "stats": [
     {
       "id": "st1",
@@ -505,63 +1170,236 @@
     }
   ],
   "business_hours": [
-  {
-    "id": "bh1", "tenant_id": "t1", "type": "opening",
-    "monday":    { "open": true,  "start": "08:00", "end": "18:00" },
-    "tuesday":   { "open": true,  "start": "08:00", "end": "18:00" },
-    "wednesday": { "open": true,  "start": "08:00", "end": "18:00" },
-    "thursday":  { "open": true,  "start": "08:00", "end": "18:00" },
-    "friday":    { "open": true,  "start": "08:00", "end": "17:00" },
-    "saturday":  { "open": true,  "start": "09:00", "end": "13:00" },
-    "sunday":    { "open": false, "start": "09:00", "end": "13:00" }
-  },
-  {
-    "id": "bh2", "tenant_id": "t1", "type": "appointments",
-    "monday":    { "open": true,  "start": "09:00", "end": "17:00" },
-    "tuesday":   { "open": true,  "start": "09:00", "end": "17:00" },
-    "wednesday": { "open": true,  "start": "09:00", "end": "17:00" },
-    "thursday":  { "open": true,  "start": "09:00", "end": "17:00" },
-    "friday":    { "open": true,  "start": "09:00", "end": "16:00" },
-    "saturday":  { "open": false, "start": "09:00", "end": "12:00" },
-    "sunday":    { "open": false, "start": "09:00", "end": "12:00" }
-  }
-],
-"locations": [
-  {
-    "id": "loc1", "tenant_id": "t1",
-    "name": "Agence Centre-ville", "address": "Avenue Kennedy, Yaoundé",
-    "whatsapp": "+237699000001", "phone": "+237699000001", "email": "centre@pharmacie.cm",
-    "transfer_whatsapp": "+237699000099", "transfer_phone": "+237699000099",
-    "hours": null, "extra_info": "Parking disponible. Accès PMR.", "is_active": true
-  }
-],
-"tenant_knowledge": [
-  {
-    "id": "tk1", "tenant_id": "t1",
-    "slogan": "Votre santé, notre priorité.",
-    "website": "https://pharmacie-centre.cm",
-    "email": "contact@pharmacie-centre.cm",
-    "transfer_whatsapp": "+237699000099",
-    "transfer_phone": "+237699000099",
-    "transfer_email": "support@pharmacie-centre.cm",
-    "transfer_message": "Je vous transfère à notre équipe. Un agent vous répondra dans les plus brefs délais.",
-    "welcome_message": "Bonjour ! Bienvenue à la Pharmacie du Centre. Comment puis-je vous aider aujourd'hui ?",
-    "bot_tone": "semi_formal",
-    "bot_personality": "Professionnel, rassurant et à l'écoute",
-    "bot_languages": ["fr", "en"],
-    "bot_signature": "— L'équipe Pharmacie du Centre",
-    "extra_info": "Langues parlées : Français, Anglais. Parking gratuit disponible."
-  }
-],
-"service_knowledge": [
-  {
-    "id": "sk1", "service_id": "s1", "tenant_id": "t1",
-    "welcome_message": "Pour une consultation médicale, voici ce dont vous avez besoin.",
-    "bot_description": "Consultation médicale générale disponible sur rendez-vous.",
-    "bot_tone": "inherit",
-    "conditions": "Apportez votre carnet de santé. Réservation obligatoire.",
-    "confirmation_message": "Votre RDV est confirmé. Pensez à apporter votre carnet de santé.",
-    "extra_info": "Durée moyenne : 30 minutes."
-  }
-]
+    {
+      "id": "bh1",
+      "tenant_id": "t1",
+      "type": "opening",
+      "monday": {
+        "open": true,
+        "start": "08:00",
+        "end": "18:00"
+      },
+      "tuesday": {
+        "open": true,
+        "start": "08:00",
+        "end": "18:00"
+      },
+      "wednesday": {
+        "open": true,
+        "start": "08:00",
+        "end": "18:00"
+      },
+      "thursday": {
+        "open": true,
+        "start": "08:00",
+        "end": "18:00"
+      },
+      "friday": {
+        "open": true,
+        "start": "08:00",
+        "end": "17:00"
+      },
+      "saturday": {
+        "open": true,
+        "start": "09:00",
+        "end": "13:00"
+      },
+      "sunday": {
+        "open": false,
+        "start": "09:00",
+        "end": "13:00"
+      }
+    },
+    {
+      "id": "bh2",
+      "tenant_id": "t1",
+      "type": "appointments",
+      "monday": {
+        "open": true,
+        "start": "09:00",
+        "end": "17:00"
+      },
+      "tuesday": {
+        "open": true,
+        "start": "09:00",
+        "end": "17:00"
+      },
+      "wednesday": {
+        "open": true,
+        "start": "09:00",
+        "end": "17:00"
+      },
+      "thursday": {
+        "open": true,
+        "start": "09:00",
+        "end": "17:00"
+      },
+      "friday": {
+        "open": true,
+        "start": "09:00",
+        "end": "16:00"
+      },
+      "saturday": {
+        "open": false,
+        "start": "09:00",
+        "end": "12:00"
+      },
+      "sunday": {
+        "open": false,
+        "start": "09:00",
+        "end": "12:00"
+      }
+    }
+  ],
+  "locations": [
+    {
+      "id": "loc1",
+      "tenant_id": "t1",
+      "name": "Agence Centre-ville",
+      "address": "Avenue Kennedy, Yaoundé",
+      "whatsapp": "+237699000001",
+      "phone": "+237699000001",
+      "email": "centre@pharmacie.cm",
+      "transfer_whatsapp": "+237699000099",
+      "transfer_phone": "+237699000099",
+      "hours": null,
+      "extra_info": "Parking disponible. Accès PMR.",
+      "is_active": true
+    }
+  ],
+  "tenant_knowledge": [
+    {
+      "id": "tk1",
+      "tenant_id": "t1",
+      "slogan": "Votre santé, notre priorité.",
+      "website": "https://pharmacie-centre.cm",
+      "email": "contact@pharmacie-centre.cm",
+      "transfer_whatsapp": "+237699000099",
+      "transfer_phone": "+237699000099",
+      "transfer_email": "support@pharmacie-centre.cm",
+      "transfer_message": "Je vous transfère à notre équipe. Un agent vous répondra dans les plus brefs délais.",
+      "welcome_message": "Bonjour ! Bienvenue à la Pharmacie du Centre. Comment puis-je vous aider aujourd'hui ?",
+      "bot_tone": "semi_formal",
+      "bot_personality": "Professionnel, rassurant et à l'écoute",
+      "bot_languages": [
+        "fr",
+        "en"
+      ],
+      "bot_signature": "— L'équipe Pharmacie du Centre",
+      "extra_info": "Langues parlées : Français, Anglais. Parking gratuit disponible.",
+      "appointment_duration_min": 45,
+      "slot_buffer_min": 15
+    }
+  ],
+  "service_knowledge": [
+    {
+      "id": "sk1",
+      "service_id": "s1",
+      "tenant_id": "t1",
+      "welcome_message": "Pour une consultation médicale, voici ce dont vous avez besoin.",
+      "bot_description": "Consultation médicale générale disponible sur rendez-vous.",
+      "bot_tone": "inherit",
+      "conditions": "Apportez votre carnet de santé. Réservation obligatoire.",
+      "confirmation_message": "Votre RDV est confirmé. Pensez à apporter votre carnet de santé.",
+      "extra_info": "Durée moyenne : 30 minutes."
+    }
+  ],
+  "transactions": [
+    {
+      "id": "tr1",
+      "tenant_id": "t1",
+      "wallet_id": "w1",
+      "type": "credit",
+      "amount": 10000,
+      "balance_after": 10000,
+      "label": "Bonus de bienvenue",
+      "operator": null,
+      "reference": "WELCOME-001",
+      "created_at": "2026-01-10T10:00:00Z"
+    },
+    {
+      "id": "tr2",
+      "tenant_id": "t1",
+      "wallet_id": "w1",
+      "type": "debit",
+      "amount": 25000,
+      "balance_after": -15000,
+      "label": "Abonnement Basic — Février 2026",
+      "operator": null,
+      "reference": "SUB-FEB-001",
+      "created_at": "2026-02-01T00:00:00Z"
+    },
+    {
+      "id": "tr3",
+      "tenant_id": "t1",
+      "wallet_id": "w1",
+      "type": "credit",
+      "amount": 75000,
+      "balance_after": 60000,
+      "label": "Recharge Orange Money",
+      "operator": "orange",
+      "reference": "OM-237691001001-20260210",
+      "created_at": "2026-02-10T14:32:00Z"
+    },
+    {
+      "id": "tr4",
+      "tenant_id": "t1",
+      "wallet_id": "w1",
+      "type": "debit",
+      "amount": 75000,
+      "balance_after": -15000,
+      "label": "Abonnement Pro — Mars 2026",
+      "operator": null,
+      "reference": "SUB-MAR-001",
+      "created_at": "2026-03-01T00:00:00Z"
+    },
+    {
+      "id": "tr5",
+      "tenant_id": "t1",
+      "wallet_id": "w1",
+      "type": "credit",
+      "amount": 100000,
+      "balance_after": 85000,
+      "label": "Recharge MTN MoMo",
+      "operator": "mtn",
+      "reference": "MTN-237691001001-20260305",
+      "created_at": "2026-03-05T09:15:00Z"
+    },
+    {
+      "id": "tr6",
+      "tenant_id": "t1",
+      "wallet_id": "w1",
+      "type": "debit",
+      "amount": 75000,
+      "balance_after": 10000,
+      "label": "Abonnement Pro — Avril 2026",
+      "operator": null,
+      "reference": "SUB-APR-001",
+      "created_at": "2026-04-01T00:00:00Z"
+    },
+    {
+      "id": "tr7",
+      "tenant_id": "t1",
+      "wallet_id": "w1",
+      "type": "credit",
+      "amount": 190000,
+      "balance_after": 200000,
+      "label": "Recharge Orange Money",
+      "operator": "orange",
+      "reference": "OM-237691001001-20260410",
+      "created_at": "2026-04-10T11:45:00Z"
+    },
+    {
+      "id": "tr8",
+      "tenant_id": "t1",
+      "wallet_id": "w1",
+      "type": "debit",
+      "amount": 75000,
+      "balance_after": 125000,
+      "label": "Abonnement Pro — Mai 2026",
+      "operator": null,
+      "reference": "SUB-MAY-001",
+      "created_at": "2026-05-01T00:00:00Z"
+    }
+  ]
 }

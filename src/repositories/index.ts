@@ -12,7 +12,7 @@ import type {
   Conversation, FAQ, CreateFAQPayload,
   ProviderConfig,
   User, AuthResponse, LoginPayload,
-  PaginatedResponse,BusinessHours, AgencyLocation, TenantKnowledge, ServiceKnowledge,
+  PaginatedResponse,BusinessHours, AgencyLocation, TenantKnowledge, ServiceKnowledge, Transaction, CreateTransactionPayload,ConversationMessage,
 } from "@/types/api";
 
 // Helper : convertit un objet filtre en Record<string, string>
@@ -132,14 +132,6 @@ export const subscriptionsRepository = {
   patch: (id: string, payload: Partial<Subscription>): Promise<Subscription> => api.patch(`/api/v1/subscriptions/${id}`, payload),
 };
 
-// ── Wallets ───────────────────────────────────────────────────────────────────
-export const walletsRepository = {
-  getByTenant: (tenantId: string): Promise<Wallet | null> =>
-    api.get("/api/v1/wallets", { params: { tenant_id: tenantId } })
-      .then((data: unknown) => (Array.isArray(data) && data.length > 0 ? data[0] as Wallet : null)),
-  getById: (id: string): Promise<Wallet> => api.get(`/api/v1/wallets/${id}`),
-};
-
 // ── Plans ─────────────────────────────────────────────────────────────────────
 export const plansRepository = {
   getList: (): Promise<Plan[]> => api.get<Plan[]>("/api/v1/plans"),
@@ -154,11 +146,24 @@ export const statsRepository = {
 };
 
 // ── Conversations ─────────────────────────────────────────────────────────────
+// ── Conversations ─────────────────────────────────────────────────────────────
 export const conversationsRepository = {
-  getList: (tenantId?: string): Promise<PaginatedResponse<Conversation>> =>
-    api.get("/api/v1/conversations", { params: tenantId ? { tenant_id: tenantId } : {} }).then((data: unknown) =>
-      Array.isArray(data) ? { results: data as Conversation[], count: (data as Conversation[]).length, next: null, previous: null } : data as PaginatedResponse<Conversation>
+  getList: (filters?: { tenant_id?: string; bot_id?: string }): Promise<PaginatedResponse<Conversation>> =>
+    api.get("/api/v1/conversations", { params: filters ? Object.fromEntries(
+      Object.entries(filters).filter(([, v]) => v !== undefined)
+    ) as Record<string, string> : {} }).then((data: unknown) =>
+      Array.isArray(data)
+        ? { results: data as Conversation[], count: (data as Conversation[]).length, next: null, previous: null }
+        : data as PaginatedResponse<Conversation>
     ),
+  getById: (id: string): Promise<Conversation> => api.get(`/api/v1/conversations/${id}`),
+};
+
+// ── ConversationMessages ──────────────────────────────────────────────────────
+export const conversationMessagesRepository = {
+  getByConversation: (conversationId: string): Promise<ConversationMessage[]> =>
+    api.get("/api/v1/conversation-messages", { params: { conversation_id: conversationId } })
+      .then((data: unknown) => Array.isArray(data) ? data as ConversationMessage[] : []),
 };
 
 // ── FAQ ───────────────────────────────────────────────────────────────────────
@@ -184,10 +189,10 @@ export const providerConfigsRepository = {
 // ── Business Hours ────────────────────────────────────────────────────────────
 export const businessHoursRepository = {
   getByTenant: (tenantId: string, type: "opening" | "appointments"): Promise<BusinessHours | null> =>
-    api.get("/api/v1/business-hours", { params: { tenant_id: tenantId, type } })
+   api.get("/api/v1/business-hours/", { params: { tenant_id: tenantId, type } })
       .then((data: unknown) => (Array.isArray(data) && data.length > 0 ? data[0] as BusinessHours : null)),
   patch: (id: string, payload: Partial<BusinessHours>): Promise<BusinessHours> =>
-    api.patch(`/api/v1/business-hours/${id}`, payload),
+    api.patch(`/api/v1/business-hours/${id}/`, payload),
 };
 
 // ── Locations ─────────────────────────────────────────────────────────────────
@@ -203,12 +208,12 @@ export const locationsRepository = {
 // ── TenantKnowledge ───────────────────────────────────────────────────────────
 export const tenantKnowledgeRepository = {
   getByTenant: (tenantId: string): Promise<TenantKnowledge | null> =>
-    api.get("/api/v1/tenant-knowledge", { params: { tenant_id: tenantId } })
+    api.get("/api/v1/tenant-knowledge/", { params: { tenant_id: tenantId } })
       .then((data: unknown) => (Array.isArray(data) && data.length > 0 ? data[0] as TenantKnowledge : null)),
   patch: (id: string, payload: Partial<TenantKnowledge>): Promise<TenantKnowledge> =>
-    api.patch(`/api/v1/tenant-knowledge/${id}`, payload),
+    api.patch(`/api/v1/tenant-knowledge/${id}/`, payload),
   create: (payload: Omit<TenantKnowledge, "id">): Promise<TenantKnowledge> =>
-    api.post("/api/v1/tenant-knowledge", payload),
+    api.post("/api/v1/tenant-knowledge/", payload),
 };
 
 // ── ServiceKnowledge ──────────────────────────────────────────────────────────
@@ -220,4 +225,23 @@ export const serviceKnowledgeRepository = {
     api.patch(`/api/v1/service-knowledge/${id}`, payload),
   create: (payload: Omit<ServiceKnowledge, "id">): Promise<ServiceKnowledge> =>
     api.post("/api/v1/service-knowledge", payload),
+};
+
+// ── Wallets (enrichi) ─────────────────────────────────────────────────────────
+export const walletsRepository = {
+  getByTenant: (tenantId: string): Promise<Wallet | null> =>
+    api.get("/api/v1/wallets", { params: { tenant_id: tenantId } })
+      .then((data: unknown) => (Array.isArray(data) && data.length > 0 ? data[0] as Wallet : null)),
+  getById: (id: string): Promise<Wallet> => api.get(`/api/v1/wallets/${id}`),
+  patch: (id: string, payload: Partial<Wallet>): Promise<Wallet> =>
+    api.patch(`/api/v1/wallets/${id}`, payload),
+};
+
+// ── Transactions ──────────────────────────────────────────────────────────────
+export const transactionsRepository = {
+  getByTenant: (tenantId: string): Promise<Transaction[]> =>
+    api.get("/api/v1/transactions", { params: { tenant_id: tenantId } })
+      .then((data: unknown) => Array.isArray(data) ? data as Transaction[] : []),
+  create: (payload: CreateTransactionPayload): Promise<Transaction> =>
+    api.post("/api/v1/transactions", payload),
 };

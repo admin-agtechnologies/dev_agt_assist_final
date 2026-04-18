@@ -72,28 +72,29 @@
   - Changement de mot de passe
   - Section entreprise (données tenant éditables)
 
-- [] **PME-08** — Base de connaissance entreprise (`/pme/knowledge`)
+- [x] **PME-08** — Base de connaissance entreprise (`/pme/knowledge`)
   - Gestion des infos métier transmises au bot
   - FAQ bilingue (fr/en) — CRUD complet
   - Services, horaires, description
 
-- [ ] **PME-09** — Abonnements & Paiements (`/pme/billing`)
-  - Historique des transactions
-  - Téléchargement de factures
-  - Modal changement de plan fonctionnelle
-  - Modal recharge wallet (Mobile Money)
+
 
 ---
 
 ## PHASE 3 — Module Bots (refonte)
 
-- [ ] **PME-10** — Interface bots enrichie (`/pme/bots`)
+- [x] **PME-09** — Interface bots enrichie (`/pme/bots`)
   - Onglet "Tester" : chat simulé avec le bot
   - Stats par bot (messages, appels, RDV)
   - Liste des RDV planifiés par ce bot
   - Liste des emails de rappel envoyés
   - Configuration des politiques de rappel (parmi celles définies par l'admin)
 
+- [x] **PME-10** — Abonnements & Paiements (`/pme/billing`)
+  - Historique des transactions
+  - Téléchargement de factures
+  - Modal changement de plan fonctionnelle
+  - Modal recharge wallet (Mobile Money)
 ---
 
 ## PHASE 4 — Support & UX
@@ -104,11 +105,11 @@
 
 - [ ] **PME-12** — Widget chatbot de support
   - Bouton fixe bas droite (premier widget)
-  - Chatbot interactif pour aide à l'utilisation de la plateforme
+  - Chatbot interactif pour aide à l'utilisation de la plateforme qui proposen de façon intélligente les racourcus au user
 
 - [ ] **PME-13** — Widget AGT-BOT WhatsApp
   - Bouton fixe bas droite (sous le chatbot)
-  - Lien vers le bot WhatsApp AGT Technologies (pub de l'entreprise)
+  - Lien vers le bot WhatsApp AGT Technologies (pub de l'entreprise),numéro configurable depuis le dashboard admin
 
 - [ ] **PME-14** — Icône relance onboarding
   - Accessible en permanence depuis le layout PME

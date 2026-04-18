@@ -32,5 +32,9 @@
   "/api/v1/tenant-knowledge": "/tenant_knowledge",
   "/api/v1/tenant-knowledge/:id": "/tenant_knowledge/:id",
   "/api/v1/service-knowledge": "/service_knowledge",
-  "/api/v1/service-knowledge/:id": "/service_knowledge/:id"
+  "/api/v1/service-knowledge/:id": "/service_knowledge/:id",
+  "/api/v1/transactions": "/transactions",
+  "/api/v1/transactions/:id": "/transactions/:id",
+  "/api/v1/conversation-messages": "/conversation_messages",
+  "/api/v1/conversation-messages/:id": "/conversation_messages/:id"
 }

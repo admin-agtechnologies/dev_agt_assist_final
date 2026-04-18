@@ -67,7 +67,7 @@ export default function PmeDashboardPage() {
     const today = new Date().toISOString().split("T")[0];
     const [s, c, sub, appts] = await Promise.all([
       statsRepository.getByTenant(user.tenant_id).catch(() => null),
-      conversationsRepository.getList(user.tenant_id).catch(() => ({ results: [] })),
+conversationsRepository.getList({ tenant_id: user.tenant_id }).catch(() => ({ results: [] })),
       subscriptionsRepository.getByTenant(user.tenant_id).catch(() => null),
       appointmentsRepository.getList({ tenant_id: user.tenant_id }).catch(() => ({ results: [] })),
     ]);
