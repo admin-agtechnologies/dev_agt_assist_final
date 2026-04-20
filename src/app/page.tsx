@@ -4,14 +4,15 @@ import Link from "next/link";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/components/ui/ThemeProvider";
-import { PLANS_CONFIG, ROUTES, WELCOME_BONUS_XAF } from "@/lib/constants";
+import { PLANS_CONFIG, ROUTES } from "@/lib/constants";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import {
   Check, MessageSquare, Phone, CalendarDays, BarChart3, Smartphone, Globe,
-  Sun, Moon, Zap, Star, Users, TrendingUp, Clock, Award,
+  Sun, Moon, Star, Users, TrendingUp, Clock, Award,
   ChevronLeft, ChevronRight, Play, MapPin, Mail, ArrowRight,
   Bot, BookOpen, HelpCircle,
+  Zap,
 } from "lucide-react";
 
 // ── Constantes ────────────────────────────────────────────────────────────────
@@ -183,6 +184,205 @@ function TestimonialsCarousel({ testimonials, locale }: TestimonialsCarouselProp
   );
 }
 
+// ── Types Hero ───────────────────────────────────────────────────────────────
+interface HeroSlide {
+  image: string;
+  overlayColor: string;
+  badgeFr: string;
+  badgeEn: string;
+  titleFr: string;
+  titleEn: string;
+  subtitleFr: string;
+  subtitleEn: string;
+  accentColor: string;
+}
+
+// Slides — images locales dans public/images/hero/
+// Pour migrer vers le serveur média : remplacer "/images/hero/X.jpg" par ENV.BACKEND_URL + "/media/hero/X.jpg"
+const HERO_SLIDES: HeroSlide[] = [
+  {
+    image: "/images/hero/hero-1.jpg",
+    overlayColor: "from-[#075E54]/80 via-[#075E54]/60 to-[#022c22]/70",
+    badgeFr: " 10 000 FCFA offerts à l'inscription",
+    badgeEn: " 10,000 XAF offered at registration",
+    titleFr: "Votre assistant virtuel,",
+    titleEn: "Your virtual assistant,",
+    subtitleFr: "prêt en 5 minutes.",
+    subtitleEn: "ready in 5 minutes.",
+    accentColor: "#25D366",
+  },
+  {
+    image: "/images/hero/hero-2.png",
+    overlayColor: "from-[#022c22]/85 via-[#075E54]/70 to-[#075E54]/60",
+    badgeFr: " WhatsApp · 24h/24 · 7j/7",
+    badgeEn: " WhatsApp · 24/7",
+    titleFr: "Répondez à vos clients",
+    titleEn: "Answer your customers",
+    subtitleFr: "même quand vous dormez.",
+    subtitleEn: "even while you sleep.",
+    accentColor: "#25D366",
+  },
+  {
+    image: "/images/hero/hero-3.jpg",
+    overlayColor: "from-[#2D1B69]/85 via-[#6C3CE1]/65 to-[#2D1B69]/70",
+    badgeFr: " Agent Vocal IA nouvelle génération",
+    badgeEn: " Next-gen AI Voice Agent",
+    titleFr: "Un agent IA qui décroche",
+    titleEn: "An AI agent that answers",
+    subtitleFr: "à votre place.",
+    subtitleEn: "in your place.",
+    accentColor: "#8B5CF6",
+  },
+];
+
+interface HeroCarouselProps {
+  t: Record<string, string>;
+  locale: string;
+}
+
+function HeroCarousel({ t, locale }: HeroCarouselProps) {
+  const [current, setCurrent] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const total = HERO_SLIDES.length;
+
+  const goTo = useCallback((index: number) => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrent(index);
+    setTimeout(() => setIsTransitioning(false), 600);
+  }, [isTransitioning]);
+
+  const prev = useCallback(() => goTo((current - 1 + total) % total), [current, total, goTo]);
+  const next = useCallback(() => goTo((current + 1) % total), [current, total, goTo]);
+
+  // Auto-play 5s
+  useEffect(() => {
+    const timer = setInterval(next, 5000);
+    return () => clearInterval(timer);
+  }, [next]);
+
+  const slide = HERO_SLIDES[current];
+
+  return (
+    <section className="relative w-full" style={{ height: "calc(100vh - 64px)" }}>
+      {/* Images — toutes préchargées, on change l'opacité */}
+      {HERO_SLIDES.map((s, i) => (
+        <div
+          key={i}
+          className="absolute inset-0 transition-opacity duration-700 ease-in-out"
+          style={{ opacity: i === current ? 1 : 0 }}
+        >
+          {/* Image de fond */}
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${s.image})` }}
+          />
+          {/* Overlay gradient coloré */}
+          <div className={`absolute inset-0 bg-gradient-to-br ${s.overlayColor}`} />
+        </div>
+      ))}
+
+      {/* Contenu centré */}
+      <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4">
+          {/* Badge */}
+    <div
+      key={`badge-${current}`}
+      className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 backdrop-blur-sm border border-white/25 text-white text-sm font-semibold mb-6 animate-fade-in"
+    >
+      {current === 0 && <Zap className="w-4 h-4 text-[#25D366]" />}
+      {current === 1 && <MessageSquare className="w-4 h-4 text-[#25D366]" />}
+      {current === 2 && <Phone className="w-4 h-4 text-[#8B5CF6]" />}
+      {locale === "fr" ? slide.badgeFr : slide.badgeEn}
+    </div>
+
+        {/* Titre */}
+        <h1
+          key={`title-${current}`}
+          className="text-5xl md:text-7xl font-black text-white leading-tight mb-3 animate-slide-up"
+          style={{ textShadow: "0 2px 20px rgba(0,0,0,0.3)" }}
+        >
+          {locale === "fr" ? slide.titleFr : slide.titleEn}<br />
+          <span style={{ color: slide.accentColor }}>
+            {locale === "fr" ? slide.subtitleFr : slide.subtitleEn}
+          </span>
+        </h1>
+
+        {/* Sous-titre */}
+        <p
+          key={`sub-${current}`}
+          className="text-lg text-white/80 max-w-xl mx-auto mb-10 leading-relaxed animate-fade-in"
+        >
+          {locale === "fr"
+            ? "AGT Platform donne à chaque PME un assistant intelligent disponible 24h/24."
+            : "AGT Platform gives every SME an intelligent assistant available 24/7."}
+        </p>
+
+        {/* CTAs */}
+        <div className="flex flex-col sm:flex-row gap-4 items-center">
+          <Link
+            href={ROUTES.onboarding}
+            className="px-8 py-4 rounded-xl text-base font-black text-white transition-all hover:scale-105 hover:shadow-modal"
+            style={{ backgroundColor: slide.accentColor }}
+          >
+            {t.heroCta}
+          </Link>
+          <Link
+            href={ROUTES.login}
+            className="px-8 py-4 rounded-xl text-base font-semibold text-white bg-white/15 backdrop-blur-sm border border-white/30 hover:bg-white/25 transition-all"
+          >
+            {t.loginCta}
+          </Link>
+        </div>
+
+        {/* Scroll hint */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/50 text-xs">
+          <div className="w-6 h-10 rounded-full border-2 border-white/30 flex items-start justify-center p-1">
+            <div className="w-1 h-2 bg-white/50 rounded-full animate-bounce" />
+          </div>
+        </div>
+      </div>
+
+      {/* Flèches navigation */}
+      <button
+        onClick={prev}
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white transition-all hover:scale-110"
+        aria-label="Slide précédent"
+      >
+        <ChevronLeft className="w-6 h-6" />
+      </button>
+      <button
+        onClick={next}
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white transition-all hover:scale-110"
+        aria-label="Slide suivant"
+      >
+        <ChevronRight className="w-6 h-6" />
+      </button>
+
+      {/* Dots */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-3">
+        {HERO_SLIDES.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => goTo(i)}
+            className="transition-all duration-300 rounded-full"
+            style={{
+              width: i === current ? 32 : 8,
+              height: 8,
+              backgroundColor: i === current ? "#25D366" : "rgba(255,255,255,0.4)",
+            }}
+            aria-label={`Slide ${i + 1}`}
+          />
+        ))}
+      </div>
+
+      {/* Indicateur slide actuel — coin bas droite */}
+      <div className="absolute bottom-8 right-6 z-20 text-white/40 text-xs font-mono">
+        {String(current + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
+      </div>
+    </section>
+  );
+}
+
 // ── Page principale ───────────────────────────────────────────────────────────
 export default function LandingPage() {
   const { dictionary: d, locale, setLocale } = useLanguage();
@@ -270,31 +470,8 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* ── Hero ───────────────────────────────────────────────────────────── */}
-      <section className="max-w-6xl mx-auto px-4 pt-24 pb-16 text-center">
-        {/* Badge bienvenue */}
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#25D366]/10 border border-[#25D366]/20 text-[#075E54] text-sm font-semibold mb-8">
-          <Zap className="w-4 h-4" />
-          {t.welcomeBadge.replace("{amount}", formatCurrency(WELCOME_BONUS_XAF))}
-        </div>
-
-        <h1 className="text-5xl md:text-6xl font-black text-[var(--text)] leading-tight mb-4">
-          {t.heroTitle}<br />
-          <span className="text-[#25D366]">{t.heroTitleAccent}</span>
-        </h1>
-        <p className="text-lg text-[var(--text-muted)] max-w-2xl mx-auto mb-10 leading-relaxed">
-          {t.heroSubtitle}
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Link href={ROUTES.onboarding} className="btn-primary text-base px-8 py-3">
-            {t.heroCta}
-          </Link>
-          <Link href={ROUTES.login} className="text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text)] transition-colors">
-            {t.loginCta} → {t.loginLink}
-          </Link>
-        </div>
-        <p className="text-xs text-[var(--text-muted)] mt-4">{t.heroCtaSub}</p>
-      </section>
+      {/* ── Hero Carousel Full-Screen ───────────────────────────────────────── */}
+      <HeroCarousel t={t} locale={locale} />
 
       {/* ── Stats ──────────────────────────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-4 py-12">
