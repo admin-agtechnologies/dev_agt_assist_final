@@ -74,6 +74,34 @@ export const en = {
     welcomeBadge: "{amount} offered at registration",
     featuresTitle: "Features designed for Cameroon",
     footerRights: "AGT Technologies. All rights reserved.",
+    
+    navFeatures: "Features",
+    navDemo: "Demo",
+    navPlans: "Pricing",
+    navTestimonials: "Testimonials",
+    
+    demoTag: "See the platform",
+    demoTitle: "Discover AGT Platform in action",
+    demoSubtitle: "See how our SME clients manage their virtual assistants daily.",
+    demoPlay: "Play video",
+    
+    testimonialsTag: "They trust us",
+    testimonialsTitle: "What our clients say",
+    testimonialsSubtitle: "Cameroonian SMEs who transformed their customer service with AGT Platform.",
+    
+    ctaSubtitle: "Join over 500 Cameroonian businesses that trust AGT Platform.",
+    
+    footerTagline: "The intelligent virtual assistant for African SMEs — WhatsApp & AI voice.",
+    footerProduct: "Product",
+    footerResources: "Resources",
+    footerGroup: "AG Technologies Group",
+    footerFeatures: "Features",
+    footerPlans: "Pricing",
+    footerDemo: "See the demo",
+    footerSignup: "Create account",
+    footerHelp: "Help center",
+    footerTutorial: "Tutorial",
+    footerLogin: "Sign in",
   },
 
   plans: {

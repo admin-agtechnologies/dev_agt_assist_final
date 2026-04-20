@@ -74,6 +74,33 @@ export const fr = {
     welcomeBadge: "{amount} offerts à l'inscription",
     featuresTitle: "Des fonctionnalités pensées pour le Cameroun",
     footerRights: "AGT Technologies. Tous droits réservés.",
+    navFeatures: "Fonctionnalités",
+    navDemo: "Démo",
+    navPlans: "Tarifs",
+    navTestimonials: "Témoignages",
+    
+    demoTag: "Voir la plateforme",
+    demoTitle: "Découvrez AGT Platform en action",
+    demoSubtitle: "Voyez comment nos clients PME gèrent leurs assistants virtuels au quotidien.",
+    demoPlay: "Lire la vidéo",
+    
+    testimonialsTag: "Ils nous font confiance",
+    testimonialsTitle: "Ce que disent nos clients",
+    testimonialsSubtitle: "Des PME camerounaises qui ont transformé leur service client avec AGT Platform.",
+    
+    ctaSubtitle: "Rejoignez plus de 500 entreprises camerounaises qui font confiance à AGT Platform.",
+    
+    footerTagline: "L'assistant virtuel intelligent pour les PME africaines — WhatsApp & IA vocale.",
+    footerProduct: "Produit",
+    footerResources: "Ressources",
+    footerGroup: "Groupe AG Technologies",
+    footerFeatures: "Fonctionnalités",
+    footerPlans: "Tarifs",
+    footerDemo: "Voir la démo",
+    footerSignup: "Créer un compte",
+    footerHelp: "Centre d'aide",
+    footerTutorial: "Tutoriel",
+    footerLogin: "Se connecter"
   },
 
   plans: {
