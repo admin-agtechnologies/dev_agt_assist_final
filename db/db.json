@@ -58,7 +58,7 @@
       "whatsapp_provider": "waha",
       "voice_ai_provider": "gemini",
       "phone_operator": null,
-      "is_active": false,
+      "is_active": true,
       "status": "active",
       "created_at": "2026-01-12T10:00:00Z"
     },
