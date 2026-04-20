@@ -211,7 +211,7 @@ const HERO_SLIDES: HeroSlide[] = [
     accentColor: "#25D366",
   },
   {
-    image: "/images/hero/hero-2.jpg",
+    image: "/images/hero/hero-2.png",
     overlayColor: "from-[#022c22]/85 via-[#075E54]/70 to-[#075E54]/60",
     badgeFr: "💬 WhatsApp · 24h/24 · 7j/7",
     badgeEn: "💬 WhatsApp · 24/7",
