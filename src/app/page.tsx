@@ -12,7 +12,6 @@ import {
   Sun, Moon, Star, Users, TrendingUp, Clock, Award,
   ChevronLeft, ChevronRight, Play, MapPin, Mail, ArrowRight,
   Bot, BookOpen, HelpCircle,
-  Zap,
 } from "lucide-react";
 
 // ── Constantes ────────────────────────────────────────────────────────────────
@@ -203,8 +202,8 @@ const HERO_SLIDES: HeroSlide[] = [
   {
     image: "/images/hero/hero-1.jpg",
     overlayColor: "from-[#075E54]/80 via-[#075E54]/60 to-[#022c22]/70",
-    badgeFr: " 10 000 FCFA offerts à l'inscription",
-    badgeEn: " 10,000 XAF offered at registration",
+    badgeFr: "🎉 10 000 FCFA offerts à l'inscription",
+    badgeEn: "🎉 10,000 XAF offered at registration",
     titleFr: "Votre assistant virtuel,",
     titleEn: "Your virtual assistant,",
     subtitleFr: "prêt en 5 minutes.",
@@ -212,10 +211,10 @@ const HERO_SLIDES: HeroSlide[] = [
     accentColor: "#25D366",
   },
   {
-    image: "/images/hero/hero-2.png",
+    image: "/images/hero/hero-2.jpg",
     overlayColor: "from-[#022c22]/85 via-[#075E54]/70 to-[#075E54]/60",
-    badgeFr: " WhatsApp · 24h/24 · 7j/7",
-    badgeEn: " WhatsApp · 24/7",
+    badgeFr: "💬 WhatsApp · 24h/24 · 7j/7",
+    badgeEn: "💬 WhatsApp · 24/7",
     titleFr: "Répondez à vos clients",
     titleEn: "Answer your customers",
     subtitleFr: "même quand vous dormez.",
@@ -225,8 +224,8 @@ const HERO_SLIDES: HeroSlide[] = [
   {
     image: "/images/hero/hero-3.jpg",
     overlayColor: "from-[#2D1B69]/85 via-[#6C3CE1]/65 to-[#2D1B69]/70",
-    badgeFr: " Agent Vocal IA nouvelle génération",
-    badgeEn: " Next-gen AI Voice Agent",
+    badgeFr: "🤖 Agent Vocal IA nouvelle génération",
+    badgeEn: "🤖 Next-gen AI Voice Agent",
     titleFr: "Un agent IA qui décroche",
     titleEn: "An AI agent that answers",
     subtitleFr: "à votre place.",
@@ -284,16 +283,13 @@ function HeroCarousel({ t, locale }: HeroCarouselProps) {
 
       {/* Contenu centré */}
       <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4">
-          {/* Badge */}
-    <div
-      key={`badge-${current}`}
-      className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 backdrop-blur-sm border border-white/25 text-white text-sm font-semibold mb-6 animate-fade-in"
-    >
-      {current === 0 && <Zap className="w-4 h-4 text-[#25D366]" />}
-      {current === 1 && <MessageSquare className="w-4 h-4 text-[#25D366]" />}
-      {current === 2 && <Phone className="w-4 h-4 text-[#8B5CF6]" />}
-      {locale === "fr" ? slide.badgeFr : slide.badgeEn}
-    </div>
+        {/* Badge */}
+        <div
+          key={`badge-${current}`}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 backdrop-blur-sm border border-white/25 text-white text-sm font-semibold mb-6 animate-fade-in"
+        >
+          {locale === "fr" ? slide.badgeFr : slide.badgeEn}
+        </div>
 
         {/* Titre */}
         <h1
@@ -313,8 +309,8 @@ function HeroCarousel({ t, locale }: HeroCarouselProps) {
           className="text-lg text-white/80 max-w-xl mx-auto mb-10 leading-relaxed animate-fade-in"
         >
           {locale === "fr"
-            ? "AGT Platform donne à chaque PME un assistant intelligent disponible 24h/24."
-            : "AGT Platform gives every SME an intelligent assistant available 24/7."}
+            ? "AGT Platform donne à chaque entreprise un assistant intelligent disponible 24h/24."
+            : "AGT Platform gives every business an intelligent assistant available 24/7."}
         </p>
 
         {/* CTAs */}
@@ -403,7 +399,7 @@ export default function LandingPage() {
 
   // Stats marketing — données hardcodées intentionnellement (page publique)
   const stats = [
-    { value: "500+", labelFr: "PME équipées", labelEn: "Businesses equipped", icon: Users },
+    { value: "500+", labelFr: "Entreprises équipées", labelEn: "Businesses equipped", icon: Users },
     { value: "98%", labelFr: "Satisfaction client", labelEn: "Client satisfaction", icon: Award },
     { value: "< 5 min", labelFr: "Temps de configuration", labelEn: "Setup time", icon: Clock },
     { value: "24/7", labelFr: "Disponibilité garantie", labelEn: "Guaranteed availability", icon: TrendingUp },
@@ -656,40 +652,56 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-[var(--border)] bg-[var(--bg-card)]">
-        <div className="max-w-6xl mx-auto px-4 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+      <footer className="bg-[#022c22] text-white">
 
-            {/* Colonne 1 — Brand */}
-            <div className="md:col-span-1 space-y-4">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-[#075E54] flex items-center justify-center text-white font-black text-sm">
+        {/* Bande supérieure colorée */}
+        <div className="h-1 bg-gradient-to-r from-[#25D366] via-[#075E54] to-[#6C3CE1]" />
+
+        <div className="max-w-6xl mx-auto px-4 pt-16 pb-10">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-10 mb-12">
+
+            {/* Colonne Brand — plus large */}
+            <div className="md:col-span-4 space-y-5">
+              {/* Logo */}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#25D366] flex items-center justify-center text-white font-black text-base shadow-lg">
                   A
                 </div>
                 <div className="flex flex-col leading-none">
-                  <span className="font-black text-sm text-[var(--text)]">AGT Platform</span>
-                  <span className="text-[10px] text-[var(--text-muted)]">by AG Technologies</span>
+                  <span className="font-black text-lg text-white tracking-tight">AGT Platform</span>
+                  <span className="text-[11px] text-white/50 font-medium">by AG Technologies</span>
                 </div>
               </div>
-              <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+
+              {/* Tagline */}
+              <p className="text-sm text-white/60 leading-relaxed max-w-xs">
                 {t.footerTagline}
               </p>
-              <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-                <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>Montée Anne rouge, Immeuble Kadji, Yaoundé</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-                <Mail className="w-3.5 h-3.5 flex-shrink-0" />
-                <a href="mailto:secretariatagtechnologies@gmail.com" className="hover:text-[#25D366] transition-colors">
-                  secretariatagtechnologies@gmail.com
-                </a>
+
+              {/* Coordonnées */}
+              <div className="space-y-2.5">
+                <div className="flex items-start gap-2.5 text-sm text-white/50">
+                  <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#25D366]" />
+                  <span>Montée Anne rouge, Immeuble Kadji,<br />Yaoundé, Cameroun</span>
+                </div>
+                <div className="flex items-center gap-2.5 text-sm text-white/50">
+                  <Mail className="w-4 h-4 flex-shrink-0 text-[#25D366]" />
+                  <a
+                    href="mailto:secretariatagtechnologies@gmail.com"
+                    className="hover:text-[#25D366] transition-colors truncate"
+                  >
+                    secretariatagtechnologies@gmail.com
+                  </a>
+                </div>
               </div>
             </div>
 
-            {/* Colonne 2 — Produit */}
-            <div className="space-y-4">
-              <p className="text-xs font-black uppercase tracking-widest text-[var(--text)]">{t.footerProduct}</p>
-              <ul className="space-y-2.5">
+            {/* Colonne Produit */}
+            <div className="md:col-span-2 space-y-4">
+              <p className="text-xs font-black uppercase tracking-widest text-white/40 mb-5">
+                {t.footerProduct}
+              </p>
+              <ul className="space-y-3">
                 {[
                   { label: t.footerFeatures, href: "#features" },
                   { label: t.footerPlans, href: "#plans" },
@@ -697,7 +709,11 @@ export default function LandingPage() {
                   { label: t.footerSignup, href: ROUTES.onboarding },
                 ].map(item => (
                   <li key={item.label}>
-                    <a href={item.href} className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors">
+                    <a
+                      href={item.href}
+                      className="text-sm text-white/60 hover:text-[#25D366] transition-colors flex items-center gap-1.5 group"
+                    >
+                      <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                       {item.label}
                     </a>
                   </li>
@@ -705,10 +721,12 @@ export default function LandingPage() {
               </ul>
             </div>
 
-            {/* Colonne 3 — Ressources */}
-            <div className="space-y-4">
-              <p className="text-xs font-black uppercase tracking-widest text-[var(--text)]">{t.footerResources}</p>
-              <ul className="space-y-2.5">
+            {/* Colonne Ressources */}
+            <div className="md:col-span-3 space-y-4">
+              <p className="text-xs font-black uppercase tracking-widest text-white/40 mb-5">
+                {t.footerResources}
+              </p>
+              <ul className="space-y-3">
                 {[
                   { label: t.footerHelp, href: ROUTES.help, icon: HelpCircle },
                   { label: t.footerTutorial, href: ROUTES.tutorial, icon: BookOpen },
@@ -717,8 +735,11 @@ export default function LandingPage() {
                   const Icon = item.icon;
                   return (
                     <li key={item.label}>
-                      <Link href={item.href} className="flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors">
-                        <Icon className="w-3.5 h-3.5" />
+                      <Link
+                        href={item.href}
+                        className="flex items-center gap-2.5 text-sm text-white/60 hover:text-[#25D366] transition-colors group"
+                      >
+                        <Icon className="w-3.5 h-3.5 text-white/30 group-hover:text-[#25D366] transition-colors" />
                         {item.label}
                       </Link>
                     </li>
@@ -727,49 +748,51 @@ export default function LandingPage() {
               </ul>
             </div>
 
-            {/* Colonne 4 — Autres produits AGT */}
-            <div className="space-y-4">
-              <p className="text-xs font-black uppercase tracking-widest text-[var(--text)]">{t.footerGroup}</p>
-              <ul className="space-y-2.5">
+            {/* Colonne Groupe AGT */}
+            <div className="md:col-span-3 space-y-4">
+              <p className="text-xs font-black uppercase tracking-widest text-white/40 mb-5">
+                {t.footerGroup}
+              </p>
+              <ul className="space-y-3">
                 <li>
                   <a
-                    href="https://www.salma-studies.com"
+                    href="https://ag-technologies.tech"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+                    className="flex items-center gap-2.5 text-sm text-white/60 hover:text-[#25D366] transition-colors group"
                   >
-                    SALMA — Bourses & Mobilité
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://www.agtgroupholding.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
-                  >
+                    <Globe className="w-3.5 h-3.5 text-white/30 group-hover:text-[#25D366] transition-colors" />
                     AG Technologies
                   </a>
                 </li>
               </ul>
+
+              {/* Badge "Fait au Cameroun" */}
+              <div className="mt-6 inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white/40 text-xs">
+                <span>🇨🇲</span>
+                <span>Conçu au Cameroun</span>
+              </div>
             </div>
           </div>
 
+          {/* Séparateur */}
+          <div className="h-px bg-white/10 mb-6" />
+
           {/* Bas du footer */}
-          <div className="border-t border-[var(--border)] mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-[var(--text-muted)]">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-white/30">
               © {new Date().getFullYear()} AG Technologies. {t.footerRights}
             </p>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => setLocale(locale === "fr" ? "en" : "fr")}
-                className="text-xs text-[var(--text-muted)] hover:text-[var(--text)] transition-colors font-bold"
+                className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/50 hover:text-white transition-all font-bold"
               >
-                {locale === "fr" ? "🇬🇧 English" : "🇫🇷 Français"}
+                {locale === "fr" ? "🇬🇧 EN" : "🇫🇷 FR"}
               </button>
               <button
                 onClick={toggle}
-                className="text-xs text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/50 hover:text-white transition-all"
               >
                 {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
