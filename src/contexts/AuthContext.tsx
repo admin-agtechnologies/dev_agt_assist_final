@@ -21,6 +21,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   isAdmin: boolean;
   isPme: boolean;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -101,11 +102,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // Espace client PME uniquement — jamais d'admin ici
+  // Recharge le user depuis /auth/me/ — utile après une mise à jour de profil
+  const refreshUser = async (): Promise<void> => {
+    try {
+      const u = await authRepository.me();
+      ensureEntreprise(u);
+      setUser(u);
+    } catch {
+      // Token invalide → on ne déconnecte pas, on laisse le refresh auto gérer
+    }
+  };
+
+  // Espace client PME uniquement — jamais d'admin ici
   const isAdmin = false;
   const isPme = user !== null;
-
+  
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, loginWithGoogle, logout, isAdmin, isPme }}>
+    <AuthContext.Provider value={{ user, isLoading, login, loginWithGoogle, logout, isAdmin, isPme , refreshUser}}>
       {children}
     </AuthContext.Provider>
   );

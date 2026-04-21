@@ -32,7 +32,7 @@ import type {
   // Transactions
   Transaction, CreateTransactionPayload,
   // Shared
-  PaginatedResponse,
+  PaginatedResponse,EntrepriseInUser,
 } from "@/types/api";
 
 // ── Interface locale PhoneNumber ──────────────────────────────────────────────
@@ -125,6 +125,32 @@ export const authRepository = {
     return api.post<AuthResponse>("/api/v1/auth/magic-link/verify/", payload, { skipAuthRefresh: true });
   },
 };
+// ══════════════════════════════════════════════════════════════════════════════
+// USERS — branché sur apps/users/ (update_me, change_password)
+// ══════════════════════════════════════════════════════════════════════════════
+
+export interface UpdateMePayload {
+  name?: string;
+  telephone?: string;
+  bio?: string;
+  ville?: string;
+  pays?: string;
+}
+
+export interface ChangePasswordPayload {
+  old_password: string;
+  new_password: string;
+}
+
+export const usersRepository = {
+  // PATCH /api/v1/users/update_me/ — met à jour nom + champs profil
+  updateMe: (payload: UpdateMePayload): Promise<User> =>
+    api.patch<User>("/api/v1/users/update_me/", payload),
+
+  // POST /api/v1/users/change_password/ — change le mot de passe
+  changePassword: (payload: ChangePasswordPayload): Promise<DetailResponse> =>
+    api.post<DetailResponse>("/api/v1/users/change_password/", payload),
+};
 
 // ══════════════════════════════════════════════════════════════════════════════
 // TENANTS — à aligner sur le backend Django dans une session dédiée
@@ -143,9 +169,21 @@ export const tenantsRepository = {
     }),
   getById: (id: string): Promise<Tenant> => api.get(`/api/v1/tenants/${id}`),
   create: (payload: CreateTenantPayload): Promise<Tenant> => api.post("/api/v1/tenants", payload),
-  patch: (id: string, payload: Partial<CreateTenantPayload>): Promise<Tenant> =>
-    api.patch(`/api/v1/tenants/${id}`, payload),
-  delete: (id: string): Promise<void> => api.delete(`/api/v1/tenants/${id}`),
+ patch: (id: string, payload: Partial<CreateTenantPayload>): Promise<Tenant> =>
+    api.patch(`/api/v1/tenants/${id}/`, payload),
+  delete: (id: string): Promise<void> => api.delete(`/api/v1/tenants/${id}/`),
+
+  // PATCH /api/v1/tenants/me_update/ — PME met à jour sa propre entreprise
+  meUpdate: (payload: {
+    name?: string;
+    description?: string;
+    whatsapp_number?: string;
+    phone_number?: string;
+    email?: string;
+    site_web?: string;
+    secteur_id?: string;
+  }): Promise<EntrepriseInUser> =>
+    api.patch<EntrepriseInUser>("/api/v1/tenants/me_update/", payload),
 };
 
 // ── Bots ──────────────────────────────────────────────────────────────────────

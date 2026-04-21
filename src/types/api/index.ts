@@ -49,7 +49,30 @@ export interface Role {
   permissions: Permission[];
   created_at: string;
 }
+// ── SecteurActivite (imbriqué dans EntrepriseInUser) ─────────────────────────
+export interface SecteurActivite {
+  id: string;
+  slug: string;
+  label_fr: string;
+  label_en: string;
+}
 
+// ── Entreprise telle que renvoyée dans /auth/me/ ──────────────────────────────
+export interface EntrepriseInUser {
+  id: string;
+  name: string;
+  slug: string;
+  secteur: SecteurActivite | null;
+  description: string;
+  whatsapp_number: string;
+  phone_number: string;
+  email: string;
+  site_web: string;
+  logo: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
 // ── User ──────────────────────────────────────────────────────────────────────
 // Aligné sur UserMeSerializer backend (apps/users/serializers.py).
 // /api/v1/auth/me/ renvoie EXACTEMENT cette forme.
@@ -63,6 +86,7 @@ export interface User {
   has_google_auth: boolean;
   roles: Role[];
   profil: Profil | null;
+  entreprise: EntrepriseInUser | null;
   permissions: string[];
   created_at: string;
 
