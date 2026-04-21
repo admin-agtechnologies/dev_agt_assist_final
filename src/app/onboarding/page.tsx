@@ -110,29 +110,33 @@ function OnboardingContent() {
 
   // ── Google OAuth onboarding ──────────────────────────────────────────────
   const handleGoogleSuccess = async (googleUser: { email: string; name: string; sub: string }) => {
-    try {
-      const res = await loginWithGoogle(googleUser);
-      if (res?.user?.tenant_id && res?.user?.is_active) {
-        router.push(ROUTES.dashboard);
-        return;
-      }
-      setAccountEmail(googleUser.email);
-      setAccountName(googleUser.name);
-      setStep("email_check");
-    } catch {
-      setError(d.common.error);
-    }
+     try {
+       const res = await loginWithGoogle(googleUser);
+       // Google est trusted — pas de vérification email
+       if (res?.user?.user_type === "entreprise" && res?.user?.is_email_verified) {
+         // Compte existant et vérifié → dashboard
+         router.push(ROUTES.dashboard);
+         return;
+       }
+    // Nouveau compte Google → skip email_check, aller direct au profil
+       setAccountEmail(googleUser.email);
+       setAccountName(googleUser.name);
+       setStep("profile");
+     } catch {
+       setError(d.common.error);
+     }
   };
 
-  // ── Simulation validation email ──────────────────────────────────────────
-  useEffect(() => {
-    if (step !== "email_check") return;
-    // Simule envoi (1s) + attente (3s) → passe au profil
-    const timer = setTimeout(() => {
+ // ── Vérification email — NE RIEN FAIRE ICI
+//   // L'utilisateur clique sur le lien reçu par email → /verify-email?token=xxx
+//   // Cette page vérifie le token, stocke les tokens JWT, redirige vers /onboarding?verified=true
+//   // Le useEffect ci-dessous détecte ?verified=true et passe à l'étape profile
+ useEffect(() => {
+     const verified = new URLSearchParams(window.location.search).get("verified");
+     if (verified === "true" && step === "email_check") {
       setStep("profile");
-    }, 4000);
-    return () => clearTimeout(timer);
-  }, [step]);
+     }
+   }, [step]);
 
   // ── Profil → Plan ────────────────────────────────────────────────────────
   const handleProfileNext = (e: React.FormEvent) => {
@@ -316,6 +320,19 @@ function OnboardingContent() {
                 {t.emailCheckWaiting}
               </p>
             </div>
+            <button
+     onClick={async () => {
+       try {
+         await authRepository.resendVerification(accountEmail);
+         toast.success("Email renvoyé !");
+       } catch {
+         toast.error("Erreur lors de l'envoi.");
+       }
+     }}
+     className="text-sm text-[#075E54] underline hover:opacity-75 mt-4"
+   >
+     Renvoyer l'email de vérification
+   </button>
           </div>
         )}
 

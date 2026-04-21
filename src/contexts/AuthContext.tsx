@@ -1,4 +1,7 @@
 // src/contexts/AuthContext.tsx
+// ══════════════════════════════════════════════════════════════════════════════
+// REMPLACER le fichier complet src/contexts/AuthContext.tsx par ceci
+// ══════════════════════════════════════════════════════════════════════════════
 "use client";
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { tokenStorage } from "@/lib/api-client";
@@ -8,7 +11,7 @@ import type { User, LoginPayload, AuthResponse } from "@/types/api";
 interface GoogleUserInfo {
   email: string;
   name: string;
-  sub: string; // Google user ID
+  sub: string;
 }
 
 interface AuthContextType {
@@ -30,48 +33,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const token = tokenStorage.getAccess();
     if (token) {
-      try {
-        const payload = JSON.parse(atob(token)) as { id: string; role: string; exp: number };
-        if (payload.exp > Date.now()) {
-          authRepository.me(payload.id)
-            .then(setUser)
-            .catch(() => tokenStorage.clear())
-            .finally(() => setIsLoading(false));
-          return;
-        }
-      } catch { tokenStorage.clear(); }
+      // Avec Django JWT réel : appeler /me/ directement avec le Bearer token
+      // Pas besoin de décoder le token localement
+      authRepository.me()
+        .then(setUser)
+        .catch(() => tokenStorage.clear())
+        .finally(() => setIsLoading(false));
+    } else {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
-  // ── Login classique ──────────────────────────────────────────────────────
   const login = async (payload: LoginPayload) => {
     const res = await authRepository.login(payload);
-    tokenStorage.set(res.access, res.refresh);
+    tokenStorage.set(res.access, res.refresh ?? "");
     setUser(res.user);
   };
 
-  // ── Login Google ─────────────────────────────────────────────────────────
-  // En mock : on cherche un user avec cet email dans JSON Server.
-  // En production : envoyer le credential JWT au backend Django pour vérification.
-const loginWithGoogle = async (googleUser: GoogleUserInfo): Promise<AuthResponse> => {
-  const res = await authRepository.loginWithGoogle(googleUser.email, googleUser.name);
-  tokenStorage.set(res.access, res.refresh);
-  setUser(res.user);
-  return res;
-};
+  const loginWithGoogle = async (googleUser: GoogleUserInfo): Promise<AuthResponse> => {
+    const res = await authRepository.loginWithGoogle(googleUser.email, googleUser.name);
+    tokenStorage.set(res.access, res.refresh ?? "");
+    setUser(res.user);
+    return res;
+  };
+
   const logout = () => {
+    const refresh = tokenStorage.getRefresh();
+    if (refresh) {
+      authRepository.logout(refresh).catch(() => {});
+    }
     tokenStorage.clear();
     setUser(null);
     window.location.href = "/login";
   };
 
+  // Django renvoie user_type ("entreprise" | "admin" | "superadmin")
+  // Le frontend utilise role ("pme" | "admin") — on adapte
+const isAdmin = false; // Espace client PME uniquement — jamais d'admin ici
+const isPme = user !== null;
+
   return (
-    <AuthContext.Provider value={{
-      user, isLoading, login, loginWithGoogle, logout,
-      isAdmin: user?.role === "admin",
-      isPme: user?.role === "pme",
-    }}>
+    <AuthContext.Provider value={{ user, isLoading, login, loginWithGoogle, logout, isAdmin, isPme }}>
       {children}
     </AuthContext.Provider>
   );

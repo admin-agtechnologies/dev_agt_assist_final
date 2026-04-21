@@ -11,11 +11,25 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: "pme" | "admin";
+  role: "pme";
+  user_type: "entreprise";
   tenant_id: string | null;
   avatar: string | null;
   is_active: boolean;
+  is_email_verified: boolean;
+  profil?: {
+    id: string;
+    avatar: string | null;
+    telephone: string;
+    bio: string;
+    ville: string;
+    pays: string;
+    updated_at: string;
+  } | null;
+  permissions?: string[];
+  created_at?: string;
 }
+ 
 export interface LoginPayload { email: string; password: string; }
 export interface AuthResponse { access: string; refresh: string; user: User; }
 

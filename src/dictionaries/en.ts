@@ -141,14 +141,24 @@ export const en = {
   },
 
   pending: {
-    title: "Check your email",
-    subtitle: "A confirmation link has been sent to you. Click it to activate your account.",
-    resendBtn: "Resend email",
-    resendSuccess: "Email resent!",
+    title: "Verify your email",
+    subtitle: "A confirmation link has been sent to your email address. Click it to continue.",
+    resendBtn: "Resend verification email",
     backToLogin: "Back to login",
-    contactSupport: "Contact support",
+    resendSuccess: "Email sent! Check your inbox.",
+    emailMissing: "Email not found. Please go back to login.",
+    resendError: "Error sending email. Please try again.",
   },
 
+  verifyEmail: {
+    loading: "Verifying…",
+    loadingSubtitle: "Please wait a moment.",
+    successTitle: "Email verified ✓",
+    successSubtitle: "Your email has been confirmed. Redirecting…",
+    errorTitle: "Invalid link",
+    errorSubtitle: "If the link expired, sign in again to get a new one.",
+    backToLogin: "Back to login",
+  },
   errors: {
     notFoundTitle: "Page not found",
     notFoundSubtitle: "The page you're looking for doesn't exist or has been moved.",
@@ -417,7 +427,7 @@ export const en = {
     title: "My Profile", subtitle: "Your account information.",
     name: "Full name", email: "Email", role: "Role", tenant: "Company",
     saveSuccess: "Profile updated.", saveError: "Save error.",
-    roles: { pme: "SME Manager", admin: "AGT Administrator" },
+    roles: { pme: "enterprise Manager" },
     editProfile: "Edit profile",
     changePassword: "Change password",
     currentPassword: "Current password",

@@ -23,50 +23,43 @@ const p = (f?: object): Record<string, string> =>
       .map(([k, v]) => [k, String(v)])
   );
 
+
 // ── Auth ─────────────────────────────────────────────────────────────────────
+// REMPLACER le bloc authRepository dans src/repositories/index.ts
 export const authRepository = {
-  register: async (payload: { email: string; password: string; name: string }): Promise<AuthResponse> => {
-    // Mock : cherche si l'email existe déjà
-    const existing = await api.get<User[]>("/api/v1/auth/me", { params: { email: payload.email } });
-    const found = Array.isArray(existing) ? existing[0] : null;
-    if (found) return { access: btoa(JSON.stringify({ id: found.id, role: found.role, exp: Date.now() + 86400000 })), refresh: "mock_refresh", user: found };
-    // Sinon crée un nouvel user mock
-    const newUser = await api.post<User>("/api/v1/users", {
-      email: payload.email, name: payload.name,
-      role: "pme", tenant_id: null, avatar: null,
-    });
-    return { access: btoa(JSON.stringify({ id: newUser.id, role: newUser.role, exp: Date.now() + 86400000 })), refresh: "mock_refresh", user: newUser };
-  },
-
-  login: async (payload: LoginPayload): Promise<AuthResponse> => {
-    const users = await api.get<User[]>("/api/v1/users", { params: { email: payload.email } });
-    if (!users || users.length === 0) throw new Error("Email ou mot de passe incorrect");
-    const user = users[0];
-    const fakeToken = btoa(JSON.stringify({ id: user.id, role: user.role, exp: Date.now() + 86400000 }));
-    return { access: fakeToken, refresh: fakeToken + "_refresh", user };
-
-  },
-
-  // ── Connexion Google (mock) ──────────────────────────────────────────────
-  // Cherche l'utilisateur par email. S'il n'existe pas, le crée (inscrit via Google).
-  // En production : envoyer le credential Google au backend pour vérification.
-  loginWithGoogle: async (email: string, name: string): Promise<AuthResponse> => {
-    const users = await api.get<User[]>("/api/v1/users", { params: { email } });
-    let user: User;
-    if (users && users.length > 0) {
-      user = users[0];
-    } else {
-      // Créer l'utilisateur à la volée (mock uniquement)
-      user = await api.post<User>("/api/v1/users", {
-        email, name, role: "pme", tenant_id: null, avatar: null,
-      });
-    }
-    const fakeToken = btoa(JSON.stringify({ id: user.id, role: user.role, exp: Date.now() + 86400000 }));
-    return { access: fakeToken, refresh: fakeToken + "_refresh", user };
-  },
-
-  me: (id: string): Promise<User> => api.get(`/api/v1/users/${id}`),
+ 
+  login: (payload: LoginPayload): Promise<AuthResponse> =>
+    api.post<AuthResponse>("/api/v1/auth/login/", payload),
+ 
+  register: (payload: {
+    email: string;
+    password: string;
+    name: string;
+    entreprise_name?: string;
+  }): Promise<AuthResponse> =>
+    api.post<AuthResponse>("/api/v1/auth/register/", payload),
+ 
+  // Google OAuth — endpoint dédié, trusted, pas de vérification email
+  loginWithGoogle: (email: string, name: string): Promise<AuthResponse> =>
+    api.post<AuthResponse>("/api/v1/auth/google/", { email, name }),
+ 
+  me: (): Promise<User> =>
+    api.get<User>("/api/v1/auth/me/"),
+ 
+  refreshToken: (refresh: string): Promise<{ access: string }> =>
+    api.post<{ access: string }>("/api/v1/auth/token/refresh/", { refresh }),
+ 
+  logout: (refresh: string): Promise<void> =>
+    api.post("/api/v1/auth/logout/", { refresh }),
+ 
+  verifyEmail: (token: string): Promise<AuthResponse> =>
+    api.post<AuthResponse>("/api/v1/auth/verify-email/", { token }),
+ 
+  resendVerification: (email: string): Promise<void> =>
+    api.post("/api/v1/auth/resend-verification/", { email }),
 };
+ 
+
 
 // ── Tenants ──────────────────────────────────────────────────────────────────
 export const tenantsRepository = {

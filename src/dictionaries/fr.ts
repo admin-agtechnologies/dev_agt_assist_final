@@ -142,13 +142,24 @@ export const fr = {
 
   pending: {
     title: "Vérifiez votre email",
-    subtitle: "Un lien de confirmation vous a été envoyé. Cliquez dessus pour activer votre compte.",
-    resendBtn: "Renvoyer l'email",
-    resendSuccess: "Email renvoyé !",
+    subtitle: "Un lien de confirmation a été envoyé à votre adresse email. Cliquez dessus pour continuer.",
+    resendBtn: "Renvoyer l'email de vérification",
     backToLogin: "Retour à la connexion",
-    contactSupport: "Contacter le support",
+    resendSuccess: "Email renvoyé ! Vérifiez votre boîte mail.",
+    emailMissing: "Email introuvable. Retournez à la page de connexion.",
+    resendError: "Erreur lors de l'envoi. Réessayez.",
   },
-
+  
+  verifyEmail: {
+    loading: "Vérification en cours…",
+    loadingSubtitle: "Veuillez patienter quelques instants.",
+    successTitle: "Email vérifié ✓",
+    successSubtitle: "Votre adresse email a été confirmée. Vous allez être redirigé…",
+    errorTitle: "Lien invalide",
+    errorSubtitle: "Si le lien a expiré, reconnectez-vous pour en recevoir un nouveau.",
+    backToLogin: "Retour à la connexion",
+  },
+  
   errors: {
     notFoundTitle: "Page introuvable",
     notFoundSubtitle: "La page que vous cherchez n'existe pas ou a été déplacée.",
@@ -416,7 +427,6 @@ export const fr = {
     title: "Mon Profil", subtitle: "Informations de votre compte.",
     name: "Nom complet", email: "Email", role: "Rôle", tenant: "Entreprise",
     saveSuccess: "Profil mis à jour.", saveError: "Erreur lors de la sauvegarde.",
-    roles: { pme: "Responsable PME", admin: "Administrateur AGT" },
     editProfile: "Modifier le profil",
     changePassword: "Changer le mot de passe",
     currentPassword: "Mot de passe actuel",
@@ -432,6 +442,7 @@ export const fr = {
     phone: "Téléphone",
     sector: "Secteur",
     description: "Description",
+    roles: { pme: "Responsable d'entreprise" },
   },
 
   support: {
