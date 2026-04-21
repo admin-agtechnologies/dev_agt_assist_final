@@ -151,7 +151,7 @@ export default function PmeProfilePage() {
             <p className="font-bold text-[var(--text)]">{user.name}</p>
             <p className="text-sm text-[var(--text-muted)]">{user.email}</p>
             <span className="inline-block mt-1 px-2.5 py-0.5 bg-[#25D366]/10 text-[#075E54] rounded-full text-xs font-bold">
-              {t.roles[user.role]}
+            {t.roles.pme}
             </span>
           </div>
         </div>
@@ -308,7 +308,7 @@ export default function PmeProfilePage() {
               )}>
                 <Shield className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" />
                 <span className="text-xs text-[var(--text-muted)]">
-                  {t.role} : <span className="font-semibold text-[var(--text)]">{t.roles[user.role]}</span>
+                  {t.role} : <span className="font-semibold text-[var(--text)]">{t.roles.pme}</span>
                 </span>
               </div>
 

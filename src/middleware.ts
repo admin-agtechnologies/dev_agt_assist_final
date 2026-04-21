@@ -2,7 +2,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // Routes publiques accessibles sans token
-const PUBLIC_ROUTES = ["/", "/login", "/pending"];
+// Routes publiques accessibles sans token
+// Routes publiques accessibles sans token
+const PUBLIC_ROUTES = ["/", "/login", "/pending", "/verify-email", "/reset-password", "/magic-link"];
 const PME_PREFIX = "/pme";
 const DASHBOARD = "/dashboard";
 const ONBOARDING = "/onboarding";
@@ -30,7 +32,19 @@ export function middleware(request: NextRequest) {
   }
 
   // ── Page pending (compte inactif) ────────────────────────────────────────
+ // ── Page pending (compte inactif) ────────────────────────────────────────
   if (pathname.startsWith("/pending")) {
+    return NextResponse.next();
+  }
+
+  // ── Pages auth flow (token dans URL, pas dans cookie) ────────────────────
+  // verify-email, reset-password, magic-link : utilisateur arrive depuis un
+  // email avec un token en query string. Accès libre.
+  if (
+    pathname.startsWith("/verify-email") ||
+    pathname.startsWith("/reset-password") ||
+    pathname.startsWith("/magic-link")
+  ) {
     return NextResponse.next();
   }
 
@@ -51,5 +65,16 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/login", "/login/:path*", "/pending", "/dashboard/:path*", "/pme/:path*", "/admin/:path*", "/onboarding/:path*"],
+  matcher: [
+    "/",
+    "/login", "/login/:path*",
+    "/pending",
+    "/verify-email", "/verify-email/:path*",
+    "/reset-password", "/reset-password/:path*",
+    "/magic-link", "/magic-link/:path*",
+    "/dashboard/:path*",
+    "/pme/:path*",
+    "/admin/:path*",
+    "/onboarding/:path*",
+  ],
 };

@@ -8,24 +8,145 @@ export interface PaginatedResponse<T> {
   results: T[];
 }
 
-// ── Auth ──────────────────────────────────────────────────────────────────────
+export interface DetailResponse {
+  detail: string;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── User types Django ────────────────────────────────────────────────────────
+// Le backend définit 3 user_type : "superadmin" | "admin" | "entreprise".
+// L'espace client PME n'accepte QUE "entreprise" — tout autre user_type doit
+// être rejeté par AuthContext après le /me/. On type donc strictement ici.
+export type UserType = "superadmin" | "admin" | "entreprise";
+
+// ── Profil (OneToOne avec User côté Django) ───────────────────────────────────
+export interface Profil {
+  id: string;
+  avatar: string | null;
+  telephone: string;
+  bio: string;
+  ville: string;
+  pays: string;
+  updated_at: string;
+}
+
+// ── Permission (code + label) ─────────────────────────────────────────────────
+export interface Permission {
+  id: string;
+  code: string;
+  label: string;
+  description: string;
+}
+
+// ── Role (groupe de permissions) ──────────────────────────────────────────────
+export interface Role {
+  id: string;
+  name: string;
+  description: string;
+  permissions: Permission[];
+  created_at: string;
+}
+
+// ── User ──────────────────────────────────────────────────────────────────────
+// Aligné sur UserMeSerializer backend (apps/users/serializers.py).
+// /api/v1/auth/me/ renvoie EXACTEMENT cette forme.
 export interface User {
   id: string;
   email: string;
   name: string;
-  role: "pme";
-  user_type: "entreprise";
-  tenant_id: string | null;
-  sector?: string;
-  avatar: string | null;
+  user_type: UserType;
   is_active: boolean;
-  created_at?: string;
-}
- 
-export interface LoginPayload { email: string; password: string; }
-export interface AuthResponse { access: string; refresh: string; user: User; }
+  is_email_verified: boolean;
+  has_google_auth: boolean;
+  roles: Role[];
+  profil: Profil | null;
+  permissions: string[];
+  created_at: string;
 
-// ── Tenant ────────────────────────────────────────────────────────────────────
+  // ── Champ transitoire — NON renvoyé par /auth/me/ ──────────────────────────
+  // Peuplé côté frontend par AuthContext après un call séparé (UserEntreprise).
+  // Sera retiré du type User quand toutes les pages métier auront migré vers
+  // un TenantContext dédié. Présent ici pour ne pas casser le build des pages
+  // qui consomment user.tenant_id avant le refactor.
+  tenant_id?: string | null;
+}
+
+// ── Payloads ──────────────────────────────────────────────────────────────────
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
+
+export interface RegisterPayload {
+  email: string;
+  password: string;
+  name: string;
+}
+
+export interface GoogleAuthPayload {
+  email: string;
+  name?: string;
+  google_id?: string;
+}
+
+export interface VerifyEmailPayload {
+  token: string;
+}
+
+export interface ResendVerificationPayload {
+  email: string;
+}
+
+export interface ForgotPasswordPayload {
+  email: string;
+}
+
+export interface ResetPasswordPayload {
+  token: string;
+  new_password: string;
+}
+
+export interface MagicLinkRequestPayload {
+  email: string;
+}
+
+export interface MagicLinkVerifyPayload {
+  token: string;
+}
+
+export interface RefreshTokenPayload {
+  refresh: string;
+}
+
+export interface LogoutPayload {
+  refresh: string;
+}
+
+// ── Réponses ──────────────────────────────────────────────────────────────────
+// Renvoyée par : login, register, google, verify-email, reset-password, magic-link/verify
+export interface AuthResponse {
+  access: string;
+  refresh: string;
+  user: User;
+}
+
+// Renvoyée par : token/refresh
+export interface TokenRefreshResponse {
+  access: string;
+}
+
+// Renvoyée par : login avec 403 quand is_email_verified=false
+export interface EmailNotVerifiedResponse {
+  detail: "EMAIL_NOT_VERIFIED";
+  email: string;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TENANT
+// ══════════════════════════════════════════════════════════════════════════════
 export interface Tenant {
   id: string;
   auth_user_id: string;
@@ -49,7 +170,9 @@ export interface TenantFilters {
   page_size?: number;
 }
 
-// ── Bot ───────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// BOT
+// ══════════════════════════════════════════════════════════════════════════════
 export type WhatsAppProviderType = "waha" | "meta_api";
 export type VoiceAIProviderType = "gemini" | "openai";
 export type PhoneOperatorType = "twilio" | "orange" | "mtn" | "camtel" | null;
@@ -70,7 +193,6 @@ export interface Bot {
   is_active: boolean;
   status: BotStatus;
   created_at: string;
-  // Champs étendus (nouveaux)
   bot_type?: BotType;
   paired_bot_id?: string | null;
   phone_number_id?: string | null;
@@ -102,7 +224,9 @@ export interface BotFilters {
   page_size?: number;
 }
 
-// ── Service ───────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// SERVICE
+// ══════════════════════════════════════════════════════════════════════════════
 export interface Service {
   id: string;
   tenant_id: string;
@@ -128,7 +252,9 @@ export interface ServiceFilters {
   page_size?: number;
 }
 
-// ── Appointment ───────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// APPOINTMENT
+// ══════════════════════════════════════════════════════════════════════════════
 export type AppointmentStatus = "pending" | "confirmed" | "done" | "cancelled";
 export interface Appointment {
   id: string;
@@ -142,7 +268,7 @@ export interface Appointment {
   channel: "whatsapp" | "voice" | "manual";
   reminder_sent: boolean;
   notes: string;
-  service_name?: string; // Ajoute cette ligne
+  service_name?: string;
 }
 export interface CreateAppointmentPayload {
   service_id: string;
@@ -162,7 +288,9 @@ export interface AppointmentFilters {
   page_size?: number;
 }
 
-// ── Subscription ──────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// SUBSCRIPTION
+// ══════════════════════════════════════════════════════════════════════════════
 export type SubscriptionStatus = "active" | "suspended" | "cancelled" | "trial";
 export interface Subscription {
   id: string;
@@ -182,7 +310,9 @@ export interface Subscription {
   calls_limit: number;
 }
 
-// ── Wallet ────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// WALLET / PLAN / STATS
+// ══════════════════════════════════════════════════════════════════════════════
 export interface Wallet {
   id: string;
   tenant_id: string;
@@ -191,7 +321,6 @@ export interface Wallet {
   updated_at: string;
 }
 
-// ── Plan ──────────────────────────────────────────────────────────────────────
 export interface Plan {
   id: string;
   name: string;
@@ -204,7 +333,6 @@ export interface Plan {
   features: string[];
 }
 
-// ── Stats ─────────────────────────────────────────────────────────────────────
 export interface TenantStats {
   messages_today: number;
   messages_week: number;
@@ -228,7 +356,9 @@ export interface AdminStats {
   tenants_growth_week: number;
 }
 
-// ── Conversation ──────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// CONVERSATION
+// ══════════════════════════════════════════════════════════════════════════════
 export interface ConversationReport {
   summary: string;
   key_takeaways: string[];
@@ -262,7 +392,9 @@ export interface ConversationFilters {
   page_size?: number;
 }
 
-// ── FAQ ───────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// FAQ / KNOWLEDGE
+// ══════════════════════════════════════════════════════════════════════════════
 export interface FAQ {
   id: string;
   tenant_id: string;
@@ -283,7 +415,6 @@ export interface CreateFAQPayload {
   tenant_id?: string;
 }
 
-// ── TenantKnowledge ───────────────────────────────────────────────────────────
 export interface TenantKnowledge {
   id: string;
   tenant_id: string;
@@ -307,7 +438,6 @@ export interface CreateTenantKnowledgePayload extends Partial<Omit<TenantKnowled
   tenant_id: string;
 }
 
-// ── ServiceKnowledge ──────────────────────────────────────────────────────────
 export interface ServiceKnowledge {
   id: string;
   tenant_id: string;
@@ -324,7 +454,9 @@ export interface CreateServiceKnowledgePayload extends Partial<Omit<ServiceKnowl
   service_id: string;
 }
 
-// ── BusinessHours ─────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// BUSINESS HOURS / LOCATION
+// ══════════════════════════════════════════════════════════════════════════════
 export interface DayHours {
   open: boolean;
   from: string;
@@ -349,7 +481,6 @@ export interface CreateBusinessHoursPayload extends Partial<Omit<BusinessHours, 
   hours_type: "opening" | "appointments";
 }
 
-// ── Location ──────────────────────────────────────────────────────────────────
 export interface Location {
   id: string;
   tenant_id: string;
@@ -358,7 +489,6 @@ export interface Location {
   lat?: number;
   lng?: number;
   is_main: boolean;
-  // Ajoute tous ces champs ci-dessous :
   whatsapp?: string;
   phone?: string;
   email?: string;
@@ -366,7 +496,7 @@ export interface Location {
   transfer_phone?: string;
   extra_info?: string;
   is_active?: boolean;
-  hours?: any; // On l'avait déjà évoqué au tour précédent
+  hours?: Record<string, DayHours>;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -374,7 +504,7 @@ export interface CreateLocationPayload extends Partial<Omit<Location, "id">> {
   tenant_id: string;
   name: string;
   address: string;
-  hours?: any; // ou le type exact si tu l'as (ex: Record<string, DayHours>)
+  hours?: Record<string, DayHours>;
   whatsapp?: string;
   phone?: string;
   email?: string;
@@ -384,7 +514,9 @@ export interface CreateLocationPayload extends Partial<Omit<Location, "id">> {
   is_active?: boolean;
 }
 
-// ── Transaction ───────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// TRANSACTION / PHONE NUMBER
+// ══════════════════════════════════════════════════════════════════════════════
 export interface Transaction {
   id: string;
   tenant_id: string;
@@ -403,13 +535,11 @@ export interface CreateTransactionPayload {
   type: "credit" | "debit";
   label: string;
   wallet_id?: string;
-  balance_after?: number; // Ajoute cette ligne
-  operator?: string | null; // Ajoute cette ligne
-  // ... garde les champs qu'on a ajoutés avant (wallet_id, balance_after, operator)
-  reference?: string | null; // Ajoute cette ligne
+  balance_after?: number;
+  operator?: string | null;
+  reference?: string | null;
 }
 
-// ── PhoneNumber ───────────────────────────────────────────────────────────────
 export interface PhoneNumber {
   id: string;
   number: string;

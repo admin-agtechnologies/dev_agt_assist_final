@@ -1,22 +1,37 @@
 // src/repositories/index.ts
 import { api } from "@/lib/api-client";
 import type {
+  // Auth
+  User, AuthResponse, LoginPayload, RegisterPayload, GoogleAuthPayload,
+  VerifyEmailPayload, ResendVerificationPayload,
+  ForgotPasswordPayload, ResetPasswordPayload,
+  MagicLinkRequestPayload, MagicLinkVerifyPayload,
+  RefreshTokenPayload, LogoutPayload,
+  DetailResponse, TokenRefreshResponse,
+  // Tenants
   Tenant, CreateTenantPayload, TenantFilters,
+  // Bots
   Bot, CreateBotPayload, BotFilters,
+  // Services
   Service, CreateServicePayload, ServiceFilters,
+  // Appointments
   Appointment, CreateAppointmentPayload, AppointmentFilters,
-  Subscription,
-  Wallet,
-  Plan,
+  // Billing
+  Subscription, Wallet, Plan,
+  // Stats
   TenantStats, AdminStats,
+  // Conversations
   Conversation, ConversationFilters,
+  // Knowledge
   FAQ, CreateFAQPayload,
   TenantKnowledge, CreateTenantKnowledgePayload,
   ServiceKnowledge, CreateServiceKnowledgePayload,
+  // Hours / Locations
   BusinessHours, CreateBusinessHoursPayload,
   Location, CreateLocationPayload,
+  // Transactions
   Transaction, CreateTransactionPayload,
-  User, AuthResponse, LoginPayload,
+  // Shared
   PaginatedResponse,
 } from "@/types/api";
 
@@ -40,43 +55,80 @@ const p = (f?: object): Record<string, string> =>
       .map(([k, v]) => [k, String(v)])
   );
 
-const toList = <T>(data: unknown): PaginatedResponse<T> =>
-  Array.isArray(data)
-    ? { results: data as T[], count: (data as T[]).length, next: null, previous: null }
-    : data as PaginatedResponse<T>;
+// ══════════════════════════════════════════════════════════════════════════════
+// AUTH — branché sur le backend Django (apps/auth_bridge/)
+// ══════════════════════════════════════════════════════════════════════════════
+// Tous les endpoints publics utilisent skipAuthRefresh:true pour éviter de
+// déclencher un refresh sur un 401 (ex: mauvais mot de passe sur login).
+// Seul /me/ et /logout/ peuvent bénéficier du refresh automatique.
 
-// ── Auth ─────────────────────────────────────────────────────────────────────
-// ── Auth ─────────────────────────────────────────────────────────────────────
-// REMPLACER le bloc authRepository dans src/repositories/index.ts
 export const authRepository = {
-  login: async (payload: LoginPayload): Promise<AuthResponse> => {
-    // JSON-Server mock: filtre par email, simule token JWT
-    const users = await api.get<User[]>("/api/v1/users", { params: { email: payload.email } });
-    if (!users || users.length === 0) throw new Error("Email ou mot de passe incorrect");
-    const user = users[0];
-    const fakeToken = btoa(JSON.stringify({ id: user.id, role: user.role, exp: Date.now() + 86400000 }));
-    return { access: fakeToken, refresh: fakeToken + "_refresh", user };
+  // ── Connexion classique email/password ───────────────────────────────────
+  login: (payload: LoginPayload): Promise<AuthResponse> =>
+    api.post<AuthResponse>("/api/v1/auth/login/", payload, { skipAuthRefresh: true }),
+
+  // ── Inscription — crée User + Profil, envoie email de vérification ───────
+  register: (payload: RegisterPayload): Promise<AuthResponse> =>
+    api.post<AuthResponse>("/api/v1/auth/register/", payload, { skipAuthRefresh: true }),
+
+  // ── Connexion/inscription Google OAuth — trusted, skip email verify ──────
+  google: (payload: GoogleAuthPayload): Promise<AuthResponse> =>
+    api.post<AuthResponse>("/api/v1/auth/google/", payload, { skipAuthRefresh: true }),
+
+  // ── Profil utilisateur connecté (Bearer token) ───────────────────────────
+  me: (): Promise<User> =>
+    api.get<User>("/api/v1/auth/me/"),
+
+  // ── Rafraîchir le access token via le refresh token ──────────────────────
+  refreshToken: (payload: RefreshTokenPayload): Promise<TokenRefreshResponse> =>
+    api.post<TokenRefreshResponse>("/api/v1/auth/token/refresh/", payload, { skipAuthRefresh: true }),
+
+  // ── Déconnexion — blacklist le refresh token ─────────────────────────────
+  logout: (refresh: string): Promise<DetailResponse> => {
+    const payload: LogoutPayload = { refresh };
+    return api.post<DetailResponse>("/api/v1/auth/logout/", payload, { skipAuthRefresh: true });
   },
-  loginWithGoogle: async (email: string, name: string): Promise<AuthResponse> => {
-    // Simulation Google auth
-    const users = await api.get<User[]>("/api/v1/users", { params: { email } });
-    if (!users || users.length === 0) throw new Error("Utilisateur non trouvé");
-    const user = users[0];
-    const fakeToken = btoa(JSON.stringify({ id: user.id, role: user.role, exp: Date.now() + 86400000 }));
-    return { access: fakeToken, refresh: fakeToken + "_refresh", user };
+
+  // ── Vérification email — consomme le token reçu par email ────────────────
+  verifyEmail: (token: string): Promise<AuthResponse> => {
+    const payload: VerifyEmailPayload = { token };
+    return api.post<AuthResponse>("/api/v1/auth/verify-email/", payload, { skipAuthRefresh: true });
   },
-  register: async (payload: any): Promise<AuthResponse> => {
-    // Simulation d'inscription
-    const user = await api.post<User>("/api/v1/users", payload);
-    const fakeToken = btoa(JSON.stringify({ id: user.id, role: user.role, exp: Date.now() + 86400000 }));
-    return { access: fakeToken, refresh: fakeToken + "_refresh", user };
+
+  // ── Renvoi d'un email de vérification ────────────────────────────────────
+  resendVerification: (email: string): Promise<DetailResponse> => {
+    const payload: ResendVerificationPayload = { email };
+    return api.post<DetailResponse>("/api/v1/auth/resend-verification/", payload, { skipAuthRefresh: true });
   },
-  me: (id: string): Promise<User> => api.get(`/api/v1/users/${id}`),
+
+  // ── Mot de passe oublié — envoie un email de reset ───────────────────────
+  forgotPassword: (email: string): Promise<DetailResponse> => {
+    const payload: ForgotPasswordPayload = { email };
+    return api.post<DetailResponse>("/api/v1/auth/forgot-password/", payload, { skipAuthRefresh: true });
+  },
+
+  // ── Réinitialisation du mot de passe avec token ──────────────────────────
+  resetPassword: (token: string, new_password: string): Promise<AuthResponse> => {
+    const payload: ResetPasswordPayload = { token, new_password };
+    return api.post<AuthResponse>("/api/v1/auth/reset-password/", payload, { skipAuthRefresh: true });
+  },
+
+  // ── Demande d'un lien magique (connexion sans mot de passe) ──────────────
+  magicLinkRequest: (email: string): Promise<DetailResponse> => {
+    const payload: MagicLinkRequestPayload = { email };
+    return api.post<DetailResponse>("/api/v1/auth/magic-link/request/", payload, { skipAuthRefresh: true });
+  },
+
+  // ── Validation d'un lien magique — connecte l'utilisateur ────────────────
+  magicLinkVerify: (token: string): Promise<AuthResponse> => {
+    const payload: MagicLinkVerifyPayload = { token };
+    return api.post<AuthResponse>("/api/v1/auth/magic-link/verify/", payload, { skipAuthRefresh: true });
+  },
 };
- 
 
-
-// ── Tenants ───────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// TENANTS — à aligner sur le backend Django dans une session dédiée
+// ══════════════════════════════════════════════════════════════════════════════
 export const tenantsRepository = {
   getList: (f?: TenantFilters): Promise<PaginatedResponse<Tenant>> =>
     api.get("/api/v1/tenants", { params: p(f) }).then((data: unknown) => {
@@ -201,7 +253,6 @@ export const statsRepository = {
 // ── Conversations ─────────────────────────────────────────────────────────────
 export const conversationsRepository = {
   getList: (f?: ConversationFilters | string): Promise<PaginatedResponse<Conversation>> => {
-    // Accepte soit un string (tenant_id direct) soit un objet filtres
     const filters = typeof f === "string" ? { tenant_id: f } : f;
     return api.get("/api/v1/conversations", { params: p(filters) }).then((data: unknown) =>
       Array.isArray(data)
@@ -241,7 +292,6 @@ export const tenantKnowledgeRepository = {
 };
 
 // ── ServiceKnowledge ──────────────────────────────────────────────────────────
-// ── ServiceKnowledge ──────────────────────────────────────────────────────────
 export const serviceKnowledgeRepository = {
   getByTenant: (tenantId: string): Promise<ServiceKnowledge[]> =>
     api.get("/api/v1/service-knowledge", { params: { tenant_id: tenantId } })
@@ -267,7 +317,7 @@ export const businessHoursRepository = {
   create: (payload: CreateBusinessHoursPayload): Promise<BusinessHours> =>
     api.post("/api/v1/business-hours", payload),
   patch: (id: string, payload: Partial<CreateBusinessHoursPayload>): Promise<BusinessHours> =>
-    api.patch(`/api/v1/business-hours/${id}`, payload), 
+    api.patch(`/api/v1/business-hours/${id}`, payload),
 };
 
 // ── Locations ─────────────────────────────────────────────────────────────────

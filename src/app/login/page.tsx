@@ -5,23 +5,19 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useTheme } from "@/components/ui/ThemeProvider";
 import { Spinner } from "@/components/ui";
-import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
-import {
-  Mail, Lock, ArrowLeft, CheckCircle, Sun, Moon,
-  MessageSquare, Phone, CalendarDays, Zap,
-} from "lucide-react";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import { Mail, Lock, ArrowLeft, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/lib/constants";
+import { ApiError } from "@/lib/api-client";
+import { authRepository } from "@/repositories";
 import { AuthShell, GoogleButton } from "@/components/auth/AuthShell";
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 
 type Tab = "password" | "magic";
 type View = "login" | "forgot" | "forgotSent" | "magicSent";
-
-
 
 // ════════════════════════════════════════════════════════════════════════════
 // PAGE LOGIN
@@ -51,6 +47,7 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
 
+  // ── Connexion email/password ────────────────────────────────────────────
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -59,26 +56,45 @@ function LoginForm() {
         await login({ email, password });
         const params = new URLSearchParams(window.location.search);
         router.push(params.get("redirect") ?? ROUTES.dashboard);
-      } catch {
+      } catch (err) {
+        if (err instanceof ApiError && err.isEmailNotVerified()) {
+          const em = err.getEmail() ?? email;
+          router.push(`${ROUTES.pending}?email=${encodeURIComponent(em)}`);
+          return;
+        }
         setError(t.loginError);
       }
     });
   };
 
+  // ── Demande de magic link ────────────────────────────────────────────────
+  // Le backend renvoie toujours une réponse neutre (il ne révèle pas l'existence
+  // du compte). On affiche donc toujours l'écran "envoyé" côté UI.
   const handleMagicLink = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     startTransition(async () => {
-      await new Promise(r => setTimeout(r, 800));
+      try {
+        await authRepository.magicLinkRequest(email);
+      } catch {
+        // Réponse neutre : même comportement visuel en cas d'erreur réseau
+      }
       setView("magicSent");
     });
   };
 
+  // ── Mot de passe oublié ──────────────────────────────────────────────────
+  // Même logique neutre : on affiche toujours "envoyé" pour ne pas divulguer
+  // l'existence du compte.
   const handleForgotPassword = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     startTransition(async () => {
-      await new Promise(r => setTimeout(r, 800));
+      try {
+        await authRepository.forgotPassword(email);
+      } catch {
+        // Réponse neutre
+      }
       setView("forgotSent");
     });
   };
@@ -150,8 +166,12 @@ function LoginForm() {
             label={t.googleBtn}
             onError={() => setError(t.loginError)}
             onSuccess={async (googleUser) => {
-              await loginWithGoogle(googleUser);
-              router.push(ROUTES.dashboard);
+              try {
+                await loginWithGoogle(googleUser);
+                router.push(ROUTES.dashboard);
+              } catch {
+                setError(t.loginError);
+              }
             }}
           />
           <div className="flex items-center gap-3 my-6">

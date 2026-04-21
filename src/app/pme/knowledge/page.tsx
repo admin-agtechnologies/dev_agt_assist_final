@@ -513,7 +513,7 @@ function TabLocations({ tenantId, d }: { tenantId: string; d: ReturnType<typeof 
                 if (editingId) {
                     await locationsRepository.patch(editingId, form);
                 } else {
-                    await locationsRepository.create({ ...form, tenant_id: tenantId, hours: null });
+                    await locationsRepository.create({ ...form, tenant_id: tenantId });
                 }
                 toast.success(t.saveSuccess);
                 setModalOpen(false);

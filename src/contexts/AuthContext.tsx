@@ -1,13 +1,12 @@
 // src/contexts/AuthContext.tsx
-// ══════════════════════════════════════════════════════════════════════════════
-// REMPLACER le fichier complet src/contexts/AuthContext.tsx par ceci
-// ══════════════════════════════════════════════════════════════════════════════
 "use client";
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { tokenStorage } from "@/lib/api-client";
 import { authRepository } from "@/repositories";
+import { ROUTES } from "@/lib/constants";
 import type { User, LoginPayload, AuthResponse } from "@/types/api";
 
+// ── Info Google OAuth renvoyée par @react-oauth/google ───────────────────────
 interface GoogleUserInfo {
   email: string;
   name: string;
@@ -19,58 +18,91 @@ interface AuthContextType {
   isLoading: boolean;
   login: (payload: LoginPayload) => Promise<void>;
   loginWithGoogle: (googleUser: GoogleUserInfo) => Promise<AuthResponse>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAdmin: boolean;
   isPme: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+/**
+ * Guard runtime : le frontend client PME ne traite que les users "entreprise".
+ * Le backend peut techniquement renvoyer un admin/superadmin si ses credentials
+ * sont valides — on rejette alors explicitement ici.
+ */
+function ensureEntreprise(u: User): void {
+  if (u.user_type !== "entreprise") {
+    throw new Error("Accès réservé aux comptes entreprise.");
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // ── Reprise de session : GET /auth/me/ si token présent ──────────────────
   useEffect(() => {
     const token = tokenStorage.getAccess();
-    if (token) {
-      // Avec Django JWT réel : appeler /me/ directement avec le Bearer token
-      // Pas besoin de décoder le token localement
-      authRepository.me()
-        .then(setUser)
-        .catch(() => tokenStorage.clear())
-        .finally(() => setIsLoading(false));
-    } else {
+    if (!token) {
       setIsLoading(false);
+      return;
     }
+    authRepository.me()
+      .then((u) => {
+        try {
+          ensureEntreprise(u);
+          setUser(u);
+        } catch {
+          tokenStorage.clear();
+          setUser(null);
+        }
+      })
+      .catch(() => {
+        tokenStorage.clear();
+        setUser(null);
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
-  const login = async (payload: LoginPayload) => {
+  // ── Connexion classique email/password ───────────────────────────────────
+  const login = async (payload: LoginPayload): Promise<void> => {
     const res = await authRepository.login(payload);
-    tokenStorage.set(res.access, res.refresh ?? "");
+    ensureEntreprise(res.user);
+    tokenStorage.set(res.access, res.refresh);
     setUser(res.user);
   };
 
+  // ── Connexion/inscription via Google OAuth ───────────────────────────────
   const loginWithGoogle = async (googleUser: GoogleUserInfo): Promise<AuthResponse> => {
-    const res = await authRepository.loginWithGoogle(googleUser.email, googleUser.name);
-    tokenStorage.set(res.access, res.refresh ?? "");
+    const res = await authRepository.google({
+      email: googleUser.email,
+      name: googleUser.name,
+      google_id: googleUser.sub,
+    });
+    ensureEntreprise(res.user);
+    tokenStorage.set(res.access, res.refresh);
     setUser(res.user);
     return res;
   };
 
-  const logout = () => {
+  // ── Déconnexion : blacklist backend (best effort) + clear local ──────────
+  const logout = async (): Promise<void> => {
     const refresh = tokenStorage.getRefresh();
     if (refresh) {
-      authRepository.logout(refresh).catch(() => {});
+      try {
+        await authRepository.logout(refresh);
+      } catch {
+        // Token expiré ou backend injoignable : on clear quand même en local
+      }
     }
     tokenStorage.clear();
     setUser(null);
-    window.location.href = "/login";
+    window.location.href = ROUTES.login;
   };
 
-  // Django renvoie user_type ("entreprise" | "admin" | "superadmin")
-  // Le frontend utilise role ("pme" | "admin") — on adapte
-const isAdmin = false; // Espace client PME uniquement — jamais d'admin ici
-const isPme = user !== null;
+  // Espace client PME uniquement — jamais d'admin ici
+  const isAdmin = false;
+  const isPme = user !== null;
 
   return (
     <AuthContext.Provider value={{ user, isLoading, login, loginWithGoogle, logout, isAdmin, isPme }}>
