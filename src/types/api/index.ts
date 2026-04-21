@@ -72,8 +72,8 @@ export interface User {
   // un TenantContext dédié. Présent ici pour ne pas casser le build des pages
   // qui consomment user.tenant_id avant le refactor.
   tenant_id?: string | null;
+  entreprise?: Tenant | null; // Ajout du bloc entreprise complet
 }
-
 // ── Payloads ──────────────────────────────────────────────────────────────────
 export interface LoginPayload {
   email: string;

@@ -15,7 +15,7 @@ import type { PlanSlug } from "@/lib/constants";
 import {
   Check, Gift, Building2, CreditCard, PartyPopper,
   ChevronRight, Star, Mail, Lock, User, MailCheck,
-  Sun, Moon, ArrowLeft,
+  Sun, Moon, ArrowLeft, Eye, EyeOff,
 } from "lucide-react";
 import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
 
@@ -58,6 +58,8 @@ function OnboardingContent() {
   // ── Compte
   const [accountEmail, setAccountEmail] = useState("");
   const [accountPassword, setAccountPassword] = useState("");
+  const [accountConfirmPassword, setAccountConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [accountName, setAccountName] = useState("");
 
   // ── Profil entreprise
@@ -77,6 +79,11 @@ function OnboardingContent() {
   const handleAccountSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (accountPassword !== accountConfirmPassword) {
+      setError(locale === "fr" ? "Les mots de passe ne correspondent pas." : "Passwords do not match.");
+      return;
+    }
     startTransition(async () => {
       try {
         const res = await authRepository.register({
@@ -110,33 +117,34 @@ function OnboardingContent() {
 
   // ── Google OAuth onboarding ──────────────────────────────────────────────
   const handleGoogleSuccess = async (googleUser: { email: string; name: string; sub: string }) => {
-     try {
-       const res = await loginWithGoogle(googleUser);
-       // Google est trusted — pas de vérification email
-       if (res?.user?.user_type === "entreprise" && res?.user?.is_email_verified) {
-         // Compte existant et vérifié → dashboard
-         router.push(ROUTES.dashboard);
-         return;
-       }
-    // Nouveau compte Google → skip email_check, aller direct au profil
-       setAccountEmail(googleUser.email);
-       setAccountName(googleUser.name);
-       setStep("profile");
-     } catch {
-       setError(d.common.error);
-     }
+    try {
+      const res = await loginWithGoogle(googleUser);
+      // Google est trusted — pas de vérification email
+      if (res?.user?.user_type === "entreprise" && res?.user?.is_email_verified) {
+        // Compte existant et vérifié → dashboard
+        router.push(ROUTES.dashboard);
+        return;
+      }
+      // Nouveau compte Google → skip email_check, aller direct au profil
+      setAccountEmail(googleUser.email);
+      setAccountName(googleUser.name);
+      setStep("profile");
+    } catch {
+      setError(d.common.error);
+    }
   };
 
- // ── Vérification email — NE RIEN FAIRE ICI
-//   // L'utilisateur clique sur le lien reçu par email → /verify-email?token=xxx
-//   // Cette page vérifie le token, stocke les tokens JWT, redirige vers /onboarding?verified=true
-//   // Le useEffect ci-dessous détecte ?verified=true et passe à l'étape profile
- useEffect(() => {
-     const verified = new URLSearchParams(window.location.search).get("verified");
-     if (verified === "true" && step === "email_check") {
+  // ── Vérification email — NE RIEN FAIRE ICI
+  //   // L'utilisateur clique sur le lien reçu par email → /verify-email?token=xxx
+  //   // Cette page vérifie le token, stocke les tokens JWT, redirige vers /onboarding?verified=true
+  //   // Le useEffect ci-dessous détecte ?verified=true et passe à l'étape profile
+  useEffect(() => {
+    const verified = new URLSearchParams(window.location.search).get("verified");
+    // Si l'email est vérifié, on saute directement à l'étape du profil entreprise
+    if (verified === "true") {
       setStep("profile");
-     }
-   }, [step]);
+    }
+  }, []); // On ne l'exécute qu'une fois au montage du composant
 
   // ── Profil → Plan ────────────────────────────────────────────────────────
   const handleProfileNext = (e: React.FormEvent) => {
@@ -269,13 +277,46 @@ function OnboardingContent() {
                       value={accountEmail} onChange={e => setAccountEmail(e.target.value)} />
                   </div>
                 </div>
+                {/* Mot de passe */}
                 <div>
                   <label className="label-base">{t.fields.password}</label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                    <input type="password" required minLength={8} autoComplete="new-password"
-                      className="input-base pl-10"
-                      value={accountPassword} onChange={e => setAccountPassword(e.target.value)} />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required minLength={8} autoComplete="new-password"
+                      className="input-base pl-10 pr-10"
+                      value={accountPassword} onChange={e => setAccountPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)]"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Confirmation Mot de passe */}
+                {/* Confirmation Mot de passe */}
+                <div>
+                  <label className="label-base">{t.fields.confirmPassword}</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required minLength={8}
+                      className="input-base pl-10 pr-10"
+                      value={accountConfirmPassword} onChange={e => setAccountConfirmPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)]"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
                 </div>
                 {error && (
@@ -321,18 +362,18 @@ function OnboardingContent() {
               </p>
             </div>
             <button
-     onClick={async () => {
-       try {
-         await authRepository.resendVerification(accountEmail);
-         toast.success("Email renvoyé !");
-       } catch {
-         toast.error("Erreur lors de l'envoi.");
-       }
-     }}
-     className="text-sm text-[#075E54] underline hover:opacity-75 mt-4"
-   >
-     Renvoyer l'email de vérification
-   </button>
+              onClick={async () => {
+                try {
+                  await authRepository.resendVerification(accountEmail);
+                  toast.success("Email renvoyé !");
+                } catch {
+                  toast.error("Erreur lors de l'envoi.");
+                }
+              }}
+              className="text-sm text-[#075E54] underline hover:opacity-75 mt-4"
+            >
+              Renvoyer l'email de vérification
+            </button>
           </div>
         )}
 
@@ -545,10 +586,10 @@ function GoogleSignupButton({ onSuccess, onError, label }: {
                  border border-[var(--border)] bg-[var(--bg-card)]
                  hover:bg-[var(--bg)] transition-colors text-sm font-semibold text-[var(--text)] shadow-sm">
       <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
-        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
       </svg>
       {label}
     </button>

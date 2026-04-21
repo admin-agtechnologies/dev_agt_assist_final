@@ -28,7 +28,7 @@ export default function VerifyEmailPage() {
       .then((res) => {
         tokenStorage.set(res.access, res.refresh ?? "");
         setStatus("success");
-        setTimeout(() => router.push("/onboarding?verified=true"), 2000);
+        setTimeout(() => router.push(ROUTES.dashboard), 2000);
       })
       .catch((err: Error) => {
         setStatus("error");

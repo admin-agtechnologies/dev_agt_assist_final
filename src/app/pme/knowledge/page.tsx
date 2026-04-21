@@ -392,6 +392,7 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
             </div>
         </form>
     );
+    
 }
 
 // ── Composant éditeur d'horaires ──────────────────────────────────────────────
@@ -405,48 +406,62 @@ function HoursEditor({ title, hours, dayLabels, onToggle, onTimeChange, onSave, 
     d: ReturnType<typeof useLanguage>["dictionary"];
 }) {
     return (
-        <div className="card p-6 space-y-4">
-            <div className="flex items-center justify-between">
-                <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-2">
-                    <Clock className="w-4 h-4" /> {title}
-                </h3>
-                <button type="button" onClick={onSave} className="btn-primary py-1.5 text-xs">
+        <div className="bg-white p-8 rounded-[2.5rem] border border-[var(--border)] shadow-sm space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-[var(--border)]">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-[#075E54]/10 flex items-center justify-center text-[#075E54]">
+                        <Clock className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text)]">{title}</h3>
+                </div>
+                <button type="button" onClick={onSave} className="flex items-center gap-2 px-4 py-2 bg-[var(--bg)] hover:bg-[var(--border)] rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
                     <Save className="w-3.5 h-3.5" /> {d.common.save}
                 </button>
             </div>
-            <div className="space-y-2">
+
+            <div className="grid grid-cols-1 gap-2">
                 {DAYS.map(day => {
                     const dh = hours[day] as DayHours;
                     return (
-                        <div key={day} className="flex items-center gap-4 py-2 border-b border-[var(--border)] last:border-0">
-                            <span className="w-24 text-sm font-semibold text-[var(--text)] flex-shrink-0">
-                                {dayLabels[day]}
-                            </span>
-                            <label className="flex items-center gap-2 cursor-pointer flex-shrink-0">
+                        <div key={day} className={cn(
+                            "flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl transition-all border",
+                            dh.open ? "bg-white border-[var(--border)] shadow-sm" : "bg-[var(--bg)] border-transparent opacity-60"
+                        )}>
+                            <div className="flex items-center gap-4">
+                                {/* Toggle Style iOS */}
                                 <div onClick={() => onToggle(day)}
                                     className={cn(
-                                        "w-10 h-5 rounded-full p-0.5 transition-colors cursor-pointer",
-                                        dh.open ? "bg-[#25D366]" : "bg-[var(--border)]"
+                                        "w-12 h-6 rounded-full p-1 transition-all cursor-pointer flex items-center",
+                                        dh.open ? "bg-[#25D366]" : "bg-[var(--text-muted)]"
                                     )}>
                                     <div className={cn(
-                                        "w-4 h-4 bg-white rounded-full shadow transition-transform",
-                                        dh.open ? "translate-x-5" : "translate-x-0"
+                                        "w-4 h-4 bg-white rounded-full shadow-md transition-transform duration-300",
+                                        dh.open ? "translate-x-6" : "translate-x-0"
                                     )} />
                                 </div>
-                                <span className="text-xs text-[var(--text-muted)]">
-                                    {dh.open ? (d.common.active) : (d.common.inactive)}
+                                <span className="text-sm font-black text-[var(--text)] w-20 capitalize">
+                                    {dayLabels[day]}
                                 </span>
-                            </label>
-                            {dh.open && (
-                                <div className="flex items-center gap-2 ml-auto">
-                                    <input type="time" value={dh.start}
-                                        onChange={e => onTimeChange(day, "start", e.target.value)}
-                                        className="input-base py-1.5 text-sm w-32" />
-                                    <span className="text-[var(--text-muted)] text-sm">→</span>
-                                    <input type="time" value={dh.end}
-                                        onChange={e => onTimeChange(day, "end", e.target.value)}
-                                        className="input-base py-1.5 text-sm w-32" />
+                            </div>
+
+                            {dh.open ? (
+                                <div className="flex items-center gap-2 mt-3 sm:mt-0">
+                                    <div className="relative">
+                                        <input type="time" value={dh.start}
+                                            onChange={e => onTimeChange(day, "start", e.target.value)}
+                                            className="bg-[var(--bg)] border-none rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-[#25D366] transition-all" />
+                                    </div>
+                                    <span className="text-[var(--text-muted)] font-black">→</span>
+                                    <div className="relative">
+                                        <input type="time" value={dh.end}
+                                            onChange={e => onTimeChange(day, "end", e.target.value)}
+                                            className="bg-[var(--bg)] border-none rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-[#25D366] transition-all" />
+                                    </div>
                                 </div>
+                            ) : (
+                                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mt-3 sm:mt-0">
+                                    Fermé / Indisponible
+                                </span>
                             )}
                         </div>
                     );
