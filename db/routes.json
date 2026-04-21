@@ -36,5 +36,7 @@
   "/api/v1/transactions": "/transactions",
   "/api/v1/transactions/:id": "/transactions/:id",
   "/api/v1/conversation-messages": "/conversation_messages",
-  "/api/v1/conversation-messages/:id": "/conversation_messages/:id"
+  "/api/v1/conversation-messages/:id": "/conversation_messages/:id",
+  "/api/v1/phone-numbers": "/phone_numbers",
+  "/api/v1/phone-numbers/:id": "/phone_numbers/:id"
 }

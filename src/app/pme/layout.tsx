@@ -11,17 +11,17 @@ import { ROUTES } from "@/lib/constants";
 import {
   LayoutDashboard, Bot, CalendarDays, CreditCard,
   UserCircle, HelpCircle, Sun, Moon, Globe, LogOut, Menu, X, RefreshCw,
-  BookOpen, GraduationCap,
+  BookOpen, GraduationCap, Star, AlertTriangle,
 } from "lucide-react";
 import { SupportWidgets } from "@/components/SupportWidgets";
 
 const navItems = (t: ReturnType<typeof useLanguage>["dictionary"]) => [
-  { href: ROUTES.dashboard,    icon: LayoutDashboard, label: t.nav.dashboard },
-  { href: ROUTES.bots,         icon: Bot,             label: t.nav.bots },
-  { href: ROUTES.knowledge,    icon: BookOpen,        label: t.nav.knowledge },
-  { href: ROUTES.appointments, icon: CalendarDays,    label: t.nav.appointments },
-  { href: ROUTES.billing,      icon: CreditCard,      label: t.nav.billing },
-  { href: ROUTES.profile,      icon: UserCircle,      label: t.nav.profile },
+  { href: ROUTES.dashboard, icon: LayoutDashboard, label: t.nav.dashboard },
+  { href: ROUTES.bots, icon: Bot, label: t.nav.bots },
+  { href: ROUTES.knowledge, icon: BookOpen, label: t.nav.knowledge },
+  { href: ROUTES.appointments, icon: CalendarDays, label: t.nav.appointments },
+  { href: ROUTES.billing, icon: CreditCard, label: t.nav.billing },
+  { href: ROUTES.profile, icon: UserCircle, label: t.nav.profile },
 ];
 
 export default function PmeLayout({ children }: { children: ReactNode }) {
@@ -87,7 +87,7 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
       {/* Footer */}
       <div className="p-4 border-t border-[var(--border)] space-y-1">
 
-        {/* Configuration rapide (onboarding) */}
+        {/* Configuration rapide */}
         <button
           onClick={() => { setSidebarOpen(false); router.push(ROUTES.onboarding); }}
           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-[var(--text-sidebar)] hover:bg-[var(--bg)] transition-colors"
@@ -124,6 +124,36 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
         >
           <HelpCircle className="w-4 h-4 flex-shrink-0" />
           {d.nav.help}
+        </Link>
+
+        {/* Laisser un témoignage */}
+        <Link
+          href={ROUTES.feedback}
+          onClick={() => setSidebarOpen(false)}
+          className={cn(
+            "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-colors",
+            pathname === ROUTES.feedback
+              ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)] font-semibold"
+              : "text-[var(--text-sidebar)] hover:bg-[var(--bg)]"
+          )}
+        >
+          <Star className="w-4 h-4 flex-shrink-0" />
+          {d.nav.feedback}
+        </Link>
+
+        {/* Signaler un problème */}
+        <Link
+          href={ROUTES.bug}
+          onClick={() => setSidebarOpen(false)}
+          className={cn(
+            "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-colors",
+            pathname === ROUTES.bug
+              ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)] font-semibold"
+              : "text-[var(--text-sidebar)] hover:bg-[var(--bg)]"
+          )}
+        >
+          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+          {d.nav.bug}
         </Link>
 
         {/* Séparateur */}
@@ -171,17 +201,25 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile header */}
         <header className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-card)]">
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 rounded-xl hover:bg-[var(--bg)] transition-colors">
-            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          <button onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 rounded-xl hover:bg-[var(--bg)] transition-colors">
+            {sidebarOpen
+              ? <X className="w-5 h-5 text-[var(--text)]" />
+              : <Menu className="w-5 h-5 text-[var(--text)]" />}
           </button>
-          <span className="font-bold text-[var(--text)]">AGT Platform</span>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg bg-[#075E54] flex items-center justify-center text-white font-black text-xs">A</div>
+            <span className="font-bold text-sm text-[var(--text)]">AGT Platform</span>
+          </div>
         </header>
 
         <main className="flex-1 overflow-y-auto p-6 lg:p-8">
           {children}
         </main>
-        <SupportWidgets />
       </div>
+
+      {/* Widgets support */}
+      <SupportWidgets />
     </div>
   );
 }

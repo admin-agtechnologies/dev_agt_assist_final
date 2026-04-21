@@ -12,28 +12,30 @@
     "dev:mock": "concurrently \"next dev -p 3000\" \"json-server --watch db/db.json --port 4000 --routes db/routes.json\""
   },
   "dependencies": {
-    "next": "14.2.5",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "next-themes": "^0.3.0",
-    "recharts": "^2.12.7",
-    "lucide-react": "^0.400.0",
     "@react-oauth/google": "^0.12.1",
     "clsx": "^2.1.1",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
+    "lucide-react": "^0.400.0",
+    "next": "14.2.5",
+    "next-themes": "^0.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "recharts": "^2.12.7",
     "tailwind-merge": "^2.4.0"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "typescript": "^5",
-    "tailwindcss": "^3.4.6",
-    "postcss": "^8",
     "autoprefixer": "^10",
+    "concurrently": "^8.2.2",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
-    "concurrently": "^8.2.2",
-    "json-server": "^0.17.4"
+    "json-server": "^0.17.4",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.6",
+    "typescript": "^5"
   },
   "description": "AGT Platform — Interface PME"
 }

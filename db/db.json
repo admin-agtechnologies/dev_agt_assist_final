@@ -47,9 +47,13 @@
     {
       "id": "b1",
       "tenant_id": "t1",
+      "phone_number_id": "pn1",
       "chatbot_service_bot_id": "cs1",
       "name": "Pharma Assistant",
-      "welcome_message": "Bonjour ! Bienvenue à la Pharmacie du Centre. Comment puis-je vous aider ?",
+      "main_name": "Pharma Bot",
+      "whatsapp_display_name": "Sophie de la Pharmacie",
+      "voice_display_name": "Sophie Vocale",
+      "welcome_message": "Bonjour ! Je suis l'assistant de la Pharmacie du Centre. Comment puis-je vous aider ?",
       "personality": "Professionnel, chaleureux et précis.",
       "languages": [
         "fr",
@@ -58,50 +62,44 @@
       "whatsapp_provider": "waha",
       "voice_ai_provider": "gemini",
       "phone_operator": null,
-      "is_active": true,
-      "status": "active",
+      "is_active": false,
+      "status": "paused",
+      "bot_type": "whatsapp",
+      "paired_bot_id": "b2",
       "created_at": "2026-01-12T10:00:00Z"
     },
     {
       "id": "b2",
       "tenant_id": "t1",
+      "phone_number_id": "pn1",
       "chatbot_service_bot_id": "cs2",
       "name": "Pharma Vocal",
+      "main_name": "Pharma Bot",
+      "whatsapp_display_name": "Sophie de la Pharmacie",
+      "voice_display_name": "Sophie Vocale",
       "welcome_message": "Pharmacie du Centre, bonjour. En quoi puis-je vous aider ?",
       "personality": "Rassurant, clair et concis.",
       "languages": [
         "fr"
       ],
       "whatsapp_provider": "waha",
-      "voice_ai_provider": "openai",
+      "voice_ai_provider": "gemini",
       "phone_operator": "orange",
       "is_active": true,
       "status": "paused",
-      "created_at": "2026-02-01T10:00:00Z"
+      "bot_type": "voice",
+      "paired_bot_id": "b1",
+      "created_at": "2026-01-12T10:00:00Z"
     },
     {
       "id": "b3",
-      "tenant_id": "t1",
-      "chatbot_service_bot_id": "cs3",
-      "name": "Pharma RDV",
-      "welcome_message": "Bonjour ! Je gère vos rendez-vous à la Pharmacie du Centre.",
-      "personality": "Efficace, organisé et ponctuel.",
-      "languages": [
-        "fr",
-        "en"
-      ],
-      "whatsapp_provider": "meta_api",
-      "voice_ai_provider": "gemini",
-      "phone_operator": null,
-      "is_active": false,
-      "status": "active",
-      "created_at": "2026-03-10T10:00:00Z"
-    },
-    {
-      "id": "b4",
       "tenant_id": "t2",
-      "chatbot_service_bot_id": "cs4",
+      "phone_number_id": "pn2",
+      "chatbot_service_bot_id": "cs3",
       "name": "Legal Assistant",
+      "main_name": "Legal Bot",
+      "whatsapp_display_name": "Maître IA du Cabinet",
+      "voice_display_name": "Assistant Juridique Vocal",
       "welcome_message": "Bonjour, Cabinet Mvondo. Quelle est votre demande ?",
       "personality": "Formel et rigoureux.",
       "languages": [
@@ -112,13 +110,42 @@
       "phone_operator": null,
       "is_active": true,
       "status": "active",
+      "bot_type": "whatsapp",
+      "paired_bot_id": "b4",
+      "created_at": "2026-01-18T10:00:00Z"
+    },
+    {
+      "id": "b4",
+      "tenant_id": "t2",
+      "phone_number_id": "pn2",
+      "chatbot_service_bot_id": "cs4",
+      "name": "Legal Vocal",
+      "main_name": "Legal Bot",
+      "whatsapp_display_name": "Maître IA du Cabinet",
+      "voice_display_name": "Assistant Juridique Vocal",
+      "welcome_message": "Cabinet Mvondo, en quoi puis-je vous aider ?",
+      "personality": "Formel et rigoureux.",
+      "languages": [
+        "fr"
+      ],
+      "whatsapp_provider": "waha",
+      "voice_ai_provider": "openai",
+      "phone_operator": null,
+      "is_active": true,
+      "status": "active",
+      "bot_type": "voice",
+      "paired_bot_id": "b3",
       "created_at": "2026-01-18T10:00:00Z"
     },
     {
       "id": "b5",
       "tenant_id": "t3",
+      "phone_number_id": "pn3",
       "chatbot_service_bot_id": "cs5",
       "name": "Beauty Bot",
+      "main_name": "Élégance Bot",
+      "whatsapp_display_name": "Assistante Élégance",
+      "voice_display_name": "Voix du Salon Élégance",
       "welcome_message": "Bienvenue au Salon Élégance !",
       "personality": "Sympathique et glamour.",
       "languages": [
@@ -129,7 +156,61 @@
       "phone_operator": null,
       "is_active": false,
       "status": "paused",
+      "bot_type": "whatsapp",
+      "paired_bot_id": "b6",
       "created_at": "2026-02-05T10:00:00Z"
+    },
+    {
+      "id": "b6",
+      "tenant_id": "t3",
+      "phone_number_id": "pn3",
+      "chatbot_service_bot_id": "cs6",
+      "name": "Beauty Vocal",
+      "main_name": "Élégance Bot",
+      "whatsapp_display_name": "Assistante Élégance",
+      "voice_display_name": "Voix du Salon Élégance",
+      "welcome_message": "Salon Élégance, bonjour !",
+      "personality": "Sympathique et glamour.",
+      "languages": [
+        "fr"
+      ],
+      "whatsapp_provider": "meta_api",
+      "voice_ai_provider": "gemini",
+      "phone_operator": null,
+      "is_active": false,
+      "status": "paused",
+      "bot_type": "voice",
+      "paired_bot_id": "b5",
+      "created_at": "2026-02-05T10:00:00Z"
+    }
+  ],
+  "phone_numbers": [
+    {
+      "id": "pn1",
+      "number": "+237699100001",
+      "tenant_id": "t1",
+      "whatsapp_bot_id": "b1",
+      "voice_bot_id": "b2",
+      "provider_name": "orange",
+      "status": "active"
+    },
+    {
+      "id": "pn2",
+      "number": "+237699100002",
+      "tenant_id": "t2",
+      "whatsapp_bot_id": "b3",
+      "voice_bot_id": "b4",
+      "provider_name": "mtn",
+      "status": "active"
+    },
+    {
+      "id": "pn3",
+      "number": "+237699100003",
+      "tenant_id": "t3",
+      "whatsapp_bot_id": "b5",
+      "voice_bot_id": "b6",
+      "provider_name": "orange",
+      "status": "inactive"
     }
   ],
   "services": [

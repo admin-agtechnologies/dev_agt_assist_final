@@ -67,7 +67,7 @@ export default function PmeDashboardPage() {
     const today = new Date().toISOString().split("T")[0];
     const [s, c, sub, appts] = await Promise.all([
       statsRepository.getByTenant(user.tenant_id).catch(() => null),
-conversationsRepository.getList({ tenant_id: user.tenant_id }).catch(() => ({ results: [] })),
+      conversationsRepository.getList({ tenant_id: user.tenant_id }).catch(() => ({ results: [] })),
       subscriptionsRepository.getByTenant(user.tenant_id).catch(() => null),
       appointmentsRepository.getList({ tenant_id: user.tenant_id }).catch(() => ({ results: [] })),
     ]);
@@ -102,11 +102,6 @@ conversationsRepository.getList({ tenant_id: user.tenant_id }).catch(() => ({ re
       week: stats?.appointments_week ?? 0, icon: CalendarDays,
       color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/20",
     },
-    {
-      label: t.activeConversations, value: stats?.active_conversations ?? 0,
-      week: null, icon: Activity,
-      color: "text-red-500", bg: "bg-red-50 dark:bg-red-900/20",
-    },
   ];
 
   // ── Données graphique ────────────────────────────────────────────────────────
@@ -119,7 +114,7 @@ conversationsRepository.getList({ tenant_id: user.tenant_id }).catch(() => ({ re
   const msgUsed = stats?.messages_week ?? 0;
   const msgTotal = currentPlan?.messages_limit ?? 2000;
   const callsUsed = stats?.calls_week ?? 0;
- const callsTotal = currentPlan?.calls_limit ?? 100;
+  const callsTotal = currentPlan?.calls_limit ?? 100;
 
   // ── Mock stats emails ────────────────────────────────────────────────────────
   const emailSentWeek = stats?.emails_sent_week ?? 12;
@@ -151,7 +146,7 @@ conversationsRepository.getList({ tenant_id: user.tenant_id }).catch(() => ({ re
         </div>
 
         {/* ── KPI Cards ─────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           {statCards.map(card => {
             const Icon = card.icon;
             return (

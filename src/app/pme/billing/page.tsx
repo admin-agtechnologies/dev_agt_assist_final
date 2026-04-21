@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback, useTransition } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/components/ui/Toast";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { Printer } from "lucide-react"; // Si tu utilises lucide-react pour les icônes
 import {
   subscriptionsRepository, walletsRepository,
   plansRepository, transactionsRepository,
@@ -82,11 +85,57 @@ export default function PmeBillingPage() {
   );
 
   const selectedPlan = plans.find(p => p.id === changePlanId) ?? null;
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+
+    // Titre du document
+    doc.setFontSize(18);
+    doc.text("Historique des Transactions - AGT Assist", 14, 22);
+
+    // Date de génération
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text(`Généré le : ${new Date().toLocaleString()}`, 14, 30);
+
+    // Préparation des données du tableau
+    const tableRows = transactions.map((tr) => [
+      formatDateTime(tr.created_at), // Utilisation de ton helper formatDateTime
+      tr.label,
+      tr.type === 'credit' ? 'Crédit' : 'Débit',
+      tr.operator || 'Système',
+      tr.reference || '-',
+      `${tr.amount.toLocaleString()} FCFA`
+    ]);
+
+    // Génération du tableau
+    autoTable(doc, {
+      startY: 40,
+      head: [['Date', 'Description', 'Type', 'Opérateur', 'Référence', 'Montant']],
+      body: tableRows,
+      theme: 'grid',
+      headStyles: { fillColor: [7, 94, 84] }, // Le vert foncé (#075E54) de ton app
+      styles: { fontSize: 8 },
+    });
+
+    // Téléchargement
+    doc.save(`facturation-agt-${new Date().getTime()}.pdf`);
+  };
 
   return (
     <>
       <div className="space-y-6 animate-fade-in">
-        <SectionHeader title={t.title} subtitle={t.subtitle} />
+        {/* En-tête avec titre à gauche et bouton à droite */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <SectionHeader title={t.title} subtitle={t.subtitle} />
+
+          <button
+            onClick={handleExportPDF}
+            className="btn-primary flex items-center gap-2 bg-[#075E54] hover:bg-[#05463e] shadow-sm"
+          >
+            <Printer className="w-4 h-4" />
+            <span>Imprimer l'historique</span>
+          </button>
+        </div>
 
         {/* ── Ligne 1 : Wallet + Abonnement ──────────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -131,10 +180,10 @@ export default function PmeBillingPage() {
               {sub && (
                 <Badge variant={
                   sub.status === "active" ? "green" :
-                  sub.status === "suspended" ? "red" : "slate"
+                    sub.status === "suspended" ? "red" : "slate"
                 }>
                   {sub.status === "active" ? t.statusActive :
-                   sub.status === "suspended" ? t.statusSuspended : t.statusCancelled}
+                    sub.status === "suspended" ? t.statusSuspended : t.statusCancelled}
                 </Badge>
               )}
             </div>

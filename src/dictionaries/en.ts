@@ -23,6 +23,8 @@ export const en = {
     help: "Get help",
     tutorial: "Interface tutorial",
     knowledge: "Knowledge base",
+    feedback: "Leave a testimonial",
+    bug: "Report an issue",
   },
 
   auth: {
@@ -228,6 +230,9 @@ export const en = {
   },
 
   bots: {
+    settingsTab: "Settings",
+    settingsSave: "Save",
+    settingsSaved: "Settings saved!",
     title: "My Bots", subtitle: "Manage your virtual assistants.",
     newBtn: "New bot",
     errorLoad: "Error loading bots.",

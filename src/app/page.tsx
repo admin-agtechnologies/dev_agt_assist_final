@@ -11,7 +11,7 @@ import {
   Check, MessageSquare, Phone, CalendarDays, BarChart3, Smartphone, Globe,
   Sun, Moon, Star, Users, TrendingUp, Clock, Award,
   ChevronLeft, ChevronRight, Play, MapPin, Mail, ArrowRight,
-  Bot, BookOpen, HelpCircle,
+  Bot, BookOpen, HelpCircle,Zap
 } from "lucide-react";
 
 // ── Constantes ────────────────────────────────────────────────────────────────
@@ -202,8 +202,8 @@ const HERO_SLIDES: HeroSlide[] = [
   {
     image: "/images/hero/hero-1.jpg",
     overlayColor: "from-[#075E54]/80 via-[#075E54]/60 to-[#022c22]/70",
-    badgeFr: "🎉 10 000 FCFA offerts à l'inscription",
-    badgeEn: "🎉 10,000 XAF offered at registration",
+    badgeFr: " 10 000 FCFA offerts à l'inscription",
+    badgeEn: " 10,000 XAF offered at registration",
     titleFr: "Votre assistant virtuel,",
     titleEn: "Your virtual assistant,",
     subtitleFr: "prêt en 5 minutes.",
@@ -213,8 +213,8 @@ const HERO_SLIDES: HeroSlide[] = [
   {
     image: "/images/hero/hero-2.png",
     overlayColor: "from-[#022c22]/85 via-[#075E54]/70 to-[#075E54]/60",
-    badgeFr: "💬 WhatsApp · 24h/24 · 7j/7",
-    badgeEn: "💬 WhatsApp · 24/7",
+    badgeFr: " WhatsApp · 24h/24 · 7j/7",
+    badgeEn: " WhatsApp · 24/7",
     titleFr: "Répondez à vos clients",
     titleEn: "Answer your customers",
     subtitleFr: "même quand vous dormez.",
@@ -224,8 +224,8 @@ const HERO_SLIDES: HeroSlide[] = [
   {
     image: "/images/hero/hero-3.jpg",
     overlayColor: "from-[#2D1B69]/85 via-[#6C3CE1]/65 to-[#2D1B69]/70",
-    badgeFr: "🤖 Agent Vocal IA nouvelle génération",
-    badgeEn: "🤖 Next-gen AI Voice Agent",
+    badgeFr: " Agent Vocal IA nouvelle génération",
+    badgeEn: " Next-gen AI Voice Agent",
     titleFr: "Un agent IA qui décroche",
     titleEn: "An AI agent that answers",
     subtitleFr: "à votre place.",
@@ -288,6 +288,9 @@ function HeroCarousel({ t, locale }: HeroCarouselProps) {
           key={`badge-${current}`}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 backdrop-blur-sm border border-white/25 text-white text-sm font-semibold mb-6 animate-fade-in"
         >
+          {current === 0 && <Zap className="w-4 h-4 text-[#25D366]" />}
+          {current === 1 && <MessageSquare className="w-4 h-4 text-[#25D366]" />}
+          {current === 2 && <Phone className="w-4 h-4 text-[#8B5CF6]" />}
           {locale === "fr" ? slide.badgeFr : slide.badgeEn}
         </div>
 
