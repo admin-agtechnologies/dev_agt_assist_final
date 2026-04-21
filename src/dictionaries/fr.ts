@@ -23,6 +23,8 @@ export const fr = {
     help: "Demander de l'aide",
     tutorial: "Tutoriel interface",
     knowledge: "Base de connaissance",
+    feedback: "Laisser un témoignage",
+    bug: "Signaler un problème",
   },
 
   auth: {
@@ -217,6 +219,9 @@ export const fr = {
   },
 
   bots: {
+    settingsTab: "Paramètres",
+    settingsSave: "Enregistrer",
+    settingsSaved: "Paramètres sauvegardés !",
     title: "Mes Bots", subtitle: "Gérez vos assistants virtuels.",
     newBtn: "Nouveau bot",
     errorLoad: "Erreur lors du chargement des bots.",

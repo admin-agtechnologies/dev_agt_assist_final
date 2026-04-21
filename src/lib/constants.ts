@@ -34,6 +34,8 @@ export const ROUTES = {
   help: "/pme/help",
   tutorial: "/pme/tutorial",
   knowledge: "/pme/knowledge",
+  feedback: "/pme/feedback",
+  bug: "/pme/bug",
 } as const;
 
 // ── Wallet cadeau de bienvenue ────────────────────────────────────────────────
@@ -59,7 +61,6 @@ export const PLANS_CONFIG = [
     highlight: false,
     features_keys: [
       "plans.features.whatsapp",
-      "plans.features.voiceBot",
       "plans.features.appointments10",
       "plans.features.emails50",
       "plans.features.dashboard",

@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { createPortal } from "react-dom";
 import type {
     TenantKnowledge, BusinessHours, DayHours,
-    AgencyLocation, Service, ServiceKnowledge, FAQ,
+    Location, Service, ServiceKnowledge, FAQ,
 } from "@/types/api";
 import {
     Building2, MapPin, Clock, BookOpen, Wrench,
@@ -122,19 +122,19 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
         if (k) {
             setKnowledge(k);
             setForm({
-                slogan:            k.slogan,
-                website:           k.website,
-                email:             k.email,
+                slogan: k.slogan,
+                website: k.website,
+                email: k.email,
                 transfer_whatsapp: k.transfer_whatsapp,
-                transfer_phone:    k.transfer_phone,
-                transfer_email:    k.transfer_email,
-                transfer_message:  k.transfer_message,
-                welcome_message:   k.welcome_message,
-                bot_tone:          k.bot_tone,
-                bot_personality:   k.bot_personality,
-                bot_signature:     k.bot_signature,
-                extra_info:        k.extra_info,
-                bot_languages:     k.bot_languages,
+                transfer_phone: k.transfer_phone,
+                transfer_email: k.transfer_email,
+                transfer_message: k.transfer_message,
+                welcome_message: k.welcome_message,
+                bot_tone: k.bot_tone,
+                bot_personality: k.bot_personality,
+                bot_signature: k.bot_signature,
+                extra_info: k.extra_info,
+                bot_languages: k.bot_languages,
             });
         }
 
@@ -162,10 +162,10 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
                     await tenantKnowledgeRepository.patch(knowledge.id, form);
                 } else {
                     await tenantKnowledgeRepository.create({
-                    ...form,
-                    tenant_id: tenantId,
-                    appointment_duration_min: 30,
-                    slot_buffer_min: 10,
+                        ...form,
+                        tenant_id: tenantId,
+                        appointment_duration_min: 30,
+                        slot_buffer_min: 10,
                     });
                 }
                 toast.success(t.saveSuccess);
@@ -462,7 +462,7 @@ function HoursEditor({ title, hours, dayLabels, onToggle, onTimeChange, onSave, 
 function TabLocations({ tenantId, d }: { tenantId: string; d: ReturnType<typeof useLanguage>["dictionary"] }) {
     const t = d.knowledge;
     const toast = useToast();
-    const [locations, setLocations] = useState<AgencyLocation[]>([]);
+    const [locations, setLocations] = useState<Location[]>([]);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -482,7 +482,7 @@ function TabLocations({ tenantId, d }: { tenantId: string; d: ReturnType<typeof 
     const fetchLocations = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await locationsRepository.getList(tenantId);
+            const data = await locationsRepository.getByTenant(tenantId);
             setLocations(data);
         } catch { /* silencieux */ }
         finally { setLoading(false); }
@@ -491,11 +491,17 @@ function TabLocations({ tenantId, d }: { tenantId: string; d: ReturnType<typeof 
     useEffect(() => { fetchLocations(); }, [fetchLocations]);
 
     const openCreate = () => { setForm(DEF_FORM); setEditingId(null); setModalOpen(true); };
-    const openEdit = (loc: AgencyLocation) => {
+    const openEdit = (loc: Location) => {
         setForm({
-            name: loc.name, address: loc.address, whatsapp: loc.whatsapp, phone: loc.phone,
-            email: loc.email, transfer_whatsapp: loc.transfer_whatsapp, transfer_phone: loc.transfer_phone,
-            extra_info: loc.extra_info, is_active: loc.is_active
+            name: loc.name,
+            address: loc.address,
+            whatsapp: loc.whatsapp ?? "",
+            phone: loc.phone ?? "",
+            email: loc.email ?? "",
+            transfer_whatsapp: loc.transfer_whatsapp ?? "",
+            transfer_phone: loc.transfer_phone ?? "",
+            extra_info: loc.extra_info ?? "",
+            is_active: loc.is_active ?? false // Pour le booléen, on met false par défaut
         });
         setEditingId(loc.id); setModalOpen(true);
     };
@@ -768,380 +774,380 @@ function TabFaq({ tenantId, d }: { tenantId: string; d: ReturnType<typeof useLan
 // ONGLET 4 — SERVICES & TARIFS (CRUD complet + knowledge)
 // ════════════════════════════════════════════════════════════════════════════
 function TabServices({ tenantId, d }: { tenantId: string; d: ReturnType<typeof useLanguage>["dictionary"] }) {
-  const t = d.knowledge;
-  const toast = useToast();
-  const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState<string | null>(null);
-  const [knowledgeMap, setKnowledgeMap] = useState<Record<string, ServiceKnowledge>>({});
-  const [savingKnowledgeId, setSavingKnowledgeId] = useState<string | null>(null);
-  const [knowledgeForms, setKnowledgeForms] = useState<Record<string, Partial<ServiceKnowledge>>>({});
-  const [mounted, setMounted] = useState(false);
+    const t = d.knowledge;
+    const toast = useToast();
+    const [services, setServices] = useState<Service[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [expanded, setExpanded] = useState<string | null>(null);
+    const [knowledgeMap, setKnowledgeMap] = useState<Record<string, ServiceKnowledge>>({});
+    const [savingKnowledgeId, setSavingKnowledgeId] = useState<string | null>(null);
+    const [knowledgeForms, setKnowledgeForms] = useState<Record<string, Partial<ServiceKnowledge>>>({});
+    const [mounted, setMounted] = useState(false);
 
-  // ── Modal création/édition service ────────────────────────────────────────
-  const [serviceModal, setServiceModal] = useState(false);
-  const [editingService, setEditingService] = useState<Service | null>(null);
-  const [deleteServiceId, setDeleteServiceId] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isSavingService, startSaveService] = useTransition();
+    // ── Modal création/édition service ────────────────────────────────────────
+    const [serviceModal, setServiceModal] = useState(false);
+    const [editingService, setEditingService] = useState<Service | null>(null);
+    const [deleteServiceId, setDeleteServiceId] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isSavingService, startSaveService] = useTransition();
 
-  const DEF_SERVICE_FORM = {
-    name: "", description: "", price: 0,
-    duration_min: 0 as number | null, is_active: true,
-  };
-  const [serviceForm, setServiceForm] = useState(DEF_SERVICE_FORM);
+    const DEF_SERVICE_FORM = {
+        name: "", description: "", price: 0,
+        duration_min: 0 as number | null, is_active: true,
+    };
+    const [serviceForm, setServiceForm] = useState(DEF_SERVICE_FORM);
 
-  useEffect(() => { setMounted(true); }, []);
+    useEffect(() => { setMounted(true); }, []);
 
-  // ── Fetch ─────────────────────────────────────────────────────────────────
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await servicesRepository.getList({ tenant_id: tenantId });
-      setServices(data.results);
-      const map: Record<string, ServiceKnowledge> = {};
-      const formInit: Record<string, Partial<ServiceKnowledge>> = {};
-      await Promise.all(
-        data.results.map(async svc => {
-          const k = await serviceKnowledgeRepository.getByService(svc.id).catch(() => null);
-          if (k) {
-            map[svc.id] = k;
-            formInit[svc.id] = {
-              welcome_message: k.welcome_message, bot_description: k.bot_description,
-              bot_tone: k.bot_tone, conditions: k.conditions,
-              confirmation_message: k.confirmation_message, extra_info: k.extra_info,
-            };
-          } else {
-            formInit[svc.id] = {
-              welcome_message: "", bot_description: "", bot_tone: "inherit",
-              conditions: "", confirmation_message: "", extra_info: "",
-            };
-          }
-        })
-      );
-      setKnowledgeMap(map);
-      setKnowledgeForms(formInit);
-    } catch { /* silencieux */ }
-    finally { setLoading(false); }
-  }, [tenantId]);
+    // ── Fetch ─────────────────────────────────────────────────────────────────
+    const fetchAll = useCallback(async () => {
+        setLoading(true);
+        try {
+            const data = await servicesRepository.getList({ tenant_id: tenantId });
+            setServices(data.results);
+            const map: Record<string, ServiceKnowledge> = {};
+            const formInit: Record<string, Partial<ServiceKnowledge>> = {};
+            await Promise.all(
+                data.results.map(async svc => {
+                    const k = await serviceKnowledgeRepository.getByService(svc.id).catch(() => null);
+                    if (k) {
+                        map[svc.id] = k;
+                        formInit[svc.id] = {
+                            welcome_message: k.welcome_message, bot_description: k.bot_description,
+                            bot_tone: k.bot_tone, conditions: k.conditions,
+                            confirmation_message: k.confirmation_message, extra_info: k.extra_info,
+                        };
+                    } else {
+                        formInit[svc.id] = {
+                            welcome_message: "", bot_description: "", bot_tone: "inherit",
+                            conditions: "", confirmation_message: "", extra_info: "",
+                        };
+                    }
+                })
+            );
+            setKnowledgeMap(map);
+            setKnowledgeForms(formInit);
+        } catch { /* silencieux */ }
+        finally { setLoading(false); }
+    }, [tenantId]);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+    useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // ── Ouvrir modale ─────────────────────────────────────────────────────────
-  const openCreate = () => {
-    setServiceForm(DEF_SERVICE_FORM);
-    setEditingService(null);
-    setServiceModal(true);
-  };
+    // ── Ouvrir modale ─────────────────────────────────────────────────────────
+    const openCreate = () => {
+        setServiceForm(DEF_SERVICE_FORM);
+        setEditingService(null);
+        setServiceModal(true);
+    };
 
-  const openEdit = (svc: Service) => {
-    setServiceForm({
-      name: svc.name, description: svc.description,
-      price: svc.price, duration_min: svc.duration_min,
-      is_active: svc.is_active,
-    });
-    setEditingService(svc);
-    setServiceModal(true);
-  };
-
-  // ── Sauvegarder service ───────────────────────────────────────────────────
-  const handleSaveService = (e: React.FormEvent) => {
-    e.preventDefault();
-    startSaveService(async () => {
-      try {
-        if (editingService) {
-          await servicesRepository.patch(editingService.id, serviceForm);
-          toast.success(t.serviceUpdated);
-        } else {
-          await servicesRepository.create({ ...serviceForm, tenant_id: tenantId });
-          toast.success(t.serviceCreated);
-        }
-        setServiceModal(false);
-        fetchAll();
-      } catch { toast.error(d.common.error); }
-    });
-  };
-
-  // ── Supprimer service ─────────────────────────────────────────────────────
-  const handleDeleteService = async () => {
-    if (!deleteServiceId) return;
-    setIsDeleting(true);
-    try {
-      await servicesRepository.delete(deleteServiceId);
-      toast.success(t.serviceDeleted);
-      setDeleteServiceId(null);
-      if (expanded === deleteServiceId) setExpanded(null);
-      fetchAll();
-    } catch { toast.error(d.common.error); }
-    finally { setIsDeleting(false); }
-  };
-
-  // ── Knowledge form ────────────────────────────────────────────────────────
-  const updateKnowledgeForm = (serviceId: string, field: string, value: string) => {
-    setKnowledgeForms(prev => ({ ...prev, [serviceId]: { ...prev[serviceId], [field]: value } }));
-  };
-
-  const handleSaveKnowledge = async (svc: Service) => {
-    setSavingKnowledgeId(svc.id);
-    try {
-      const formData = knowledgeForms[svc.id] ?? {};
-      const existing = knowledgeMap[svc.id];
-      if (existing) {
-        await serviceKnowledgeRepository.patch(existing.id, formData);
-      } else {
-        await serviceKnowledgeRepository.create({
-          ...formData as Omit<ServiceKnowledge, "id">,
-          service_id: svc.id, tenant_id: tenantId,
+    const openEdit = (svc: Service) => {
+        setServiceForm({
+            name: svc.name, description: svc.description,
+            price: svc.price, duration_min: svc.duration_min,
+            is_active: svc.is_active,
         });
-      }
-      toast.success(t.saveSuccess);
-      fetchAll();
-    } catch { toast.error(d.common.error); }
-    finally { setSavingKnowledgeId(null); }
-  };
+        setEditingService(svc);
+        setServiceModal(true);
+    };
 
-  if (loading) return (
-    <div className="flex justify-center py-12">
-      <Spinner className="w-6 h-6 border-[#25D366] border-t-transparent" />
-    </div>
-  );
+    // ── Sauvegarder service ───────────────────────────────────────────────────
+    const handleSaveService = (e: React.FormEvent) => {
+        e.preventDefault();
+        startSaveService(async () => {
+            try {
+                if (editingService) {
+                    await servicesRepository.patch(editingService.id, serviceForm);
+                    toast.success(t.serviceUpdated);
+                } else {
+                    await servicesRepository.create({ ...serviceForm, tenant_id: tenantId });
+                    toast.success(t.serviceCreated);
+                }
+                setServiceModal(false);
+                fetchAll();
+            } catch { toast.error(d.common.error); }
+        });
+    };
 
-  return (
-    <>
-      <div className="space-y-4">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-[var(--text-muted)]">
-            {services.length} {services.length > 1 ? "services" : "service"}
-          </p>
-          <button onClick={openCreate} className="btn-primary">
-            <Plus className="w-4 h-4" /> {t.newService}
-          </button>
+    // ── Supprimer service ─────────────────────────────────────────────────────
+    const handleDeleteService = async () => {
+        if (!deleteServiceId) return;
+        setIsDeleting(true);
+        try {
+            await servicesRepository.delete(deleteServiceId);
+            toast.success(t.serviceDeleted);
+            setDeleteServiceId(null);
+            if (expanded === deleteServiceId) setExpanded(null);
+            fetchAll();
+        } catch { toast.error(d.common.error); }
+        finally { setIsDeleting(false); }
+    };
+
+    // ── Knowledge form ────────────────────────────────────────────────────────
+    const updateKnowledgeForm = (serviceId: string, field: string, value: string) => {
+        setKnowledgeForms(prev => ({ ...prev, [serviceId]: { ...prev[serviceId], [field]: value } }));
+    };
+
+    const handleSaveKnowledge = async (svc: Service) => {
+        setSavingKnowledgeId(svc.id);
+        try {
+            const formData = knowledgeForms[svc.id] ?? {};
+            const existing = knowledgeMap[svc.id];
+            if (existing) {
+                await serviceKnowledgeRepository.patch(existing.id, formData);
+            } else {
+                await serviceKnowledgeRepository.create({
+                    ...formData as Omit<ServiceKnowledge, "id">,
+                    service_id: svc.id, tenant_id: tenantId,
+                });
+            }
+            toast.success(t.saveSuccess);
+            fetchAll();
+        } catch { toast.error(d.common.error); }
+        finally { setSavingKnowledgeId(null); }
+    };
+
+    if (loading) return (
+        <div className="flex justify-center py-12">
+            <Spinner className="w-6 h-6 border-[#25D366] border-t-transparent" />
         </div>
+    );
 
-        {/* Liste services */}
-        {services.length === 0 ? (
-          <div className="card">
-            <EmptyState message={d.services.noData} icon={Wrench} />
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {services.map(svc => {
-              const kForm = knowledgeForms[svc.id] ?? {};
-              const isExpanded = expanded === svc.id;
-              const isSavingK = savingKnowledgeId === svc.id;
-
-              return (
-                <div key={svc.id} className="card overflow-hidden">
-                  {/* ── En-tête service ── */}
-                  <div className="px-5 py-4 flex items-center gap-3">
-                    {/* Icône + infos */}
-                    <button
-                      type="button"
-                      onClick={() => setExpanded(isExpanded ? null : svc.id)}
-                      className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity">
-                      <div className="w-9 h-9 rounded-xl bg-[#6C3CE1]/10 flex items-center justify-center flex-shrink-0">
-                        <Wrench className="w-4 h-4 text-[#6C3CE1]" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-[var(--text)] truncate">{svc.name}</p>
-                        <p className="text-xs text-[var(--text-muted)]">
-                          {svc.price === 0 ? d.services.free : `${svc.price.toLocaleString()} XAF`}
-                          {svc.duration_min ? ` · ${svc.duration_min} min` : ""}
-                        </p>
-                      </div>
-                      <Badge variant={svc.is_active ? "green" : "slate"}>
-                        {svc.is_active ? d.common.active : d.common.inactive}
-                      </Badge>
-                      {isExpanded
-                        ? <ChevronUp className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" />
-                        : <ChevronDown className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" />}
+    return (
+        <>
+            <div className="space-y-4">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <p className="text-sm text-[var(--text-muted)]">
+                        {services.length} {services.length > 1 ? "services" : "service"}
+                    </p>
+                    <button onClick={openCreate} className="btn-primary">
+                        <Plus className="w-4 h-4" /> {t.newService}
                     </button>
+                </div>
 
-                    {/* Actions */}
-                    <div className="flex gap-1 flex-shrink-0">
-                      <button
-                        onClick={() => openEdit(svc)}
-                        className="p-1.5 rounded-lg hover:bg-[var(--bg)] text-[var(--text-muted)] transition-colors">
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteServiceId(svc.id)}
-                        className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-400 transition-colors">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                {/* Liste services */}
+                {services.length === 0 ? (
+                    <div className="card">
+                        <EmptyState message={d.services.noData} icon={Wrench} />
                     </div>
-                  </div>
+                ) : (
+                    <div className="space-y-3">
+                        {services.map(svc => {
+                            const kForm = knowledgeForms[svc.id] ?? {};
+                            const isExpanded = expanded === svc.id;
+                            const isSavingK = savingKnowledgeId === svc.id;
 
-                  {/* ── Section knowledge (expandable) ── */}
-                  {isExpanded && (
-                    <div className="px-5 pb-5 space-y-4 border-t border-[var(--border)] pt-4 animate-fade-in">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-1.5">
-                        <Bot className="w-3.5 h-3.5" /> {t.knowledgeSection}
-                      </p>
+                            return (
+                                <div key={svc.id} className="card overflow-hidden">
+                                    {/* ── En-tête service ── */}
+                                    <div className="px-5 py-4 flex items-center gap-3">
+                                        {/* Icône + infos */}
+                                        <button
+                                            type="button"
+                                            onClick={() => setExpanded(isExpanded ? null : svc.id)}
+                                            className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity">
+                                            <div className="w-9 h-9 rounded-xl bg-[#6C3CE1]/10 flex items-center justify-center flex-shrink-0">
+                                                <Wrench className="w-4 h-4 text-[#6C3CE1]" />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-bold text-[var(--text)] truncate">{svc.name}</p>
+                                                <p className="text-xs text-[var(--text-muted)]">
+                                                    {svc.price === 0 ? d.services.free : `${svc.price.toLocaleString()} XAF`}
+                                                    {svc.duration_min ? ` · ${svc.duration_min} min` : ""}
+                                                </p>
+                                            </div>
+                                            <Badge variant={svc.is_active ? "green" : "slate"}>
+                                                {svc.is_active ? d.common.active : d.common.inactive}
+                                            </Badge>
+                                            {isExpanded
+                                                ? <ChevronUp className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" />
+                                                : <ChevronDown className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" />}
+                                        </button>
 
-                      <div>
-                        <label className="label-base">{t.serviceWelcomeMessage}</label>
-                        <textarea rows={2} className="input-base resize-none"
-                          value={kForm.welcome_message ?? ""}
-                          onChange={e => updateKnowledgeForm(svc.id, "welcome_message", e.target.value)}
-                          placeholder="Pour ce service..." />
-                      </div>
+                                        {/* Actions */}
+                                        <div className="flex gap-1 flex-shrink-0">
+                                            <button
+                                                onClick={() => openEdit(svc)}
+                                                className="p-1.5 rounded-lg hover:bg-[var(--bg)] text-[var(--text-muted)] transition-colors">
+                                                <Edit className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => setDeleteServiceId(svc.id)}
+                                                className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-400 transition-colors">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
 
-                      <div>
-                        <label className="label-base">{t.serviceBotDescription}</label>
-                        <textarea rows={2} className="input-base resize-none"
-                          value={kForm.bot_description ?? ""}
-                          onChange={e => updateKnowledgeForm(svc.id, "bot_description", e.target.value)}
-                          placeholder="Description que le bot utilisera..." />
-                      </div>
+                                    {/* ── Section knowledge (expandable) ── */}
+                                    {isExpanded && (
+                                        <div className="px-5 pb-5 space-y-4 border-t border-[var(--border)] pt-4 animate-fade-in">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-1.5">
+                                                <Bot className="w-3.5 h-3.5" /> {t.knowledgeSection}
+                                            </p>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="label-base">{t.botTone}</label>
-                          <select className="input-base" value={kForm.bot_tone ?? "inherit"}
-                            onChange={e => updateKnowledgeForm(svc.id, "bot_tone", e.target.value)}>
-                            <option value="inherit">{t.toneInherit}</option>
-                            <option value="formal">{t.toneFormal}</option>
-                            <option value="semi_formal">{t.toneSemiFormal}</option>
-                            <option value="casual">{t.toneCasual}</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="label-base">{t.serviceConditions}</label>
-                          <input className="input-base"
-                            value={kForm.conditions ?? ""}
-                            onChange={e => updateKnowledgeForm(svc.id, "conditions", e.target.value)}
-                            placeholder="Apporter ordonnance..." />
-                        </div>
-                      </div>
+                                            <div>
+                                                <label className="label-base">{t.serviceWelcomeMessage}</label>
+                                                <textarea rows={2} className="input-base resize-none"
+                                                    value={kForm.welcome_message ?? ""}
+                                                    onChange={e => updateKnowledgeForm(svc.id, "welcome_message", e.target.value)}
+                                                    placeholder="Pour ce service..." />
+                                            </div>
 
-                      <div>
-                        <label className="label-base">{t.serviceConfirmationMessage}</label>
-                        <textarea rows={2} className="input-base resize-none"
-                          value={kForm.confirmation_message ?? ""}
-                          onChange={e => updateKnowledgeForm(svc.id, "confirmation_message", e.target.value)}
-                          placeholder="Votre RDV est confirmé..." />
-                      </div>
+                                            <div>
+                                                <label className="label-base">{t.serviceBotDescription}</label>
+                                                <textarea rows={2} className="input-base resize-none"
+                                                    value={kForm.bot_description ?? ""}
+                                                    onChange={e => updateKnowledgeForm(svc.id, "bot_description", e.target.value)}
+                                                    placeholder="Description que le bot utilisera..." />
+                                            </div>
 
-                      <div>
-                        <label className="label-base">{t.extraInfo}</label>
-                        <textarea rows={2} className="input-base resize-none"
-                          value={kForm.extra_info ?? ""}
-                          onChange={e => updateKnowledgeForm(svc.id, "extra_info", e.target.value)}
-                          placeholder="Infos supplémentaires..." />
-                      </div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="label-base">{t.botTone}</label>
+                                                    <select className="input-base" value={kForm.bot_tone ?? "inherit"}
+                                                        onChange={e => updateKnowledgeForm(svc.id, "bot_tone", e.target.value)}>
+                                                        <option value="inherit">{t.toneInherit}</option>
+                                                        <option value="formal">{t.toneFormal}</option>
+                                                        <option value="semi_formal">{t.toneSemiFormal}</option>
+                                                        <option value="casual">{t.toneCasual}</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="label-base">{t.serviceConditions}</label>
+                                                    <input className="input-base"
+                                                        value={kForm.conditions ?? ""}
+                                                        onChange={e => updateKnowledgeForm(svc.id, "conditions", e.target.value)}
+                                                        placeholder="Apporter ordonnance..." />
+                                                </div>
+                                            </div>
 
-                      <div className="flex justify-end">
-                        <button type="button" onClick={() => handleSaveKnowledge(svc)}
-                          disabled={isSavingK} className="btn-primary">
-                          {isSavingK
-                            ? <><Spinner className="border-white/30 border-t-white" /> {d.common.loading}</>
-                            : <><Save className="w-4 h-4" /> {d.common.save}</>}
-                        </button>
-                      </div>
+                                            <div>
+                                                <label className="label-base">{t.serviceConfirmationMessage}</label>
+                                                <textarea rows={2} className="input-base resize-none"
+                                                    value={kForm.confirmation_message ?? ""}
+                                                    onChange={e => updateKnowledgeForm(svc.id, "confirmation_message", e.target.value)}
+                                                    placeholder="Votre RDV est confirmé..." />
+                                            </div>
+
+                                            <div>
+                                                <label className="label-base">{t.extraInfo}</label>
+                                                <textarea rows={2} className="input-base resize-none"
+                                                    value={kForm.extra_info ?? ""}
+                                                    onChange={e => updateKnowledgeForm(svc.id, "extra_info", e.target.value)}
+                                                    placeholder="Infos supplémentaires..." />
+                                            </div>
+
+                                            <div className="flex justify-end">
+                                                <button type="button" onClick={() => handleSaveKnowledge(svc)}
+                                                    disabled={isSavingK} className="btn-primary">
+                                                    {isSavingK
+                                                        ? <><Spinner className="border-white/30 border-t-white" /> {d.common.loading}</>
+                                                        : <><Save className="w-4 h-4" /> {d.common.save}</>}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* ── Modale création/édition service ────────────────────────────────── */}
-      {mounted && serviceModal && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="absolute inset-0" onClick={() => !isSavingService && setServiceModal(false)} />
-          <form onSubmit={handleSaveService}
-            className="relative bg-[var(--bg-card)] rounded-3xl w-full max-w-md shadow-2xl border border-[var(--border)] flex flex-col animate-zoom-in">
-            <div className="p-5 border-b border-[var(--border)] flex justify-between items-center">
-              <h2 className="text-lg font-bold text-[var(--text)]">
-                {editingService ? t.editService : t.newService}
-              </h2>
-              <button type="button" onClick={() => setServiceModal(false)}
-                className="w-8 h-8 rounded-full bg-[var(--bg)] flex items-center justify-center text-[var(--text-muted)]">
-                <X className="w-4 h-4" />
-              </button>
+                )}
             </div>
 
-            <div className="p-5 space-y-4">
-              <div>
-                <label className="label-base">{t.serviceName}</label>
-                <input required className="input-base"
-                  value={serviceForm.name}
-                  onChange={e => setServiceForm({ ...serviceForm, name: e.target.value })} />
-              </div>
+            {/* ── Modale création/édition service ────────────────────────────────── */}
+            {mounted && serviceModal && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+                    <div className="absolute inset-0" onClick={() => !isSavingService && setServiceModal(false)} />
+                    <form onSubmit={handleSaveService}
+                        className="relative bg-[var(--bg-card)] rounded-3xl w-full max-w-md shadow-2xl border border-[var(--border)] flex flex-col animate-zoom-in">
+                        <div className="p-5 border-b border-[var(--border)] flex justify-between items-center">
+                            <h2 className="text-lg font-bold text-[var(--text)]">
+                                {editingService ? t.editService : t.newService}
+                            </h2>
+                            <button type="button" onClick={() => setServiceModal(false)}
+                                className="w-8 h-8 rounded-full bg-[var(--bg)] flex items-center justify-center text-[var(--text-muted)]">
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
 
-              <div>
-                <label className="label-base">{t.serviceDescription}</label>
-                <textarea rows={2} className="input-base resize-none"
-                  value={serviceForm.description}
-                  onChange={e => setServiceForm({ ...serviceForm, description: e.target.value })} />
-              </div>
+                        <div className="p-5 space-y-4">
+                            <div>
+                                <label className="label-base">{t.serviceName}</label>
+                                <input required className="input-base"
+                                    value={serviceForm.name}
+                                    onChange={e => setServiceForm({ ...serviceForm, name: e.target.value })} />
+                            </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="label-base">{t.servicePrice}</label>
-                  <input type="number" min={0} className="input-base"
-                    value={serviceForm.price}
-                    onChange={e => setServiceForm({ ...serviceForm, price: Number(e.target.value) })} />
-                </div>
-                <div>
-                  <label className="label-base">{t.serviceDuration}</label>
-                  <input type="number" min={0} className="input-base"
-                    value={serviceForm.duration_min ?? ""}
-                    onChange={e => setServiceForm({ ...serviceForm, duration_min: e.target.value ? Number(e.target.value) : null })} />
-                </div>
-              </div>
+                            <div>
+                                <label className="label-base">{t.serviceDescription}</label>
+                                <textarea rows={2} className="input-base resize-none"
+                                    value={serviceForm.description}
+                                    onChange={e => setServiceForm({ ...serviceForm, description: e.target.value })} />
+                            </div>
 
-              <label className="flex items-center gap-3 cursor-pointer">
-                <div onClick={() => setServiceForm({ ...serviceForm, is_active: !serviceForm.is_active })}
-                  className={cn("w-10 h-6 rounded-full p-1 transition-colors cursor-pointer",
-                    serviceForm.is_active ? "bg-[#25D366]" : "bg-[var(--border)]")}>
-                  <div className={cn("w-4 h-4 bg-white rounded-full shadow transition-transform",
-                    serviceForm.is_active ? "translate-x-4" : "translate-x-0")} />
-                </div>
-                <span className="text-sm font-medium text-[var(--text)]">{t.serviceActive}</span>
-              </label>
-            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="label-base">{t.servicePrice}</label>
+                                    <input type="number" min={0} className="input-base"
+                                        value={serviceForm.price}
+                                        onChange={e => setServiceForm({ ...serviceForm, price: Number(e.target.value) })} />
+                                </div>
+                                <div>
+                                    <label className="label-base">{t.serviceDuration}</label>
+                                    <input type="number" min={0} className="input-base"
+                                        value={serviceForm.duration_min ?? ""}
+                                        onChange={e => setServiceForm({ ...serviceForm, duration_min: e.target.value ? Number(e.target.value) : null })} />
+                                </div>
+                            </div>
 
-            <div className="p-5 border-t border-[var(--border)] flex justify-end gap-3">
-              <button type="button" onClick={() => setServiceModal(false)} className="btn-ghost">
-                {d.common.cancel}
-              </button>
-              <button type="submit" disabled={isSavingService} className="btn-primary">
-                {isSavingService
-                  ? <><Spinner className="border-white/30 border-t-white" /> {d.common.loading}</>
-                  : <><Save className="w-4 h-4" /> {d.common.save}</>}
-              </button>
-            </div>
-          </form>
-        </div>,
-        document.body
-      )}
+                            <label className="flex items-center gap-3 cursor-pointer">
+                                <div onClick={() => setServiceForm({ ...serviceForm, is_active: !serviceForm.is_active })}
+                                    className={cn("w-10 h-6 rounded-full p-1 transition-colors cursor-pointer",
+                                        serviceForm.is_active ? "bg-[#25D366]" : "bg-[var(--border)]")}>
+                                    <div className={cn("w-4 h-4 bg-white rounded-full shadow transition-transform",
+                                        serviceForm.is_active ? "translate-x-4" : "translate-x-0")} />
+                                </div>
+                                <span className="text-sm font-medium text-[var(--text)]">{t.serviceActive}</span>
+                            </label>
+                        </div>
 
-      {/* ── Modale suppression service ──────────────────────────────────────── */}
-      {mounted && deleteServiceId && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="absolute inset-0" onClick={() => !isDeleting && setDeleteServiceId(null)} />
-          <div className="relative bg-[var(--bg-card)] rounded-3xl p-6 w-full max-w-sm border border-[var(--border)] shadow-2xl">
-            <h3 className="font-bold text-[var(--text)] mb-2">{d.common.confirmTitle}</h3>
-            <p className="text-sm text-[var(--text-muted)] mb-6">{t.deleteService}</p>
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => setDeleteServiceId(null)} className="btn-ghost">{d.common.cancel}</button>
-              <button onClick={handleDeleteService} disabled={isDeleting}
-                className="px-4 py-2 bg-red-500 text-white rounded-xl text-sm font-semibold hover:bg-red-600 transition-colors flex items-center gap-2">
-                {isDeleting
-                  ? <Spinner className="border-white/30 border-t-white" />
-                  : <Trash2 className="w-4 h-4" />}
-                {d.common.delete}
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-    </>
-  );
+                        <div className="p-5 border-t border-[var(--border)] flex justify-end gap-3">
+                            <button type="button" onClick={() => setServiceModal(false)} className="btn-ghost">
+                                {d.common.cancel}
+                            </button>
+                            <button type="submit" disabled={isSavingService} className="btn-primary">
+                                {isSavingService
+                                    ? <><Spinner className="border-white/30 border-t-white" /> {d.common.loading}</>
+                                    : <><Save className="w-4 h-4" /> {d.common.save}</>}
+                            </button>
+                        </div>
+                    </form>
+                </div>,
+                document.body
+            )}
+
+            {/* ── Modale suppression service ──────────────────────────────────────── */}
+            {mounted && deleteServiceId && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="absolute inset-0" onClick={() => !isDeleting && setDeleteServiceId(null)} />
+                    <div className="relative bg-[var(--bg-card)] rounded-3xl p-6 w-full max-w-sm border border-[var(--border)] shadow-2xl">
+                        <h3 className="font-bold text-[var(--text)] mb-2">{d.common.confirmTitle}</h3>
+                        <p className="text-sm text-[var(--text-muted)] mb-6">{t.deleteService}</p>
+                        <div className="flex gap-3 justify-end">
+                            <button onClick={() => setDeleteServiceId(null)} className="btn-ghost">{d.common.cancel}</button>
+                            <button onClick={handleDeleteService} disabled={isDeleting}
+                                className="px-4 py-2 bg-red-500 text-white rounded-xl text-sm font-semibold hover:bg-red-600 transition-colors flex items-center gap-2">
+                                {isDeleting
+                                    ? <Spinner className="border-white/30 border-t-white" />
+                                    : <Trash2 className="w-4 h-4" />}
+                                {d.common.delete}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+        </>
+    );
 }
