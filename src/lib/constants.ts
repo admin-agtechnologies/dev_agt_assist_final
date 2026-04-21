@@ -31,7 +31,8 @@ export const ROUTES = {
   appointments: "/pme/appointments",
   billing: "/pme/billing",
   profile: "/pme/profile",
-  faq: "/pme/faq",
+  help: "/pme/help",
+  tutorial: "/pme/tutorial",
   knowledge: "/pme/knowledge",
 } as const;
 
