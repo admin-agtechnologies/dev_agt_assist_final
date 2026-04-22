@@ -7,7 +7,8 @@ import type {
   ResetPasswordPayload, MagicLinkRequestPayload, MagicLinkVerifyPayload,
   RefreshTokenPayload, LogoutPayload, DetailResponse, TokenRefreshResponse,
   // Tenants
-  Tenant, CreateTenantPayload, TenantFilters, EntrepriseInUser,
+  // Tenants
+  Tenant, CreateTenantPayload, TenantFilters, EntrepriseInUser, SecteurActivite,
   // Bots
   Bot, CreateBotPayload, BotFilters, NumeroTelephone,
   // Services
@@ -134,7 +135,19 @@ export const tenantsRepository = {
     secteur_id?: string;
   }): Promise<EntrepriseInUser> =>
     api.patch<EntrepriseInUser>("/api/v1/tenants/me_update/", payload),
+    
 };
+
+// Juste après tenantsRepository, ajouter :
+export const secteursRepository = {
+  getList: (): Promise<SecteurActivite[]> =>
+    api.get("/api/v1/tenants/secteurs/").then((data: unknown) =>
+      Array.isArray(data) ? (data as SecteurActivite[])
+        : (data as { results?: SecteurActivite[] }).results ?? [],
+    ),
+};
+
+
 
 // ══════════════════════════════════════════════════════════════════════════════
 // BOTS
