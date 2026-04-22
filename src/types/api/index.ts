@@ -127,56 +127,86 @@ export interface TenantFilters {
 
 // ══════════════════════════════════════════════════════════════════════════════
 // BOT
+// Aligné avec apps/bots/models.py et apps/bots/serializers.py
 // ══════════════════════════════════════════════════════════════════════════════
-export type WhatsAppProviderType = "waha" | "meta_api";
-export type VoiceAIProviderType = "gemini" | "openai";
-export type PhoneOperatorType = "twilio" | "orange" | "mtn" | "camtel" | null;
-export type BotStatus = "active" | "paused" | "archived";
-export type BotType = "whatsapp" | "voice";
 
+/** Valeurs exactes du champ Bot.statut côté Django. */
+export type BotStatut = "actif" | "en_pause" | "archive";
+
+/** Valeurs exactes du champ Bot.bot_type côté Django. */
+export type BotType = "whatsapp" | "vocal";
+
+/**
+ * Représentation d'un Bot telle que retournée par BotSerializer.
+ * Tous les noms de champs sont ceux du modèle Django.
+ */
 export interface Bot {
   id: string;
-  tenant_id: string;
-  chatbot_service_bot_id: string;
-  name: string;
-  welcome_message: string;
-  personality: string;
-  languages: string[];
-  whatsapp_provider: WhatsAppProviderType;
-  voice_ai_provider: VoiceAIProviderType;
-  phone_operator: PhoneOperatorType;
+  entreprise: string;           // UUID FK → Entreprise
+  entreprise_name: string;
+  numero: string | null;        // UUID FK → NumeroTelephone (null si non assigné)
+  numero_value: string | null;  // Valeur lisible du numéro (ex: "+237699000001")
+  bot_type: BotType;
+  nom: string;
+  message_accueil: string;
+  personnalite: string;
+  langues: string[];            // JSONField Django — tableau de codes langue
+  config_whatsapp: string | null;   // UUID FK → ConfigProvider
+  config_voice_ai: string | null;   // UUID FK → ConfigProvider
+  bot_paire: string | null;     // UUID O2O → Bot (le WA pointe vers le Vocal)
+  statut: BotStatut;
   is_active: boolean;
-  status: BotStatus;
   created_at: string;
-  bot_type?: BotType;
-  paired_bot_id?: string | null;
-  phone_number_id?: string | null;
-  main_name?: string;
-  whatsapp_display_name?: string;
-  voice_display_name?: string;
+  updated_at: string;
 }
+
+/** Payload de création / mise à jour d'un Bot. */
 export interface CreateBotPayload {
-  name: string;
-  welcome_message: string;
-  personality: string;
-  languages: string[];
-  whatsapp_provider: WhatsAppProviderType;
-  voice_ai_provider: VoiceAIProviderType;
-  phone_operator?: PhoneOperatorType;
-  is_active?: boolean;
+  nom: string;
+  message_accueil?: string;
+  personnalite?: string;
+  langues?: string[];
   bot_type?: BotType;
-  phone_number_id?: string;
-  paired_bot_id?: string;
-  tenant_id?: string;
-  status?: BotStatus;
+  is_active?: boolean;
+  statut?: BotStatut;
+  // entreprise est injecté automatiquement côté backend (perform_create)
+  // pour les créations via l'espace PME
+  entreprise?: string;
+  numero?: string | null;
+  bot_paire?: string | null;
 }
+
 export interface BotFilters {
   search?: string;
-  status?: BotStatus;
+  statut?: BotStatut;
   is_active?: boolean;
-  tenant_id?: string;
+  bot_type?: BotType;
   page?: number;
   page_size?: number;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// NUMÉRO DE TÉLÉPHONE
+// Aligné avec apps/bots/models.py → NumeroTelephone + NumeroTelephoneSerializer
+// ══════════════════════════════════════════════════════════════════════════════
+export interface NumeroTelephone {
+  id: string;
+  numero: string;
+  operateur: {
+    id: string;
+    nom: string;
+    slug: string;
+    pays: string;
+    is_active: boolean;
+    created_at: string;
+  } | null;
+  config_provider: string | null;
+  entreprise: string | null;
+  entreprise_name: string | null;
+  statut: "disponible" | "assigne" | "suspendu";
+  notes: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -209,7 +239,6 @@ export interface ServiceFilters {
 
 // ══════════════════════════════════════════════════════════════════════════════
 // AGENCE & HORAIRES & AGENDA
-// (remplace BusinessHours / DayHours / Location)
 // ══════════════════════════════════════════════════════════════════════════════
 
 export interface DaySchedule {
@@ -260,7 +289,6 @@ export interface Agence {
   services_count: number;
   created_at: string;
 }
-
 export interface CreateAgencePayload {
   nom: string;
   adresse?: string;
@@ -276,17 +304,13 @@ export interface CreateAgencePayload {
 
 export interface Agenda {
   id: string;
-  agence: string;
-  agence_nom: string;
+  entreprise: string;
   nom: string;
   description: string;
-  bots_ids: string[];
   is_active: boolean;
   created_at: string;
 }
-
 export interface CreateAgendaPayload {
-  agence: string;
   nom: string;
   description?: string;
   is_active?: boolean;
@@ -294,17 +318,14 @@ export interface CreateAgendaPayload {
 
 // ══════════════════════════════════════════════════════════════════════════════
 // RENDEZ-VOUS
-// (remplace Appointment — champs alignés sur le backend Django)
 // ══════════════════════════════════════════════════════════════════════════════
-
-export type RendezVousStatut = "en_attente" | "confirme" | "annule" | "termine";
+export type RendezVousStatut = "en_attente" | "confirme" | "termine" | "annule";
 export type RendezVousCanal = "whatsapp" | "vocal" | "manuel";
 
 export interface RendezVousServiceDetail {
-  id: number;
-  service: string;
+  service_id: string;
   service_nom: string;
-  service_prix: string;
+  prix: number;
 }
 
 export interface RendezVous {
@@ -589,7 +610,7 @@ export interface CreateServiceKnowledgePayload extends Partial<Omit<ServiceKnowl
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// TRANSACTION / PHONE NUMBER
+// TRANSACTION
 // ══════════════════════════════════════════════════════════════════════════════
 export interface Transaction {
   id: string;
@@ -615,14 +636,4 @@ export interface CreateTransactionPayload {
   type: string;
   label: string;
   service_paiement?: string | null;
-}
-
-export interface PhoneNumber {
-  id: string;
-  number: string;
-  tenant_id: string | null;
-  whatsapp_bot_id: string | null;
-  voice_bot_id: string | null;
-  provider_name: string;
-  status: string;
 }

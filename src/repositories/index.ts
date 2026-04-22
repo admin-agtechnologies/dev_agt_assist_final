@@ -9,7 +9,7 @@ import type {
   // Tenants
   Tenant, CreateTenantPayload, TenantFilters, EntrepriseInUser,
   // Bots
-  Bot, CreateBotPayload, BotFilters,
+  Bot, CreateBotPayload, BotFilters, NumeroTelephone,
   // Services
   Service, CreateServicePayload, ServiceFilters,
   // Agences / Horaires / Agendas
@@ -38,17 +38,6 @@ import type {
   // Shared
   PaginatedResponse,
 } from "@/types/api";
-
-// ── Interface locale PhoneNumber ──────────────────────────────────────────────
-interface PhoneNumberLocal {
-  id: string;
-  number: string;
-  tenant_id: string | null;
-  whatsapp_bot_id: string | null;
-  voice_bot_id: string | null;
-  provider_name: string;
-  status: string;
-}
 
 // ── Helper params ─────────────────────────────────────────────────────────────
 const p = (f?: object): Record<string, string> =>
@@ -149,8 +138,13 @@ export const tenantsRepository = {
 
 // ══════════════════════════════════════════════════════════════════════════════
 // BOTS
+// Champs alignés avec BotSerializer Django :
+//   nom, message_accueil, personnalite, langues, bot_type,
+//   statut (actif/en_pause/archive), bot_paire, numero, numero_value
+// L'entreprise est injectée automatiquement côté backend (perform_create).
 // ══════════════════════════════════════════════════════════════════════════════
 export const botsRepository = {
+  /** Liste les bots de l'entreprise connectée (isolation côté backend). */
   getList: (f?: BotFilters): Promise<PaginatedResponse<Bot>> =>
     api.get("/api/v1/bots/", { params: p(f) }).then((data: unknown) =>
       Array.isArray(data)
@@ -165,13 +159,21 @@ export const botsRepository = {
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
-// PHONE NUMBERS
+// NUMÉROS DE TÉLÉPHONE
+// Champs alignés avec NumeroTelephoneSerializer Django :
+//   numero, operateur, config_provider, entreprise, statut, notes
+// Endpoint réservé aux admins AGT (read-only depuis l'espace PME).
 // ══════════════════════════════════════════════════════════════════════════════
 export const phoneNumbersRepository = {
-  getList: (f?: { tenant_id?: string }): Promise<PhoneNumberLocal[]> =>
+  getList: (f?: { entreprise?: string }): Promise<NumeroTelephone[]> =>
     api.get("/api/v1/bots/numeros/", { params: p(f) })
-      .then((data: unknown) => Array.isArray(data) ? (data as PhoneNumberLocal[]) : []),
-  getById: (id: string): Promise<PhoneNumberLocal> => api.get(`/api/v1/bots/numeros/${id}/`),
+      .then((data: unknown) =>
+        Array.isArray(data)
+          ? (data as NumeroTelephone[])
+          : (data as PaginatedResponse<NumeroTelephone>).results ?? [],
+      ),
+  getById: (id: string): Promise<NumeroTelephone> =>
+    api.get(`/api/v1/bots/numeros/${id}/`),
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
