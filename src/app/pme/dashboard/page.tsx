@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   statsRepository, conversationsRepository,
-  subscriptionsRepository, appointmentsRepository,
+  subscriptionsRepository, rendezVousRepository,
 } from "@/repositories";
 import { formatDateTime, formatDate, cn } from "@/lib/utils";
 import { Badge, PageLoader, EmptyState, UsageBar, Spinner } from "@/components/ui";
@@ -22,7 +22,7 @@ import {
   Mail, CheckCircle, XCircle, ChevronRight,
   X, User, Zap,
 } from "lucide-react";
-import type { TenantStats, Conversation, Subscription, Appointment } from "@/types/api";
+import type { TenantStats, Conversation, Subscription, RendezVous } from "@/types/api";
 import Link from "next/link";
 
 // ── Mock historique conversation ──────────────────────────────────────────────
@@ -55,7 +55,7 @@ export default function PmeDashboardPage() {
   const [stats, setStats] = useState<TenantStats | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([]);
+  const [todayAppointments, setTodayAppointments] = useState<RendezVous[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -68,15 +68,15 @@ export default function PmeDashboardPage() {
     const [s, c, sub, appts] = await Promise.all([
       statsRepository.getByTenant(user.tenant_id).catch(() => null),
       conversationsRepository.getList({ tenant_id: user.tenant_id }).catch(() => ({ results: [] })),
-      subscriptionsRepository.getMine(),
-      appointmentsRepository.getList({ tenant_id: user.tenant_id }).catch(() => ({ results: [] })),
+      subscriptionsRepository.getMine(),rendezVousRepository.getList().catch(() => ({ results: [] })),
+      
     ]);
     setStats(s);
     setConversations(c.results.slice(0, 5));
     setSubscription(sub);
     // Filtrer RDV du jour
     setTodayAppointments(
-      appts.results.filter((a: Appointment) => a.scheduled_at?.startsWith(today)).slice(0, 3)
+      appts.results.filter((a:  RendezVous) => a.scheduled_at?.startsWith(today)).slice(0, 3)
     );
     setLoading(false);
   }, [user?.tenant_id]);
@@ -122,15 +122,15 @@ export default function PmeDashboardPage() {
   const emailFailed = Math.round(emailSentWeek * 0.04);
 
   // ── Statuts RDV ──────────────────────────────────────────────────────────────
-  const apptStatusVariant: Record<string, "green" | "amber" | "slate" | "red"> = {
-    confirmed: "green", pending: "amber", done: "slate", cancelled: "red",
-  };
-  const apptStatusLabel: Record<string, string> = {
-    confirmed: d.appointments.statuses.confirmed,
-    pending: d.appointments.statuses.pending,
-    done: d.appointments.statuses.done,
-    cancelled: d.appointments.statuses.cancelled,
-  };
+const apptStatusVariant: Record<string, "green" | "amber" | "slate" | "red"> = {
+  confirme: "green", en_attente: "amber", termine: "slate", annule: "red",
+};
+const apptStatusLabel: Record<string, string> = {
+  confirme: d.appointments.statuses.confirmed,
+  en_attente: d.appointments.statuses.pending,
+  termine: d.appointments.statuses.done,
+  annule: d.appointments.statuses.cancelled,
+};
 
   return (
     <>
@@ -339,14 +339,14 @@ export default function PmeDashboardPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-[var(--text)] truncate">
-                          {appt.client_name}
+                          {appt.client_nom}
                         </p>
                         <p className="text-[10px] text-[var(--text-muted)]">
                           {formatDateTime(appt.scheduled_at)}
                         </p>
                       </div>
-                      <Badge variant={apptStatusVariant[appt.status] ?? "slate"}>
-                        {apptStatusLabel[appt.status] ?? appt.status}
+                      <Badge variant={apptStatusVariant[appt.statut] ?? "slate"}>
+                        {apptStatusLabel[appt.statut] ?? appt.statut}
                       </Badge>
                     </div>
                   ))}

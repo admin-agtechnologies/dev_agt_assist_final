@@ -1,48 +1,53 @@
-// src/app/pme/appointments/page.tsx
 "use client";
 import { useState, useEffect, useCallback, useTransition } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/components/ui/Toast";
-import { appointmentsRepository, servicesRepository, tenantKnowledgeRepository } from "@/repositories";
+import { rendezVousRepository, servicesRepository, tenantKnowledgeRepository } from "@/repositories";
 import { formatDateTime, cn } from "@/lib/utils";
 import { Badge, SectionHeader, EmptyState, ConfirmDeleteModal, Spinner } from "@/components/ui";
 import { createPortal } from "react-dom";
 import {
   CalendarDays, ChevronLeft, ChevronRight, Plus,
   Pencil, Trash2, X, Clock, User, Phone,
-  Wrench, MessageSquare, Save, Settings,
+  Wrench, Save, Settings,
   ChevronDown, ChevronUp,
 } from "lucide-react";
 import type {
-  Appointment, CreateAppointmentPayload,
-  AppointmentStatus, Service, TenantKnowledge,
+  RendezVous, CreateRendezVousPayload, Service, TenantKnowledge,
 } from "@/types/api";
 
+// ── Types locaux ──────────────────────────────────────────────────────────────
+type AppointmentStatus = "en_attente" | "confirme" | "annule" | "termine";
+type AppointmentCanal  = "whatsapp" | "vocal" | "manuel";
+
 // ── Constantes ────────────────────────────────────────────────────────────────
-const SLOT_MIN = 30;           // granularité grille en minutes
-const HOUR_START = 7;          // 7h00
-const HOUR_END = 20;           // 20h00
-const SLOT_HEIGHT_PX = 56;     // hauteur d'une tranche de 30min en px
+const SLOT_MIN        = 30;
+const HOUR_START      = 7;
+const HOUR_END        = 20;
+const SLOT_HEIGHT_PX  = 56;
 
 type ViewMode = "week" | "day";
 
 type StatusColor = "green" | "amber" | "blue" | "slate";
 const STATUS_COLOR: Record<AppointmentStatus, StatusColor> = {
-  confirmed: "green", pending: "amber", done: "blue", cancelled: "slate",
+  confirme:   "green",
+  en_attente: "amber",
+  termine:    "blue",
+  annule:     "slate",
 };
 const STATUS_BG: Record<AppointmentStatus, string> = {
-  confirmed: "bg-[#25D366]/20 border-[#25D366] text-[#075E54] dark:text-[#25D366]",
-  pending:   "bg-amber-100 border-amber-400 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-  done:      "bg-blue-100 border-blue-400 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-  cancelled: "bg-[var(--bg)] border-[var(--border)] text-[var(--text-muted)] line-through",
+  confirme:   "bg-[#25D366]/20 border-[#25D366] text-[#075E54] dark:text-[#25D366]",
+  en_attente: "bg-amber-100 border-amber-400 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
+  termine:    "bg-blue-100 border-blue-400 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+  annule:     "bg-[var(--bg)] border-[var(--border)] text-[var(--text-muted)] line-through",
 };
 
 // ── Helpers date ──────────────────────────────────────────────────────────────
 function startOfWeek(date: Date): Date {
   const d = new Date(date);
-  const day = d.getDay(); // 0=dim
-  const diff = day === 0 ? -6 : 1 - day; // lundi = début
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
   d.setDate(d.getDate() + diff);
   d.setHours(0, 0, 0, 0);
   return d;
@@ -69,36 +74,33 @@ function slotHeight(durationMin: number): number {
   return (durationMin / SLOT_MIN) * SLOT_HEIGHT_PX;
 }
 
-const DAYS_FR = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
-const DAYS_EN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAYS_FR   = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+const DAYS_EN   = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const MONTHS_FR = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"];
 const MONTHS_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-// ════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
 // PAGE PRINCIPALE
-// ════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
 export default function PmeAppointmentsPage() {
   const { user } = useAuth();
   const { dictionary: d, locale } = useLanguage();
   const t = d.appointments;
   const toast = useToast();
 
-  // ── État agenda ───────────────────────────────────────────────────────────
   const [viewMode, setViewMode] = useState<ViewMode>("week");
   const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
-  const [items, setItems] = useState<Appointment[]>([]);
+  const [items, setItems] = useState<RendezVous[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [knowledge, setKnowledge] = useState<TenantKnowledge | null>(null);
   const [loading, setLoading] = useState(true);
   const [, startTransition] = useTransition();
 
-  // ── Config créneaux ───────────────────────────────────────────────────────
   const [configOpen, setConfigOpen] = useState(false);
   const [durationMin, setDurationMin] = useState(30);
   const [bufferMin, setBufferMin] = useState(10);
   const [isSavingConfig, startSaveConfig] = useTransition();
 
-  // ── Modales ───────────────────────────────────────────────────────────────
   const [mounted, setMounted] = useState(false);
   const [formModal, setFormModal] = useState<{ open: boolean; editId: string | null; prefillDate?: string }>
     ({ open: false, editId: null });
@@ -110,12 +112,12 @@ export default function PmeAppointmentsPage() {
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
-    if (!user?.tenant_id) return;
+    if (!user?.entreprise?.id) return;
     startTransition(async () => {
       try {
         const [aptsRes, svcsRes, kRes] = await Promise.all([
-          appointmentsRepository.getList({ tenant_id: user.tenant_id! }),
-          servicesRepository.getList({ tenant_id: user.tenant_id! }),
+          rendezVousRepository.getList(),
+          servicesRepository.getList(),
           tenantKnowledgeRepository.getMine(),
         ]);
         setItems(aptsRes.results);
@@ -131,25 +133,23 @@ export default function PmeAppointmentsPage() {
         setLoading(false);
       }
     });
-  }, [user?.tenant_id, t.errorLoad, toast]);
+  }, [user?.entreprise?.id, t.errorLoad, toast]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // ── Map serviceId → name ──────────────────────────────────────────────────
+  // ── Map serviceId → nom ───────────────────────────────────────────────────
   const serviceMap = Object.fromEntries(services.map(s => [s.id, s.nom]));
 
   // ── Navigation ────────────────────────────────────────────────────────────
   const goToday = () => setCurrentDate(new Date());
-  const goPrev = () => setCurrentDate(d => addDays(d, viewMode === "week" ? -7 : -1));
-  const goNext = () => setCurrentDate(d => addDays(d, viewMode === "week" ? 7 : 1));
+  const goPrev  = () => setCurrentDate(prev => addDays(prev, viewMode === "week" ? -7 : -1));
+  const goNext  = () => setCurrentDate(prev => addDays(prev, viewMode === "week" ? 7 : 1));
 
-  // ── Jours affichés ────────────────────────────────────────────────────────
-  const weekStart = startOfWeek(currentDate);
+  const weekStart   = startOfWeek(currentDate);
   const displayDays = viewMode === "week"
     ? Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
     : [new Date(currentDate)];
 
-  // ── RDV par jour ──────────────────────────────────────────────────────────
   const aptsByDay = (day: Date) =>
     items.filter(a => isSameDay(new Date(a.scheduled_at), day));
 
@@ -159,7 +159,7 @@ export default function PmeAppointmentsPage() {
     startSaveConfig(async () => {
       try {
         await tenantKnowledgeRepository.patch(knowledge.id, {
-          duree_rdv_min: durationMin,
+          duree_rdv_min:   durationMin,
           buffer_slot_min: bufferMin,
         });
         toast.success(t.configSaved);
@@ -174,7 +174,7 @@ export default function PmeAppointmentsPage() {
     if (!deleteId) return;
     setIsDeleting(true);
     try {
-      await appointmentsRepository.delete(deleteId);
+      await rendezVousRepository.delete(deleteId);
       toast.success(t.deleteSuccess);
       setDeleteId(null);
       setDetailId(null);
@@ -183,15 +183,14 @@ export default function PmeAppointmentsPage() {
     finally { setIsDeleting(false); }
   };
 
-  // ── Label période ─────────────────────────────────────────────────────────
+  // ── Labels période ────────────────────────────────────────────────────────
   const DAYS_LABELS = locale === "fr" ? DAYS_FR : DAYS_EN;
-  const MONTHS = locale === "fr" ? MONTHS_FR : MONTHS_EN;
+  const MONTHS      = locale === "fr" ? MONTHS_FR : MONTHS_EN;
 
   const periodLabel = viewMode === "week"
-    ? `${weekStart.getDate()} ${MONTHS[weekStart.getMonth()]} — ${addDays(weekStart, 6).getDate()} ${MONTHS[addDays(weekStart, 6).getMonth()]} ${weekStart.getFullYear()}`
+    ? `${weekStart.getDate()} ${MONTHS[weekStart.getMonth()]} – ${addDays(weekStart, 6).getDate()} ${MONTHS[addDays(weekStart, 6).getMonth()]} ${weekStart.getFullYear()}`
     : `${DAYS_LABELS[currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1]} ${currentDate.getDate()} ${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
 
-  // ── Tranches horaires ─────────────────────────────────────────────────────
   const timeSlots = Array.from(
     { length: ((HOUR_END - HOUR_START) * 60) / SLOT_MIN },
     (_, i) => {
@@ -202,6 +201,32 @@ export default function PmeAppointmentsPage() {
     }
   );
 
+  // ── Helpers statut / canal avec cast sûr ─────────────────────────────────
+  const statusLabel = (statut: string): string => {
+    const map: Record<AppointmentStatus, string> = {
+      en_attente: t.statuses.pending,
+      confirme:   t.statuses.confirmed,
+      termine:    t.statuses.done,
+      annule:     t.statuses.cancelled,
+    };
+    return map[statut as AppointmentStatus] ?? statut;
+  };
+
+  const canalLabel = (canal: string): string => {
+    const map: Record<AppointmentCanal, string> = {
+      whatsapp: t.channels.whatsapp,
+      vocal:    t.channels.voice,
+      manuel:   t.channels.manual,
+    };
+    return map[canal as AppointmentCanal] ?? canal;
+  };
+
+  const statusColor = (statut: string): StatusColor =>
+    STATUS_COLOR[statut as AppointmentStatus] ?? "slate";
+
+  const statusBg = (statut: string): string =>
+    STATUS_BG[statut as AppointmentStatus] ?? STATUS_BG.annule;
+
   if (loading) return (
     <div className="space-y-4 animate-pulse">
       {[...Array(4)].map((_, i) => <div key={i} className="h-20 card bg-[var(--bg)]" />)}
@@ -209,6 +234,14 @@ export default function PmeAppointmentsPage() {
   );
 
   const detailItem = items.find(a => a.id === detailId) ?? null;
+
+  // ── Résolution du nom de service pour un RDV ──────────────────────────────
+  const rdvServiceLabel = (rdv: RendezVous): string => {
+    if (rdv.services_detail && rdv.services_detail.length > 0) {
+      return rdv.services_detail[0].service_nom;
+    }
+    return serviceMap[rdv.agenda] ?? "—";
+  };
 
   return (
     <>
@@ -219,7 +252,7 @@ export default function PmeAppointmentsPage() {
           </button>
         } />
 
-        {/* ── Config créneaux (accordéon) ─────────────────────────────────── */}
+        {/* ── Config créneaux ──────────────────────────────────────────────── */}
         <div className="card overflow-hidden">
           <button
             onClick={() => setConfigOpen(o => !o)}
@@ -275,9 +308,8 @@ export default function PmeAppointmentsPage() {
           )}
         </div>
 
-        {/* ── Contrôles agenda ────────────────────────────────────────────── */}
+        {/* ── Contrôles agenda ─────────────────────────────────────────────── */}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          {/* Toggle vue */}
           <div className="flex gap-1 p-1 bg-[var(--bg)] rounded-xl border border-[var(--border)]">
             {(["week", "day"] as ViewMode[]).map(v => (
               <button key={v} onClick={() => setViewMode(v)}
@@ -292,7 +324,6 @@ export default function PmeAppointmentsPage() {
             ))}
           </div>
 
-          {/* Navigation période */}
           <div className="flex items-center gap-2">
             <button onClick={goPrev}
               className="w-8 h-8 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] flex items-center justify-center hover:border-[#25D366] transition-colors">
@@ -310,14 +341,14 @@ export default function PmeAppointmentsPage() {
           </div>
         </div>
 
-        {/* ── Grille agenda ────────────────────────────────────────────────── */}
+        {/* ── Grille agenda ─────────────────────────────────────────────────── */}
         <div className="card overflow-hidden">
-          {/* En-têtes colonnes jours */}
+          {/* En-têtes colonnes */}
           <div className={cn(
             "grid border-b border-[var(--border)] bg-[var(--bg)]",
             viewMode === "week" ? "grid-cols-[56px_repeat(7,1fr)]" : "grid-cols-[56px_1fr]"
           )}>
-            <div className="border-r border-[var(--border)]" /> {/* coin vide */}
+            <div className="border-r border-[var(--border)]" />
             {displayDays.map((day, i) => {
               const isToday = isSameDay(day, new Date());
               const dayLabel = DAYS_LABELS[day.getDay() === 0 ? 6 : day.getDay() - 1];
@@ -374,7 +405,7 @@ export default function PmeAppointmentsPage() {
                     )}
                     style={{ height: totalHeight }}>
 
-                    {/* Lignes horaires */}
+                    {/* Lignes horaires cliquables */}
                     {timeSlots.map((_, si) => (
                       <div key={si}
                         style={{ top: si * SLOT_HEIGHT_PX, height: SLOT_HEIGHT_PX }}
@@ -393,7 +424,7 @@ export default function PmeAppointmentsPage() {
 
                     {/* Blocs RDV */}
                     {dayApts.map(apt => {
-                      const top = slotTop(new Date(apt.scheduled_at));
+                      const top    = slotTop(new Date(apt.scheduled_at));
                       const height = Math.max(slotHeight(durationMin), SLOT_HEIGHT_PX * 0.8);
                       return (
                         <div key={apt.id}
@@ -401,19 +432,22 @@ export default function PmeAppointmentsPage() {
                           className={cn(
                             "absolute rounded-lg border-l-4 px-2 py-1 cursor-pointer overflow-hidden",
                             "shadow-sm hover:shadow-md transition-shadow z-10",
-                            STATUS_BG[apt.status]
+                            statusBg(apt.statut)
                           )}
                           onClick={() => setDetailId(apt.id)}>
                           <p className="text-[10px] font-black truncate leading-tight">
-                            {apt.client_name}
+                            {apt.client_nom}
                           </p>
                           <p className="text-[9px] truncate opacity-80 flex items-center gap-0.5">
                             <Clock className="w-2.5 h-2.5 inline" />
-                            {new Date(apt.scheduled_at).toLocaleTimeString(locale === "fr" ? "fr-FR" : "en-US", { hour: "2-digit", minute: "2-digit" })}
+                            {new Date(apt.scheduled_at).toLocaleTimeString(
+                              locale === "fr" ? "fr-FR" : "en-US",
+                              { hour: "2-digit", minute: "2-digit" }
+                            )}
                           </p>
                           {height >= SLOT_HEIGHT_PX * 1.5 && (
                             <p className="text-[9px] truncate opacity-70">
-                              {serviceMap[apt.service_id] ?? apt.service_id}
+                              {rdvServiceLabel(apt)}
                             </p>
                           )}
                         </div>
@@ -425,14 +459,20 @@ export default function PmeAppointmentsPage() {
             </div>
           </div>
         </div>
+
+        {/* Empty state si aucun RDV sur la semaine */}
+        {items.length === 0 && (
+          <div className="card">
+            <EmptyState message={t.noData} icon={CalendarDays} />
+          </div>
+        )}
       </div>
 
-      {/* ── Modale détail RDV ──────────────────────────────────────────────── */}
+      {/* ── Modale détail RDV ─────────────────────────────────────────────── */}
       {mounted && detailId && detailItem && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
           <div className="absolute inset-0" onClick={() => setDetailId(null)} />
           <div className="relative bg-[var(--bg-card)] rounded-3xl w-full max-w-md shadow-2xl border border-[var(--border)] animate-zoom-in">
-            {/* Header */}
             <div className="p-5 border-b border-[var(--border)] flex justify-between items-center">
               <h2 className="text-lg font-bold text-[var(--text)]">{t.detailTitle}</h2>
               <button onClick={() => setDetailId(null)}
@@ -441,7 +481,6 @@ export default function PmeAppointmentsPage() {
               </button>
             </div>
 
-            {/* Corps */}
             <div className="p-5 space-y-3">
               <div className="flex items-center gap-3 p-3 bg-[var(--bg)] rounded-xl">
                 <div className="w-9 h-9 rounded-xl bg-[#25D366]/10 flex items-center justify-center flex-shrink-0">
@@ -449,7 +488,7 @@ export default function PmeAppointmentsPage() {
                 </div>
                 <div>
                   <p className="text-xs text-[var(--text-muted)]">{t.detailClient}</p>
-                  <p className="text-sm font-bold text-[var(--text)]">{detailItem.client_name}</p>
+                  <p className="text-sm font-bold text-[var(--text)]">{detailItem.client_nom}</p>
                 </div>
               </div>
 
@@ -458,13 +497,13 @@ export default function PmeAppointmentsPage() {
                   <p className="text-xs text-[var(--text-muted)] mb-1">{t.detailPhone}</p>
                   <p className="text-sm font-semibold text-[var(--text)] flex items-center gap-1.5">
                     <Phone className="w-3.5 h-3.5 text-[var(--text-muted)]" />
-                    {detailItem.client_phone}
+                    {detailItem.client_telephone}
                   </p>
                 </div>
                 <div className="p-3 bg-[var(--bg)] rounded-xl">
                   <p className="text-xs text-[var(--text-muted)] mb-1">{t.detailChannel}</p>
-                  <Badge variant={detailItem.channel === "whatsapp" ? "green" : "violet"}>
-                    {t.channels[detailItem.channel] ?? detailItem.channel}
+                  <Badge variant={detailItem.canal === "whatsapp" ? "green" : "violet"}>
+                    {canalLabel(detailItem.canal)}
                   </Badge>
                 </div>
               </div>
@@ -473,7 +512,7 @@ export default function PmeAppointmentsPage() {
                 <p className="text-xs text-[var(--text-muted)] mb-1">{t.detailService}</p>
                 <p className="text-sm font-semibold text-[var(--text)] flex items-center gap-1.5">
                   <Wrench className="w-3.5 h-3.5 text-[var(--text-muted)]" />
-                  {serviceMap[detailItem.service_id] ?? detailItem.service_id}
+                  {rdvServiceLabel(detailItem)}
                 </p>
               </div>
 
@@ -487,8 +526,8 @@ export default function PmeAppointmentsPage() {
                 </div>
                 <div className="p-3 bg-[var(--bg)] rounded-xl">
                   <p className="text-xs text-[var(--text-muted)] mb-1">{t.detailStatus}</p>
-                  <Badge variant={STATUS_COLOR[detailItem.status]}>
-                    {t.statuses[detailItem.status]}
+                  <Badge variant={statusColor(detailItem.statut)}>
+                    {statusLabel(detailItem.statut)}
                   </Badge>
                 </div>
               </div>
@@ -501,7 +540,6 @@ export default function PmeAppointmentsPage() {
               )}
             </div>
 
-            {/* Footer actions */}
             <div className="p-5 border-t border-[var(--border)] flex justify-between items-center">
               <button onClick={() => setDeleteId(detailItem.id)}
                 className="flex items-center gap-2 px-3 py-2 rounded-xl text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-semibold transition-colors">
@@ -517,11 +555,10 @@ export default function PmeAppointmentsPage() {
         document.body
       )}
 
-      {/* ── Modale formulaire création/édition ─────────────────────────────── */}
+      {/* ── Modale formulaire ─────────────────────────────────────────────── */}
       {mounted && formModal.open && createPortal(
         <AppointmentFormModal
           itemId={formModal.editId}
-          tenantId={user?.tenant_id ?? ""}
           prefillDate={formModal.prefillDate}
           services={services}
           onClose={() => setFormModal({ open: false, editId: null })}
@@ -530,7 +567,7 @@ export default function PmeAppointmentsPage() {
         document.body
       )}
 
-      {/* ── Modale suppression ─────────────────────────────────────────────── */}
+      {/* ── Modale suppression ────────────────────────────────────────────── */}
       <ConfirmDeleteModal
         isOpen={!!deleteId} isLoading={isDeleting}
         onClose={() => !isDeleting && setDeleteId(null)}
@@ -540,42 +577,48 @@ export default function PmeAppointmentsPage() {
   );
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
 // MODALE FORMULAIRE
-// ════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
 interface AppointmentFormModalProps {
   itemId: string | null;
-  tenantId: string;
   prefillDate?: string;
   services: Service[];
   onClose: () => void;
   onSave: () => void;
 }
 
-function AppointmentFormModal({ itemId, tenantId, prefillDate, services, onClose, onSave }: AppointmentFormModalProps) {
+function AppointmentFormModal({ itemId, prefillDate, services, onClose, onSave }: AppointmentFormModalProps) {
   const { dictionary: d } = useLanguage();
-  const t = d.appointments;
+  const t  = d.appointments;
   const tf = t.modal.fields;
   const toast = useToast();
   const isEdit = !!itemId;
 
-  const DEF: CreateAppointmentPayload = {
-    service_id: "", client_name: "", client_phone: "",
-    client_email: "", scheduled_at: prefillDate ?? "", status: "pending", notes: "",
+  // Formulaire aligné sur CreateRendezVousPayload
+  const DEF: CreateRendezVousPayload = {
+    agenda:       "",
+    client:       "",
+    scheduled_at: prefillDate ?? "",
+    statut:       "en_attente",
+    canal:        "manuel",
+    notes:        "",
   };
-  const [form, setForm] = useState<CreateAppointmentPayload>(DEF);
+  const [form, setForm] = useState<CreateRendezVousPayload>(DEF);
   const [loadingItem, setLoadingItem] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (itemId) {
       setLoadingItem(true);
-      appointmentsRepository.getById(itemId)
-        .then(a => setForm({
-          service_id: a.service_id, client_name: a.client_name,
-          client_phone: a.client_phone, client_email: a.client_email ?? "",
-          scheduled_at: a.scheduled_at.slice(0, 16),
-          status: a.status, notes: a.notes,
+      rendezVousRepository.getById(itemId)
+        .then((rdv: RendezVous) => setForm({
+          agenda:       rdv.agenda,
+          client:       rdv.client,
+          scheduled_at: rdv.scheduled_at.slice(0, 16),
+          statut:       rdv.statut as AppointmentStatus,
+          canal:        rdv.canal as AppointmentCanal,
+          notes:        rdv.notes,
         }))
         .finally(() => setLoadingItem(false));
     }
@@ -585,17 +628,35 @@ function AppointmentFormModal({ itemId, tenantId, prefillDate, services, onClose
     e.preventDefault();
     setSaving(true);
     try {
-      const payload = { ...form, scheduled_at: new Date(form.scheduled_at).toISOString() };
+      const payload: CreateRendezVousPayload = {
+        ...form,
+        scheduled_at: new Date(form.scheduled_at).toISOString(),
+      };
       if (isEdit) {
-        await appointmentsRepository.patch(itemId!, payload);
+        await rendezVousRepository.patch(itemId!, payload);
       } else {
-        await appointmentsRepository.create({ ...payload, tenant_id: tenantId });
+        await rendezVousRepository.create(payload);
       }
       toast.success(t.createSuccess);
       onSave();
       onClose();
     } catch { toast.error(d.common.error); }
     finally { setSaving(false); }
+  };
+
+  const statuts: AppointmentStatus[] = ["en_attente", "confirme", "termine", "annule"];
+  const canaux: AppointmentCanal[]   = ["whatsapp", "vocal", "manuel"];
+
+  const statutLabels: Record<AppointmentStatus, string> = {
+    en_attente: t.statuses.pending,
+    confirme:   t.statuses.confirmed,
+    termine:    t.statuses.done,
+    annule:     t.statuses.cancelled,
+  };
+  const canalLabels: Record<AppointmentCanal, string> = {
+    whatsapp: t.channels.whatsapp,
+    vocal:    t.channels.voice,
+    manuel:   t.channels.manual,
   };
 
   return (
@@ -617,54 +678,54 @@ function AppointmentFormModal({ itemId, tenantId, prefillDate, services, onClose
         <div className="p-6 overflow-y-auto flex-1 space-y-4">
           {loadingItem
             ? <div className="flex justify-center py-8"><Spinner className="w-6 h-6 border-[#25D366] border-t-transparent" /></div>
-            : <>
-              <div>
-                <label className="label-base">{tf.service}</label>
-                <select required className="input-base" value={form.service_id}
-                  onChange={e => setForm({ ...form, service_id: e.target.value })}>
-                  <option value="">—</option>
-                  {services.map(s => <option key={s.id} value={s.id}>{s.nom}</option>)}
-                </select>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            : (
+              <>
+                {/* Sélection service via services_detail — en V1 on choisit le service dans la liste */}
                 <div>
-                  <label className="label-base">{tf.clientName}</label>
-                  <input required className="input-base" value={form.client_name}
-                    onChange={e => setForm({ ...form, client_name: e.target.value })} />
+                  <label className="label-base">{tf.service}</label>
+                  <select required className="input-base" value={form.agenda}
+                    onChange={e => setForm({ ...form, agenda: e.target.value })}>
+                    <option value="">—</option>
+                    {services.map(s => <option key={s.id} value={s.id}>{s.nom}</option>)}
+                  </select>
                 </div>
+
                 <div>
-                  <label className="label-base">{tf.clientPhone}</label>
-                  <input required className="input-base" value={form.client_phone}
-                    onChange={e => setForm({ ...form, client_phone: e.target.value })} />
+                  <label className="label-base">{tf.scheduledAt}</label>
+                  <input required type="datetime-local" className="input-base"
+                    value={form.scheduled_at}
+                    onChange={e => setForm({ ...form, scheduled_at: e.target.value })} />
                 </div>
-              </div>
-              <div>
-                <label className="label-base">{tf.clientEmail}</label>
-                <input type="email" className="input-base" value={form.client_email ?? ""}
-                  onChange={e => setForm({ ...form, client_email: e.target.value })} />
-              </div>
-              <div>
-                <label className="label-base">{tf.scheduledAt}</label>
-                <input required type="datetime-local" className="input-base"
-                  value={form.scheduled_at}
-                  onChange={e => setForm({ ...form, scheduled_at: e.target.value })} />
-              </div>
-              <div>
-                <label className="label-base">{tf.status}</label>
-                <select className="input-base" value={form.status}
-                  onChange={e => setForm({ ...form, status: e.target.value as AppointmentStatus })}>
-                  {(["pending", "confirmed", "done", "cancelled"] as AppointmentStatus[]).map(s => (
-                    <option key={s} value={s}>{t.statuses[s]}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="label-base">{tf.notes}</label>
-                <textarea rows={2} className="input-base resize-none"
-                  value={form.notes ?? ""}
-                  onChange={e => setForm({ ...form, notes: e.target.value })} />
-              </div>
-            </>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="label-base">{tf.status}</label>
+                    <select className="input-base" value={form.statut}
+                      onChange={e => setForm({ ...form, statut: e.target.value as AppointmentStatus })}>
+                      {statuts.map(s => (
+                        <option key={s} value={s}>{statutLabels[s]}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label-base">{t.detailChannel}</label>
+                    <select className="input-base" value={form.canal}
+                      onChange={e => setForm({ ...form, canal: e.target.value as AppointmentCanal })}>
+                      {canaux.map(c => (
+                        <option key={c} value={c}>{canalLabels[c]}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="label-base">{tf.notes}</label>
+                  <textarea rows={2} className="input-base resize-none"
+                    value={form.notes ?? ""}
+                    onChange={e => setForm({ ...form, notes: e.target.value })} />
+                </div>
+              </>
+            )
           }
         </div>
 

@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/components/ui/Toast";
 import {
-  botsRepository, conversationsRepository, appointmentsRepository,
+  botsRepository, conversationsRepository, rendezVousRepository,
 } from "@/repositories";
 import { formatDateTime, cn } from "@/lib/utils";
 import { Badge, SectionHeader, EmptyState, ConfirmDeleteModal, Spinner } from "@/components/ui";
@@ -23,7 +23,7 @@ import {
 } from "recharts";
 import type {
   Bot as BotType, CreateBotPayload, BotStatus,
-  Conversation, Appointment,
+  Conversation, RendezVous,
 } from "@/types/api";
 
 // ── Type local PhoneNumber ────────────────────────────────────────────────────
@@ -379,7 +379,7 @@ function BotPairDetailPanel({
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<DetailTab>("conversations");
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] = useState<RendezVous[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -398,6 +398,12 @@ function BotPairDetailPanel({
     emails: true,
     handoffs: true
   });
+  const STATUT_LABEL: Record<string, string> = {
+  confirme: d.appointments.statuses.confirmed,
+  en_attente: d.appointments.statuses.pending,
+  termine: d.appointments.statuses.done,
+  annule: d.appointments.statuses.cancelled,
+};
 
   const metricsDef = [
     { id: 'messages', label: 'Messages', color: '#25D366' },
@@ -419,9 +425,10 @@ function BotPairDetailPanel({
 
       const [convRes, aptRes] = await Promise.all([
         conversationsRepository.getList({ tenant_id: tenantId }),
-        appointmentsRepository.getList({ tenant_id: tenantId }),
+        rendezVousRepository.getList(),
       ]);
-      setConversations(convRes.results.filter(c => botIds.includes(c.bot_id)));
+      setConversations(convRes.results.filter((c: Conversation) => botIds.includes(c.bot_id)));
+
       setAppointments(aptRes.results);
     } catch { toast.error(d.common.error); }
     finally { setLoadingData(false); }
@@ -682,7 +689,7 @@ function BotPairDetailPanel({
                                 {dayAppointments.slice(0, 3).map((a, idx) => (
                                   <div key={idx} className={cn(
                                     "w-1.5 h-1.5 rounded-full",
-                                    a.status === 'confirmed' ? "bg-[#25D366]" : "bg-amber-400"
+                                   a.statut === 'confirme' ? "bg-[#25D366]" : "bg-amber-400"
                                   )} />
                                 ))}
                                 {dayAppointments.length > 3 && <span className="text-[8px] font-bold">+</span>}
@@ -719,11 +726,11 @@ function BotPairDetailPanel({
                                 </p>
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold text-[var(--text)] truncate">{apt.client_name}</p>
-                                <p className="text-[10px] text-[var(--text-muted)]">{apt.service_name || "Consultation"}</p>
+                                <p className="text-sm font-bold text-[var(--text)] truncate">{apt.client_nom}</p>
+                                <p className="text-[10px] text-[var(--text-muted)]">{apt.services_detail?.[0]?.service_nom || "Consultation"}</p>
                               </div>
-                              <Badge variant={apt.status === "confirmed" ? "green" : "amber"}>
-                                {d.appointments.statuses[apt.status]}
+                              <Badge variant={apt.statut === "confirme" ? "green" : "amber"}>
+                                {STATUT_LABEL[apt.statut] ?? apt.statut}
                               </Badge>
                             </div>
                           ))

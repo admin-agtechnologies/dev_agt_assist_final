@@ -28,7 +28,7 @@ export default function PmeServicesPage() {
     if (!user?.tenant_id) return;
     startTransition(async () => {
       try {
-        const res = await servicesRepository.getList({ tenant_id: user.tenant_id! });
+        const res = await servicesRepository.getList();
         setServices(res.results);
       } catch { toast.error(t.errorLoad); } finally { setLoading(false); }
     });
@@ -142,7 +142,7 @@ function ServiceModal({ isOpen, itemId, tenantId, onClose, onSave }: {
     e.preventDefault(); setSaving(true);
     try {
       if (isEdit) await servicesRepository.patch(itemId!, form);
-      else await servicesRepository.create({ ...form, tenant_id: tenantId });
+      else await servicesRepository.create(form);
       toast.success(t.createSuccess); onSave(); onClose();
     } catch { toast.error(d.common.error); } finally { setSaving(false); }
   };

@@ -7,7 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/components/ui/Toast";
 import {
   botsRepository, tenantsRepository,
-  appointmentsRepository, servicesRepository,
+  rendezVousRepository, servicesRepository,
 } from "@/repositories";
 import { cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui";
@@ -20,7 +20,7 @@ import {
   User, Mail, Users, AlertTriangle, CheckCircle,
   FileText, Loader2, AtSign, Briefcase,
 } from "lucide-react";
-import type { Bot as BotType, Tenant, Appointment, Service } from "@/types/api";
+import type { Bot as BotType, Tenant, RendezVous, Service } from "@/types/api";
 
 // ── Palette par secteur ────────────────────────────────────────────────────────
 const SECTOR_THEMES: Record<string, {
@@ -74,10 +74,10 @@ const DAYS_FR = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 const MONTHS_FR = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"];
 
 const STATUS_BG: Record<string, string> = {
-  confirmed: "bg-[#25D366]/20 border-[#25D366]",
-  pending:   "bg-amber-100 border-amber-400 dark:bg-amber-900/30",
-  done:      "bg-blue-100 border-blue-400 dark:bg-blue-900/30",
-  cancelled: "bg-[var(--bg)] border-[var(--border)] opacity-50",
+  confirme:   "bg-[#25D366]/20 border-[#25D366]",
+  en_attente: "bg-amber-100 border-amber-400 dark:bg-amber-900/30",
+  termine:    "bg-blue-100 border-blue-400 dark:bg-blue-900/30",
+  annule:     "bg-[var(--bg)] border-[var(--border)] opacity-50",
 };
 
 // ── Types locaux ───────────────────────────────────────────────────────────────
@@ -116,7 +116,7 @@ interface MockResult {
 
 function getMockResponse(
   input: string,
-  appointments: Appointment[],
+  appointments: RendezVous[],
   services: Service[],
   durationMin: number,
   report: ClientReport,
@@ -247,7 +247,6 @@ function AccordionBlock({
         : "border-[var(--border)]",
     )}
       style={highlight ? { borderColor: primaryColor, boxShadow: `0 0 0 3px ${primaryColor}15` } : {}}>
-      {/* Header accordéon */}
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between gap-2 px-4 py-3 hover:bg-[var(--bg)] transition-colors"
@@ -273,7 +272,6 @@ function AccordionBlock({
           : <ChevronDown className="w-3.5 h-3.5 text-[var(--text-muted)] flex-shrink-0" />}
       </button>
 
-      {/* Contenu */}
       {isOpen && (
         <div className="px-4 pb-4 pt-1 border-t border-[var(--border)] animate-in slide-in-from-top-1 duration-200">
           {children}
@@ -304,7 +302,6 @@ function ClientReportBlock({ report, primaryColor }: { report: ClientReport; pri
 
   return (
     <div className="space-y-3 pt-1">
-      {/* Statut */}
       <div className="flex items-center justify-between">
         <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-black">Contact</span>
         <span className={cn("text-[10px] font-bold", statusColor[report.status])}>
@@ -312,7 +309,6 @@ function ClientReportBlock({ report, primaryColor }: { report: ClientReport; pri
         </span>
       </div>
 
-      {/* Champs contact */}
       <div className="space-y-2">
         {fields.map(f => (
           <div key={f.label} className="flex items-center gap-2">
@@ -326,7 +322,6 @@ function ClientReportBlock({ report, primaryColor }: { report: ClientReport; pri
         ))}
       </div>
 
-      {/* Séparateur */}
       <div className="border-t border-[var(--border)]" />
       <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-black">Conversation</span>
 
@@ -413,15 +408,14 @@ function EmailBotBlock({ emailStep }: { emailStep: EmailPhase | null }) {
   );
 
   const steps: { key: EmailPhase["phase"]; label: string; icon: React.ReactNode }[] = [
-    { key: "drafting", label: "Rédaction", icon: <FileText className="w-3 h-3" /> },
+    { key: "drafting", label: "Rédaction",       icon: <FileText className="w-3 h-3" /> },
     { key: "preview",  label: "Prévisualisation", icon: <Mail className="w-3 h-3" /> },
-    { key: "sent",     label: "Envoyé", icon: <CheckCircle className="w-3 h-3" /> },
+    { key: "sent",     label: "Envoyé",           icon: <CheckCircle className="w-3 h-3" /> },
   ];
   const currentIdx = steps.findIndex(s => s.key === emailStep.phase);
 
   return (
     <div className="space-y-3 pt-1">
-      {/* Stepper */}
       <div className="flex items-center gap-1">
         {steps.map((step, i) => {
           const done = i < currentIdx;
@@ -452,7 +446,6 @@ function EmailBotBlock({ emailStep }: { emailStep: EmailPhase | null }) {
         })}
       </div>
 
-      {/* Contenu selon phase */}
       {emailStep.phase === "drafting" && (
         <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
           <Loader2 className="w-4 h-4 text-blue-500 animate-spin flex-shrink-0" />
@@ -498,8 +491,8 @@ export default function BotTestPage({ params }: { params: { id: string } }) {
 
   const [bot, setBot] = useState<BotType | null>(null);
   const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [mockAppointments, setMockAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] = useState<RendezVous[]>([]);
+  const [mockAppointments, setMockAppointments] = useState<RendezVous[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -520,10 +513,7 @@ export default function BotTestPage({ params }: { params: { id: string } }) {
 
   // ── État cockpit gauche ────────────────────────────────────────────────────
   const [openPanels, setOpenPanels] = useState<Record<LeftPanel, boolean>>({
-    info: true,
-    report: false,
-    transfer: false,
-    email: false,
+    info: true, report: false, transfer: false, email: false,
   });
   const [highlightPanel, setHighlightPanel] = useState<LeftPanel | null>(null);
 
@@ -536,7 +526,6 @@ export default function BotTestPage({ params }: { params: { id: string } }) {
   });
   const [emailStep, setEmailStep] = useState<EmailPhase | null>(null);
 
-  // Auto-expand : ouvre un panneau et le met en avant
   const expandPanel = useCallback((panel: LeftPanel) => {
     setOpenPanels(prev => ({ ...prev, [panel]: true }));
     setHighlightPanel(panel);
@@ -551,7 +540,6 @@ export default function BotTestPage({ params }: { params: { id: string } }) {
   const handleReportUpdate = useCallback((patch: Partial<ClientReport>) => {
     setClientReport(prev => {
       const next = { ...prev, ...patch };
-      // Si le rapport n'était pas ouvert, l'ouvrir
       setOpenPanels(p => {
         if (!p.report) expandPanel("report");
         return p;
@@ -570,34 +558,36 @@ export default function BotTestPage({ params }: { params: { id: string } }) {
     subject: string, body: string, to: string
   ) => {
     expandPanel("email");
-    // Étape 1 : rédaction
     setEmailStep({ phase: "drafting" });
     await new Promise(r => setTimeout(r, 2000));
-    // Étape 2 : prévisualisation
     setEmailStep({ phase: "preview", subject, body });
     await new Promise(r => setTimeout(r, 3000));
-    // Étape 3 : envoyé
     setEmailStep({ phase: "sent", to });
   }, [expandPanel]);
 
   const handleMockAppointment = useCallback((apt: { date: Date; serviceId: string }) => {
-    const mock: Appointment = {
-      id: `mock-${Date.now()}`,
-      tenant_id: user?.tenant_id ?? "",
-      service_id: apt.serviceId,
-      client_name: clientReport.name ?? "Client simulé",
-      client_phone: clientReport.phone ?? "+237600000000",
-      client_email: clientReport.email ?? "",
-      scheduled_at: apt.date.toISOString(),
-      status: "pending",
-      channel: "whatsapp",
-      reminder_sent: false,
-      notes: "RDV simulé (test bot)",
+    // Crée un objet RendezVous minimal pour l'affichage dans la grille agenda
+    const mock: RendezVous = {
+      id:               `mock-${Date.now()}`,
+      agenda:           "",
+      agenda_nom:       "",
+      agence:           null,
+      agence_nom:       null,
+      client:           "",
+      client_nom:       clientReport.name ?? "Client simulé",
+      client_telephone: clientReport.phone ?? "+237600000000",
+      bot:              null,
+      statut:           "en_attente",
+      canal:            "whatsapp",
+      scheduled_at:     apt.date.toISOString(),
+      reminder_sent:    false,
+      notes:            "RDV simulé (test bot)",
+      services_detail:  [],
+      created_at:       new Date().toISOString(),
     };
     setMockAppointments(prev => [...prev, mock]);
     setCurrentDate(apt.date);
 
-    // Déclencher l'email de confirmation
     const svc = services.find(s => s.id === apt.serviceId);
     const dateLabel = apt.date.toLocaleDateString("fr-FR", {
       weekday: "long", day: "numeric", month: "long",
@@ -607,18 +597,18 @@ export default function BotTestPage({ params }: { params: { id: string } }) {
     const body = `Bonjour${clientReport.name ? " " + clientReport.name : ""},\n\nVotre rendez-vous a bien été enregistré :\n\n📅 Date : ${dateLabel} à ${timeLabel}\n🏥 Service : ${svc?.nom ?? "Consultation"}\n\nUn rappel vous sera envoyé 24h avant.\n\nCordialement,\nL'équipe`;
     const to = clientReport.email ?? "client@exemple.com";
     handleEmailTrigger(subject, body, to);
-  }, [user?.tenant_id, clientReport, services, handleEmailTrigger]);
+  }, [clientReport, services, handleEmailTrigger]);
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
     try {
       const b = await botsRepository.getById(id);
       setBot(b);
-      if (user?.tenant_id) {
+      if (user?.entreprise?.id) {
         const [ten, aptsRes, svcsRes] = await Promise.all([
-          tenantsRepository.getById(user.tenant_id),
-          appointmentsRepository.getList({ tenant_id: user.tenant_id }),
-          servicesRepository.getList({ tenant_id: user.tenant_id }),
+          tenantsRepository.getById(user.entreprise.id),
+          rendezVousRepository.getList(),
+          servicesRepository.getList(),
         ]);
         setTenant(ten);
         setAppointments(aptsRes.results);
@@ -626,7 +616,7 @@ export default function BotTestPage({ params }: { params: { id: string } }) {
       }
     } catch { toast.error(t.errorLoad); }
     finally { setLoading(false); }
-  }, [id, user?.tenant_id, t.errorLoad, toast]);
+  }, [id, user?.entreprise?.id, t.errorLoad, toast]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -651,10 +641,9 @@ export default function BotTestPage({ params }: { params: { id: string } }) {
   const allAppointments = [...appointments, ...mockAppointments];
   const periodLabel = `${weekStart.getDate()} ${MONTHS_FR[weekStart.getMonth()]} — ${addDays(weekStart, 6).getDate()} ${MONTHS_FR[addDays(weekStart, 6).getMonth()]} ${weekStart.getFullYear()}`;
 
-  // Badges dynamiques pour les panneaux
-  const reportBadge = clientReport.status !== "idle" ? "●" : undefined;
+  const reportBadge  = clientReport.status !== "idle" ? "●" : undefined;
   const transferBadge = humanTransfer.triggered ? "!" : undefined;
-  const emailBadge = emailStep ? (emailStep.phase === "sent" ? "✓" : "…") : undefined;
+  const emailBadge   = emailStep ? (emailStep.phase === "sent" ? "✓" : "…") : undefined;
 
   return (
     <div className={cn("min-h-screen bg-gradient-to-br", theme.bg)}>
@@ -718,7 +707,6 @@ export default function BotTestPage({ params }: { params: { id: string } }) {
           {/* ── COL 1 : Cockpit supervision ──────────────────────────────────── */}
           <div className="space-y-3">
 
-            {/* Bloc 1 — Infos bot */}
             <AccordionBlock
               id="info"
               title={`${tenant?.name ?? "Bot"} — ${theme.name}`}
@@ -746,9 +734,9 @@ export default function BotTestPage({ params }: { params: { id: string } }) {
                 <div className="border-t border-[var(--border)] pt-2 space-y-1.5">
                   {[
                     { label: "Personnalité", value: bot.personality },
-                    { label: "Langues", value: bot.languages.join(", ").toUpperCase() },
-                    { label: "WhatsApp", value: bot.whatsapp_provider?.toUpperCase() },
-                    { label: "IA Vocale", value: bot.voice_ai_provider },
+                    { label: "Langues",      value: bot.languages.join(", ").toUpperCase() },
+                    { label: "WhatsApp",     value: bot.whatsapp_provider?.toUpperCase() },
+                    { label: "IA Vocale",    value: bot.voice_ai_provider },
                   ].map((item, i) => (
                     <div key={i} className="flex justify-between items-center gap-2">
                       <span className="text-[10px] text-[var(--text-muted)]">{item.label}</span>
@@ -767,7 +755,6 @@ export default function BotTestPage({ params }: { params: { id: string } }) {
               </div>
             </AccordionBlock>
 
-            {/* Bloc 2 — Rapport client live */}
             <AccordionBlock
               id="report"
               title="Rapport client"
@@ -781,7 +768,6 @@ export default function BotTestPage({ params }: { params: { id: string } }) {
               <ClientReportBlock report={clientReport} primaryColor={theme.primary} />
             </AccordionBlock>
 
-            {/* Bloc 3 — Transfert humain */}
             <AccordionBlock
               id="transfer"
               title="Transfert humain"
@@ -796,7 +782,6 @@ export default function BotTestPage({ params }: { params: { id: string } }) {
               <HumanTransferBlock transfer={humanTransfer} />
             </AccordionBlock>
 
-            {/* Bloc 4 — Email bot */}
             <AccordionBlock
               id="email"
               title="Email bot"
@@ -816,7 +801,6 @@ export default function BotTestPage({ params }: { params: { id: string } }) {
           {/* ── COL 2 : Simulateur ───────────────────────────────────────────── */}
           <div className="space-y-4">
 
-            {/* Toggle WhatsApp / Vocal */}
             <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] p-1 flex gap-1 shadow-sm">
               <button
                 onClick={() => setActiveSimulator("whatsapp")}
@@ -846,7 +830,6 @@ export default function BotTestPage({ params }: { params: { id: string } }) {
               </button>
             </div>
 
-            {/* Simulateur actif */}
             {activeSimulator === "whatsapp" ? (
               <WhatsAppSimulator
                 bot={bot}
@@ -866,9 +849,8 @@ export default function BotTestPage({ params }: { params: { id: string } }) {
 
           </div>
 
-          {/* ── COL 3 : Agenda (inchangé) ────────────────────────────────────── */}
+          {/* ── COL 3 : Agenda ───────────────────────────────────────────────── */}
           <div className="bg-[var(--bg-card)] rounded-3xl border border-[var(--border)] shadow-sm overflow-hidden flex flex-col">
-            {/* Header */}
             <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between gap-2"
               style={{ backgroundColor: `${theme.primary}10` }}>
               <div className="flex items-center gap-2">
@@ -876,22 +858,16 @@ export default function BotTestPage({ params }: { params: { id: string } }) {
                 <p className="text-xs font-bold text-[var(--text)]">Agenda temps réel</p>
               </div>
               <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setCurrentDate(dt => addDays(dt, -7))}
-                  className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-[var(--bg)] transition-colors"
-                >
+                <button onClick={() => setCurrentDate(dt => addDays(dt, -7))}
+                  className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-[var(--bg)] transition-colors">
                   <ChevronLeft className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                 </button>
-                <button
-                  onClick={() => setCurrentDate(new Date())}
-                  className="px-2 py-0.5 rounded-lg text-[10px] font-bold border border-[var(--border)] hover:bg-[var(--bg)] transition-colors text-[var(--text-muted)]"
-                >
+                <button onClick={() => setCurrentDate(new Date())}
+                  className="px-2 py-0.5 rounded-lg text-[10px] font-bold border border-[var(--border)] hover:bg-[var(--bg)] transition-colors text-[var(--text-muted)]">
                   Auj.
                 </button>
-                <button
-                  onClick={() => setCurrentDate(dt => addDays(dt, 7))}
-                  className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-[var(--bg)] transition-colors"
-                >
+                <button onClick={() => setCurrentDate(dt => addDays(dt, 7))}
+                  className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-[var(--bg)] transition-colors">
                   <ChevronRight className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                 </button>
               </div>
@@ -931,7 +907,6 @@ export default function BotTestPage({ params }: { params: { id: string } }) {
             {/* Corps grille */}
             <div className="overflow-y-auto flex-1" style={{ maxHeight: "520px" }}>
               <div className="grid grid-cols-[32px_repeat(7,1fr)]">
-                {/* Heures */}
                 <div className="border-r border-[var(--border)]">
                   {timeSlots.map(slot => (
                     <div key={slot} style={{ height: SLOT_H }}
@@ -941,7 +916,6 @@ export default function BotTestPage({ params }: { params: { id: string } }) {
                   ))}
                 </div>
 
-                {/* Colonnes jours */}
                 {displayDays.map((day, di) => {
                   const dayApts = allAppointments.filter(a =>
                     isSameDay(new Date(a.scheduled_at), day)
@@ -974,13 +948,13 @@ export default function BotTestPage({ params }: { params: { id: string } }) {
                               "absolute rounded-md border-l-2 px-1 py-0.5 overflow-hidden z-10",
                               isMock
                                 ? "border-amber-400 bg-amber-50 dark:bg-amber-900/20"
-                                : STATUS_BG[apt.status] ?? STATUS_BG.pending
+                                : STATUS_BG[apt.statut] ?? STATUS_BG.en_attente
                             )}>
                             <p className={cn(
                               "text-[8px] font-bold truncate leading-tight",
                               isMock ? "text-amber-700 dark:text-amber-300" : "text-[var(--text)]"
                             )}>
-                              {isMock ? "⚡ " : ""}{apt.client_name}
+                              {isMock ? "⚡ " : ""}{apt.client_nom}
                             </p>
                             <p className="text-[7px] opacity-70 flex items-center gap-0.5">
                               <Clock className="w-2 h-2 inline" />
@@ -1028,7 +1002,7 @@ interface WhatsAppSimulatorProps {
   tenant: Tenant | null;
   theme: ReturnType<typeof getTheme>;
   d: ReturnType<typeof useLanguage>["dictionary"];
-  appointments: Appointment[];
+  appointments: RendezVous[];
   services: Service[];
   clientReport: ClientReport;
   onMockAppointment: (apt: { date: Date; serviceId: string }) => void;
@@ -1067,7 +1041,6 @@ function WhatsAppSimulator({
 
     await new Promise(r => setTimeout(r, 1000 + Math.random() * 600));
 
-    // Confirmation RDV en attente
     if (pendingApt && /oui|confirme|ok|parfait|d'accord|yes/i.test(content)) {
       const svc = services.find(s => s.id === pendingApt.serviceId);
       const dateLabel = `${DAYS_FR[pendingApt.date.getDay() === 0 ? 6 : pendingApt.date.getDay() - 1]} ${pendingApt.date.getDate()} ${MONTHS_FR[pendingApt.date.getMonth()]} à ${String(pendingApt.date.getHours()).padStart(2, "0")}h${String(pendingApt.date.getMinutes()).padStart(2, "0")}`;
@@ -1085,12 +1058,8 @@ function WhatsAppSimulator({
 
     const response = getMockResponse(content, appointments, services, 30, clientReport);
 
-    // Appliquer les mises à jour du rapport
     if (response.reportPatch) onReportUpdate(response.reportPatch);
-
-    // Transfert humain
     if (response.triggerTransfer) onHumanTransfer(response.triggerTransfer);
-
     if (response.mockApt) setPendingApt(response.mockApt);
 
     setMessages(prev => [...prev, {
@@ -1111,7 +1080,6 @@ function WhatsAppSimulator({
 
   return (
     <div className="bg-[var(--bg-card)] rounded-3xl border border-[var(--border)] shadow-sm overflow-hidden">
-      {/* Header */}
       <div className={cn("px-4 py-3 flex items-center gap-3", theme.header)}>
         <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
           <Bot className="w-4 h-4 text-white" />
@@ -1128,7 +1096,6 @@ function WhatsAppSimulator({
         </div>
       </div>
 
-      {/* Messages */}
       <div
         className="h-80 overflow-y-auto p-3 space-y-2"
         style={{
@@ -1174,7 +1141,6 @@ function WhatsAppSimulator({
         <div ref={bottomRef} />
       </div>
 
-      {/* Suggestions rapides */}
       <div className="px-3 pb-2 flex gap-1.5 flex-wrap">
         {["Je veux un RDV", "Vos services ?", "Vos horaires ?", "Parler à quelqu'un"].map(s => (
           <button key={s} onClick={() => sendMessage(s)} disabled={isTyping}
@@ -1184,7 +1150,6 @@ function WhatsAppSimulator({
         ))}
       </div>
 
-      {/* Input */}
       <div className="p-3 border-t border-[var(--border)] flex gap-2 items-end bg-[var(--bg)]">
         <input
           className="flex-1 input-base py-2 text-sm"
@@ -1221,7 +1186,6 @@ function VoiceSimulator({ bot, theme, d }: {
   const [isMuted, setIsMuted] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Transcription simulée
   const VOICE_TRANSCRIPT: { delay: number; role: "bot" | "client"; text: string }[] = [
     { delay: 1500,  role: "bot",    text: `Bonjour, vous êtes bien chez ${bot.name}. Comment puis-je vous aider ?` },
     { delay: 4000,  role: "client", text: "Bonjour, je voudrais prendre un rendez-vous." },
@@ -1242,8 +1206,6 @@ function VoiceSimulator({ bot, theme, d }: {
     setTimeout(() => {
       setCallState("connected");
       timerRef.current = setInterval(() => setDuration(s => s + 1), 1000);
-
-      // Lancer la transcription simulée
       VOICE_TRANSCRIPT.forEach(({ delay, role, text }) => {
         const tid = setTimeout(() => {
           setTranscript(prev => [...prev, { role, text }]);
@@ -1275,14 +1237,12 @@ function VoiceSimulator({ bot, theme, d }: {
 
   return (
     <div className="bg-[var(--bg-card)] rounded-3xl border border-[var(--border)] shadow-sm overflow-hidden">
-      {/* Header */}
       <div className={cn("px-5 py-3", theme.header)}>
         <p className="text-sm font-bold text-white">{t.testVoiceTitle}</p>
         <p className="text-xs text-white/70">{bot.voice_ai_provider} · {bot.languages.join(", ").toUpperCase()}</p>
       </div>
 
       <div className="p-5 flex items-center gap-5">
-        {/* Avatar */}
         <div className="relative flex-shrink-0">
           {callState === "connected" && (
             <>
@@ -1300,7 +1260,6 @@ function VoiceSimulator({ bot, theme, d }: {
           </div>
         </div>
 
-        {/* Statut */}
         <div className="flex-1">
           <p className="text-sm font-bold text-[var(--text)]">{bot.name}</p>
           <p className="text-xs text-[var(--text-muted)] mt-0.5">
@@ -1320,7 +1279,6 @@ function VoiceSimulator({ bot, theme, d }: {
           </p>
         </div>
 
-        {/* Boutons */}
         <div className="flex items-center gap-2 flex-shrink-0">
           {callState === "connected" && (
             <button
@@ -1353,7 +1311,6 @@ function VoiceSimulator({ bot, theme, d }: {
         </div>
       </div>
 
-      {/* Transcription en temps réel */}
       {(callState === "connected" || (callState === "ended" && transcript.length > 0)) && (
         <div className="mx-5 mb-5 rounded-2xl border border-[var(--border)] overflow-hidden">
           <div className="px-3 py-2 border-b border-[var(--border)] bg-[var(--bg)] flex items-center gap-2">

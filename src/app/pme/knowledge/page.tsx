@@ -1,4 +1,3 @@
-// src/app/pme/knowledge/page.tsx
 "use client";
 import { useState, useEffect, useTransition, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,44 +5,44 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/components/ui/Toast";
 import { SectionHeader, Spinner, EmptyState, Badge } from "@/components/ui";
 import {
-    tenantKnowledgeRepository, businessHoursRepository,
-    locationsRepository, servicesRepository, serviceKnowledgeRepository,
+    tenantKnowledgeRepository, horairesRepository,
+    agencesRepository, servicesRepository, serviceKnowledgeRepository,
     faqRepository,
 } from "@/repositories";
 import { cn } from "@/lib/utils";
 import { createPortal } from "react-dom";
 import type {
-    TenantKnowledge, BusinessHours, DayHours,
-    Location, Service, ServiceKnowledge, FAQ,
+    TenantKnowledge, HorairesOuverture, DaySchedule,
+    Agence, Service, ServiceKnowledge, FAQ,
 } from "@/types/api";
 import {
     Building2, MapPin, Clock, BookOpen, Wrench,
     MessageSquare, Phone, Mail, Globe, Save, Plus,
     Trash2, ChevronDown, ChevronUp, X, Edit,
-    Bot, Zap, Languages, AlertCircle,
+    Bot, Languages, AlertCircle,
 } from "lucide-react";
 
 // ── Constantes ────────────────────────────────────────────────────────────────
-const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
+const DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"] as const;
 type DayKey = typeof DAYS[number];
 
 // ── Onglets ───────────────────────────────────────────────────────────────────
 type Tab = "general" | "locations" | "faq" | "services";
 
-// ════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
 // PAGE PRINCIPALE
-// ════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
 export default function PmeKnowledgePage() {
     const { user } = useAuth();
     const { dictionary: d, locale } = useLanguage();
     const t = d.knowledge;
     const [activeTab, setActiveTab] = useState<Tab>("general");
-    
+
     const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
-        { id: "general", label: t.tabGeneral, icon: Building2 },
-        { id: "locations", label: t.tabLocations, icon: MapPin },
-        { id: "faq", label: t.tabFaq, icon: BookOpen },
-        { id: "services", label: t.tabServices, icon: Wrench },
+        { id: "general",   label: t.tabGeneral,   icon: Building2 },
+        { id: "locations", label: t.tabLocations,  icon: MapPin    },
+        { id: "faq",       label: t.tabFaq,        icon: BookOpen  },
+        { id: "services",  label: t.tabServices,   icon: Wrench    },
     ];
 
     if (!user) return null;
@@ -72,87 +71,115 @@ export default function PmeKnowledgePage() {
             </div>
 
             {/* Contenu onglet */}
-            {activeTab === "general" && <TabGeneral tenantId={user.tenant_id!} d={d} locale={locale} />}
+            {activeTab === "general"   && <TabGeneral   tenantId={user.tenant_id!} d={d} locale={locale} />}
             {activeTab === "locations" && <TabLocations tenantId={user.tenant_id!} d={d} />}
-            {activeTab === "faq" && <TabFaq tenantId={user.tenant_id!} d={d} />}
-            {activeTab === "services" && <TabServices tenantId={user.tenant_id!} entrepriseId={user.entreprise?.id ?? ""} d={d} />}
+            {activeTab === "faq"       && <TabFaq       tenantId={user.tenant_id!} d={d} />}
+            {activeTab === "services"  && <TabServices  tenantId={user.tenant_id!} entrepriseId={user.entreprise?.id ?? ""} d={d} />}
         </div>
     );
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// ONGLET 1 — INFOS GÉNÉRALES
-// ════════════════════════════════════════════════════════════════════════════
-function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<typeof useLanguage>["dictionary"]; locale: string }) {
+// ══════════════════════════════════════════════════════════════════════════════
+// ONGLET 1 – INFOS GÉNÉRALES
+// ══════════════════════════════════════════════════════════════════════════════
+function TabGeneral({
+    tenantId, d, locale,
+}: {
+    tenantId: string;
+    d: ReturnType<typeof useLanguage>["dictionary"];
+    locale: string;
+}) {
     const t = d.knowledge;
     const toast = useToast();
     const { user } = useAuth();
     const [knowledge, setKnowledge] = useState<TenantKnowledge | null>(null);
-    const [hoursOpening, setHoursOpening] = useState<BusinessHours | null>(null);
-    const [hoursAppt, setHoursAppt] = useState<BusinessHours | null>(null);
+    const [hoursOpening, setHoursOpening] = useState<HorairesOuverture | null>(null);
+    const [hoursAppt, setHoursAppt] = useState<HorairesOuverture | null>(null);
     const [loading, setLoading] = useState(true);
     const [isSaving, startSave] = useTransition();
 
-    // Formulaire
     const [form, setForm] = useState({
-          slogan: "", site_web: "", email_contact: "",
-          transfer_whatsapp: "", transfer_phone: "", transfer_email: "", transfer_message: "",
-          message_accueil: "", bot_tone: "semi_formal" as TenantKnowledge["bot_tone"],
-          bot_personality: "", bot_signature: "", extra_info: "",
-          bot_languages: ["fr"] as string[],
-      });
+        slogan: "", site_web: "", email_contact: "",
+        transfer_whatsapp: "", transfer_phone: "", transfer_email: "", transfer_message: "",
+        message_accueil: "", bot_tone: "semi_formal" as TenantKnowledge["bot_tone"],
+        bot_personality: "", bot_signature: "", extra_info: "",
+        bot_languages: ["fr"] as string[],
+    });
 
     const DAY_LABELS: Record<DayKey, string> = {
-        monday: locale === "fr" ? "Lundi" : "Monday",
-        tuesday: locale === "fr" ? "Mardi" : "Tuesday",
-        wednesday: locale === "fr" ? "Mercredi" : "Wednesday",
-        thursday: locale === "fr" ? "Jeudi" : "Thursday",
-        friday: locale === "fr" ? "Vendredi" : "Friday",
-        saturday: locale === "fr" ? "Samedi" : "Saturday",
-        sunday: locale === "fr" ? "Dimanche" : "Sunday",
+        lundi:    locale === "fr" ? "Lundi"    : "Monday",
+        mardi:    locale === "fr" ? "Mardi"    : "Tuesday",
+        mercredi: locale === "fr" ? "Mercredi" : "Wednesday",
+        jeudi:    locale === "fr" ? "Jeudi"    : "Thursday",
+        vendredi: locale === "fr" ? "Vendredi" : "Friday",
+        samedi:   locale === "fr" ? "Samedi"   : "Saturday",
+        dimanche: locale === "fr" ? "Dimanche" : "Sunday",
     };
 
     const fetchAll = useCallback(async () => {
         setLoading(true);
-
-        // ── 1. TenantKnowledge ─────────────────────────────────────────────────
         const k = await tenantKnowledgeRepository.getMine();
-
         if (k) {
             setKnowledge(k);
             setForm({
-                slogan: k.slogan,
-                site_web: k.site_web,
-                email_contact: k.email_contact,
+                slogan:            k.slogan,
+                site_web:          k.site_web,
+                email_contact:     k.email_contact,
                 transfer_whatsapp: k.transfer_whatsapp,
-                transfer_phone: k.transfer_phone,
-                transfer_email: k.transfer_email,
-                transfer_message: k.transfer_message,
-                message_accueil: k.message_accueil,
-                bot_tone: k.bot_tone,
-                bot_personality: k.bot_personality,
-                bot_signature: k.bot_signature,
-                extra_info: k.extra_info,
-                bot_languages: k.bot_languages,
+                transfer_phone:    k.transfer_phone,
+                transfer_email:    k.transfer_email,
+                transfer_message:  k.transfer_message,
+                message_accueil:   k.message_accueil,
+                bot_tone:          k.bot_tone,
+                bot_personality:   k.bot_personality,
+                bot_signature:     k.bot_signature,
+                extra_info:        k.extra_info,
+                bot_languages:     k.bot_languages,
             });
         }
 
-        // ── 2. Horaires (indépendants — ne bloquent pas le formulaire) ─────────
-        const [ho, ha] = await Promise.allSettled([
-            businessHoursRepository.getByTenant(tenantId, "opening"),
-            businessHoursRepository.getByTenant(tenantId, "appointments"),
-        ]).then(([r1, r2]) => [
-            r1.status === "fulfilled" ? r1.value : null,
-            r2.status === "fulfilled" ? r2.value : null,
+        const [r1, r2] = await Promise.allSettled([
+            horairesRepository.getList("ouverture"),
+            horairesRepository.getList("rendez_vous"),
         ]);
-
-        setHoursOpening(ho);
-        setHoursAppt(ha);
+        setHoursOpening(r1.status === "fulfilled" ? (r1.value[0] ?? null) : null);
+        setHoursAppt(r2.status === "fulfilled" ? (r2.value[0] ?? null) : null);
         setLoading(false);
     }, [tenantId]);
 
     useEffect(() => { fetchAll(); }, [fetchAll]);
 
+    // ── Helpers horaires ──────────────────────────────────────────────────────
+    const toggleDay = (
+        hours: HorairesOuverture,
+        setHours: (h: HorairesOuverture) => void,
+        day: DayKey,
+    ) => {
+        const current = hours[day] as DaySchedule;
+        setHours({ ...hours, [day]: { ...current, open: !current.open } });
+    };
+
+    const updateDayTime = (
+        hours: HorairesOuverture,
+        setHours: (h: HorairesOuverture) => void,
+        day: DayKey,
+        field: "start" | "end",
+        value: string,
+    ) => {
+        const current = hours[day] as DaySchedule;
+        setHours({ ...hours, [day]: { ...current, [field]: value } });
+    };
+
+    const saveHours = async (hours: HorairesOuverture) => {
+        try {
+            await horairesRepository.patch(hours.id, hours);
+            toast.success(t.saveSuccess);
+        } catch {
+            toast.error(d.common.error);
+        }
+    };
+
+    // ── Sauvegarde profil ─────────────────────────────────────────────────────
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
         startSave(async () => {
@@ -162,41 +189,29 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
                 } else {
                     await tenantKnowledgeRepository.create({
                         ...form,
-                        entreprise: user?.entreprise?.id ?? "",
-                        duree_rdv_min: 30,
+                        entreprise:     user?.entreprise?.id ?? "",
+                        duree_rdv_min:  30,
                         buffer_slot_min: 10,
                     });
                 }
                 toast.success(t.saveSuccess);
                 fetchAll();
-            } catch { toast.error(d.common.error); }
+            } catch {
+                toast.error(d.common.error);
+            }
         });
     };
 
-    const toggleDay = (hours: BusinessHours, setHours: (h: BusinessHours) => void, day: DayKey) => {
-        setHours({ ...hours, [day]: { ...hours[day], open: !hours[day].open } });
-    };
-
-    const updateDayTime = (
-        hours: BusinessHours, setHours: (h: BusinessHours) => void,
-        day: DayKey, field: "start" | "end", value: string
-    ) => {
-        setHours({ ...hours, [day]: { ...hours[day], [field]: value } });
-    };
-
-    const saveHours = async (hours: BusinessHours) => {
-        try {
-            await businessHoursRepository.patch(hours.id, hours);
-            toast.success(t.saveSuccess);
-        } catch { toast.error(d.common.error); }
-    };
-
-    if (loading) return <div className="flex justify-center py-12"><Spinner className="w-6 h-6 border-[#25D366] border-t-transparent" /></div>;
+    if (loading) return (
+        <div className="flex justify-center py-12">
+            <Spinner className="w-6 h-6 border-[#25D366] border-t-transparent" />
+        </div>
+    );
 
     return (
         <form onSubmit={handleSave} className="space-y-6">
 
-            {/* ── Message d'accueil + Branding ─────────────────────────────────── */}
+            {/* ── Message d'accueil + Branding ────────────────────────────────── */}
             <div className="card p-6 space-y-4">
                 <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-2">
                     <Bot className="w-4 h-4" /> {t.botSection}
@@ -241,7 +256,7 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
                                             ...form,
                                             bot_languages: e.target.checked
                                                 ? [...form.bot_languages, lang]
-                                                : form.bot_languages.filter(l => l !== lang)
+                                                : form.bot_languages.filter(l => l !== lang),
                                         })} />
                                     <span className="text-sm font-semibold text-[var(--text)]">
                                         {lang === "fr" ? "Français" : "English"}
@@ -266,7 +281,7 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
                 </div>
             </div>
 
-            {/* ── Contacts principaux ───────────────────────────────────────────── */}
+            {/* ── Contacts principaux ──────────────────────────────────────────── */}
             <div className="card p-6 space-y-4">
                 <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-2">
                     <Phone className="w-4 h-4" /> {t.contactSection}
@@ -276,7 +291,8 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
                         <label className="label-base">{t.contactWhatsapp}</label>
                         <div className="relative">
                             <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                            <input className="input-base pl-10" placeholder="+237..." value={form.transfer_whatsapp}
+                            <input className="input-base pl-10" placeholder="+237..."
+                                value={form.transfer_whatsapp}
                                 onChange={e => setForm({ ...form, transfer_whatsapp: e.target.value })} />
                         </div>
                     </div>
@@ -284,7 +300,8 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
                         <label className="label-base">{t.contactPhone}</label>
                         <div className="relative">
                             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                            <input className="input-base pl-10" placeholder="+237..." value={form.transfer_phone}
+                            <input className="input-base pl-10" placeholder="+237..."
+                                value={form.transfer_phone}
                                 onChange={e => setForm({ ...form, transfer_phone: e.target.value })} />
                         </div>
                     </div>
@@ -292,7 +309,8 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
                         <label className="label-base">{t.contactEmail}</label>
                         <div className="relative">
                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                            <input type="email" className="input-base pl-10" value={form.email_contact}
+                            <input type="email" className="input-base pl-10"
+                                value={form.email_contact}
                                 onChange={e => setForm({ ...form, email_contact: e.target.value })} />
                         </div>
                     </div>
@@ -300,14 +318,15 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
                         <label className="label-base">{t.website}</label>
                         <div className="relative">
                             <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                            <input className="input-base pl-10" placeholder="https://..." value={form.site_web}
+                            <input className="input-base pl-10" placeholder="https://..."
+                                value={form.site_web}
                                 onChange={e => setForm({ ...form, site_web: e.target.value })} />
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* ── Transfert vers humain ─────────────────────────────────────────── */}
+            {/* ── Transfert vers humain ────────────────────────────────────────── */}
             <div className="card p-6 space-y-4">
                 <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 text-amber-500" /> {t.transferSection}
@@ -318,7 +337,8 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
                         <label className="label-base">{t.transferWhatsapp}</label>
                         <div className="relative">
                             <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                            <input className="input-base pl-10" placeholder="+237..." value={form.transfer_whatsapp}
+                            <input className="input-base pl-10" placeholder="+237..."
+                                value={form.transfer_whatsapp}
                                 onChange={e => setForm({ ...form, transfer_whatsapp: e.target.value })} />
                         </div>
                     </div>
@@ -326,7 +346,8 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
                         <label className="label-base">{t.transferPhone}</label>
                         <div className="relative">
                             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                            <input className="input-base pl-10" placeholder="+237..." value={form.transfer_phone}
+                            <input className="input-base pl-10" placeholder="+237..."
+                                value={form.transfer_phone}
                                 onChange={e => setForm({ ...form, transfer_phone: e.target.value })} />
                         </div>
                     </div>
@@ -334,47 +355,52 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
                         <label className="label-base">{t.transferEmail}</label>
                         <div className="relative">
                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                            <input type="email" className="input-base pl-10" value={form.transfer_email}
+                            <input type="email" className="input-base pl-10"
+                                value={form.transfer_email}
                                 onChange={e => setForm({ ...form, transfer_email: e.target.value })} />
                         </div>
                     </div>
                     <div className="sm:col-span-2">
                         <label className="label-base">{t.transferMessage}</label>
-                        <textarea rows={2} className="input-base resize-none" value={form.transfer_message}
+                        <textarea rows={2} className="input-base resize-none"
+                            value={form.transfer_message}
                             onChange={e => setForm({ ...form, transfer_message: e.target.value })}
                             placeholder="Je vous transfère à notre équipe..." />
                     </div>
                 </div>
             </div>
 
-            {/* ── Infos supplémentaires ─────────────────────────────────────────── */}
+            {/* ── Infos supplémentaires ────────────────────────────────────────── */}
             <div className="card p-6 space-y-4">
                 <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-muted)]">
                     {t.extraInfo}
                 </h3>
-                <textarea rows={4} className="input-base resize-none" value={form.extra_info}
+                <textarea rows={4} className="input-base resize-none"
+                    value={form.extra_info}
                     onChange={e => setForm({ ...form, extra_info: e.target.value })}
                     placeholder="Parking disponible, accès PMR, langues parlées..." />
             </div>
 
-            {/* ── Horaires d'ouverture ──────────────────────────────────────────── */}
+            {/* ── Horaires d'ouverture ─────────────────────────────────────────── */}
             {hoursOpening && (
                 <HoursEditor
-                    title={t.hoursOpening} hours={hoursOpening}
+                    title={t.hoursOpening}
+                    hours={hoursOpening}
                     dayLabels={DAY_LABELS}
-                    onToggle={(day) => toggleDay(hoursOpening, setHoursOpening, day)}
+                    onToggle={day => toggleDay(hoursOpening, setHoursOpening, day)}
                     onTimeChange={(day, field, val) => updateDayTime(hoursOpening, setHoursOpening, day, field, val)}
                     onSave={() => saveHours(hoursOpening)}
                     d={d}
                 />
             )}
 
-            {/* ── Horaires de réception RDV ─────────────────────────────────────── */}
+            {/* ── Horaires de réception RDV ────────────────────────────────────── */}
             {hoursAppt && (
                 <HoursEditor
-                    title={t.hoursAppointments} hours={hoursAppt}
+                    title={t.hoursAppointments}
+                    hours={hoursAppt}
                     dayLabels={DAY_LABELS}
-                    onToggle={(day) => toggleDay(hoursAppt, setHoursAppt, day)}
+                    onToggle={day => toggleDay(hoursAppt, setHoursAppt, day)}
                     onTimeChange={(day, field, val) => updateDayTime(hoursAppt, setHoursAppt, day, field, val)}
                     onSave={() => saveHours(hoursAppt)}
                     d={d}
@@ -391,13 +417,14 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
             </div>
         </form>
     );
-    
 }
 
 // ── Composant éditeur d'horaires ──────────────────────────────────────────────
-function HoursEditor({ title, hours, dayLabels, onToggle, onTimeChange, onSave, d }: {
+function HoursEditor({
+    title, hours, dayLabels, onToggle, onTimeChange, onSave, d,
+}: {
     title: string;
-    hours: BusinessHours;
+    hours: HorairesOuverture;
     dayLabels: Record<DayKey, string>;
     onToggle: (day: DayKey) => void;
     onTimeChange: (day: DayKey, field: "start" | "end", val: string) => void;
@@ -413,21 +440,23 @@ function HoursEditor({ title, hours, dayLabels, onToggle, onTimeChange, onSave, 
                     </div>
                     <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text)]">{title}</h3>
                 </div>
-                <button type="button" onClick={onSave} className="flex items-center gap-2 px-4 py-2 bg-[var(--bg)] hover:bg-[var(--border)] rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                <button type="button" onClick={onSave}
+                    className="flex items-center gap-2 px-4 py-2 bg-[var(--bg)] hover:bg-[var(--border)] rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
                     <Save className="w-3.5 h-3.5" /> {d.common.save}
                 </button>
             </div>
 
             <div className="grid grid-cols-1 gap-2">
                 {DAYS.map(day => {
-                    const dh = hours[day] as DayHours;
+                    const dh = hours[day] as DaySchedule;
                     return (
                         <div key={day} className={cn(
                             "flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl transition-all border",
-                            dh.open ? "bg-white border-[var(--border)] shadow-sm" : "bg-[var(--bg)] border-transparent opacity-60"
+                            dh.open
+                                ? "bg-white border-[var(--border)] shadow-sm"
+                                : "bg-[var(--bg)] border-transparent opacity-60"
                         )}>
                             <div className="flex items-center gap-4">
-                                {/* Toggle Style iOS */}
                                 <div onClick={() => onToggle(day)}
                                     className={cn(
                                         "w-12 h-6 rounded-full p-1 transition-all cursor-pointer flex items-center",
@@ -445,17 +474,13 @@ function HoursEditor({ title, hours, dayLabels, onToggle, onTimeChange, onSave, 
 
                             {dh.open ? (
                                 <div className="flex items-center gap-2 mt-3 sm:mt-0">
-                                    <div className="relative">
-                                        <input type="time" value={dh.start}
-                                            onChange={e => onTimeChange(day, "start", e.target.value)}
-                                            className="bg-[var(--bg)] border-none rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-[#25D366] transition-all" />
-                                    </div>
+                                    <input type="time" value={dh.start}
+                                        onChange={e => onTimeChange(day, "start", e.target.value)}
+                                        className="bg-[var(--bg)] border-none rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-[#25D366] transition-all" />
                                     <span className="text-[var(--text-muted)] font-black">→</span>
-                                    <div className="relative">
-                                        <input type="time" value={dh.end}
-                                            onChange={e => onTimeChange(day, "end", e.target.value)}
-                                            className="bg-[var(--bg)] border-none rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-[#25D366] transition-all" />
-                                    </div>
+                                    <input type="time" value={dh.end}
+                                        onChange={e => onTimeChange(day, "end", e.target.value)}
+                                        className="bg-[var(--bg)] border-none rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-[#25D366] transition-all" />
                                 </div>
                             ) : (
                                 <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mt-3 sm:mt-0">
@@ -470,13 +495,18 @@ function HoursEditor({ title, hours, dayLabels, onToggle, onTimeChange, onSave, 
     );
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// ONGLET 2 — AGENCES
-// ════════════════════════════════════════════════════════════════════════════
-function TabLocations({ tenantId, d }: { tenantId: string; d: ReturnType<typeof useLanguage>["dictionary"] }) {
+// ══════════════════════════════════════════════════════════════════════════════
+// ONGLET 2 – AGENCES
+// ══════════════════════════════════════════════════════════════════════════════
+function TabLocations({
+    tenantId, d,
+}: {
+    tenantId: string;
+    d: ReturnType<typeof useLanguage>["dictionary"];
+}) {
     const t = d.knowledge;
     const toast = useToast();
-    const [locations, setLocations] = useState<Location[]>([]);
+    const [locations, setLocations] = useState<Agence[]>([]);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -487,7 +517,7 @@ function TabLocations({ tenantId, d }: { tenantId: string; d: ReturnType<typeof 
     useEffect(() => { setMounted(true); }, []);
 
     const DEF_FORM = {
-        name: "", address: "", whatsapp: "", phone: "", email: "",
+        nom: "", adresse: "", whatsapp: "", telephone: "", email: "",
         transfer_whatsapp: "", transfer_phone: "", extra_info: "", is_active: true,
     };
     const [form, setForm] = useState(DEF_FORM);
@@ -496,8 +526,8 @@ function TabLocations({ tenantId, d }: { tenantId: string; d: ReturnType<typeof 
     const fetchLocations = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await locationsRepository.getByTenant(tenantId);
-            setLocations(data);
+            const data = await agencesRepository.getList();
+            setLocations(data.results);
         } catch { /* silencieux */ }
         finally { setLoading(false); }
     }, [tenantId]);
@@ -505,19 +535,21 @@ function TabLocations({ tenantId, d }: { tenantId: string; d: ReturnType<typeof 
     useEffect(() => { fetchLocations(); }, [fetchLocations]);
 
     const openCreate = () => { setForm(DEF_FORM); setEditingId(null); setModalOpen(true); };
-    const openEdit = (loc: Location) => {
+
+    const openEdit = (loc: Agence) => {
         setForm({
-            name: loc.name,
-            address: loc.address,
-            whatsapp: loc.whatsapp ?? "",
-            phone: loc.phone ?? "",
-            email: loc.email ?? "",
+            nom:              loc.nom,
+            adresse:          loc.adresse,
+            whatsapp:         loc.whatsapp ?? "",
+            telephone:        loc.telephone ?? "",
+            email:            loc.email ?? "",
             transfer_whatsapp: loc.transfer_whatsapp ?? "",
-            transfer_phone: loc.transfer_phone ?? "",
-            extra_info: loc.extra_info ?? "",
-            is_active: loc.is_active ?? false // Pour le booléen, on met false par défaut
+            transfer_phone:   loc.transfer_phone ?? "",
+            extra_info:       loc.extra_info ?? "",
+            is_active:        loc.is_active ?? true,
         });
-        setEditingId(loc.id); setModalOpen(true);
+        setEditingId(loc.id);
+        setModalOpen(true);
     };
 
     const handleSave = (e: React.FormEvent) => {
@@ -525,9 +557,9 @@ function TabLocations({ tenantId, d }: { tenantId: string; d: ReturnType<typeof 
         startSave(async () => {
             try {
                 if (editingId) {
-                    await locationsRepository.patch(editingId, form);
+                    await agencesRepository.patch(editingId, form);
                 } else {
-                    await locationsRepository.create({ ...form, tenant_id: tenantId });
+                    await agencesRepository.create(form);
                 }
                 toast.success(t.saveSuccess);
                 setModalOpen(false);
@@ -540,7 +572,7 @@ function TabLocations({ tenantId, d }: { tenantId: string; d: ReturnType<typeof 
         if (!deleteId) return;
         setIsDeleting(true);
         try {
-            await locationsRepository.delete(deleteId);
+            await agencesRepository.delete(deleteId);
             toast.success(t.locationDeleted);
             setDeleteId(null);
             fetchLocations();
@@ -548,7 +580,11 @@ function TabLocations({ tenantId, d }: { tenantId: string; d: ReturnType<typeof 
         finally { setIsDeleting(false); }
     };
 
-    if (loading) return <div className="flex justify-center py-12"><Spinner className="w-6 h-6 border-[#25D366] border-t-transparent" /></div>;
+    if (loading) return (
+        <div className="flex justify-center py-12">
+            <Spinner className="w-6 h-6 border-[#25D366] border-t-transparent" />
+        </div>
+    );
 
     return (
         <>
@@ -573,8 +609,8 @@ function TabLocations({ tenantId, d }: { tenantId: string; d: ReturnType<typeof 
                                             <MapPin className="w-4 h-4 text-[#25D366]" />
                                         </div>
                                         <div>
-                                            <p className="font-bold text-[var(--text)]">{loc.name}</p>
-                                            <p className="text-xs text-[var(--text-muted)]">{loc.address}</p>
+                                            <p className="font-bold text-[var(--text)]">{loc.nom}</p>
+                                            <p className="text-xs text-[var(--text-muted)]">{loc.adresse}</p>
                                         </div>
                                     </div>
                                     <div className="flex gap-2">
@@ -589,9 +625,9 @@ function TabLocations({ tenantId, d }: { tenantId: string; d: ReturnType<typeof 
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 text-xs text-[var(--text-muted)]">
-                                    {loc.whatsapp && <span className="flex items-center gap-1.5"><MessageSquare className="w-3 h-3" />{loc.whatsapp}</span>}
-                                    {loc.phone && <span className="flex items-center gap-1.5"><Phone className="w-3 h-3" />{loc.phone}</span>}
-                                    {loc.email && <span className="flex items-center gap-1.5 col-span-2"><Mail className="w-3 h-3" />{loc.email}</span>}
+                                    {loc.whatsapp   && <span className="flex items-center gap-1.5"><MessageSquare className="w-3 h-3" />{loc.whatsapp}</span>}
+                                    {loc.telephone  && <span className="flex items-center gap-1.5"><Phone className="w-3 h-3" />{loc.telephone}</span>}
+                                    {loc.email      && <span className="flex items-center gap-1.5 col-span-2"><Mail className="w-3 h-3" />{loc.email}</span>}
                                 </div>
                                 {loc.extra_info && (
                                     <p className="text-xs text-[var(--text-muted)] bg-[var(--bg)] rounded-lg px-3 py-2">
@@ -625,13 +661,13 @@ function TabLocations({ tenantId, d }: { tenantId: string; d: ReturnType<typeof 
                         <div className="p-5 overflow-y-auto flex-1 space-y-4">
                             <div>
                                 <label className="label-base">{t.locationName}</label>
-                                <input required className="input-base" value={form.name}
-                                    onChange={e => setForm({ ...form, name: e.target.value })} />
+                                <input required className="input-base" value={form.nom}
+                                    onChange={e => setForm({ ...form, nom: e.target.value })} />
                             </div>
                             <div>
                                 <label className="label-base">{t.locationAddress}</label>
-                                <input required className="input-base" value={form.address}
-                                    onChange={e => setForm({ ...form, address: e.target.value })} />
+                                <input required className="input-base" value={form.adresse}
+                                    onChange={e => setForm({ ...form, adresse: e.target.value })} />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -641,8 +677,8 @@ function TabLocations({ tenantId, d }: { tenantId: string; d: ReturnType<typeof 
                                 </div>
                                 <div>
                                     <label className="label-base">{t.contactPhone}</label>
-                                    <input className="input-base" placeholder="+237..." value={form.phone}
-                                        onChange={e => setForm({ ...form, phone: e.target.value })} />
+                                    <input className="input-base" placeholder="+237..." value={form.telephone}
+                                        onChange={e => setForm({ ...form, telephone: e.target.value })} />
                                 </div>
                             </div>
                             <div>
@@ -712,15 +748,23 @@ function TabLocations({ tenantId, d }: { tenantId: string; d: ReturnType<typeof 
     );
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// ONGLET 3 — FAQ
-// ════════════════════════════════════════════════════════════════════════════
-function TabFaq({ tenantId, d }: { tenantId: string; d: ReturnType<typeof useLanguage>["dictionary"] }) {
+// ══════════════════════════════════════════════════════════════════════════════
+// ONGLET 3 – FAQ
+// ══════════════════════════════════════════════════════════════════════════════
+function TabFaq({
+    tenantId, d,
+}: {
+    tenantId: string;
+    d: ReturnType<typeof useLanguage>["dictionary"];
+}) {
     const t = d.knowledge;
     const toast = useToast();
     const [faqs, setFaqs] = useState<FAQ[]>([]);
     const [loading, setLoading] = useState(true);
     const [expanded, setExpanded] = useState<string | null>(null);
+
+    // suppression warning toast non utilisé
+    void toast;
 
     const fetchFaqs = useCallback(async () => {
         setLoading(true);
@@ -733,7 +777,11 @@ function TabFaq({ tenantId, d }: { tenantId: string; d: ReturnType<typeof useLan
 
     useEffect(() => { fetchFaqs(); }, [fetchFaqs]);
 
-    if (loading) return <div className="flex justify-center py-12"><Spinner className="w-6 h-6 border-[#25D366] border-t-transparent" /></div>;
+    if (loading) return (
+        <div className="flex justify-center py-12">
+            <Spinner className="w-6 h-6 border-[#25D366] border-t-transparent" />
+        </div>
+    );
 
     return (
         <div className="space-y-4">
@@ -763,17 +811,11 @@ function TabFaq({ tenantId, d }: { tenantId: string; d: ReturnType<typeof useLan
                                     : <ChevronDown className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" />}
                             </button>
                             {expanded === faq.id && (
-                                <div className="px-5 pb-4 space-y-2">
+                                <div className="px-5 pb-4">
                                     <div className="bg-[var(--bg)] rounded-xl p-4">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">FR</p>
                                         <p className="text-sm text-[var(--text)]">{faq.titre}</p>
                                     </div>
-                                    {false && (
-                                        <div className="bg-[var(--bg)] rounded-xl p-4">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">EN</p>
-                                            <p className="text-sm text-[var(--text)]"></p>
-                                        </div>
-                                    )}
                                 </div>
                             )}
                         </div>
@@ -784,10 +826,16 @@ function TabFaq({ tenantId, d }: { tenantId: string; d: ReturnType<typeof useLan
     );
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// ONGLET 4 — SERVICES & TARIFS (CRUD complet + knowledge)
-// ════════════════════════════════════════════════════════════════════════════
-function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepriseId: string; d: ReturnType<typeof useLanguage>["dictionary"] }) {
+// ══════════════════════════════════════════════════════════════════════════════
+// ONGLET 4 – SERVICES & TARIFS
+// ══════════════════════════════════════════════════════════════════════════════
+function TabServices({
+    tenantId, entrepriseId, d,
+}: {
+    tenantId: string;
+    entrepriseId: string;
+    d: ReturnType<typeof useLanguage>["dictionary"];
+}) {
     const t = d.knowledge;
     const toast = useToast();
     const [services, setServices] = useState<Service[]>([]);
@@ -798,7 +846,6 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
     const [knowledgeForms, setKnowledgeForms] = useState<Record<string, Partial<ServiceKnowledge>>>({});
     const [mounted, setMounted] = useState(false);
 
-    // ── Modal création/édition service ────────────────────────────────────────
     const [serviceModal, setServiceModal] = useState(false);
     const [editingService, setEditingService] = useState<Service | null>(null);
     const [deleteServiceId, setDeleteServiceId] = useState<string | null>(null);
@@ -813,11 +860,10 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
 
     useEffect(() => { setMounted(true); }, []);
 
-    // ── Fetch ─────────────────────────────────────────────────────────────────
     const fetchAll = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await servicesRepository.getList({ tenant_id: tenantId });
+            const data = await servicesRepository.getList();
             setServices(data.results);
             const map: Record<string, ServiceKnowledge> = {};
             const formInit: Record<string, Partial<ServiceKnowledge>> = {};
@@ -827,9 +873,12 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
                     if (k) {
                         map[svc.id] = k;
                         formInit[svc.id] = {
-                            welcome_message: k.welcome_message, bot_description: k.bot_description,
-                            bot_tone: k.bot_tone, conditions: k.conditions,
-                            confirmation_message: k.confirmation_message, extra_info: k.extra_info,
+                            welcome_message:      k.welcome_message,
+                            bot_description:      k.bot_description,
+                            bot_tone:             k.bot_tone,
+                            conditions:           k.conditions,
+                            confirmation_message: k.confirmation_message,
+                            extra_info:           k.extra_info,
                         };
                     } else {
                         formInit[svc.id] = {
@@ -847,7 +896,6 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
 
     useEffect(() => { fetchAll(); }, [fetchAll]);
 
-    // ── Ouvrir modale ─────────────────────────────────────────────────────────
     const openCreate = () => {
         setServiceForm(DEF_SERVICE_FORM);
         setEditingService(null);
@@ -864,7 +912,6 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
         setServiceModal(true);
     };
 
-    // ── Sauvegarder service ───────────────────────────────────────────────────
     const handleSaveService = (e: React.FormEvent) => {
         e.preventDefault();
         startSaveService(async () => {
@@ -873,7 +920,7 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
                     await servicesRepository.patch(editingService.id, serviceForm);
                     toast.success(t.serviceUpdated);
                 } else {
-                    await servicesRepository.create({ ...serviceForm, entreprise: entrepriseId });
+                    await servicesRepository.create(serviceForm);
                     toast.success(t.serviceCreated);
                 }
                 setServiceModal(false);
@@ -882,7 +929,6 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
         });
     };
 
-    // ── Supprimer service ─────────────────────────────────────────────────────
     const handleDeleteService = async () => {
         if (!deleteServiceId) return;
         setIsDeleting(true);
@@ -896,7 +942,6 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
         finally { setIsDeleting(false); }
     };
 
-    // ── Knowledge form ────────────────────────────────────────────────────────
     const updateKnowledgeForm = (serviceId: string, field: string, value: string) => {
         setKnowledgeForms(prev => ({ ...prev, [serviceId]: { ...prev[serviceId], [field]: value } }));
     };
@@ -911,7 +956,8 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
             } else {
                 await serviceKnowledgeRepository.create({
                     ...formData as Omit<ServiceKnowledge, "id">,
-                    service_id: svc.id, tenant_id: tenantId,
+                    service_id: svc.id,
+                    tenant_id:  tenantId,
                 });
             }
             toast.success(t.saveSuccess);
@@ -919,6 +965,9 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
         } catch { toast.error(d.common.error); }
         finally { setSavingKnowledgeId(null); }
     };
+
+    // supprime warning entrepriseId non utilisé en V1
+    void entrepriseId;
 
     if (loading) return (
         <div className="flex justify-center py-12">
@@ -929,7 +978,6 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
     return (
         <>
             <div className="space-y-4">
-                {/* Header */}
                 <div className="flex items-center justify-between">
                     <p className="text-sm text-[var(--text-muted)]">
                         {services.length} {services.length > 1 ? "services" : "service"}
@@ -939,7 +987,6 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
                     </button>
                 </div>
 
-                {/* Liste services */}
                 {services.length === 0 ? (
                     <div className="card">
                         <EmptyState message={d.services.noData} icon={Wrench} />
@@ -953,11 +1000,8 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
 
                             return (
                                 <div key={svc.id} className="card overflow-hidden">
-                                    {/* ── En-tête service ── */}
                                     <div className="px-5 py-4 flex items-center gap-3">
-                                        {/* Icône + infos */}
-                                        <button
-                                            type="button"
+                                        <button type="button"
                                             onClick={() => setExpanded(isExpanded ? null : svc.id)}
                                             className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity">
                                             <div className="w-9 h-9 rounded-xl bg-[#6C3CE1]/10 flex items-center justify-center flex-shrink-0">
@@ -977,29 +1021,23 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
                                                 ? <ChevronUp className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" />
                                                 : <ChevronDown className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" />}
                                         </button>
-
-                                        {/* Actions */}
                                         <div className="flex gap-1 flex-shrink-0">
-                                            <button
-                                                onClick={() => openEdit(svc)}
+                                            <button onClick={() => openEdit(svc)}
                                                 className="p-1.5 rounded-lg hover:bg-[var(--bg)] text-[var(--text-muted)] transition-colors">
                                                 <Edit className="w-4 h-4" />
                                             </button>
-                                            <button
-                                                onClick={() => setDeleteServiceId(svc.id)}
+                                            <button onClick={() => setDeleteServiceId(svc.id)}
                                                 className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-400 transition-colors">
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
                                         </div>
                                     </div>
 
-                                    {/* ── Section knowledge (expandable) ── */}
                                     {isExpanded && (
                                         <div className="px-5 pb-5 space-y-4 border-t border-[var(--border)] pt-4 animate-fade-in">
                                             <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-1.5">
                                                 <Bot className="w-3.5 h-3.5" /> {t.knowledgeSection}
                                             </p>
-
                                             <div>
                                                 <label className="label-base">{t.serviceWelcomeMessage}</label>
                                                 <textarea rows={2} className="input-base resize-none"
@@ -1007,7 +1045,6 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
                                                     onChange={e => updateKnowledgeForm(svc.id, "welcome_message", e.target.value)}
                                                     placeholder="Pour ce service..." />
                                             </div>
-
                                             <div>
                                                 <label className="label-base">{t.serviceBotDescription}</label>
                                                 <textarea rows={2} className="input-base resize-none"
@@ -1015,7 +1052,6 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
                                                     onChange={e => updateKnowledgeForm(svc.id, "bot_description", e.target.value)}
                                                     placeholder="Description que le bot utilisera..." />
                                             </div>
-
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <div>
                                                     <label className="label-base">{t.botTone}</label>
@@ -1035,7 +1071,6 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
                                                         placeholder="Apporter ordonnance..." />
                                                 </div>
                                             </div>
-
                                             <div>
                                                 <label className="label-base">{t.serviceConfirmationMessage}</label>
                                                 <textarea rows={2} className="input-base resize-none"
@@ -1043,7 +1078,6 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
                                                     onChange={e => updateKnowledgeForm(svc.id, "confirmation_message", e.target.value)}
                                                     placeholder="Votre RDV est confirmé..." />
                                             </div>
-
                                             <div>
                                                 <label className="label-base">{t.extraInfo}</label>
                                                 <textarea rows={2} className="input-base resize-none"
@@ -1051,7 +1085,6 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
                                                     onChange={e => updateKnowledgeForm(svc.id, "extra_info", e.target.value)}
                                                     placeholder="Infos supplémentaires..." />
                                             </div>
-
                                             <div className="flex justify-end">
                                                 <button type="button" onClick={() => handleSaveKnowledge(svc)}
                                                     disabled={isSavingK} className="btn-primary">
@@ -1069,7 +1102,7 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
                 )}
             </div>
 
-            {/* ── Modale création/édition service ────────────────────────────────── */}
+            {/* Modale création/édition service */}
             {mounted && serviceModal && createPortal(
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
                     <div className="absolute inset-0" onClick={() => !isSavingService && setServiceModal(false)} />
@@ -1084,7 +1117,6 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
                                 <X className="w-4 h-4" />
                             </button>
                         </div>
-
                         <div className="p-5 space-y-4">
                             <div>
                                 <label className="label-base">{t.serviceName}</label>
@@ -1092,14 +1124,12 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
                                     value={serviceForm.nom}
                                     onChange={e => setServiceForm({ ...serviceForm, nom: e.target.value })} />
                             </div>
-
                             <div>
                                 <label className="label-base">{t.serviceDescription}</label>
                                 <textarea rows={2} className="input-base resize-none"
                                     value={serviceForm.description}
                                     onChange={e => setServiceForm({ ...serviceForm, description: e.target.value })} />
                             </div>
-
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="label-base">{t.servicePrice}</label>
@@ -1114,7 +1144,6 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
                                         onChange={e => setServiceForm({ ...serviceForm, duree_min: e.target.value ? Number(e.target.value) : null })} />
                                 </div>
                             </div>
-
                             <label className="flex items-center gap-3 cursor-pointer">
                                 <div onClick={() => setServiceForm({ ...serviceForm, is_active: !serviceForm.is_active })}
                                     className={cn("w-10 h-6 rounded-full p-1 transition-colors cursor-pointer",
@@ -1125,7 +1154,6 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
                                 <span className="text-sm font-medium text-[var(--text)]">{t.serviceActive}</span>
                             </label>
                         </div>
-
                         <div className="p-5 border-t border-[var(--border)] flex justify-end gap-3">
                             <button type="button" onClick={() => setServiceModal(false)} className="btn-ghost">
                                 {d.common.cancel}
@@ -1141,7 +1169,7 @@ function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepri
                 document.body
             )}
 
-            {/* ── Modale suppression service ──────────────────────────────────────── */}
+            {/* Modale suppression service */}
             {mounted && deleteServiceId && createPortal(
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                     <div className="absolute inset-0" onClick={() => !isDeleting && setDeleteServiceId(null)} />

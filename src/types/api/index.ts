@@ -1,6 +1,6 @@
 // src/types/api/index.ts
 
-// ── Shared ────────────────────────────────────────────────────────────────────
+// ── Shared ───────────────────────────────────────────────────────────────────
 export interface PaginatedResponse<T> {
   count: number;
   next: string | null;
@@ -16,13 +16,8 @@ export interface DetailResponse {
 // AUTH
 // ══════════════════════════════════════════════════════════════════════════════
 
-// ── User types Django ────────────────────────────────────────────────────────
-// Le backend définit 3 user_type : "superadmin" | "admin" | "entreprise".
-// L'espace client PME n'accepte QUE "entreprise" — tout autre user_type doit
-// être rejeté par AuthContext après le /me/. On type donc strictement ici.
 export type UserType = "superadmin" | "admin" | "entreprise";
 
-// ── Profil (OneToOne avec User côté Django) ───────────────────────────────────
 export interface Profil {
   id: string;
   avatar: string | null;
@@ -33,7 +28,6 @@ export interface Profil {
   updated_at: string;
 }
 
-// ── Permission (code + label) ─────────────────────────────────────────────────
 export interface Permission {
   id: string;
   code: string;
@@ -41,7 +35,6 @@ export interface Permission {
   description: string;
 }
 
-// ── Role (groupe de permissions) ──────────────────────────────────────────────
 export interface Role {
   id: string;
   name: string;
@@ -49,7 +42,7 @@ export interface Role {
   permissions: Permission[];
   created_at: string;
 }
-// ── SecteurActivite (imbriqué dans EntrepriseInUser) ─────────────────────────
+
 export interface SecteurActivite {
   id: string;
   slug: string;
@@ -57,7 +50,6 @@ export interface SecteurActivite {
   label_en: string;
 }
 
-// ── Entreprise telle que renvoyée dans /auth/me/ ──────────────────────────────
 export interface EntrepriseInUser {
   id: string;
   name: string;
@@ -73,9 +65,7 @@ export interface EntrepriseInUser {
   created_at: string;
   updated_at: string;
 }
-// ── User ──────────────────────────────────────────────────────────────────────
-// Aligné sur UserMeSerializer backend (apps/users/serializers.py).
-// /api/v1/auth/me/ renvoie EXACTEMENT cette forme.
+
 export interface User {
   id: string;
   email: string;
@@ -89,79 +79,25 @@ export interface User {
   entreprise: EntrepriseInUser | null;
   permissions: string[];
   created_at: string;
-
   // Conservé pour compatibilité pages non encore migrées
   tenant_id?: string | null;
 }
-// ── Payloads ──────────────────────────────────────────────────────────────────
-export interface LoginPayload {
-  email: string;
-  password: string;
-}
 
-export interface RegisterPayload {
-  email: string;
-  password: string;
-  name: string;
-}
+export interface LoginPayload { email: string; password: string; }
+export interface RegisterPayload { email: string; password: string; name: string; }
+export interface GoogleAuthPayload { email: string; name?: string; google_id?: string; }
+export interface VerifyEmailPayload { token: string; }
+export interface ResendVerificationPayload { email: string; }
+export interface ForgotPasswordPayload { email: string; }
+export interface ResetPasswordPayload { token: string; new_password: string; }
+export interface MagicLinkRequestPayload { email: string; }
+export interface MagicLinkVerifyPayload { token: string; }
+export interface RefreshTokenPayload { refresh: string; }
+export interface LogoutPayload { refresh: string; }
 
-export interface GoogleAuthPayload {
-  email: string;
-  name?: string;
-  google_id?: string;
-}
-
-export interface VerifyEmailPayload {
-  token: string;
-}
-
-export interface ResendVerificationPayload {
-  email: string;
-}
-
-export interface ForgotPasswordPayload {
-  email: string;
-}
-
-export interface ResetPasswordPayload {
-  token: string;
-  new_password: string;
-}
-
-export interface MagicLinkRequestPayload {
-  email: string;
-}
-
-export interface MagicLinkVerifyPayload {
-  token: string;
-}
-
-export interface RefreshTokenPayload {
-  refresh: string;
-}
-
-export interface LogoutPayload {
-  refresh: string;
-}
-
-// ── Réponses ──────────────────────────────────────────────────────────────────
-// Renvoyée par : login, register, google, verify-email, reset-password, magic-link/verify
-export interface AuthResponse {
-  access: string;
-  refresh: string;
-  user: User;
-}
-
-// Renvoyée par : token/refresh
-export interface TokenRefreshResponse {
-  access: string;
-}
-
-// Renvoyée par : login avec 403 quand is_email_verified=false
-export interface EmailNotVerifiedResponse {
-  detail: "EMAIL_NOT_VERIFIED";
-  email: string;
-}
+export interface AuthResponse { access: string; refresh: string; user: User; }
+export interface TokenRefreshResponse { access: string; }
+export interface EmailNotVerifiedResponse { detail: "EMAIL_NOT_VERIFIED"; email: string; }
 
 // ══════════════════════════════════════════════════════════════════════════════
 // TENANT
@@ -263,54 +199,198 @@ export interface CreateServicePayload {
   prix: number;
   duree_min: number | null;
   is_active?: boolean;
-  entreprise?: string;
 }
 export interface ServiceFilters {
   search?: string;
   is_active?: boolean;
-  tenant_id?: string;
   page?: number;
   page_size?: number;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// APPOINTMENT
+// AGENCE & HORAIRES & AGENDA
+// (remplace BusinessHours / DayHours / Location)
 // ══════════════════════════════════════════════════════════════════════════════
-export type AppointmentStatus = "pending" | "confirmed" | "done" | "cancelled";
-export interface Appointment {
+
+export interface DaySchedule {
+  open: boolean;
+  start: string;
+  end: string;
+  slot_min: number;
+}
+
+export interface HorairesOuverture {
   id: string;
-  tenant_id: string;
-  service_id: string;
-  client_name: string;
-  client_phone: string;
-  client_email: string;
+  agence: string;
+  type: "ouverture" | "rendez_vous";
+  lundi: DaySchedule;
+  mardi: DaySchedule;
+  mercredi: DaySchedule;
+  jeudi: DaySchedule;
+  vendredi: DaySchedule;
+  samedi: DaySchedule;
+  dimanche: DaySchedule;
+  created_at: string;
+}
+
+export interface UpdateHorairesPayload {
+  lundi?: DaySchedule;
+  mardi?: DaySchedule;
+  mercredi?: DaySchedule;
+  jeudi?: DaySchedule;
+  vendredi?: DaySchedule;
+  samedi?: DaySchedule;
+  dimanche?: DaySchedule;
+}
+
+export interface Agence {
+  id: string;
+  entreprise: string;
+  nom: string;
+  adresse: string;
+  ville: string;
+  whatsapp: string;
+  telephone: string;
+  email: string;
+  transfer_whatsapp: string;
+  transfer_phone: string;
+  extra_info: string;
+  is_active: boolean;
+  horaires: HorairesOuverture[];
+  services_count: number;
+  created_at: string;
+}
+
+export interface CreateAgencePayload {
+  nom: string;
+  adresse?: string;
+  ville?: string;
+  whatsapp?: string;
+  telephone?: string;
+  email?: string;
+  transfer_whatsapp?: string;
+  transfer_phone?: string;
+  extra_info?: string;
+  is_active?: boolean;
+}
+
+export interface Agenda {
+  id: string;
+  agence: string;
+  agence_nom: string;
+  nom: string;
+  description: string;
+  bots_ids: string[];
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface CreateAgendaPayload {
+  agence: string;
+  nom: string;
+  description?: string;
+  is_active?: boolean;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// RENDEZ-VOUS
+// (remplace Appointment — champs alignés sur le backend Django)
+// ══════════════════════════════════════════════════════════════════════════════
+
+export type RendezVousStatut = "en_attente" | "confirme" | "annule" | "termine";
+export type RendezVousCanal = "whatsapp" | "vocal" | "manuel";
+
+export interface RendezVousServiceDetail {
+  id: number;
+  service: string;
+  service_nom: string;
+  service_prix: string;
+}
+
+export interface RendezVous {
+  id: string;
+  agenda: string;
+  agenda_nom: string;
+  agence: string | null;
+  agence_nom: string | null;
+  client: string;
+  client_nom: string;
+  client_telephone: string;
+  bot: string | null;
+  statut: RendezVousStatut;
+  canal: RendezVousCanal;
   scheduled_at: string;
-  status: AppointmentStatus;
-  channel: "whatsapp" | "voice" | "manual";
   reminder_sent: boolean;
   notes: string;
-  service_name?: string;
+  services_detail: RendezVousServiceDetail[];
+  created_at: string;
 }
-export interface CreateAppointmentPayload {
-  service_id: string;
-  client_name: string;
-  client_phone: string;
-  client_email?: string;
+
+export interface CreateRendezVousPayload {
+  agenda: string;
+  agence?: string;
+  client: string;
+  bot?: string;
+  statut?: RendezVousStatut;
+  canal?: RendezVousCanal;
   scheduled_at: string;
-  status?: AppointmentStatus;
   notes?: string;
-  tenant_id?: string;
 }
-export interface AppointmentFilters {
+
+export interface RendezVousFilters {
+  statut?: RendezVousStatut;
+  canal?: RendezVousCanal;
+  agenda?: string;
+  reminder_sent?: boolean;
   search?: string;
-  status?: AppointmentStatus;
-  tenant_id?: string;
   page?: number;
   page_size?: number;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// SUBSCRIPTION
+// CLIENT (collecté par le bot)
+// ══════════════════════════════════════════════════════════════════════════════
+export interface Client {
+  id: string;
+  entreprise: string;
+  nom: string;
+  telephone: string;
+  email: string;
+  created_at: string;
+}
+
+export interface CreateClientPayload {
+  nom: string;
+  telephone?: string;
+  email?: string;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// POLITIQUE DE RAPPEL
+// ══════════════════════════════════════════════════════════════════════════════
+export type CanalRappel = "whatsapp" | "email" | "sms" | "appel";
+
+export interface PolitiqueRappel {
+  id: string;
+  entreprise: string;
+  nom: string;
+  canal: CanalRappel;
+  delai_heures: number;
+  message_template: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface CreatePolitiqueRappelPayload {
+  nom: string;
+  canal: CanalRappel;
+  delai_heures: number;
+  message_template?: string;
+  is_active?: boolean;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SUBSCRIPTION / WALLET / PLAN / STATS
 // ══════════════════════════════════════════════════════════════════════════════
 export type SubscriptionStatus = "actif" | "suspendu" | "resilie" | "essai";
 export interface Subscription {
@@ -328,9 +408,6 @@ export interface Subscription {
   created_at: string;
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// WALLET / PLAN / STATS
-// ══════════════════════════════════════════════════════════════════════════════
 export interface Wallet {
   id: string;
   entreprise: string;
@@ -421,7 +498,6 @@ export interface ConversationFilters {
 // ══════════════════════════════════════════════════════════════════════════════
 // FAQ / KNOWLEDGE
 // ══════════════════════════════════════════════════════════════════════════════
-// FAQ = conteneur (titre uniquement)
 export interface FAQ {
   id: string;
   entreprise: string;
@@ -435,7 +511,6 @@ export interface CreateFAQPayload {
   is_active?: boolean;
 }
 
-// QuestionFrequente = items sous une FAQ
 export interface QuestionFrequente {
   id: string;
   faq: string;
@@ -479,7 +554,7 @@ export interface TenantKnowledge {
   updated_at: string;
 }
 export interface CreateTenantKnowledgePayload {
-  entreprise: string;
+  entreprise?: string;
   slogan?: string;
   site_web?: string;
   email_contact?: string;
@@ -511,66 +586,6 @@ export interface ServiceKnowledge {
 export interface CreateServiceKnowledgePayload extends Partial<Omit<ServiceKnowledge, "id">> {
   tenant_id: string;
   service_id: string;
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// BUSINESS HOURS / LOCATION
-// ══════════════════════════════════════════════════════════════════════════════
-export interface DayHours {
-  open: boolean;
-  from: string;
-  to: string;
-  start?: string;
-  end?: string;
-}
-export interface BusinessHours {
-  id: string;
-  tenant_id: string;
-  hours_type: "opening" | "appointments";
-  monday: DayHours;
-  tuesday: DayHours;
-  wednesday: DayHours;
-  thursday: DayHours;
-  friday: DayHours;
-  saturday: DayHours;
-  sunday: DayHours;
-}
-export interface CreateBusinessHoursPayload extends Partial<Omit<BusinessHours, "id">> {
-  tenant_id: string;
-  hours_type: "opening" | "appointments";
-}
-
-export interface Location {
-  id: string;
-  tenant_id: string;
-  name: string;
-  address: string;
-  lat?: number;
-  lng?: number;
-  is_main: boolean;
-  whatsapp?: string;
-  phone?: string;
-  email?: string;
-  transfer_whatsapp?: string;
-  transfer_phone?: string;
-  extra_info?: string;
-  is_active?: boolean;
-  hours?: Record<string, DayHours>;
-  createdAt?: string;
-  updatedAt?: string;
-}
-export interface CreateLocationPayload extends Partial<Omit<Location, "id">> {
-  tenant_id: string;
-  name: string;
-  address: string;
-  hours?: Record<string, DayHours>;
-  whatsapp?: string;
-  phone?: string;
-  email?: string;
-  transfer_whatsapp?: string;
-  transfer_phone?: string;
-  extra_info?: string;
-  is_active?: boolean;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
