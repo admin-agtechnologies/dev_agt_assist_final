@@ -11,7 +11,7 @@ import {
   Check, MessageSquare, Phone, CalendarDays, BarChart3, Smartphone, Globe,
   Sun, Moon, Star, Users, TrendingUp, Clock, Award,
   ChevronLeft, ChevronRight, Play, MapPin, Mail, ArrowRight,
-  Bot, BookOpen, HelpCircle,Zap
+  Bot, BookOpen, HelpCircle, Zap
 } from "lucide-react";
 
 // ── Constantes ────────────────────────────────────────────────────────────────
@@ -759,7 +759,7 @@ export default function LandingPage() {
               <ul className="space-y-3">
                 <li>
                   <a
-                    href="https://ag-technologies.tech"
+                    href="https://www.ag-technologies.tech/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2.5 text-sm text-white/60 hover:text-[#25D366] transition-colors group"
