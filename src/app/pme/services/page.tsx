@@ -69,7 +69,7 @@ export default function PmeServicesPage() {
             <div key={svc.id} className="card p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <p className="font-semibold text-[var(--text)]">{svc.name}</p>
+                  <p className="font-semibold text-[var(--text)]">{svc.nom}</p>
                   <p className="text-xs text-[var(--text-muted)] mt-0.5 line-clamp-2">{svc.description}</p>
                 </div>
                 <ActiveBadge active={svc.is_active} />
@@ -77,10 +77,10 @@ export default function PmeServicesPage() {
               <div className="flex items-center justify-between pt-2 border-t border-[var(--border)]">
                 <div>
                   <p className="text-lg font-black text-[#075E54]">
-                    {svc.price === 0 ? t.free : formatCurrency(svc.price)}
+                    {svc.prix === 0 ? t.free : formatCurrency(svc.prix)}
                   </p>
-                  {svc.duration_min && (
-                    <p className="text-[10px] text-[var(--text-muted)]">{svc.duration_min} min</p>
+                  {svc.duree_min && (
+                    <p className="text-[10px] text-[var(--text-muted)]">{svc.duree_min} min</p>
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -122,7 +122,7 @@ function ServiceModal({ isOpen, itemId, tenantId, onClose, onSave }: {
   const tf = t.modal.fields;
   const toast = useToast();
   const isEdit = !!itemId;
-  const DEF: CreateServicePayload = { name: "", description: "", price: 0, duration_min: null, is_active: true };
+  const DEF: CreateServicePayload = { nom: "", description: "", prix: 0, duree_min: null, is_active: true };
   const [form, setForm] = useState<CreateServicePayload>(DEF);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -132,7 +132,7 @@ function ServiceModal({ isOpen, itemId, tenantId, onClose, onSave }: {
     if (itemId) {
       setLoading(true);
       servicesRepository.getById(itemId)
-        .then(s => setForm({ name: s.name, description: s.description, price: s.price, duration_min: s.duration_min, is_active: s.is_active }))
+        .then(s => setForm({ nom: s.nom, description: s.description, prix: s.prix, duree_min: s.duree_min, is_active: s.is_active }))
         .catch(() => toast.error(d.common.error))
         .finally(() => setLoading(false));
     } else setForm(DEF);
@@ -160,11 +160,11 @@ function ServiceModal({ isOpen, itemId, tenantId, onClose, onSave }: {
           {loading
             ? <div className="flex justify-center py-8"><Spinner className="w-6 h-6 border-[#25D366] border-t-transparent" /></div>
             : <>
-              <div><label className="label-base">{tf.name}</label><input required className="input-base" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
+              <div><label className="label-base">{tf.name}</label><input required className="input-base" value={form.nom} onChange={e => setForm({ ...form, nom: e.target.value })} /></div>
               <div><label className="label-base">{tf.description}</label><textarea rows={3} className="input-base resize-none" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
               <div className="grid grid-cols-2 gap-4">
-                <div><label className="label-base">{tf.price}</label><input type="number" min={0} className="input-base" value={form.price} onChange={e => setForm({ ...form, price: Number(e.target.value) })} /></div>
-                <div><label className="label-base">{tf.duration}</label><input type="number" min={1} className="input-base" value={form.duration_min ?? ""} onChange={e => setForm({ ...form, duration_min: e.target.value ? Number(e.target.value) : null })} /></div>
+                <div><label className="label-base">{tf.price}</label><input type="number" min={0} className="input-base" value={form.prix} onChange={e => setForm({ ...form, prix: Number(e.target.value) })} /></div>
+                <div><label className="label-base">{tf.duration}</label><input type="number" min={1} className="input-base" value={form.duree_min ?? ""} onChange={e => setForm({ ...form, duree_min: e.target.value ? Number(e.target.value) : null })} /></div>
               </div>
               <label className="flex items-center gap-3 cursor-pointer">
                 <div className={`w-11 h-6 rounded-full p-1 transition-colors ${form.is_active ? "bg-[#25D366]" : "bg-[var(--border)]"}`}>

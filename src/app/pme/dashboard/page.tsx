@@ -68,7 +68,7 @@ export default function PmeDashboardPage() {
     const [s, c, sub, appts] = await Promise.all([
       statsRepository.getByTenant(user.tenant_id).catch(() => null),
       conversationsRepository.getList({ tenant_id: user.tenant_id }).catch(() => ({ results: [] })),
-      subscriptionsRepository.getByTenant(user.tenant_id).catch(() => null),
+      subscriptionsRepository.getMine(),
       appointmentsRepository.getList({ tenant_id: user.tenant_id }).catch(() => ({ results: [] })),
     ]);
     setStats(s);
@@ -76,7 +76,7 @@ export default function PmeDashboardPage() {
     setSubscription(sub);
     // Filtrer RDV du jour
     setTodayAppointments(
-      appts.results.filter(a => a.scheduled_at?.startsWith(today)).slice(0, 3)
+      appts.results.filter((a: Appointment) => a.scheduled_at?.startsWith(today)).slice(0, 3)
     );
     setLoading(false);
   }, [user?.tenant_id]);
@@ -109,7 +109,7 @@ export default function PmeDashboardPage() {
 
   // ── Plan actuel ──────────────────────────────────────────────────────────────
   const currentPlan = subscription
-    ? PLANS_CONFIG.find(p => p.slug === subscription.plan_slug) ?? null
+    ? PLANS_CONFIG.find(p => p.slug === subscription.plan?.slug) ?? null
     : null;
   const msgUsed = stats?.messages_week ?? 0;
   const msgTotal = currentPlan?.messages_limit ?? 2000;
@@ -274,8 +274,8 @@ export default function PmeDashboardPage() {
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-bold text-[var(--text)]">{t.subscription}</h2>
                 {subscription ? (
-                  <Badge variant={subscription.status === "active" ? "green" : "red"}>
-                    {subscription.status === "active" ? d.billing.statusActive : d.billing.statusSuspended}
+                  <Badge variant={subscription.statut === "actif" ? "green" : "red"}>
+                    {subscription.statut === "actif" ? d.billing.statusActive : d.billing.statusSuspended}
                   </Badge>
                 ) : null}
               </div>
@@ -288,9 +288,9 @@ export default function PmeDashboardPage() {
                     </div>
                     <div>
                       <p className="text-sm font-black text-[var(--text)]">{currentPlan.name}</p>
-                      {subscription?.renewal_date && (
+                      {subscription?.date_renouvellement && (
                         <p className="text-[10px] text-[var(--text-muted)]">
-                          {d.billing.renewsOn} {formatDate(subscription.renewal_date)}
+                          {d.billing.renewsOn} {formatDate(subscription.date_renouvellement)}
                         </p>
                       )}
                     </div>

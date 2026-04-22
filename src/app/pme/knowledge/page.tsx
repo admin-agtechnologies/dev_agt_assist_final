@@ -38,7 +38,7 @@ export default function PmeKnowledgePage() {
     const { dictionary: d, locale } = useLanguage();
     const t = d.knowledge;
     const [activeTab, setActiveTab] = useState<Tab>("general");
-
+    
     const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
         { id: "general", label: t.tabGeneral, icon: Building2 },
         { id: "locations", label: t.tabLocations, icon: MapPin },
@@ -75,7 +75,7 @@ export default function PmeKnowledgePage() {
             {activeTab === "general" && <TabGeneral tenantId={user.tenant_id!} d={d} locale={locale} />}
             {activeTab === "locations" && <TabLocations tenantId={user.tenant_id!} d={d} />}
             {activeTab === "faq" && <TabFaq tenantId={user.tenant_id!} d={d} />}
-            {activeTab === "services" && <TabServices tenantId={user.tenant_id!} d={d} />}
+            {activeTab === "services" && <TabServices tenantId={user.tenant_id!} entrepriseId={user.entreprise?.id ?? ""} d={d} />}
         </div>
     );
 }
@@ -86,6 +86,7 @@ export default function PmeKnowledgePage() {
 function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<typeof useLanguage>["dictionary"]; locale: string }) {
     const t = d.knowledge;
     const toast = useToast();
+    const { user } = useAuth();
     const [knowledge, setKnowledge] = useState<TenantKnowledge | null>(null);
     const [hoursOpening, setHoursOpening] = useState<BusinessHours | null>(null);
     const [hoursAppt, setHoursAppt] = useState<BusinessHours | null>(null);
@@ -94,12 +95,12 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
 
     // Formulaire
     const [form, setForm] = useState({
-        slogan: "", website: "", email: "",
-        transfer_whatsapp: "", transfer_phone: "", transfer_email: "", transfer_message: "",
-        welcome_message: "", bot_tone: "semi_formal" as TenantKnowledge["bot_tone"],
-        bot_personality: "", bot_signature: "", extra_info: "",
-        bot_languages: ["fr"] as string[],
-    });
+          slogan: "", site_web: "", email_contact: "",
+          transfer_whatsapp: "", transfer_phone: "", transfer_email: "", transfer_message: "",
+          message_accueil: "", bot_tone: "semi_formal" as TenantKnowledge["bot_tone"],
+          bot_personality: "", bot_signature: "", extra_info: "",
+          bot_languages: ["fr"] as string[],
+      });
 
     const DAY_LABELS: Record<DayKey, string> = {
         monday: locale === "fr" ? "Lundi" : "Monday",
@@ -115,21 +116,19 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
         setLoading(true);
 
         // ── 1. TenantKnowledge ─────────────────────────────────────────────────
-        const k = await tenantKnowledgeRepository
-            .getByTenant(tenantId)
-            .catch(() => null);
+        const k = await tenantKnowledgeRepository.getMine();
 
         if (k) {
             setKnowledge(k);
             setForm({
                 slogan: k.slogan,
-                website: k.website,
-                email: k.email,
+                site_web: k.site_web,
+                email_contact: k.email_contact,
                 transfer_whatsapp: k.transfer_whatsapp,
                 transfer_phone: k.transfer_phone,
                 transfer_email: k.transfer_email,
                 transfer_message: k.transfer_message,
-                welcome_message: k.welcome_message,
+                message_accueil: k.message_accueil,
                 bot_tone: k.bot_tone,
                 bot_personality: k.bot_personality,
                 bot_signature: k.bot_signature,
@@ -163,9 +162,9 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
                 } else {
                     await tenantKnowledgeRepository.create({
                         ...form,
-                        tenant_id: tenantId,
-                        appointment_duration_min: 30,
-                        slot_buffer_min: 10,
+                        entreprise: user?.entreprise?.id ?? "",
+                        duree_rdv_min: 30,
+                        buffer_slot_min: 10,
                     });
                 }
                 toast.success(t.saveSuccess);
@@ -206,8 +205,8 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
                 <div>
                     <label className="label-base">{t.welcomeMessage}</label>
                     <textarea rows={3} className="input-base resize-none"
-                        value={form.welcome_message}
-                        onChange={e => setForm({ ...form, welcome_message: e.target.value })}
+                        value={form.message_accueil}
+                        onChange={e => setForm({ ...form, message_accueil: e.target.value })}
                         placeholder="Bonjour ! Bienvenue chez..." />
                 </div>
 
@@ -293,16 +292,16 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
                         <label className="label-base">{t.contactEmail}</label>
                         <div className="relative">
                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                            <input type="email" className="input-base pl-10" value={form.email}
-                                onChange={e => setForm({ ...form, email: e.target.value })} />
+                            <input type="email" className="input-base pl-10" value={form.email_contact}
+                                onChange={e => setForm({ ...form, email_contact: e.target.value })} />
                         </div>
                     </div>
                     <div>
                         <label className="label-base">{t.website}</label>
                         <div className="relative">
                             <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                            <input className="input-base pl-10" placeholder="https://..." value={form.website}
-                                onChange={e => setForm({ ...form, website: e.target.value })} />
+                            <input className="input-base pl-10" placeholder="https://..." value={form.site_web}
+                                onChange={e => setForm({ ...form, site_web: e.target.value })} />
                         </div>
                     </div>
                 </div>
@@ -392,6 +391,7 @@ function TabGeneral({ tenantId, d, locale }: { tenantId: string; d: ReturnType<t
             </div>
         </form>
     );
+    
 }
 
 // ── Composant éditeur d'horaires ──────────────────────────────────────────────
@@ -405,48 +405,62 @@ function HoursEditor({ title, hours, dayLabels, onToggle, onTimeChange, onSave, 
     d: ReturnType<typeof useLanguage>["dictionary"];
 }) {
     return (
-        <div className="card p-6 space-y-4">
-            <div className="flex items-center justify-between">
-                <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-2">
-                    <Clock className="w-4 h-4" /> {title}
-                </h3>
-                <button type="button" onClick={onSave} className="btn-primary py-1.5 text-xs">
+        <div className="bg-white p-8 rounded-[2.5rem] border border-[var(--border)] shadow-sm space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-[var(--border)]">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-[#075E54]/10 flex items-center justify-center text-[#075E54]">
+                        <Clock className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text)]">{title}</h3>
+                </div>
+                <button type="button" onClick={onSave} className="flex items-center gap-2 px-4 py-2 bg-[var(--bg)] hover:bg-[var(--border)] rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
                     <Save className="w-3.5 h-3.5" /> {d.common.save}
                 </button>
             </div>
-            <div className="space-y-2">
+
+            <div className="grid grid-cols-1 gap-2">
                 {DAYS.map(day => {
                     const dh = hours[day] as DayHours;
                     return (
-                        <div key={day} className="flex items-center gap-4 py-2 border-b border-[var(--border)] last:border-0">
-                            <span className="w-24 text-sm font-semibold text-[var(--text)] flex-shrink-0">
-                                {dayLabels[day]}
-                            </span>
-                            <label className="flex items-center gap-2 cursor-pointer flex-shrink-0">
+                        <div key={day} className={cn(
+                            "flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl transition-all border",
+                            dh.open ? "bg-white border-[var(--border)] shadow-sm" : "bg-[var(--bg)] border-transparent opacity-60"
+                        )}>
+                            <div className="flex items-center gap-4">
+                                {/* Toggle Style iOS */}
                                 <div onClick={() => onToggle(day)}
                                     className={cn(
-                                        "w-10 h-5 rounded-full p-0.5 transition-colors cursor-pointer",
-                                        dh.open ? "bg-[#25D366]" : "bg-[var(--border)]"
+                                        "w-12 h-6 rounded-full p-1 transition-all cursor-pointer flex items-center",
+                                        dh.open ? "bg-[#25D366]" : "bg-[var(--text-muted)]"
                                     )}>
                                     <div className={cn(
-                                        "w-4 h-4 bg-white rounded-full shadow transition-transform",
-                                        dh.open ? "translate-x-5" : "translate-x-0"
+                                        "w-4 h-4 bg-white rounded-full shadow-md transition-transform duration-300",
+                                        dh.open ? "translate-x-6" : "translate-x-0"
                                     )} />
                                 </div>
-                                <span className="text-xs text-[var(--text-muted)]">
-                                    {dh.open ? (d.common.active) : (d.common.inactive)}
+                                <span className="text-sm font-black text-[var(--text)] w-20 capitalize">
+                                    {dayLabels[day]}
                                 </span>
-                            </label>
-                            {dh.open && (
-                                <div className="flex items-center gap-2 ml-auto">
-                                    <input type="time" value={dh.start}
-                                        onChange={e => onTimeChange(day, "start", e.target.value)}
-                                        className="input-base py-1.5 text-sm w-32" />
-                                    <span className="text-[var(--text-muted)] text-sm">→</span>
-                                    <input type="time" value={dh.end}
-                                        onChange={e => onTimeChange(day, "end", e.target.value)}
-                                        className="input-base py-1.5 text-sm w-32" />
+                            </div>
+
+                            {dh.open ? (
+                                <div className="flex items-center gap-2 mt-3 sm:mt-0">
+                                    <div className="relative">
+                                        <input type="time" value={dh.start}
+                                            onChange={e => onTimeChange(day, "start", e.target.value)}
+                                            className="bg-[var(--bg)] border-none rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-[#25D366] transition-all" />
+                                    </div>
+                                    <span className="text-[var(--text-muted)] font-black">→</span>
+                                    <div className="relative">
+                                        <input type="time" value={dh.end}
+                                            onChange={e => onTimeChange(day, "end", e.target.value)}
+                                            className="bg-[var(--bg)] border-none rounded-xl px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-[#25D366] transition-all" />
+                                    </div>
                                 </div>
+                            ) : (
+                                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mt-3 sm:mt-0">
+                                    Fermé / Indisponible
+                                </span>
                             )}
                         </div>
                     );
@@ -711,7 +725,7 @@ function TabFaq({ tenantId, d }: { tenantId: string; d: ReturnType<typeof useLan
     const fetchFaqs = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await faqRepository.getList(tenantId);
+            const data = await faqRepository.getList();
             setFaqs(data.results);
         } catch { /* silencieux */ }
         finally { setLoading(false); }
@@ -742,7 +756,7 @@ function TabFaq({ tenantId, d }: { tenantId: string; d: ReturnType<typeof useLan
                                     <Badge variant={faq.is_active ? "green" : "slate"}>
                                         {faq.is_active ? d.common.active : d.common.inactive}
                                     </Badge>
-                                    <p className="text-sm font-semibold text-[var(--text)] truncate">{faq.question_fr}</p>
+                                    <p className="text-sm font-semibold text-[var(--text)] truncate">{faq.titre}</p>
                                 </div>
                                 {expanded === faq.id
                                     ? <ChevronUp className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" />
@@ -752,12 +766,12 @@ function TabFaq({ tenantId, d }: { tenantId: string; d: ReturnType<typeof useLan
                                 <div className="px-5 pb-4 space-y-2">
                                     <div className="bg-[var(--bg)] rounded-xl p-4">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">FR</p>
-                                        <p className="text-sm text-[var(--text)]">{faq.answer_fr}</p>
+                                        <p className="text-sm text-[var(--text)]">{faq.titre}</p>
                                     </div>
-                                    {faq.answer_en && (
+                                    {false && (
                                         <div className="bg-[var(--bg)] rounded-xl p-4">
                                             <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">EN</p>
-                                            <p className="text-sm text-[var(--text)]">{faq.answer_en}</p>
+                                            <p className="text-sm text-[var(--text)]"></p>
                                         </div>
                                     )}
                                 </div>
@@ -773,7 +787,7 @@ function TabFaq({ tenantId, d }: { tenantId: string; d: ReturnType<typeof useLan
 // ════════════════════════════════════════════════════════════════════════════
 // ONGLET 4 — SERVICES & TARIFS (CRUD complet + knowledge)
 // ════════════════════════════════════════════════════════════════════════════
-function TabServices({ tenantId, d }: { tenantId: string; d: ReturnType<typeof useLanguage>["dictionary"] }) {
+function TabServices({ tenantId, entrepriseId, d }: { tenantId: string; entrepriseId: string; d: ReturnType<typeof useLanguage>["dictionary"] }) {
     const t = d.knowledge;
     const toast = useToast();
     const [services, setServices] = useState<Service[]>([]);
@@ -792,8 +806,8 @@ function TabServices({ tenantId, d }: { tenantId: string; d: ReturnType<typeof u
     const [isSavingService, startSaveService] = useTransition();
 
     const DEF_SERVICE_FORM = {
-        name: "", description: "", price: 0,
-        duration_min: 0 as number | null, is_active: true,
+        nom: "", description: "", prix: 0,
+        duree_min: 0 as number | null, is_active: true,
     };
     const [serviceForm, setServiceForm] = useState(DEF_SERVICE_FORM);
 
@@ -842,8 +856,8 @@ function TabServices({ tenantId, d }: { tenantId: string; d: ReturnType<typeof u
 
     const openEdit = (svc: Service) => {
         setServiceForm({
-            name: svc.name, description: svc.description,
-            price: svc.price, duration_min: svc.duration_min,
+            nom: svc.nom, description: svc.description,
+            prix: svc.prix, duree_min: svc.duree_min,
             is_active: svc.is_active,
         });
         setEditingService(svc);
@@ -859,7 +873,7 @@ function TabServices({ tenantId, d }: { tenantId: string; d: ReturnType<typeof u
                     await servicesRepository.patch(editingService.id, serviceForm);
                     toast.success(t.serviceUpdated);
                 } else {
-                    await servicesRepository.create({ ...serviceForm, tenant_id: tenantId });
+                    await servicesRepository.create({ ...serviceForm, entreprise: entrepriseId });
                     toast.success(t.serviceCreated);
                 }
                 setServiceModal(false);
@@ -950,10 +964,10 @@ function TabServices({ tenantId, d }: { tenantId: string; d: ReturnType<typeof u
                                                 <Wrench className="w-4 h-4 text-[#6C3CE1]" />
                                             </div>
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-sm font-bold text-[var(--text)] truncate">{svc.name}</p>
+                                                <p className="text-sm font-bold text-[var(--text)] truncate">{svc.nom}</p>
                                                 <p className="text-xs text-[var(--text-muted)]">
-                                                    {svc.price === 0 ? d.services.free : `${svc.price.toLocaleString()} XAF`}
-                                                    {svc.duration_min ? ` · ${svc.duration_min} min` : ""}
+                                                    {svc.prix === 0 ? d.services.free : `${svc.prix.toLocaleString()} XAF`}
+                                                    {svc.duree_min ? ` · ${svc.duree_min} min` : ""}
                                                 </p>
                                             </div>
                                             <Badge variant={svc.is_active ? "green" : "slate"}>
@@ -1075,8 +1089,8 @@ function TabServices({ tenantId, d }: { tenantId: string; d: ReturnType<typeof u
                             <div>
                                 <label className="label-base">{t.serviceName}</label>
                                 <input required className="input-base"
-                                    value={serviceForm.name}
-                                    onChange={e => setServiceForm({ ...serviceForm, name: e.target.value })} />
+                                    value={serviceForm.nom}
+                                    onChange={e => setServiceForm({ ...serviceForm, nom: e.target.value })} />
                             </div>
 
                             <div>
@@ -1090,14 +1104,14 @@ function TabServices({ tenantId, d }: { tenantId: string; d: ReturnType<typeof u
                                 <div>
                                     <label className="label-base">{t.servicePrice}</label>
                                     <input type="number" min={0} className="input-base"
-                                        value={serviceForm.price}
-                                        onChange={e => setServiceForm({ ...serviceForm, price: Number(e.target.value) })} />
+                                        value={serviceForm.prix}
+                                        onChange={e => setServiceForm({ ...serviceForm, prix: Number(e.target.value) })} />
                                 </div>
                                 <div>
                                     <label className="label-base">{t.serviceDuration}</label>
                                     <input type="number" min={0} className="input-base"
-                                        value={serviceForm.duration_min ?? ""}
-                                        onChange={e => setServiceForm({ ...serviceForm, duration_min: e.target.value ? Number(e.target.value) : null })} />
+                                        value={serviceForm.duree_min ?? ""}
+                                        onChange={e => setServiceForm({ ...serviceForm, duree_min: e.target.value ? Number(e.target.value) : null })} />
                                 </div>
                             </div>
 

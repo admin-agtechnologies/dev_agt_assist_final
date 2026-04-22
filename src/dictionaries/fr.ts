@@ -147,6 +147,7 @@ export const fr = {
       phone: "Téléphone",
       email: "Adresse email",
       password: "Mot de passe",
+      confirmPassword: "Confirmer le mot de passe",
       fullName: "Votre nom complet",
     },
     sectors: {
@@ -181,7 +182,7 @@ export const fr = {
     emailMissing: "Email introuvable. Retournez à la page de connexion.",
     resendError: "Erreur lors de l'envoi. Réessayez.",
   },
-  
+
   verifyEmail: {
     loading: "Vérification en cours…",
     loadingSubtitle: "Veuillez patienter quelques instants.",
@@ -219,7 +220,7 @@ export const fr = {
     errorGeneric: "Ce lien magique n'est plus valide.",
     backToLogin: "Retour à la connexion",
   },
-  
+
   errors: {
     notFoundTitle: "Page introuvable",
     notFoundSubtitle: "La page que vous cherchez n'existe pas ou a été déplacée.",
@@ -490,15 +491,15 @@ export const fr = {
     title: "Mon Profil", subtitle: "Informations de votre compte.",
     name: "Nom complet", email: "Email", role: "Rôle", tenant: "Entreprise",
     saveSuccess: "Profil mis à jour.", saveError: "Erreur lors de la sauvegarde.",
-    editProfile: "Modifier le profil",
-    changePassword: "Changer le mot de passe",
+    editProfile: "MODIFIER LE PROFIL",
+    changePassword: "CHANGER LE MOT DE PASSE",
+    companySection: "MON ENTREPRISE",
     currentPassword: "Mot de passe actuel",
     newPassword: "Nouveau mot de passe",
     confirmPassword: "Confirmer le mot de passe",
     passwordMismatch: "Les mots de passe ne correspondent pas.",
     passwordSameAsOld: "Le nouveau mot de passe doit être différent.",
     passwordSuccess: "Mot de passe modifié avec succès.",
-    companySection: "Mon entreprise",
     companySaved: "Entreprise mise à jour.",
     companyError: "Erreur lors de la mise à jour.",
     whatsapp: "Numéro WhatsApp",

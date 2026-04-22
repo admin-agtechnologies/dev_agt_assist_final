@@ -116,14 +116,14 @@ export default function PmeAppointmentsPage() {
         const [aptsRes, svcsRes, kRes] = await Promise.all([
           appointmentsRepository.getList({ tenant_id: user.tenant_id! }),
           servicesRepository.getList({ tenant_id: user.tenant_id! }),
-          tenantKnowledgeRepository.getByTenant(user.tenant_id!).catch(() => null),
+          tenantKnowledgeRepository.getMine(),
         ]);
         setItems(aptsRes.results);
         setServices(svcsRes.results);
         if (kRes) {
           setKnowledge(kRes);
-          setDurationMin(kRes.appointment_duration_min ?? 30);
-          setBufferMin(kRes.slot_buffer_min ?? 10);
+          setDurationMin(kRes.duree_rdv_min ?? 30);
+          setBufferMin(kRes.buffer_slot_min ?? 10);
         }
       } catch {
         toast.error(t.errorLoad);
@@ -136,7 +136,7 @@ export default function PmeAppointmentsPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   // ── Map serviceId → name ──────────────────────────────────────────────────
-  const serviceMap = Object.fromEntries(services.map(s => [s.id, s.name]));
+  const serviceMap = Object.fromEntries(services.map(s => [s.id, s.nom]));
 
   // ── Navigation ────────────────────────────────────────────────────────────
   const goToday = () => setCurrentDate(new Date());
@@ -159,8 +159,8 @@ export default function PmeAppointmentsPage() {
     startSaveConfig(async () => {
       try {
         await tenantKnowledgeRepository.patch(knowledge.id, {
-          appointment_duration_min: durationMin,
-          slot_buffer_min: bufferMin,
+          duree_rdv_min: durationMin,
+          buffer_slot_min: bufferMin,
         });
         toast.success(t.configSaved);
         setConfigOpen(false);
@@ -623,7 +623,7 @@ function AppointmentFormModal({ itemId, tenantId, prefillDate, services, onClose
                 <select required className="input-base" value={form.service_id}
                   onChange={e => setForm({ ...form, service_id: e.target.value })}>
                   <option value="">—</option>
-                  {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  {services.map(s => <option key={s.id} value={s.id}>{s.nom}</option>)}
                 </select>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

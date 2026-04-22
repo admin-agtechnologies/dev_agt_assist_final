@@ -161,9 +161,9 @@ function getMockResponse(
 
   if (wantsService && services.length > 0) {
     const list = services.slice(0, 3).map(s =>
-      `• ${s.name} — ${s.price === 0 ? "Gratuit" : `${s.price.toLocaleString()} XAF`}${s.duration_min ? ` / ${s.duration_min} min` : ""}`
+      `• ${s.nom} — ${s.prix === 0 ? "Gratuit" : `${s.prix.toLocaleString()} XAF`}${s.duree_min ? ` / ${s.duree_min} min` : ""}`
     ).join("\n");
-    const names = services.slice(0, 3).map(s => s.name);
+    const names = services.slice(0, 3).map(s => s.nom);
     result.reportPatch = { ...result.reportPatch, services: names, status: "active" };
     result.text = `Voici nos services disponibles :\n${list}\n\nSouhaitez-vous réserver un créneau ?`;
     return result;
@@ -193,7 +193,7 @@ function getMockResponse(
       const dayLabel = DAYS_FR[freeSlot.getDay() === 0 ? 6 : freeSlot.getDay() - 1];
       const dateLabel = `${dayLabel} ${freeSlot.getDate()} ${MONTHS_FR[freeSlot.getMonth()]} à ${String(freeSlot.getHours()).padStart(2, "0")}h${String(freeSlot.getMinutes()).padStart(2, "0")}`;
       const svc = services[0];
-      result.text = `J'ai vérifié le calendrier 📅. Le prochain créneau disponible est le **${dateLabel}**${svc ? ` pour "${svc.name}"` : ""}.\n\nJe confirme ce rendez-vous pour vous ?`;
+      result.text = `J'ai vérifié le calendrier 📅. Le prochain créneau disponible est le **${dateLabel}**${svc ? ` pour "${svc.nom}"` : ""}.\n\nJe confirme ce rendez-vous pour vous ?`;
       result.mockApt = { date: freeSlot, serviceId: svc?.id ?? "" };
       result.reportPatch = { ...result.reportPatch, appointmentDate: dateLabel, intention: "Prise de RDV" };
       return result;
@@ -604,7 +604,7 @@ export default function BotTestPage({ params }: { params: { id: string } }) {
     });
     const timeLabel = apt.date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
     const subject = `Confirmation de votre rendez-vous — ${dateLabel}`;
-    const body = `Bonjour${clientReport.name ? " " + clientReport.name : ""},\n\nVotre rendez-vous a bien été enregistré :\n\n📅 Date : ${dateLabel} à ${timeLabel}\n🏥 Service : ${svc?.name ?? "Consultation"}\n\nUn rappel vous sera envoyé 24h avant.\n\nCordialement,\nL'équipe`;
+    const body = `Bonjour${clientReport.name ? " " + clientReport.name : ""},\n\nVotre rendez-vous a bien été enregistré :\n\n📅 Date : ${dateLabel} à ${timeLabel}\n🏥 Service : ${svc?.nom ?? "Consultation"}\n\nUn rappel vous sera envoyé 24h avant.\n\nCordialement,\nL'équipe`;
     const to = clientReport.email ?? "client@exemple.com";
     handleEmailTrigger(subject, body, to);
   }, [user?.tenant_id, clientReport, services, handleEmailTrigger]);
@@ -1071,7 +1071,7 @@ function WhatsAppSimulator({
     if (pendingApt && /oui|confirme|ok|parfait|d'accord|yes/i.test(content)) {
       const svc = services.find(s => s.id === pendingApt.serviceId);
       const dateLabel = `${DAYS_FR[pendingApt.date.getDay() === 0 ? 6 : pendingApt.date.getDay() - 1]} ${pendingApt.date.getDate()} ${MONTHS_FR[pendingApt.date.getMonth()]} à ${String(pendingApt.date.getHours()).padStart(2, "0")}h${String(pendingApt.date.getMinutes()).padStart(2, "0")}`;
-      const confirmMsg = `✅ RDV confirmé ! Le **${dateLabel}**${svc ? ` pour "${svc.name}"` : ""}. Vous recevrez un rappel. Y a-t-il autre chose ?`;
+      const confirmMsg = `✅ RDV confirmé ! Le **${dateLabel}**${svc ? ` pour "${svc.nom}"` : ""}. Vous recevrez un rappel. Y a-t-il autre chose ?`;
       setMessages(prev => [...prev, {
         id: `b-${Date.now()}`, role: "bot",
         content: confirmMsg,

@@ -90,14 +90,9 @@ export interface User {
   permissions: string[];
   created_at: string;
 
-  // ── Champ transitoire — NON renvoyé par /auth/me/ ──────────────────────────
-  // Peuplé côté frontend par AuthContext après un call séparé (UserEntreprise).
-  // Sera retiré du type User quand toutes les pages métier auront migré vers
-  // un TenantContext dédié. Présent ici pour ne pas casser le build des pages
-  // qui consomment user.tenant_id avant le refactor.
+  // Conservé pour compatibilité pages non encore migrées
   tenant_id?: string | null;
 }
-
 // ── Payloads ──────────────────────────────────────────────────────────────────
 export interface LoginPayload {
   email: string;
@@ -253,20 +248,22 @@ export interface BotFilters {
 // ══════════════════════════════════════════════════════════════════════════════
 export interface Service {
   id: string;
-  tenant_id: string;
-  name: string;
+  entreprise: string;
+  entreprise_name: string;
+  nom: string;
   description: string;
-  price: number;
-  duration_min: number | null;
+  prix: number;
+  duree_min: number | null;
   is_active: boolean;
+  created_at: string;
 }
 export interface CreateServicePayload {
-  name: string;
+  nom: string;
   description: string;
-  price: number;
-  duration_min: number | null;
+  prix: number;
+  duree_min: number | null;
   is_active?: boolean;
-  tenant_id?: string;
+  entreprise?: string;
 }
 export interface ServiceFilters {
   search?: string;
@@ -315,23 +312,20 @@ export interface AppointmentFilters {
 // ══════════════════════════════════════════════════════════════════════════════
 // SUBSCRIPTION
 // ══════════════════════════════════════════════════════════════════════════════
-export type SubscriptionStatus = "active" | "suspended" | "cancelled" | "trial";
+export type SubscriptionStatus = "actif" | "suspendu" | "resilie" | "essai";
 export interface Subscription {
   id: string;
-  tenant_id: string;
-  plan_name: string;
-  plan_slug: string;
-  renewal_date?: string | null;
-  status: SubscriptionStatus;
-  billing_cycle: "monthly" | "yearly";
-  price: number;
-  currency: string;
-  current_period_start: string;
-  current_period_end: string;
-  messages_used: number;
-  messages_limit: number;
-  calls_used: number;
-  calls_limit: number;
+  entreprise: string;
+  entreprise_name: string;
+  plan: Plan;
+  statut: SubscriptionStatus;
+  billing_cycle: string;
+  periode_debut: string;
+  periode_fin: string;
+  date_renouvellement: string | null;
+  usage_messages: number;
+  usage_appels: number;
+  created_at: string;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -339,22 +333,30 @@ export interface Subscription {
 // ══════════════════════════════════════════════════════════════════════════════
 export interface Wallet {
   id: string;
-  tenant_id: string;
-  balance: number;
-  currency: string;
+  entreprise: string;
+  entreprise_name: string;
+  solde: number;
+  frozen_balance: number;
+  total_balance: number;
+  devise: string;
   updated_at: string;
 }
 
 export interface Plan {
   id: string;
-  name: string;
+  nom: string;
   slug: string;
-  price: number;
-  currency: string;
+  prix: number;
+  devise: string;
   billing_cycle: string;
-  messages_limit: number;
-  calls_limit: number;
+  limite_messages: number;
+  limite_appels: number;
+  limite_bots: number;
+  limite_rdv: number;
+  is_active: boolean;
+  highlight: boolean;
   features: string[];
+  created_at: string;
 }
 
 export interface TenantStats {
@@ -419,47 +421,80 @@ export interface ConversationFilters {
 // ══════════════════════════════════════════════════════════════════════════════
 // FAQ / KNOWLEDGE
 // ══════════════════════════════════════════════════════════════════════════════
+// FAQ = conteneur (titre uniquement)
 export interface FAQ {
   id: string;
-  tenant_id: string;
-  question_fr: string;
-  question_en: string;
-  answer_fr: string;
-  answer_en: string;
-  category: string;
+  entreprise: string;
+  titre: string;
   is_active: boolean;
+  created_at: string;
 }
 export interface CreateFAQPayload {
+  entreprise: string;
+  titre: string;
+  is_active?: boolean;
+}
+
+// QuestionFrequente = items sous une FAQ
+export interface QuestionFrequente {
+  id: string;
+  faq: string;
   question_fr: string;
   question_en: string;
-  answer_fr: string;
-  answer_en: string;
-  category: string;
+  reponse_fr: string;
+  reponse_en: string;
+  categorie: string;
+  is_active: boolean;
+  created_at: string;
+}
+export interface CreateQuestionPayload {
+  faq: string;
+  question_fr: string;
+  question_en?: string;
+  reponse_fr: string;
+  reponse_en?: string;
+  categorie?: string;
   is_active?: boolean;
-  tenant_id?: string;
 }
 
 export interface TenantKnowledge {
   id: string;
-  tenant_id: string;
+  entreprise: string;
   slogan: string;
-  website: string;
-  email: string;
+  site_web: string;
+  email_contact: string;
+  transfer_email: string;
   transfer_whatsapp: string;
   transfer_phone: string;
-  transfer_email: string;
   transfer_message: string;
-  welcome_message: string;
+  message_accueil: string;
   bot_tone: string;
   bot_personality: string;
+  bot_languages: string[];
   bot_signature: string;
   extra_info: string;
-  bot_languages: string[];
-  appointment_duration_min?: number;
-  slot_buffer_min?: number;
+  duree_rdv_min: number;
+  buffer_slot_min: number;
+  created_at: string;
+  updated_at: string;
 }
-export interface CreateTenantKnowledgePayload extends Partial<Omit<TenantKnowledge, "id">> {
-  tenant_id: string;
+export interface CreateTenantKnowledgePayload {
+  entreprise: string;
+  slogan?: string;
+  site_web?: string;
+  email_contact?: string;
+  transfer_email?: string;
+  transfer_whatsapp?: string;
+  transfer_phone?: string;
+  transfer_message?: string;
+  message_accueil?: string;
+  bot_tone?: string;
+  bot_personality?: string;
+  bot_languages?: string[];
+  bot_signature?: string;
+  extra_info?: string;
+  duree_rdv_min?: number;
+  buffer_slot_min?: number;
 }
 
 export interface ServiceKnowledge {
@@ -543,25 +578,28 @@ export interface CreateLocationPayload extends Partial<Omit<Location, "id">> {
 // ══════════════════════════════════════════════════════════════════════════════
 export interface Transaction {
   id: string;
-  tenant_id: string;
-  amount: number;
-  currency: string;
-  type: "credit" | "debit";
+  wallet: string;
+  type: string;
+  type_display: string;
+  category: string;
+  category_display: string;
+  status: string;
+  status_display: string;
+  montant: number;
+  solde_apres: number | null;
+  service_paiement: string | null;
+  service_paiement_nom: string | null;
+  reference: string;
+  external_reference: string | null;
   label: string;
   created_at: string;
-  operator?: string;
-  reference?: string;
 }
 export interface CreateTransactionPayload {
-  tenant_id: string;
-  amount: number;
-  currency?: string;
-  type: "credit" | "debit";
+  wallet: string;
+  montant: number;
+  type: string;
   label: string;
-  wallet_id?: string;
-  balance_after?: number;
-  operator?: string | null;
-  reference?: string | null;
+  service_paiement?: string | null;
 }
 
 export interface PhoneNumber {
