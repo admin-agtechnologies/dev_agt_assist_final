@@ -178,7 +178,6 @@ export default function PmeBillingPage() {
       {topUpOpen && wallet && (
         <TopUpModal
           wallet={wallet}
-          tenantId={user?.entreprise?.id ?? ""}
           onClose={() => setTopUpOpen(false)}
           onSuccess={() => {
             setTopUpOpen(false);

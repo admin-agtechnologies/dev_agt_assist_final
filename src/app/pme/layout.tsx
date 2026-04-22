@@ -88,13 +88,13 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
       <div className="p-4 border-t border-[var(--border)] space-y-1">
 
         {/* Configuration rapide */}
-        <button
+        {/* <button
           onClick={() => { setSidebarOpen(false); router.push(ROUTES.onboarding); }}
           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-[var(--text-sidebar)] hover:bg-[var(--bg)] transition-colors"
         >
           <RefreshCw className="w-4 h-4 flex-shrink-0" />
           {d.nav.quickSetup}
-        </button>
+        </button> */}
 
         {/* Tutoriel interface */}
         <Link

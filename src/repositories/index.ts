@@ -334,9 +334,16 @@ export const subscriptionsRepository = {
 // ══════════════════════════════════════════════════════════════════════════════
 export const walletsRepository = {
   getMine: (): Promise<Wallet | null> =>
-    api.get("/api/v1/billing/wallets/").then((data: unknown) =>
-      Array.isArray(data) && data.length > 0 ? (data[0] as Wallet) : null,
-    ),
+    api.get("/api/v1/billing/wallets/").then((data: unknown) => {
+      // L'API retourne soit un array direct, soit une réponse paginée
+      if (Array.isArray(data)) {
+        return data.length > 0 ? (data[0] as Wallet) : null;
+      }
+      const paginated = data as { results?: Wallet[] };
+      return paginated.results && paginated.results.length > 0
+        ? paginated.results[0]
+        : null;
+    }),
   getById: (id: string): Promise<Wallet> => api.get(`/api/v1/billing/wallets/${id}/`),
   patch: (id: string, payload: Partial<Wallet>): Promise<Wallet> =>
     api.patch(`/api/v1/billing/wallets/${id}/`, payload),
@@ -483,22 +490,43 @@ export const billingRepository = {
 
   confirmUpgrade: (planId: string) =>
     api.post(`/api/v1/billing/plans/${planId}/confirm-upgrade/`, {}),
+  applyCode: (code: string): Promise<{ detail: string; montant: string; devise: string; nouveau_solde: string }> =>
+    api.post("/api/v1/billing/codes-recharge/apply-code/", { code }),
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
 // FEEDBACK
 // Aligné avec apps/feedback/views.py
 // ══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
+// FEEDBACK
+// Aligné avec apps/feedback/views.py
+// ══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
+// FEEDBACK
+// ══════════════════════════════════════════════════════════════════════════════
+export interface CreateTemoignagePayload {
+  note: number;
+  contenu: string;
+}
+
 export interface CreateProblemePayload {
+  categorie: string;
+  severite: string;
+  titre: string;
   contenu: string;
 }
 
 export const feedbackRepository = {
-  // Signaler un problème — POST /api/v1/feedback/problemes/
-  createProbleme: (payload: CreateProblemePayload) =>
+  createTemoignage: (payload: CreateTemoignagePayload): Promise<unknown> =>
+    api.post("/api/v1/feedback/temoignages/", payload),
+
+  createProbleme: (payload: CreateProblemePayload): Promise<unknown> =>
     api.post("/api/v1/feedback/problemes/", payload),
-  // Témoignages publics (lecture seule côté PME)
+
   getTemoignages: (params?: { featured_landing?: boolean; featured_login?: boolean }) =>
     api.get("/api/v1/feedback/temoignages/", { params: p(params) })
-      .then((data: unknown) => Array.isArray(data) ? data : (data as { results?: unknown[] }).results ?? []),
+      .then((data: unknown) =>
+        Array.isArray(data) ? data : (data as { results?: unknown[] }).results ?? []
+      ),
 };
