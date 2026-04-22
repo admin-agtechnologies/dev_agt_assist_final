@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MailCheck, XCircle, Loader2 } from "lucide-react";
 import { authRepository } from "@/repositories";
@@ -9,7 +9,7 @@ import { ROUTES } from "@/lib/constants";
 
 type Status = "loading" | "success" | "error";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { dictionary: d } = useLanguage();
@@ -19,11 +19,7 @@ export default function VerifyEmailPage() {
 
   useEffect(() => {
     const token = searchParams.get("token");
-    if (!token) {
-      setStatus("error");
-      setErrorMsg(t.errorTitle);
-      return;
-    }
+    if (!token) { setStatus("error"); setErrorMsg(t.errorTitle); return; }
     authRepository.verifyEmail(token)
       .then((res) => {
         tokenStorage.set(res.access, res.refresh ?? "");
@@ -39,7 +35,6 @@ export default function VerifyEmailPage() {
   return (
     <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center px-4">
       <div className="card p-12 text-center max-w-md w-full">
-
         {status === "loading" && (
           <>
             <div className="w-20 h-20 rounded-3xl bg-[#25D366]/10 flex items-center justify-center mx-auto mb-6">
@@ -49,7 +44,6 @@ export default function VerifyEmailPage() {
             <p className="text-sm text-[var(--text-muted)]">{t.loadingSubtitle}</p>
           </>
         )}
-
         {status === "success" && (
           <>
             <div className="w-20 h-20 rounded-3xl bg-[#25D366]/10 flex items-center justify-center mx-auto mb-6">
@@ -62,7 +56,6 @@ export default function VerifyEmailPage() {
             </div>
           </>
         )}
-
         {status === "error" && (
           <>
             <div className="w-20 h-20 rounded-3xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center mx-auto mb-6">
@@ -70,17 +63,21 @@ export default function VerifyEmailPage() {
             </div>
             <h1 className="text-2xl font-black text-[var(--text)] mb-2">{t.errorTitle}</h1>
             <p className="text-sm text-[var(--text-muted)] mb-6">{errorMsg}</p>
-            <button
-              onClick={() => router.push(ROUTES.login)}
-              className="btn-primary w-full justify-center py-3"
-            >
+            <button onClick={() => router.push(ROUTES.login)} className="btn-primary w-full justify-center py-3">
               {t.backToLogin}
             </button>
             <p className="text-xs text-[var(--text-muted)] mt-4">{t.errorSubtitle}</p>
           </>
         )}
-
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

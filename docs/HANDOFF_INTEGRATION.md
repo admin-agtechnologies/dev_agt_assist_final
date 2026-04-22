@@ -1,7 +1,3 @@
-Zéro erreur. On génère le handoff maintenant.
-
----
-
 # HANDOFF — Session 22 avril 2026
 
 ## 1. Ce qui a été complété
@@ -97,4 +93,3 @@ npx tsc --noEmit
 # Comptes de test
 # pharma@demo.cm / Pme@2024!
 # hotel@demo.cm / Pme@2024!
-```

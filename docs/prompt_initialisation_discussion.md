@@ -248,6 +248,7 @@ voici mes objectifs:
 
 * vérifier,débogguer,tester,documenter coté backend et intégrer coté frontend les modules, gestion de rendez vous,gestion des bots,demander de l'aide,laisser un témoignage,signaler un problème et tableau de bord, du  backend au frontend,1 à a fois,après quoi je pourrai me concentre sur faire marcher de façon tangible le bot dans l'onglet test avec les appels de fonctions nécessaire car après cette session, je vais installer ollama,vraiment mettre en palec ce bot dans l'app chatbot et mettre sur pied le systeme d'apels de focntion de systeme prompt afin qu'il subisse direct le résulats,je devrai aussi installer waha community pour les sessions et les webhooks urls à configurer à partir de numéros existants.
 * continuer les itérations modifs backend+intégration frontend puis-je compter sur toi dans le respect de mon dome de travail ?
-je note que tu ne vas exécuter aucun code dans ta console, tout code tu devras me le donner, si tu veux un fichier en détail, tu regarde dans la mémoire sinon tu me le demande avec Get-content path | Set-Clipboard. on travaille de façon méthodique, un bloc à la fois. on commence par reset le backend et le lancer et vérifier+stabiliser le cas échéanbt d'erreurs le build coté frontend
-
-n'ou blie pas après ton auoidt de me demander ce que je souhaite faire maintenant.
+je note que tu ne vas exécuter aucun code dans ta console, tout code tu devras me le donner, si tu veux un fichier en détail, tu regarde dans la mémoire sinon tu me le demande avec Get-content path | Set-Clipboard. on travaille de façon méthodique, un bloc à la fois. on commence par reset le backend et le lancer et vérifier+stabiliser le cas échéanbt d'erreurs le build coté frontend.
+Dernière chose, dans le backend on devra se rassurer de l'exitence du seeder pour le compte de démo avec un hotel aitd es donnes fiables sur tous les plans :
+**Compte démo de référence :** `hotel@demo.cm` / `Pme@2024!`
+n'ou blie pas après ton audit de me demander ce que je souhaite faire maintenant.
