@@ -13,6 +13,7 @@ import { ROUTES } from "@/lib/constants";
 import { ApiError } from "@/lib/api-client";
 import { authRepository } from "@/repositories";
 import { AuthShell, GoogleButton } from "@/components/auth/AuthShell";
+import { Eye, EyeOff } from "lucide-react"; // Importe les icônes
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 
@@ -36,6 +37,7 @@ export default function LoginPage() {
 // ── Formulaire login ──────────────────────────────────────────────────────────
 function LoginForm() {
   const { login, loginWithGoogle } = useAuth();
+  const [showPassword, setShowPassword] = useState(false); // Ajoute cette ligne
   const { dictionary: d } = useLanguage();
   const t = d.auth;
   const router = useRouter();
@@ -217,11 +219,27 @@ function LoginForm() {
                 {t.forgotPassword}
               </button>
             </div>
+
+            {/* CONTENEUR RELATIVE POUR POSITIONNER L'OEIL */}
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-              <input type="password" required autoComplete="current-password"
-                className="input-base pl-10" value={password}
-                onChange={e => setPassword(e.target.value)} />
+              <input
+                type={showPassword ? "text" : "password"} // Bascule entre text et password
+                required
+                autoComplete="current-password"
+                className="input-base pl-10 pr-10" // pr-10 pour laisser de la place à droite
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+              />
+
+              {/* BOUTON OEIL À DROITE */}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[#075E54] transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
           {error && (
