@@ -10,7 +10,7 @@ import { initials, cn } from "@/lib/utils";
 import type { EntrepriseInUser } from "@/types/api";
 import {
   User, Mail, Lock, Building2,
-  Phone, MessageSquare, FileText, Save,
+  Phone, MessageSquare, FileText, Save, Eye, EyeOff
 } from "lucide-react";
 
 export default function PmeProfilePage() {
@@ -28,6 +28,10 @@ export default function PmeProfilePage() {
   const [newPwd, setNewPwd] = useState("");
   const [confirmPwd, setConfirmPwd] = useState("");
   const [pwdError, setPwdError] = useState("");
+  // ... tes autres states
+  const [showCurrentPwd, setShowCurrentPwd] = useState(false);
+  const [showNewPwd, setShowNewPwd] = useState(false);
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
   const [isSavingPwd, startSavePwd] = useTransition();
 
   // ── État entreprise ──────────────────────────────────────────────────────
@@ -165,32 +169,75 @@ export default function PmeProfilePage() {
               {t.changePassword}
             </h2>
             <form onSubmit={handleSavePassword} className="space-y-4">
+              {/* MOT DE PASSE ACTUEL */}
               <div>
                 <label className="label-base">{t.currentPassword}</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                  <input type="password" required className="input-base pl-10"
-                    value={currentPwd} onChange={e => setCurrentPwd(e.target.value)} />
+                  <input
+                    type={showCurrentPwd ? "text" : "password"} // Bascule ici
+                    required
+                    className="input-base pl-10 pr-10"
+                    value={currentPwd}
+                    onChange={e => setCurrentPwd(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPwd(!showCurrentPwd)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[#075E54] transition-colors"
+                  >
+                    {showCurrentPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
+
+              {/* NOUVEAU MOT DE PASSE */}
               <div>
                 <label className="label-base">{t.newPassword}</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                  <input type="password" required minLength={8} className="input-base pl-10"
-                    value={newPwd} onChange={e => setNewPwd(e.target.value)} />
+                  <input
+                    type={showNewPwd ? "text" : "password"} // Bascule ici
+                    required
+                    minLength={8}
+                    className="input-base pl-10 pr-10"
+                    value={newPwd}
+                    onChange={e => setNewPwd(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPwd(!showNewPwd)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[#075E54] transition-colors"
+                  >
+                    {showNewPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
+
+              {/* CONFIRMATION DU MOT DE PASSE */}
               <div>
                 <label className="label-base">{t.confirmPassword}</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                  <input type="password" required minLength={8}
-                    className={cn("input-base pl-10", pwdError && "border-red-400")}
-                    value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} />
+                  <input
+                    type={showConfirmPwd ? "text" : "password"} // Bascule ici
+                    required
+                    minLength={8}
+                    className={cn("input-base pl-10 pr-10", pwdError && "border-red-400")}
+                    value={confirmPwd}
+                    onChange={e => setConfirmPwd(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPwd(!showConfirmPwd)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[#075E54] transition-colors"
+                  >
+                    {showConfirmPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
                 {pwdError && <p className="text-xs text-red-500 mt-1">{pwdError}</p>}
               </div>
+
               <div className="flex justify-end">
                 <button type="submit" disabled={isSavingPwd} className="btn-primary flex items-center gap-2">
                   {isSavingPwd
