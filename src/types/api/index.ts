@@ -304,13 +304,16 @@ export interface CreateAgencePayload {
 
 export interface Agenda {
   id: string;
-  entreprise: string;
+  agence: string | null;
+  agence_nom: string | null;
   nom: string;
   description: string;
+  bots_ids: string[];
   is_active: boolean;
   created_at: string;
 }
 export interface CreateAgendaPayload {
+  agence?: string;
   nom: string;
   description?: string;
   is_active?: boolean;
@@ -319,13 +322,12 @@ export interface CreateAgendaPayload {
 // ══════════════════════════════════════════════════════════════════════════════
 // RENDEZ-VOUS
 // ══════════════════════════════════════════════════════════════════════════════
-export type RendezVousStatut = "en_attente" | "confirme" | "termine" | "annule";
-export type RendezVousCanal = "whatsapp" | "vocal" | "manuel";
 
-export interface RendezVousServiceDetail {
-  service_id: string;
+export interface ServiceRDV {
+  id: number;
+  service: string;
   service_nom: string;
-  prix: number;
+  service_prix: string;
 }
 
 export interface RendezVous {
@@ -338,39 +340,33 @@ export interface RendezVous {
   client_nom: string;
   client_telephone: string;
   bot: string | null;
-  statut: RendezVousStatut;
-  canal: RendezVousCanal;
+  statut: "en_attente" | "confirme" | "annule" | "termine";
+  canal: "whatsapp" | "vocal" | "manuel";
   scheduled_at: string;
   reminder_sent: boolean;
   notes: string;
-  services_detail: RendezVousServiceDetail[];
+  services_detail: ServiceRDV[];
   created_at: string;
 }
-
 export interface CreateRendezVousPayload {
   agenda: string;
-  agence?: string;
-  client: string;
-  bot?: string;
-  statut?: RendezVousStatut;
-  canal?: RendezVousCanal;
+  agence?: string | null;
+  client?: string;
+  client_nom?: string;
+  client_telephone?: string;
+  statut?: "en_attente" | "confirme" | "annule" | "termine";
+  canal?: "whatsapp" | "vocal" | "manuel";
   scheduled_at: string;
   notes?: string;
 }
-
 export interface RendezVousFilters {
-  statut?: RendezVousStatut;
-  canal?: RendezVousCanal;
-  agenda?: string;
-  reminder_sent?: boolean;
-  search?: string;
+  statut?: string;
+  canal?: string;
+  date?: string;
   page?: number;
   page_size?: number;
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// CLIENT (collecté par le bot)
-// ══════════════════════════════════════════════════════════════════════════════
 export interface Client {
   id: string;
   entreprise: string;
@@ -379,41 +375,36 @@ export interface Client {
   email: string;
   created_at: string;
 }
-
 export interface CreateClientPayload {
   nom: string;
   telephone?: string;
   email?: string;
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// POLITIQUE DE RAPPEL
-// ══════════════════════════════════════════════════════════════════════════════
-export type CanalRappel = "whatsapp" | "email" | "sms" | "appel";
-
 export interface PolitiqueRappel {
   id: string;
   entreprise: string;
   nom: string;
-  canal: CanalRappel;
+  canal: "whatsapp" | "email" | "sms" | "appel";
   delai_heures: number;
   message_template: string;
   is_active: boolean;
   created_at: string;
 }
-
 export interface CreatePolitiqueRappelPayload {
   nom: string;
-  canal: CanalRappel;
-  delai_heures: number;
+  canal: "whatsapp" | "email" | "sms" | "appel";
+  delai_heures?: number;
   message_template?: string;
   is_active?: boolean;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// SUBSCRIPTION / WALLET / PLAN / STATS
+// BILLING
 // ══════════════════════════════════════════════════════════════════════════════
-export type SubscriptionStatus = "actif" | "suspendu" | "resilie" | "essai";
+
+export type SubscriptionStatus = "actif" | "suspendu" | "expire" | "en_attente";
+
 export interface Subscription {
   id: string;
   entreprise: string;
@@ -457,61 +448,76 @@ export interface Plan {
   created_at: string;
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// STATS
+// Aligné avec apps/dashboard/serializers.py → EntrepriseStatsSerializer
+// Endpoint : GET /api/v1/dashboard/entreprise/
+// ══════════════════════════════════════════════════════════════════════════════
 export interface TenantStats {
-  messages_today: number;
-  messages_week: number;
-  calls_today: number;
-  calls_week: number;
-  appointments_today: number;
-  appointments_week: number;
-  active_conversations: number;
-  emails_sent_week: number;
-  week_data: { day: string; messages: number; calls: number }[];
+  messages_aujourdhui: number;
+  messages_semaine: number;
+  appels_aujourdhui: number;
+  rdv_aujourdhui: number;
+  rdv_semaine: number;
+  conversations_actives: number;
 }
+
+// Aligné avec apps/dashboard/serializers.py → AdminStatsSerializer
+// Endpoint : GET /api/v1/dashboard/admin/
 export interface AdminStats {
-  id: string;
-  total_tenants: number;
-  active_tenants: number;
+  total_entreprises: number;
+  entreprises_actives: number;
   total_bots: number;
-  active_bots: number;
-  total_messages_today: number;
-  total_calls_today: number;
+  bots_actifs: number;
+  total_conversations_aujourdhui: number;
+  total_rdv_aujourdhui: number;
   mrr: number;
-  tenants_growth_week: number;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
 // CONVERSATION
+// Aligné avec apps/conversations/serializers.py → ConversationSerializer
 // ══════════════════════════════════════════════════════════════════════════════
-export interface ConversationReport {
-  summary: string;
-  key_takeaways: string[];
+
+export interface RapportConversation {
+  id: string;
+  conversation: string;
+  resume: string;
+  points_cles: string[];
   actions: { type: string; label: string; detail: string }[];
-  appointment_scheduled: boolean;
-  appointment_id: string | null;
-  human_handoff: boolean;
-  handoff_reason: string | null;
-  services_discussed: string[];
+  tokens_utilises: number;
+  rdv_planifies: number;
+  emails_envoyes: number;
+  transferts_humain: number;
+  created_at: string;
 }
+
 export interface Conversation {
   id: string;
-  tenant_id: string;
-  bot_id: string;
-  client_identifier: string;
-  client_name: string;
-  client_phone: string;
-  client_email: string | null;
-  channel: "whatsapp" | "voice";
-  last_message: string;
-  last_message_at: string;
-  messages_count: number;
-  appointment_id?: string | null;
-  report?: ConversationReport | null;
+  bot: string;
+  bot_nom: string;
+  bot_type: "whatsapp" | "vocal";
+  client: string;
+  client_nom: string;
+  client_telephone: string;
+  type_conversation: string | null;
+  type_label: string | null;
+  agenda: string | null;
+  agenda_nom: string | null;
+  rendez_vous: string | null;
+  statut: "en_cours" | "terminee" | "abandonnee";
+  human_handoff: boolean;
+  dernier_message: string;
+  dernier_message_at: string;
+  nb_messages: number;
+  created_at: string;
+  rapport: RapportConversation | null;
 }
+
 export interface ConversationFilters {
-  tenant_id?: string;
-  bot_id?: string;
-  channel?: string;
+  bot?: string;
+  statut?: string;
+  human_handoff?: boolean;
   page?: number;
   page_size?: number;
 }

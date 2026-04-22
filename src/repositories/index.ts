@@ -144,7 +144,6 @@ export const tenantsRepository = {
 // L'entreprise est injectée automatiquement côté backend (perform_create).
 // ══════════════════════════════════════════════════════════════════════════════
 export const botsRepository = {
-  /** Liste les bots de l'entreprise connectée (isolation côté backend). */
   getList: (f?: BotFilters): Promise<PaginatedResponse<Bot>> =>
     api.get("/api/v1/bots/", { params: p(f) }).then((data: unknown) =>
       Array.isArray(data)
@@ -160,8 +159,6 @@ export const botsRepository = {
 
 // ══════════════════════════════════════════════════════════════════════════════
 // NUMÉROS DE TÉLÉPHONE
-// Champs alignés avec NumeroTelephoneSerializer Django :
-//   numero, operateur, config_provider, entreprise, statut, notes
 // Endpoint réservé aux admins AGT (read-only depuis l'espace PME).
 // ══════════════════════════════════════════════════════════════════════════════
 export const phoneNumbersRepository = {
@@ -345,32 +342,37 @@ export const plansRepository = {
 
 // ══════════════════════════════════════════════════════════════════════════════
 // STATS
+// Endpoint réel : /api/v1/dashboard/entreprise/ (auth-based, pas de tenant_id)
+// Endpoint admin : /api/v1/dashboard/admin/
 // ══════════════════════════════════════════════════════════════════════════════
 export const statsRepository = {
-  getByTenant: (tenantId: string): Promise<TenantStats | null> =>
-    api.get("/api/v1/stats/", { params: { tenant_id: tenantId } })
-      .then((data: unknown) =>
-        Array.isArray(data) && data.length > 0 ? (data[0] as TenantStats) : null,
-      ),
-  getAdmin: (): Promise<AdminStats> => api.get("/api/v1/admin-stats/"),
+  // Le paramètre _tenantId est conservé pour compatibilité des call-sites existants
+  // mais n'est pas transmis — le backend filtre automatiquement par user connecté.
+  getByTenant: (_tenantId?: string | null): Promise<TenantStats | null> =>
+    api.get<TenantStats>("/api/v1/dashboard/entreprise/").catch(() => null),
+  getAdmin: (): Promise<AdminStats> =>
+    api.get<AdminStats>("/api/v1/dashboard/admin/"),
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
 // CONVERSATIONS
+// Aligné avec ConversationViewSet — isolation tenant auto via auth
 // ══════════════════════════════════════════════════════════════════════════════
 export const conversationsRepository = {
-  getList: (f?: ConversationFilters | string): Promise<PaginatedResponse<Conversation>> => {
-    const filters = typeof f === "string" ? { tenant_id: f } : f;
-    return api.get("/api/v1/conversations/", { params: p(filters) })
+  // Les filtres supportés côté backend : statut, human_handoff, bot
+  getList: (f?: ConversationFilters): Promise<PaginatedResponse<Conversation>> =>
+    api.get("/api/v1/conversations/", { params: p(f) })
       .then((data: unknown) =>
         Array.isArray(data)
           ? { results: data as Conversation[], count: (data as Conversation[]).length, next: null, previous: null }
           : (data as PaginatedResponse<Conversation>),
-      );
-  },
+      ),
+  getById: (id: string): Promise<Conversation> => api.get(`/api/v1/conversations/${id}/`),
   getMessages: (conversationId: string) =>
-    api.get("/api/v1/conversations/messages/", { params: { conversation_id: conversationId } })
+    api.get(`/api/v1/conversations/${conversationId}/messages/`)
       .then((data: unknown) => (Array.isArray(data) ? data : [])),
+  getRapport: (conversationId: string) =>
+    api.get(`/api/v1/conversations/${conversationId}/rapport/`).catch(() => null),
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -468,4 +470,22 @@ export const billingRepository = {
 
   confirmUpgrade: (planId: string) =>
     api.post(`/api/v1/billing/plans/${planId}/confirm-upgrade/`, {}),
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// FEEDBACK
+// Aligné avec apps/feedback/views.py
+// ══════════════════════════════════════════════════════════════════════════════
+export interface CreateProblemePayload {
+  contenu: string;
+}
+
+export const feedbackRepository = {
+  // Signaler un problème — POST /api/v1/feedback/problemes/
+  createProbleme: (payload: CreateProblemePayload) =>
+    api.post("/api/v1/feedback/problemes/", payload),
+  // Témoignages publics (lecture seule côté PME)
+  getTemoignages: (params?: { featured_landing?: boolean; featured_login?: boolean }) =>
+    api.get("/api/v1/feedback/temoignages/", { params: p(params) })
+      .then((data: unknown) => Array.isArray(data) ? data : (data as { results?: unknown[] }).results ?? []),
 };

@@ -10,7 +10,7 @@ import {
   subscriptionsRepository, rendezVousRepository,
 } from "@/repositories";
 import { formatDateTime, formatDate, cn } from "@/lib/utils";
-import { Badge, PageLoader, EmptyState, UsageBar, Spinner } from "@/components/ui";
+import { Badge, PageLoader, EmptyState, UsageBar } from "@/components/ui";
 import { ROUTES, PLANS_CONFIG } from "@/lib/constants";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -25,20 +25,7 @@ import {
 import type { TenantStats, Conversation, Subscription, RendezVous } from "@/types/api";
 import Link from "next/link";
 
-// ── Mock historique conversation ──────────────────────────────────────────────
-interface MockMessage { role: "bot" | "client"; text: string; time: string; }
-const MOCK_HISTORY: Record<string, MockMessage[]> = {
-  default: [
-    { role: "client", text: "Bonjour, je voudrais prendre un rendez-vous.", time: "14:02" },
-    { role: "bot", text: "Bonjour ! Bien sûr, pour quel service ?", time: "14:02" },
-    { role: "client", text: "Une consultation médicale.", time: "14:03" },
-    { role: "bot", text: "Parfait. Quelle date vous convient ?", time: "14:03" },
-    { role: "client", text: "Demain à 10h si possible.", time: "14:04" },
-    { role: "bot", text: "RDV confirmé pour demain à 10h. Vous recevrez un rappel.", time: "14:04" },
-  ],
-};
-
-// ── Données semaine mockées (fallback si pas de vraies stats) ─────────────────
+// ── Données semaine fallback (le backend ne retourne pas de données par jour) ─
 const WEEK_FALLBACK = [
   { day: "Lun", messages: 38, calls: 3 }, { day: "Mar", messages: 52, calls: 5 },
   { day: "Mer", messages: 45, calls: 2 }, { day: "Jeu", messages: 61, calls: 7 },
@@ -63,74 +50,82 @@ export default function PmeDashboardPage() {
   useEffect(() => { setMounted(true); }, []);
 
   const fetchAll = useCallback(async () => {
-    if (!user?.tenant_id) { setLoading(false); return; }
+    setLoading(true);
     const today = new Date().toISOString().split("T")[0];
     const [s, c, sub, appts] = await Promise.all([
-      statsRepository.getByTenant(user.tenant_id).catch(() => null),
-      conversationsRepository.getList({ tenant_id: user.tenant_id }).catch(() => ({ results: [] })),
-      subscriptionsRepository.getMine(),rendezVousRepository.getList().catch(() => ({ results: [] })),
-      
+      statsRepository.getByTenant().catch(() => null),
+      conversationsRepository.getList().catch(() => ({ results: [] as Conversation[], count: 0, next: null, previous: null })),
+      subscriptionsRepository.getMine(),
+      rendezVousRepository.getList().catch(() => ({ results: [] as RendezVous[], count: 0, next: null, previous: null })),
     ]);
     setStats(s);
-    setConversations(c.results.slice(0, 5));
+    setConversations((c.results ?? []).slice(0, 5));
     setSubscription(sub);
-    // Filtrer RDV du jour
     setTodayAppointments(
-      appts.results.filter((a:  RendezVous) => a.scheduled_at?.startsWith(today)).slice(0, 3)
+      (appts.results ?? []).filter((a: RendezVous) => a.scheduled_at?.startsWith(today)).slice(0, 3)
     );
     setLoading(false);
-  }, [user?.tenant_id]);
+  }, []);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => {
+    void router; // router conservé pour usage futur
+    fetchAll();
+  }, [fetchAll, router]);
 
   if (loading) return <PageLoader />;
 
-  // ── KPI cards ───────────────────────────────────────────────────────────────
+  // ── KPI cards — champs alignés avec EntrepriseStatsSerializer ───────────────
   const statCards = [
     {
-      label: t.messagesToday, value: stats?.messages_today ?? 0,
-      week: stats?.messages_week ?? 0, icon: MessageSquare,
+      label: t.messagesToday,
+      value: stats?.messages_aujourdhui ?? 0,
+      week: stats?.messages_semaine ?? 0,
+      icon: MessageSquare,
       color: "text-[#25D366]", bg: "bg-[#25D366]/10",
     },
     {
-      label: t.callsToday, value: stats?.calls_today ?? 0,
-      week: stats?.calls_week ?? 0, icon: Phone,
+      label: t.callsToday,
+      value: stats?.appels_aujourdhui ?? 0,
+      week: null, // pas de champ appels_semaine côté backend
+      icon: Phone,
       color: "text-[#6C3CE1]", bg: "bg-[#6C3CE1]/10",
     },
     {
-      label: t.appointmentsToday, value: stats?.appointments_today ?? 0,
-      week: stats?.appointments_week ?? 0, icon: CalendarDays,
+      label: t.appointmentsToday,
+      value: stats?.rdv_aujourdhui ?? 0,
+      week: stats?.rdv_semaine ?? 0,
+      icon: CalendarDays,
       color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/20",
     },
   ];
 
-  // ── Données graphique ────────────────────────────────────────────────────────
-  const weekData = stats?.week_data ?? WEEK_FALLBACK;
+  // Graphique semaine — toujours en fallback (pas de données par jour côté backend)
+  const weekData = WEEK_FALLBACK;
 
   // ── Plan actuel ──────────────────────────────────────────────────────────────
   const currentPlan = subscription
     ? PLANS_CONFIG.find(p => p.slug === subscription.plan?.slug) ?? null
     : null;
-  const msgUsed = stats?.messages_week ?? 0;
+  const msgUsed = stats?.messages_semaine ?? 0;
   const msgTotal = currentPlan?.messages_limit ?? 2000;
-  const callsUsed = stats?.calls_week ?? 0;
+  const callsUsed = stats?.appels_aujourdhui ?? 0;
   const callsTotal = currentPlan?.calls_limit ?? 100;
 
-  // ── Mock stats emails ────────────────────────────────────────────────────────
-  const emailSentWeek = stats?.emails_sent_week ?? 12;
+  // ── Emails (mock — pas d'endpoint dédié côté backend pour l'instant) ─────────
+  const emailSentWeek = 12;
   const emailOpened = Math.round(emailSentWeek * 0.68);
   const emailFailed = Math.round(emailSentWeek * 0.04);
 
   // ── Statuts RDV ──────────────────────────────────────────────────────────────
-const apptStatusVariant: Record<string, "green" | "amber" | "slate" | "red"> = {
-  confirme: "green", en_attente: "amber", termine: "slate", annule: "red",
-};
-const apptStatusLabel: Record<string, string> = {
-  confirme: d.appointments.statuses.confirmed,
-  en_attente: d.appointments.statuses.pending,
-  termine: d.appointments.statuses.done,
-  annule: d.appointments.statuses.cancelled,
-};
+  const apptStatusVariant: Record<string, "green" | "amber" | "slate" | "red"> = {
+    confirme: "green", en_attente: "amber", termine: "slate", annule: "red",
+  };
+  const apptStatusLabel: Record<string, string> = {
+    confirme: d.appointments.statuses.confirmed,
+    en_attente: d.appointments.statuses.pending,
+    termine: d.appointments.statuses.done,
+    annule: d.appointments.statuses.cancelled,
+  };
 
   return (
     <>
@@ -168,6 +163,21 @@ const apptStatusLabel: Record<string, string> = {
           })}
         </div>
 
+        {/* ── Conversations actives ─────────────────────────────────────────── */}
+        {stats && (
+          <div className="card p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#075E54]/10 flex items-center justify-center">
+                <Activity className="w-5 h-5 text-[#075E54]" />
+              </div>
+              <div>
+                <p className="text-2xl font-black text-[#075E54]">{stats.conversations_actives}</p>
+                <p className="text-xs text-[var(--text-muted)]">{t.activeConversations ?? "Conversations actives"}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── Accès rapides ─────────────────────────────────────────────────── */}
         <div className="card p-4">
           <p className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-3">
@@ -200,7 +210,7 @@ const apptStatusLabel: Record<string, string> = {
           {/* Colonne gauche — 3/5 */}
           <div className="lg:col-span-3 space-y-6">
 
-            {/* Graphique */}
+            {/* Graphique semaine */}
             <div className="card p-6">
               <h2 className="text-sm font-bold text-[var(--text)] mb-4">{t.thisWeek}</h2>
               <ResponsiveContainer width="100%" height={200}>
@@ -240,22 +250,22 @@ const apptStatusLabel: Record<string, string> = {
                       onClick={() => setSelectedConv(conv)}
                       className="w-full px-6 py-4 flex items-center gap-4 hover:bg-[var(--bg)] transition-colors text-left group">
                       <div className="w-9 h-9 rounded-full bg-[#25D366]/10 flex items-center justify-center text-[#25D366] flex-shrink-0">
-                        {conv.channel === "whatsapp"
+                        {conv.bot_type === "whatsapp"
                           ? <MessageSquare className="w-4 h-4" />
                           : <Phone className="w-4 h-4" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-[var(--text)] truncate">
-                          {conv.client_name || conv.client_identifier}
+                          {conv.client_nom || conv.client_telephone}
                         </p>
-                        <p className="text-xs text-[var(--text-muted)] truncate">{conv.last_message}</p>
+                        <p className="text-xs text-[var(--text-muted)] truncate">{conv.dernier_message}</p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <Badge variant={conv.channel === "whatsapp" ? "green" : "violet"}>
-                          {conv.channel === "whatsapp" ? t.channel_whatsapp : t.channel_voice}
+                        <Badge variant={conv.bot_type === "whatsapp" ? "green" : "violet"}>
+                          {conv.bot_type === "whatsapp" ? t.channel_whatsapp : t.channel_voice}
                         </Badge>
                         <p className="text-[10px] text-[var(--text-muted)] mt-1">
-                          {formatDateTime(conv.last_message_at)}
+                          {formatDateTime(conv.dernier_message_at)}
                         </p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-[var(--text-muted)] opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
@@ -354,7 +364,7 @@ const apptStatusLabel: Record<string, string> = {
               )}
             </div>
 
-            {/* Emails de rappel */}
+            {/* Emails de rappel (mock — pas encore d'endpoint dédié) */}
             <div className="card p-5">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-sm font-bold text-[var(--text)]">{t.emailStats}</h2>
@@ -395,14 +405,14 @@ const apptStatusLabel: Record<string, string> = {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-[var(--text)] truncate">
-                  {selectedConv.client_name || selectedConv.client_identifier}
+                  {selectedConv.client_nom || selectedConv.client_telephone}
                 </p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <Badge variant={selectedConv.channel === "whatsapp" ? "green" : "violet"}>
-                    {selectedConv.channel === "whatsapp" ? t.channel_whatsapp : t.channel_voice}
+                  <Badge variant={selectedConv.bot_type === "whatsapp" ? "green" : "violet"}>
+                    {selectedConv.bot_type === "whatsapp" ? t.channel_whatsapp : t.channel_voice}
                   </Badge>
                   <span className="text-[10px] text-[var(--text-muted)]">
-                    {formatDateTime(selectedConv.last_message_at)}
+                    {formatDateTime(selectedConv.dernier_message_at)}
                   </span>
                 </div>
               </div>
@@ -412,38 +422,52 @@ const apptStatusLabel: Record<string, string> = {
               </button>
             </div>
 
-            {/* Historique messages */}
+            {/* Résumé rapport si disponible */}
             <div className="flex-1 overflow-y-auto p-5 space-y-3">
               <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-4">
                 {t.conversationHistory}
               </p>
-              {(MOCK_HISTORY[selectedConv.id] ?? MOCK_HISTORY.default).map((msg, i) => (
-                <div key={i} className={cn("flex", msg.role === "client" ? "justify-end" : "justify-start")}>
-                  <div className={cn(
-                    "max-w-[80%] px-4 py-2.5 rounded-2xl text-sm",
-                    msg.role === "client"
-                      ? "bg-[#25D366] text-white rounded-br-sm"
-                      : "bg-[var(--bg)] text-[var(--text)] rounded-bl-sm border border-[var(--border)]"
-                  )}>
-                    <p className="leading-relaxed">{msg.text}</p>
-                    <p className={cn("text-[10px] mt-1", msg.role === "client" ? "text-white/70 text-right" : "text-[var(--text-muted)]")}>
-                      {msg.time}
-                    </p>
-                  </div>
+              {selectedConv.rapport ? (
+                <div className="space-y-3">
+                  {selectedConv.rapport.resume && (
+                    <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)]">
+                      <p className="text-xs font-bold text-[var(--text)] mb-1">Résumé</p>
+                      <p className="text-sm text-[var(--text-muted)] leading-relaxed">{selectedConv.rapport.resume}</p>
+                    </div>
+                  )}
+                  {selectedConv.rapport.points_cles?.length > 0 && (
+                    <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)]">
+                      <p className="text-xs font-bold text-[var(--text)] mb-2">Points clés</p>
+                      <ul className="space-y-1">
+                        {selectedConv.rapport.points_cles.map((pt, i) => (
+                          <li key={i} className="text-xs text-[var(--text-muted)] flex items-start gap-2">
+                            <span className="text-[#25D366] mt-0.5">•</span>
+                            <span>{pt}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
-              ))}
+              ) : (
+                <p className="text-sm text-[var(--text-muted)] text-center py-8">
+                  {selectedConv.nb_messages} message{selectedConv.nb_messages > 1 ? "s" : ""}
+                </p>
+              )}
             </div>
 
-            {/* Footer : action déclenchée */}
+            {/* Footer */}
             <div className="p-5 border-t border-[var(--border)] bg-[var(--bg)] rounded-b-3xl">
               <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2">
                 {t.conversationAction}
               </p>
-              {selectedConv.appointment_id ? (
+              {selectedConv.rendez_vous ? (
                 <div className="flex items-center gap-2 text-sm text-[#25D366] font-semibold">
                   <CalendarDays className="w-4 h-4" />
                   <span>{d.appointments.title} — {d.appointments.statuses.confirmed}</span>
                 </div>
+              ) : selectedConv.human_handoff ? (
+                <p className="text-sm text-amber-600 font-semibold">⚠️ Transfert humain requis</p>
               ) : (
                 <p className="text-sm text-[var(--text-muted)]">{t.conversationNoAction}</p>
               )}
