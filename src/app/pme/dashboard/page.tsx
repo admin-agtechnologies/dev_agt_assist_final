@@ -112,9 +112,10 @@ export default function PmeDashboardPage() {
   const callsTotal = currentPlan?.calls_limit ?? 100;
 
   // ── Emails (mock — pas d'endpoint dédié côté backend pour l'instant) ─────────
-  const emailSentWeek = 12;
-  const emailOpened = Math.round(emailSentWeek * 0.68);
-  const emailFailed = Math.round(emailSentWeek * 0.04);
+  // APRÈS (données réelles)
+  const emailSentWeek = stats?.email_rappels_semaine ?? 0;
+  const emailOpened   = stats?.email_rappels_envoyes ?? 0;
+  const emailFailed   = stats?.email_rappels_echoues ?? 0;
 
   // ── Statuts RDV ──────────────────────────────────────────────────────────────
   const apptStatusVariant: Record<string, "green" | "amber" | "slate" | "red"> = {

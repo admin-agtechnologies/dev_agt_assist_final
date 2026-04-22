@@ -427,13 +427,13 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
 
           {/* Logo */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 flex-shrink-0">
             <div className="w-8 h-8 rounded-xl bg-[#075E54] flex items-center justify-center text-white font-black text-sm">
               A
             </div>
             <div className="flex flex-col leading-none">
               <span className="font-black text-[var(--text)] text-sm">AGT Platform</span>
-              <span className="text-[10px] text-[var(--text-muted)] font-medium">by AG Technologies</span>
+              <span className="text-[10px] text-[var(--text-muted)] font-medium hidden sm:block">by AG Technologies</span>
             </div>
           </div>
 
@@ -446,26 +446,41 @@ export default function LandingPage() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            {/* Langue */}
             <button
               onClick={() => setLocale(locale === "fr" ? "en" : "fr")}
               className="p-2 rounded-xl hover:bg-[var(--bg)] text-[var(--text-muted)] transition-colors text-xs font-bold"
             >
               {locale === "fr" ? "EN" : "FR"}
             </button>
-            <button onClick={toggle} className="p-2 rounded-xl hover:bg-[var(--bg)] text-[var(--text-muted)] transition-colors">
+
+            {/* Thème */}
+            <button
+              onClick={toggle}
+              className="p-2 rounded-xl hover:bg-[var(--bg)] text-[var(--text-muted)] transition-colors"
+            >
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
+
+            {/* "Déjà un compte ?" — masqué sur mobile (présent dans le Hero) */}
             <Link
               href={ROUTES.login}
-              className="px-4 py-2 rounded-xl text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg)] transition-colors"
+              className="hidden sm:inline-flex px-4 py-2 rounded-xl text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg)] transition-colors"
             >
               {t.loginCta}
             </Link>
-            <Link href={ROUTES.onboarding} className="btn-primary text-sm">
-              {t.heroCta}
+
+            {/* CTA principal — libellé court sur mobile */}
+            <Link
+              href={ROUTES.onboarding}
+              className="btn-primary text-sm px-3 sm:px-4 whitespace-nowrap"
+            >
+              <span className="hidden sm:inline">{t.heroCta}</span>
+              <span className="sm:hidden">Démarrer</span>
             </Link>
           </div>
+
         </div>
       </nav>
 
@@ -512,7 +527,7 @@ export default function LandingPage() {
         <div className="relative rounded-3xl overflow-hidden border border-[var(--border)] shadow-modal bg-[var(--bg-card)] group">
           <video
             ref={videoRef}
-            src="/videos/demo.mp4"
+            src="https://api.salma.agtgroupholding.com/media/seed/bourses/demo.mp4"
             className="w-full aspect-video object-cover"
             playsInline
             preload="metadata"

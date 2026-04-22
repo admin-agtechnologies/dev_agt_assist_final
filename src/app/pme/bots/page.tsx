@@ -429,7 +429,7 @@ function BotPairDetailPanel({
       ]);
 
       // Filtrer les conversations qui appartiennent à ce bot ou son pair vocal
-      setConversations(convRes.results.filter((c: Conversation) => botIds.includes(c.bot_id)));
+      setConversations(convRes.results.filter((c: Conversation) => botIds.includes(c.bot)));
       setAppointments(aptRes.results);
     } catch {
       toast.error(d.common.error);
@@ -441,12 +441,12 @@ function BotPairDetailPanel({
   useEffect(() => { fetchData(); }, [fetchData]);
 
   // ── Stats calculées ───────────────────────────────────────────────────────
-  const waConvs      = conversations.filter(c => c.channel === "whatsapp");
-  const voiceConvs   = conversations.filter(c => c.channel === "voice");
-  const totalMessages   = conversations.reduce((acc, c) => acc + c.messages_count, 0);
+  const waConvs      = conversations.filter(c => c.bot_type === "whatsapp");
+  const voiceConvs   = conversations.filter(c => c.bot_type === "vocal");
+  const totalMessages   = conversations.reduce((acc, c) => acc + c.nb_messages, 0);
   const totalCalls      = voiceConvs.length;
-  const totalRdv        = conversations.filter(c => c.report?.appointment_scheduled).length;
-  const totalHandoffs   = conversations.filter(c => c.report?.human_handoff).length;
+  const totalRdv        = conversations.filter(c => c.rapport?.rdv_planifies && c.rapport.rdv_planifies > 0).length;
+  const totalHandoffs   = conversations.filter(c => c.human_handoff).length;
   const resolutionRate  = conversations.length > 0
     ? Math.round(((conversations.length - totalHandoffs) / conversations.length) * 100)
     : 0;
@@ -531,28 +531,28 @@ function BotPairDetailPanel({
                     >
                       <div className="absolute top-0 left-0 w-1.5 h-full bg-[#075E54] opacity-0 group-hover:opacity-100 transition-opacity" />
                       <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--bg)] to-[var(--border)] flex items-center justify-center text-[var(--text-muted)] font-black text-xl shadow-inner flex-shrink-0 group-hover:scale-105 transition-transform">
-                        {conv.client_name?.charAt(0) || "C"}
+                        {conv.client_nom?.charAt(0) || "C"}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-1">
                           <p className="text-base font-black text-[var(--text)] truncate group-hover:text-[#075E54] transition-colors">
-                            {conv.client_name || "Client anonyme"}
+                            {conv.client_nom || "Client anonyme"}
                           </p>
-                          <Badge variant={conv.channel === "whatsapp" ? "green" : "violet"} className="rounded-lg text-[9px] uppercase tracking-tighter">
-                            {conv.channel === "whatsapp" ? "WhatsApp" : "Vocal"}
+                          <Badge variant={conv.bot_type === "whatsapp" ? "green" : "violet"} className="rounded-lg text-[9px] uppercase tracking-tighter">
+                            {conv.bot_type === "whatsapp" ? "WhatsApp" : "Vocal"}
                           </Badge>
                         </div>
                         <p className="text-sm text-[var(--text-muted)] line-clamp-1 italic group-hover:text-[var(--text)] transition-colors">
-                          "{conv.last_message}"
+                          "{conv.dernier_message}"
                         </p>
                         <div className="flex items-center gap-4 mt-2">
                           <div className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--text-muted)]">
                             <MessageSquare className="w-3 h-3" />
-                            {conv.messages_count} messages
+                            {conv.nb_messages} messages
                           </div>
                           <div className="w-1 h-1 rounded-full bg-[var(--border)]" />
                           <p className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-widest">
-                            Dernier contact : {new Date(conv.last_message_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                            Dernier contact : {new Date(conv.dernier_message_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                           </p>
                         </div>
                       </div>
@@ -834,7 +834,7 @@ function ConversationReportModal({ conversation, onClose, d, colors }: {
   colors: { primary: string; accent: string };
 }) {
   const t = d.bots;
-  const report = conversation.report;
+  const report = conversation.rapport;
   const [showChat, setShowChat] = useState(false);
 
   const ACTION_ICONS: Record<string, React.ElementType> = {
@@ -859,10 +859,10 @@ function ConversationReportModal({ conversation, onClose, d, colors }: {
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-[var(--text)] truncate">
-              Rapport d'analyse : {conversation.client_name || "Client"}
+              Rapport d'analyse : {conversation.client_nom || "Client"}
             </p>
             <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-black">
-              {conversation.channel === "whatsapp" ? "Canal WhatsApp" : "Canal Vocal"}
+              {conversation.bot_type === "whatsapp" ? "Canal WhatsApp" : "Canal Vocal"}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -886,24 +886,24 @@ function ConversationReportModal({ conversation, onClose, d, colors }: {
                 <section>
                   <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-3">Résumé de l'IA</p>
                   <div className="bg-[var(--bg)] rounded-2xl p-4 text-sm leading-relaxed text-[var(--text)] border border-[var(--border)]">
-                    {report.summary}
+                    {report.resume}
                   </div>
                 </section>
                 <section className="grid grid-cols-2 gap-3">
-                  <div className={cn("p-4 rounded-2xl border", report.appointment_scheduled ? "bg-[#25D366]/5 border-[#25D366]/20" : "bg-[var(--bg)] border-[var(--border)]")}>
+                  <div className={cn("p-4 rounded-2xl border", (report.rdv_planifies > 0) ? "bg-[#25D366]/5 border-[#25D366]/20" : "bg-[var(--bg)] border-[var(--border)]")}>
                     <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">Rendez-vous</p>
-                    <p className="text-sm font-bold">{report.appointment_scheduled ? "✅ Planifié" : "❌ Non planifié"}</p>
+                    <p className="text-sm font-bold">{(report.rdv_planifies > 0) ? "✅ Planifié" : "❌ Non planifié"}</p>
                   </div>
-                  <div className={cn("p-4 rounded-2xl border", report.human_handoff ? "bg-amber-50 border-amber-200" : "bg-[var(--bg)] border-[var(--border)]")}>
+                  <div className={cn("p-4 rounded-2xl border", (report.transferts_humain > 0) ? "bg-amber-50 border-amber-200" : "bg-[var(--bg)] border-[var(--border)]")}>
                     <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">Besoin humain</p>
-                    <p className="text-sm font-bold">{report.human_handoff ? "⚠️ Requis" : "✅ Géré par IA"}</p>
+                    <p className="text-sm font-bold">{(report.transferts_humain > 0) ? "⚠️ Requis" : "✅ Géré par IA"}</p>
                   </div>
                 </section>
-                {report.key_takeaways && (
+                {report.points_cles && (
                   <section>
                     <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-3">Points clés</p>
                     <ul className="space-y-2">
-                      {report.key_takeaways.map((tk, i) => (
+                      {report.points_cles.map((tk: string, i: number) => (
                         <li key={i} className="flex items-start gap-3 text-sm p-2 rounded-xl hover:bg-[var(--bg)] transition-colors">
                           <CheckCircle className="w-4 h-4 text-[#25D366] flex-shrink-0 mt-0.5" />
                           <span>{tk}</span>
@@ -916,7 +916,7 @@ function ConversationReportModal({ conversation, onClose, d, colors }: {
                   <section>
                     <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-3">Actions détectées</p>
                     <div className="space-y-2">
-                      {report.actions.map((action, i) => {
+                      {report.actions.map((action: { type: string; label: string; detail: string }, i: number) => {
                         const Icon = ACTION_ICONS[action.type] ?? Activity;
                         return (
                           <div key={i} className="flex items-center gap-3 p-3 bg-[var(--bg)] rounded-2xl border border-[var(--border)]">

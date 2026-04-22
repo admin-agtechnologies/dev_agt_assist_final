@@ -460,8 +460,10 @@ export interface TenantStats {
   rdv_aujourdhui: number;
   rdv_semaine: number;
   conversations_actives: number;
+  email_rappels_semaine: number;
+  email_rappels_envoyes: number;
+  email_rappels_echoues: number;
 }
-
 // Aligné avec apps/dashboard/serializers.py → AdminStatsSerializer
 // Endpoint : GET /api/v1/dashboard/admin/
 export interface AdminStats {
