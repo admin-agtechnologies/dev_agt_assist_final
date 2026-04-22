@@ -31,6 +31,17 @@ import { ChangePlanModal } from "./components/ChangePlanModal";
 
 export default function PmeBillingPage() {
   const { user } = useAuth();
+  // DONNÉES DE SECOURS (Si le backend ne renvoie rien)
+  const FALLBACK_WALLET: WalletType = {
+    id: "temp-wallet-id",
+    entreprise: "unknown",
+    entreprise_name: "Entreprise",
+    solde: 0,
+    frozen_balance: 0,
+    total_balance: 0,
+    devise: "XAF",
+    updated_at: new Date().toISOString()
+  };
   const { dictionary: d } = useLanguage();
   const t = d.billing;
   const toast = useToast();
@@ -49,21 +60,35 @@ export default function PmeBillingPage() {
     try {
       const [s, w, p, tr] = await Promise.all([
         subscriptionsRepository.getMine(),
-        walletsRepository.getMine(),
+        walletsRepository.getMine().catch(() => null), // On attrape l'erreur individuellement
         plansRepository.getList(),
-        transactionsRepository.getMine(),
+        transactionsRepository.getMine().catch(() => []), // Idem pour les transactions
       ]);
+
       setSub(s);
-      setWallet(w);
       setPlans(p);
+
+      // LOGIQUE DE SECOURS : Si 'w' est null ou indéfini, on utilise FALLBACK_WALLET
+      if (!w) {
+        console.warn("Portefeuille non trouvé, chargement des données de secours.");
+        setWallet(FALLBACK_WALLET);
+      } else {
+        setWallet(w);
+      }
+
       setTransactions(
         tr.sort(
           (a: Transaction, b: Transaction) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
         ),
       );
-    } catch {
+    } catch (error) {
+      console.error("Erreur critique lors du fetch:", error);
       toast.error(d.common.error);
+
+      // En cas d'erreur totale du serveur, on force quand même le wallet de secours
+      // pour ne pas bloquer l'UI
+      if (!wallet) setWallet(FALLBACK_WALLET);
     } finally {
       setLoading(false);
     }
