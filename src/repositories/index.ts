@@ -213,26 +213,54 @@ export const agencesRepository = {
         ? { results: data as Agence[], count: (data as Agence[]).length, next: null, previous: null }
         : (data as PaginatedResponse<Agence>),
     ),
-  getById: (id: string): Promise<Agence> => api.get(`/api/v1/services/agences/${id}/`),
-  create: (payload: CreateAgencePayload): Promise<Agence> => api.post("/api/v1/services/agences/", payload),
+  // Retourne l'agence siege de l'entreprise connectee
+  getSiege: (): Promise<Agence> =>
+    api.get("/api/v1/services/agences/siege/"),
+ 
+  getById: (id: string): Promise<Agence> =>
+    api.get(`/api/v1/services/agences/${id}/`),
+ 
+  create: (payload: CreateAgencePayload): Promise<Agence> =>
+    api.post("/api/v1/services/agences/", payload),
+ 
   patch: (id: string, payload: Partial<CreateAgencePayload>): Promise<Agence> =>
     api.patch(`/api/v1/services/agences/${id}/`, payload),
-  delete: (id: string): Promise<void> => api.delete(`/api/v1/services/agences/${id}/`),
+ 
+  // Protege cote backend — retourne 403 si is_siege=true
+  delete: (id: string): Promise<void> =>
+    api.delete(`/api/v1/services/agences/${id}/`),
+ 
   addService: (agenceId: string, serviceId: string): Promise<unknown> =>
     api.post(`/api/v1/services/agences/${agenceId}/services/add/`, { service_id: serviceId }),
+ 
   removeService: (agenceId: string, serviceId: string): Promise<void> =>
     api.post(`/api/v1/services/agences/${agenceId}/services/remove/`, { service_id: serviceId }),
 };
-
 // ══════════════════════════════════════════════════════════════════════════════
 // HORAIRES D'OUVERTURE
 // ══════════════════════════════════════════════════════════════════════════════
 export const horairesRepository = {
+  // Lister les horaires (filtrable par agence et/ou type)
   getList: (type?: "ouverture" | "rendez_vous"): Promise<HorairesOuverture[]> =>
     api.get("/api/v1/services/horaires/", { params: p({ type }) }).then((data: unknown) =>
-      Array.isArray(data) ? (data as HorairesOuverture[])
+      Array.isArray(data)
+        ? (data as HorairesOuverture[])
         : (data as PaginatedResponse<HorairesOuverture>).results ?? [],
     ),
+ 
+  // Lister les horaires d'une agence specifique
+  getListByAgence: (agenceId: string): Promise<HorairesOuverture[]> =>
+    api.get("/api/v1/services/horaires/", { params: p({ agence: agenceId }) }).then((data: unknown) =>
+      Array.isArray(data)
+        ? (data as HorairesOuverture[])
+        : (data as PaginatedResponse<HorairesOuverture>).results ?? [],
+    ),
+ 
+  // Creer des horaires (POST)
+  create: (payload: UpdateHorairesPayload & { agence_id: string; type: "ouverture" | "rendez_vous" }): Promise<HorairesOuverture> =>
+    api.post("/api/v1/services/horaires/", payload),
+ 
+  // Mettre a jour des horaires (PATCH)
   patch: (id: string, payload: UpdateHorairesPayload): Promise<HorairesOuverture> =>
     api.patch(`/api/v1/services/horaires/${id}/`, payload),
 };
@@ -262,36 +290,35 @@ export const rendezVousRepository = {
         ? { results: data as RendezVous[], count: (data as RendezVous[]).length, next: null, previous: null }
         : (data as PaginatedResponse<RendezVous>),
     ),
-  getById: (id: string): Promise<RendezVous> => api.get(`/api/v1/appointments/${id}/`),
+ 
+  getById: (id: string): Promise<RendezVous> =>
+    api.get(`/api/v1/appointments/${id}/`),
+ 
   create: (payload: CreateRendezVousPayload): Promise<RendezVous> =>
     api.post("/api/v1/appointments/", payload),
-  patch: (id: string, payload: Partial<CreateRendezVousPayload>): Promise<RendezVous> =>
-    api.patch(`/api/v1/appointments/${id}/`, payload),
-  delete: (id: string): Promise<void> => api.delete(`/api/v1/appointments/${id}/`),
+ 
   confirmer: (id: string): Promise<RendezVous> =>
     api.post(`/api/v1/appointments/${id}/confirmer/`, {}),
+ 
   annuler: (id: string): Promise<RendezVous> =>
     api.post(`/api/v1/appointments/${id}/annuler/`, {}),
+ 
   terminer: (id: string): Promise<RendezVous> =>
     api.post(`/api/v1/appointments/${id}/terminer/`, {}),
-  addService: (id: string, serviceId: string): Promise<unknown> =>
-    api.post(`/api/v1/appointments/${id}/services/add/`, { service_id: serviceId }),
-  removeService: (id: string, serviceId: string): Promise<void> =>
-    api.post(`/api/v1/appointments/${id}/services/remove/`, { service_id: serviceId }),
+  
+  patch: (id: string, payload: Partial<CreateRendezVousPayload>): Promise<RendezVous> =>
+  api.patch(`/api/v1/appointments/${id}/`, payload),
 };
-
 // ══════════════════════════════════════════════════════════════════════════════
 // CLIENTS
 // ══════════════════════════════════════════════════════════════════════════════
 export const clientsRepository = {
-  getList: (search?: string): Promise<PaginatedResponse<Client>> =>
-    api.get("/api/v1/appointments/clients/", { params: p({ search }) }).then((data: unknown) =>
+  getList: (): Promise<Client[]> =>
+    api.get("/api/v1/appointments/clients/").then((data: unknown) =>
       Array.isArray(data)
-        ? { results: data as Client[], count: (data as Client[]).length, next: null, previous: null }
-        : (data as PaginatedResponse<Client>),
+        ? (data as Client[])
+        : (data as PaginatedResponse<Client>).results ?? [],
     ),
-  create: (payload: CreateClientPayload): Promise<Client> =>
-    api.post("/api/v1/appointments/clients/", payload),
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -431,10 +458,17 @@ export const questionsRepository = {
 // TENANT KNOWLEDGE
 // ══════════════════════════════════════════════════════════════════════════════
 export const tenantKnowledgeRepository = {
-  getMine: (): Promise<TenantKnowledge | null> =>
-    api.get("/api/v1/knowledge/profils/").then((data: unknown) =>
-      Array.isArray(data) && data.length > 0 ? (data[0] as TenantKnowledge) : null,
-    ).catch(() => null),
+
+// PAR :
+getMine: (): Promise<TenantKnowledge | null> =>
+    api.get("/api/v1/knowledge/profils/").then((data: unknown) => {
+        if (Array.isArray(data) && data.length > 0)
+            return data[0] as TenantKnowledge;
+        const paginated = data as { results?: TenantKnowledge[] };
+        if (paginated.results && paginated.results.length > 0)
+            return paginated.results[0];
+        return null;
+    }).catch(() => null),
   create: (payload: CreateTenantKnowledgePayload): Promise<TenantKnowledge> =>
     api.post("/api/v1/knowledge/profils/", payload),
   patch: (id: string, payload: Partial<CreateTenantKnowledgePayload>): Promise<TenantKnowledge> =>
