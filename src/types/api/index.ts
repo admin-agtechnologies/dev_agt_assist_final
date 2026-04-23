@@ -285,7 +285,7 @@ export interface DaySchedule {
   open: boolean;
   start: string;
   end: string;
-  slot_min: number;
+  slot_min?: number; // optionnel — non envoyé par le backend Django actuel
 }
 
 export interface HorairesOuverture {
@@ -325,8 +325,10 @@ export interface Agence {
   transfer_phone: string;
   extra_info: string;
   is_active: boolean;
+  is_siege: boolean;
   horaires: HorairesOuverture[];
   services_count: number;
+  service_ids: string[];
   created_at: string;
 }
 export interface CreateAgencePayload {
@@ -340,25 +342,29 @@ export interface CreateAgencePayload {
   transfer_phone?: string;
   extra_info?: string;
   is_active?: boolean;
+  service_ids?: string[]; 
 }
-
 export interface Agenda {
   id: string;
   agence: string | null;
   agence_nom: string | null;
   nom: string;
   description: string;
+  duree_rdv_min: number;
+  buffer_min: number;
   bots_ids: string[];
   is_active: boolean;
   created_at: string;
 }
+
 export interface CreateAgendaPayload {
   agence?: string;
   nom: string;
   description?: string;
+  duree_rdv_min?: number;
+  buffer_min?: number;
   is_active?: boolean;
 }
-
 // ══════════════════════════════════════════════════════════════════════════════
 // RENDEZ-VOUS
 // ══════════════════════════════════════════════════════════════════════════════
@@ -394,6 +400,7 @@ export interface CreateRendezVousPayload {
   client?: string;
   client_nom?: string;
   client_telephone?: string;
+  client_email?: string;        // ← AJOUT
   statut?: "en_attente" | "confirme" | "annule" | "termine";
   canal?: "whatsapp" | "vocal" | "manuel";
   scheduled_at: string;

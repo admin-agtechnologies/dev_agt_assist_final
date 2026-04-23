@@ -18,10 +18,14 @@ import type {
   DetailResponse,
   TokenRefreshResponse,
   // Tenants
+
+  // Tenants
   Tenant,
   CreateTenantPayload,
   TenantFilters,
   EntrepriseInUser,
+  SecteurActivite,
+
   // Bots
   Bot,
   CreateBotPayload,
@@ -219,6 +223,18 @@ export const tenantsRepository = {
     api.patch<EntrepriseInUser>("/api/v1/tenants/me_update/", payload),
 };
 
+// Juste après tenantsRepository, ajouter :
+export const secteursRepository = {
+  getList: (): Promise<SecteurActivite[]> =>
+    api
+      .get("/api/v1/tenants/secteurs/")
+      .then((data: unknown) =>
+        Array.isArray(data)
+          ? (data as SecteurActivite[])
+          : ((data as { results?: SecteurActivite[] }).results ?? []),
+      ),
+};
+
 // ══════════════════════════════════════════════════════════════════════════════
 // BOTS
 // Champs alignés avec BotSerializer Django :
@@ -305,28 +321,38 @@ export const agencesRepository = {
           }
         : (data as PaginatedResponse<Agence>),
     ),
+
+  // Retourne l'agence siege de l'entreprise connectee
+  getSiege: (): Promise<Agence> => api.get("/api/v1/services/agences/siege/"),
+
   getById: (id: string): Promise<Agence> =>
     api.get(`/api/v1/services/agences/${id}/`),
+
   create: (payload: CreateAgencePayload): Promise<Agence> =>
     api.post("/api/v1/services/agences/", payload),
+
   patch: (id: string, payload: Partial<CreateAgencePayload>): Promise<Agence> =>
     api.patch(`/api/v1/services/agences/${id}/`, payload),
+
+  // Protege cote backend — retourne 403 si is_siege=true
   delete: (id: string): Promise<void> =>
     api.delete(`/api/v1/services/agences/${id}/`),
+
   addService: (agenceId: string, serviceId: string): Promise<unknown> =>
     api.post(`/api/v1/services/agences/${agenceId}/services/add/`, {
       service_id: serviceId,
     }),
+
   removeService: (agenceId: string, serviceId: string): Promise<void> =>
     api.post(`/api/v1/services/agences/${agenceId}/services/remove/`, {
       service_id: serviceId,
     }),
 };
-
 // ══════════════════════════════════════════════════════════════════════════════
 // HORAIRES D'OUVERTURE
 // ══════════════════════════════════════════════════════════════════════════════
 export const horairesRepository = {
+  // Lister les horaires (filtrable par agence et/ou type)
   getList: (type?: "ouverture" | "rendez_vous"): Promise<HorairesOuverture[]> =>
     api
       .get("/api/v1/services/horaires/", { params: p({ type }) })
@@ -335,6 +361,27 @@ export const horairesRepository = {
           ? (data as HorairesOuverture[])
           : ((data as PaginatedResponse<HorairesOuverture>).results ?? []),
       ),
+
+  // Lister les horaires d'une agence specifique
+  getListByAgence: (agenceId: string): Promise<HorairesOuverture[]> =>
+    api
+      .get("/api/v1/services/horaires/", { params: p({ agence: agenceId }) })
+      .then((data: unknown) =>
+        Array.isArray(data)
+          ? (data as HorairesOuverture[])
+          : ((data as PaginatedResponse<HorairesOuverture>).results ?? []),
+      ),
+
+  // Creer des horaires (POST)
+  create: (
+    payload: UpdateHorairesPayload & {
+      agence_id: string;
+      type: "ouverture" | "rendez_vous";
+    },
+  ): Promise<HorairesOuverture> =>
+    api.post("/api/v1/services/horaires/", payload),
+
+  // Mettre a jour des horaires (PATCH)
   patch: (
     id: string,
     payload: UpdateHorairesPayload,
@@ -377,51 +424,39 @@ export const rendezVousRepository = {
           }
         : (data as PaginatedResponse<RendezVous>),
     ),
+
   getById: (id: string): Promise<RendezVous> =>
     api.get(`/api/v1/appointments/${id}/`),
+
   create: (payload: CreateRendezVousPayload): Promise<RendezVous> =>
     api.post("/api/v1/appointments/", payload),
+
+  confirmer: (id: string): Promise<RendezVous> =>
+    api.post(`/api/v1/appointments/${id}/confirmer/`, {}),
+
+  annuler: (id: string): Promise<RendezVous> =>
+    api.post(`/api/v1/appointments/${id}/annuler/`, {}),
+
+  terminer: (id: string): Promise<RendezVous> =>
+    api.post(`/api/v1/appointments/${id}/terminer/`, {}),
+
   patch: (
     id: string,
     payload: Partial<CreateRendezVousPayload>,
   ): Promise<RendezVous> => api.patch(`/api/v1/appointments/${id}/`, payload),
-  delete: (id: string): Promise<void> =>
-    api.delete(`/api/v1/appointments/${id}/`),
-  confirmer: (id: string): Promise<RendezVous> =>
-    api.post(`/api/v1/appointments/${id}/confirmer/`, {}),
-  annuler: (id: string): Promise<RendezVous> =>
-    api.post(`/api/v1/appointments/${id}/annuler/`, {}),
-  terminer: (id: string): Promise<RendezVous> =>
-    api.post(`/api/v1/appointments/${id}/terminer/`, {}),
-  addService: (id: string, serviceId: string): Promise<unknown> =>
-    api.post(`/api/v1/appointments/${id}/services/add/`, {
-      service_id: serviceId,
-    }),
-  removeService: (id: string, serviceId: string): Promise<void> =>
-    api.post(`/api/v1/appointments/${id}/services/remove/`, {
-      service_id: serviceId,
-    }),
 };
-
 // ══════════════════════════════════════════════════════════════════════════════
 // CLIENTS
 // ══════════════════════════════════════════════════════════════════════════════
 export const clientsRepository = {
-  getList: (search?: string): Promise<PaginatedResponse<Client>> =>
+  getList: (): Promise<Client[]> =>
     api
-      .get("/api/v1/appointments/clients/", { params: p({ search }) })
+      .get("/api/v1/appointments/clients/")
       .then((data: unknown) =>
         Array.isArray(data)
-          ? {
-              results: data as Client[],
-              count: (data as Client[]).length,
-              next: null,
-              previous: null,
-            }
-          : (data as PaginatedResponse<Client>),
+          ? (data as Client[])
+          : ((data as PaginatedResponse<Client>).results ?? []),
       ),
-  create: (payload: CreateClientPayload): Promise<Client> =>
-    api.post("/api/v1/appointments/clients/", payload),
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -480,11 +515,16 @@ export const subscriptionsRepository = {
 // ══════════════════════════════════════════════════════════════════════════════
 export const walletsRepository = {
   getMine: (): Promise<Wallet | null> =>
-    api
-      .get("/api/v1/billing/wallets/")
-      .then((data: unknown) =>
-        Array.isArray(data) && data.length > 0 ? (data[0] as Wallet) : null,
-      ),
+    api.get("/api/v1/billing/wallets/").then((data: unknown) => {
+      // L'API retourne soit un array direct, soit une réponse paginée
+      if (Array.isArray(data)) {
+        return data.length > 0 ? (data[0] as Wallet) : null;
+      }
+      const paginated = data as { results?: Wallet[] };
+      return paginated.results && paginated.results.length > 0
+        ? paginated.results[0]
+        : null;
+    }),
   getById: (id: string): Promise<Wallet> =>
     api.get(`/api/v1/billing/wallets/${id}/`),
   patch: (id: string, payload: Partial<Wallet>): Promise<Wallet> =>
@@ -600,15 +640,20 @@ export const questionsRepository = {
 // TENANT KNOWLEDGE
 // ══════════════════════════════════════════════════════════════════════════════
 export const tenantKnowledgeRepository = {
+  // PAR :
   getMine: (): Promise<TenantKnowledge | null> =>
     api
       .get("/api/v1/knowledge/profils/")
-      .then((data: unknown) =>
-        Array.isArray(data) && data.length > 0
-          ? (data[0] as TenantKnowledge)
-          : null,
-      )
+      .then((data: unknown) => {
+        if (Array.isArray(data) && data.length > 0)
+          return data[0] as TenantKnowledge;
+        const paginated = data as { results?: TenantKnowledge[] };
+        if (paginated.results && paginated.results.length > 0)
+          return paginated.results[0];
+        return null;
+      })
       .catch(() => null),
+
   create: (payload: CreateTenantKnowledgePayload): Promise<TenantKnowledge> =>
     api.post("/api/v1/knowledge/profils/", payload),
   patch: (
@@ -690,19 +735,44 @@ export const billingRepository = {
 
   confirmUpgrade: (planId: string) =>
     api.post(`/api/v1/billing/plans/${planId}/confirm-upgrade/`, {}),
+  applyCode: (
+    code: string,
+  ): Promise<{
+    detail: string;
+    montant: string;
+    devise: string;
+    nouveau_solde: string;
+  }> => api.post("/api/v1/billing/codes-recharge/apply-code/", { code }),
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
 // FEEDBACK
 // Aligné avec apps/feedback/views.py
 // ══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
+// FEEDBACK
+// Aligné avec apps/feedback/views.py
+// ══════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
+// FEEDBACK
+// ══════════════════════════════════════════════════════════════════════════════
+export interface CreateTemoignagePayload {
+  note: number;
+  contenu: string;
+}
+
 export interface CreateProblemePayload {
+  categorie: string;
+  severite: string;
+  titre: string;
   contenu: string;
 }
 
 export const feedbackRepository = {
-  // Signaler un problème — POST /api/v1/feedback/problemes/
-  createProbleme: (payload: CreateProblemePayload) =>
+  createTemoignage: (payload: CreateTemoignagePayload): Promise<unknown> =>
+    api.post("/api/v1/feedback/temoignages/", payload),
+
+  createProbleme: (payload: CreateProblemePayload): Promise<unknown> =>
     api.post("/api/v1/feedback/problemes/", payload),
   // Témoignages publics (lecture seule côté PME)
   getTemoignages: (params?: {
