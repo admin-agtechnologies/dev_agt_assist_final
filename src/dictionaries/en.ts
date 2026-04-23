@@ -574,6 +574,8 @@ export const en = {
     serviceDescription: "Description",
     serviceActive: "Service active",
     knowledgeSection: "Assistant configuration",
+    locationServicesLabel: "Services offered in this branch",
+    noServicesCreated: "No services created.",
   },
   help: {
     title: "Get help",
