@@ -83,21 +83,58 @@ export interface User {
   tenant_id?: string | null;
 }
 
-export interface LoginPayload { email: string; password: string; }
-export interface RegisterPayload { email: string; password: string; name: string; }
-export interface GoogleAuthPayload { email: string; name?: string; google_id?: string; }
-export interface VerifyEmailPayload { token: string; }
-export interface ResendVerificationPayload { email: string; }
-export interface ForgotPasswordPayload { email: string; }
-export interface ResetPasswordPayload { token: string; new_password: string; }
-export interface MagicLinkRequestPayload { email: string; }
-export interface MagicLinkVerifyPayload { token: string; }
-export interface RefreshTokenPayload { refresh: string; }
-export interface LogoutPayload { refresh: string; }
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
+export interface RegisterPayload {
+  email: string;
+  password: string;
+  name: string;
+}
+export interface GoogleAuthPayload {
+  email: string;
+  name?: string;
+  google_id?: string;
+}
+export interface VerifyEmailPayload {
+  token: string;
+}
+export interface ResendVerificationPayload {
+  email: string;
+}
+export interface ForgotPasswordPayload {
+  email: string;
+}
+export interface ResetPasswordPayload {
+  token: string;
+  new_password: string;
+}
+export interface MagicLinkRequestPayload {
+  email: string;
+}
+export interface MagicLinkVerifyPayload {
+  token: string;
+}
+export interface RefreshTokenPayload {
+  refresh: string;
+}
+export interface LogoutPayload {
+  refresh: string;
+}
 
-export interface AuthResponse { access: string; refresh: string; user: User; }
-export interface TokenRefreshResponse { access: string; }
-export interface EmailNotVerifiedResponse { detail: "EMAIL_NOT_VERIFIED"; email: string; }
+export interface AuthResponse {
+  access: string;
+  refresh: string;
+  user: User;
+}
+export interface TokenRefreshResponse {
+  access: string;
+}
+export interface EmailNotVerifiedResponse {
+  detail: "EMAIL_NOT_VERIFIED";
+  email: string;
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // TENANT
@@ -116,7 +153,10 @@ export interface Tenant {
   is_active: boolean;
   created_at: string;
 }
-export type CreateTenantPayload = Omit<Tenant, "id" | "created_at" | "subscription_id" | "wallet_id">;
+export type CreateTenantPayload = Omit<
+  Tenant,
+  "id" | "created_at" | "subscription_id" | "wallet_id"
+>;
 export interface TenantFilters {
   search?: string;
   is_active?: boolean;
@@ -142,18 +182,18 @@ export type BotType = "whatsapp" | "vocal";
  */
 export interface Bot {
   id: string;
-  entreprise: string;           // UUID FK → Entreprise
+  entreprise: string; // UUID FK → Entreprise
   entreprise_name: string;
-  numero: string | null;        // UUID FK → NumeroTelephone (null si non assigné)
-  numero_value: string | null;  // Valeur lisible du numéro (ex: "+237699000001")
+  numero: string | null; // UUID FK → NumeroTelephone (null si non assigné)
+  numero_value: string | null; // Valeur lisible du numéro (ex: "+237699000001")
   bot_type: BotType;
   nom: string;
   message_accueil: string;
   personnalite: string;
-  langues: string[];            // JSONField Django — tableau de codes langue
-  config_whatsapp: string | null;   // UUID FK → ConfigProvider
-  config_voice_ai: string | null;   // UUID FK → ConfigProvider
-  bot_paire: string | null;     // UUID O2O → Bot (le WA pointe vers le Vocal)
+  langues: string[]; // JSONField Django — tableau de codes langue
+  config_whatsapp: string | null; // UUID FK → ConfigProvider
+  config_voice_ai: string | null; // UUID FK → ConfigProvider
+  bot_paire: string | null; // UUID O2O → Bot (le WA pointe vers le Vocal)
   statut: BotStatut;
   is_active: boolean;
   created_at: string;
@@ -612,7 +652,9 @@ export interface ServiceKnowledge {
   bot_tone?: string;
   extra_info?: string;
 }
-export interface CreateServiceKnowledgePayload extends Partial<Omit<ServiceKnowledge, "id">> {
+export interface CreateServiceKnowledgePayload extends Partial<
+  Omit<ServiceKnowledge, "id">
+> {
   tenant_id: string;
   service_id: string;
 }
@@ -644,4 +686,20 @@ export interface CreateTransactionPayload {
   type: string;
   label: string;
   service_paiement?: string | null;
+}
+///////////////////
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+export interface ChatbotTestPayload {
+  bot_id: string;
+  message: string;
+  history: ChatMessage[];
+}
+export interface ChatbotTestResponse {
+  reply: string;
+  intention: string | null;
+  human_handoff: boolean;
+  tokens_used: number;
 }
