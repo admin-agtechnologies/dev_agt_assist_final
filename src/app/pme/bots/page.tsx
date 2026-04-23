@@ -1,6 +1,6 @@
 // src/app/pme/bots/page.tsx
 "use client";
-import { useState, useEffect, useCallback, useTransition } from "react";
+import { useState, useEffect, useCallback, useTransition, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Bot, Plus } from "lucide-react";
@@ -37,17 +37,20 @@ export default function PmeBotsPage() {
   useEffect(() => { setMounted(true); }, []);
 
   // ── Chargement ─────────────────────────────────────────────────────────────
-  const fetchBots = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await botsRepository.getList();
-      setBots(res.results ?? []);
-    } catch {
-      toast.error(t.errorLoad);
-    } finally {
-      setLoading(false);
-    }
-  }, [t.errorLoad, toast]);
+  const toastRef = useRef(toast);
+useEffect(() => { toastRef.current = toast; }, [toast]);
+
+const fetchBots = useCallback(async () => {
+  setLoading(true);
+  try {
+    const res = await botsRepository.getList();
+    setBots(res.results ?? []);
+  } catch {
+    toastRef.current.error(t.errorLoad);
+  } finally {
+    setLoading(false);
+  }
+}, [t.errorLoad]);
 
   useEffect(() => { fetchBots(); }, [fetchBots]);
 
