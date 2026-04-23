@@ -8,6 +8,8 @@ import { agencesRepository } from "@/repositories";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import type { Agence } from "@/types/api";
+import { servicesRepository } from "@/repositories";
+import type { Service } from "@/types/api";
 import {
     MapPin, Phone, Mail, Save, Plus,
     Trash2, X, Edit2, AlertCircle,
@@ -29,6 +31,8 @@ export function TabLocations({
     const [showForm, setShowForm] = useState(false);
     const [saving, setSaving]     = useState(false);
     const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [availableServices, setAvailableServices] = useState<Service[]>([]);
+    const [selectedServices, setSelectedServices] = useState<string[]>([]);
 
     const [form, setForm] = useState({
         nom: "", adresse: "", ville: "", whatsapp: "", telephone: "", email: "",
@@ -43,31 +47,47 @@ export function TabLocations({
         finally { setLoading(false); }
     }, [d.common.error, toast]);
 
-    useEffect(() => { fetchAgences(); }, [fetchAgences]);
+    const fetchServices = useCallback(async () => {
+        try {
+            const res = await servicesRepository.getList();
+            const list = Array.isArray(res) ? res : (res as { results?: Service[] }).results ?? [];
+            setAvailableServices(list);
+        } catch { /* erreur silencieuse */ }
+    }, []);
 
-    const openEdit = (ag: Agence) => {
+    useEffect(() => { 
+        fetchAgences(); 
+        fetchServices();
+    }, [fetchAgences, fetchServices]);
+
+
+   const openEdit = (ag: Agence) => {
         setEditId(ag.id);
         setForm({ nom: ag.nom, adresse: ag.adresse, ville: ag.ville, whatsapp: ag.whatsapp, telephone: ag.telephone, email: ag.email });
+        // On pré-remplit avec les IDs déjà présents dans l'objet agence
+        setSelectedServices(ag.service_ids || []);
         setShowForm(true);
     };
 
     const openNew = () => {
         setEditId(null);
         setForm({ nom: "", adresse: "", ville: "", whatsapp: "", telephone: "", email: "" });
+        setSelectedServices([]);
         setShowForm(true);
     };
 
     const handleSave = async () => {
-        setSaving(true);
-        try {
-            if (editId) await agencesRepository.patch(editId, form);
-            else await agencesRepository.create(form);
-            toast.success(d.common.save + " ✓");
-            setShowForm(false);
-            fetchAgences();
-        } catch { toast.error(d.common.error); }
-        finally { setSaving(false); }
-    };
+            setSaving(true);
+            try {
+                const payload = { ...form, service_ids: selectedServices };
+                if (editId) await agencesRepository.patch(editId, payload);
+                else await agencesRepository.create(payload);
+                toast.success(d.common.save + " ✓");
+                setShowForm(false);
+                fetchAgences();
+            } catch { toast.error(d.common.error); }
+            finally { setSaving(false); }
+        };
 
     const handleDelete = async (id: string) => {
         try {
@@ -173,6 +193,31 @@ export function TabLocations({
                                         onChange={e => setForm({ ...form, [key]: e.target.value })} />
                                 </div>
                             ))}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-[var(--text)]">{t.locationServicesLabel}</label>
+                                <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto p-2 border border-[var(--border)] rounded-xl bg-[var(--bg)]">
+                                    {availableServices.map(svc => (
+                                        <label key={svc.id} className="flex items-center gap-3 p-2 hover:bg-[var(--bg-card)] rounded-lg cursor-pointer transition-colors">
+                                            <input 
+                                                type="checkbox" 
+                                                className="rounded border-[var(--border)] text-[#075E54] focus:ring-[#075E54]"
+                                                checked={selectedServices.includes(svc.id)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) setSelectedServices([...selectedServices, svc.id]);
+                                                    else setSelectedServices(selectedServices.filter(id => id !== svc.id));
+                                                }}
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-semibold text-[var(--text)] truncate">{svc.nom}</p>
+                                                <p className="text-[10px] text-[var(--text-muted)]">{Number(svc.prix).toLocaleString()} XAF</p>
+                                            </div>
+                                        </label>
+                                    ))}
+                                    {availableServices.length === 0 && (
+                                        <p className="text-[10px] text-[var(--text-muted)] italic text-center py-2">{t.noServicesCreated}</p>
+                                    )}
+                                </div>
+                            </div>
                             <div className="flex gap-3 pt-2">
                                 <button onClick={() => setShowForm(false)} className="btn-ghost flex-1 text-sm">
                                     {d.common.cancel}

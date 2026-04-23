@@ -288,6 +288,7 @@ export interface Agence {
   is_siege: boolean;
   horaires: HorairesOuverture[];
   services_count: number;
+  service_ids: string[];
   created_at: string;
 }
 export interface CreateAgencePayload {
@@ -301,8 +302,8 @@ export interface CreateAgencePayload {
   transfer_phone?: string;
   extra_info?: string;
   is_active?: boolean;
+  service_ids?: string[]; 
 }
-
 export interface Agenda {
   id: string;
   agence: string | null;

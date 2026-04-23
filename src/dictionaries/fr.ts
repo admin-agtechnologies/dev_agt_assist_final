@@ -574,6 +574,8 @@ export const fr = {
     serviceDescription: "Description",
     serviceActive: "Service actif",
     knowledgeSection: "Configuration assistant",
+    locationServicesLabel: "Services proposés dans cette agence",
+    noServicesCreated: "Aucun service créé.",
   },
   help: {
     title: "Demander de l'aide",
