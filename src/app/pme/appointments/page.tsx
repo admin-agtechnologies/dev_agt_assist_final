@@ -124,22 +124,22 @@ export default function AppointmentsPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            {activeAgenda && (
-              <button
-                onClick={() => {
-                  setShowConfig(!showConfig);
-                  setShowHor(false);
-                }}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all",
-                  showConfig
-                    ? "border-[#075E54] bg-[#075E54]/10 text-[#075E54]"
-                    : "border-[var(--border)] text-[var(--text-muted)] hover:border-[#075E54]/30",
-                )}
-              >
-                <Settings className="w-3.5 h-3.5" /> Créneaux
-              </button>
-            )}
+            {/* Créneaux : toujours visible si agence sélectionnée
+                (crée l'agenda si absent, le modifie sinon) */}
+            <button
+              onClick={() => {
+                setShowConfig(!showConfig);
+                setShowHor(false);
+              }}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all",
+                showConfig
+                  ? "border-[#075E54] bg-[#075E54]/10 text-[#075E54]"
+                  : "border-[var(--border)] text-[var(--text-muted)] hover:border-[#075E54]/30",
+              )}
+            >
+              <Settings className="w-3.5 h-3.5" /> Créneaux
+            </button>
             <button
               onClick={() => {
                 setShowHor(!showHor);
@@ -159,9 +159,10 @@ export default function AppointmentsPage() {
       )}
 
       {/* ── Panneau config créneaux ── visible seulement si agence sélectionnée ── */}
-      {showConfig && activeAgenda && selAgenceId && (
+      {showConfig && selAgenceId && (
         <AgendaConfigPanel
           agenda={activeAgenda}
+          agenceId={selAgenceId}
           onSaved={fetchAll}
           onClose={() => setShowConfig(false)}
         />
