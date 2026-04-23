@@ -700,7 +700,14 @@ export default function LandingPage() {
               <div className="space-y-2.5">
                 <div className="flex items-start gap-2.5 text-sm text-white/50">
                   <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#25D366]" />
-                  <span>Montée Anne rouge, Immeuble Kadji,<br />Yaoundé, Cameroun</span>
+                  <a
+                    href="https://www.google.com/maps/place/BGFI+Bank+-+Agence+Rubis/@3.868969,11.5191484,17z/data=!4m6!3m5!1s0x108bcf7f4a64fb59:0x9d3234fbf8d8f97c!8m2!3d3.8690074!4d11.5192341!16s%2Fg%2F11c5wmn_sg?entry=ttu&g_ep=EgoyMDI2MDQyMC4wIKXMDSoASAFQAw%3D%3D"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-[#25D366] transition-colors"
+                  >
+                    Montée Anne rouge, Immeuble Kadji,<br />Yaoundé, Cameroun
+                  </a>
                 </div>
                 <div className="flex items-center gap-2.5 text-sm text-white/50">
                   <Mail className="w-4 h-4 flex-shrink-0 text-[#25D366]" />
