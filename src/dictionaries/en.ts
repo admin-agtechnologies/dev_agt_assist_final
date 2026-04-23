@@ -42,7 +42,7 @@ export const en = {
     forgotPasswordTitle: "Reset your password",
     forgotPasswordSubtitle: "Enter your email and we'll send you a reset link.",
     forgotPasswordBtn: "Send reset link",
-    forgotPasswordSent: "Email sent! Check your inbox.",
+    forgotPasswordSent: "If your email exists in our system, then you have received an email.",
     backToLogin: "Back to login",
     noAccount: "Don't have an account?", signUp: "Create account",
     tabPassword: "Password", tabMagicLink: "Magic link",

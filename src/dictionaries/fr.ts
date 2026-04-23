@@ -42,7 +42,7 @@ export const fr = {
     forgotPasswordTitle: "Réinitialiser le mot de passe",
     forgotPasswordSubtitle: "Entrez votre email, nous vous enverrons un lien.",
     forgotPasswordBtn: "Envoyer le lien",
-    forgotPasswordSent: "Email envoyé ! Vérifiez votre boîte mail.",
+    forgotPasswordSent: "Si votre e-mail existe dans notre système, alors vous avez reçu un mail.",
     backToLogin: "Retour à la connexion",
     noAccount: "Pas encore de compte ?", signUp: "Créer un compte",
     tabPassword: "Mot de passe", tabMagicLink: "Lien magique",

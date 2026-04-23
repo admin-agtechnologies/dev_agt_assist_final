@@ -67,12 +67,12 @@ export default function AppointmentsPage() {
             Tous les rendez-vous pris via votre assistant.
           </p>
         </div>
-        <button
+       {/* <button    #Bouton pour ajouter un RDV
           onClick={() => setModal({ open: true, rdv: null, date: selDate })}
           className="btn-primary flex items-center gap-2 flex-shrink-0"
         >
           <Plus className="w-4 h-4" /> Nouveau RDV
-        </button>
+        </button> */}
       </div>
 
       {/* ── Sélecteur agences ────────────────────────────────────────────────── */}
