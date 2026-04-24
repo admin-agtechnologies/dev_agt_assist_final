@@ -2,7 +2,7 @@
 import type { Metadata } from "next";
 import LandingPageContent from "./_components/LandingPageContent";
 
-const BASE_URL = "https://dev.assist.ag-technologies.tech";
+const BASE_URL = "https://assist.ag-technologies.tech";
 
 export const metadata: Metadata = {
   title: "AGT Platform — Virtual Assistants for African SMEs | Assistants virtuels PME africaines",
