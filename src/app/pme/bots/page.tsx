@@ -11,9 +11,9 @@ import { botsRepository } from "@/repositories";
 import { Badge, SectionHeader, EmptyState, ConfirmDeleteModal } from "@/components/ui";
 import type { Bot as BotData, BotStatut } from "@/types/api";
 
-import { type BotPair }   from "./_components/bots.types";
-import { BotPairCard }    from "./_components/BotPairCard";
-import { BotFormModal }   from "./_components/BotFormModal";
+import { type BotPair }  from "./_components/bots.types";
+import { BotPairCard }   from "./_components/BotPairCard";
+import { BotFormModal }  from "./_components/BotFormModal";
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -24,33 +24,33 @@ export default function PmeBotsPage() {
   const toast = useToast();
   const router = useRouter();
 
-  const [bots, setBots]         = useState<BotData[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [mounted, setMounted]   = useState(false);
-  const [, startTransition]     = useTransition();
+  const [bots, setBots]       = useState<BotData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  const [, startTransition]   = useTransition();
 
-  const [formModal, setFormModal]     = useState<{ open: boolean; editId: string | null }>({ open: false, editId: null });
-  const [deleteId, setDeleteId]       = useState<string | null>(null);
-  const [isDeleting, setIsDeleting]   = useState(false);
+  const [formModal, setFormModal]           = useState<{ open: boolean; editId: string | null }>({ open: false, editId: null });
+  const [deleteId, setDeleteId]             = useState<string | null>(null);
+  const [isDeleting, setIsDeleting]         = useState(false);
   const [expandedPairId, setExpandedPairId] = useState<string | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
-  // ── Chargement ─────────────────────────────────────────────────────────────
+  // ── Chargement ──────────────────────────────────────────────────────────────
   const toastRef = useRef(toast);
-useEffect(() => { toastRef.current = toast; }, [toast]);
+  useEffect(() => { toastRef.current = toast; }, [toast]);
 
-const fetchBots = useCallback(async () => {
-  setLoading(true);
-  try {
-    const res = await botsRepository.getList();
-    setBots(res.results ?? []);
-  } catch {
-    toastRef.current.error(t.errorLoad);
-  } finally {
-    setLoading(false);
-  }
-}, [t.errorLoad]);
+  const fetchBots = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await botsRepository.getList();
+      setBots(res.results ?? []);
+    } catch {
+      toastRef.current.error(t.errorLoad);
+    } finally {
+      setLoading(false);
+    }
+  }, [t.errorLoad]);
 
   useEffect(() => { fetchBots(); }, [fetchBots]);
 
@@ -64,7 +64,7 @@ const fetchBots = useCallback(async () => {
 
   // ── Publish / Unpublish ───────────────────────────────────────────────────
   const handlePublishToggle = async (pair: BotPair) => {
-    const isActive  = pair.waBot.statut === "actif";
+    const isActive = pair.waBot.statut === "actif";
     const newStatut: BotStatut = isActive ? "en_pause" : "actif";
     try {
       await Promise.all([
@@ -101,7 +101,9 @@ const fetchBots = useCallback(async () => {
   // ── Rendu ─────────────────────────────────────────────────────────────────
   if (loading) return (
     <div className="space-y-4 animate-pulse">
-      {[...Array(2)].map((_, i) => <div key={i} className="h-28 card bg-[var(--bg)]" />)}
+      {[...Array(2)].map((_, i) => (
+        <div key={i} className="h-28 card bg-[var(--bg)]" />
+      ))}
     </div>
   );
 
@@ -112,7 +114,10 @@ const fetchBots = useCallback(async () => {
           title={t.title}
           subtitle={t.subtitle}
           action={
-            <button onClick={() => setFormModal({ open: true, editId: null })} className="btn-primary">
+            <button
+              onClick={() => setFormModal({ open: true, editId: null })}
+              className="btn-primary"
+            >
               <Plus className="w-4 h-4" /> {t.newBtn}
             </button>
           }

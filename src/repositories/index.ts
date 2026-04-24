@@ -78,6 +78,11 @@ import type {
   PaginatedResponse,
   ChatbotTestResponse,
   ChatbotTestPayload,
+  // Chatbot bridge
+  ChatbotConfig,
+  UpdateChatbotConfigPayload,
+  TestSessionSummary,
+  TestSessionDetail,
 } from "@/types/api";
 
 // ── Helper params ─────────────────────────────────────────────────────────────
@@ -788,7 +793,49 @@ export const feedbackRepository = {
       ),
 };
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CHATBOT BRIDGE
+// Aligné avec apps/chatbot_bridge/views.py + session_views.py
+// POST /api/v1/chatbot/test/
+// GET/PATCH /api/v1/bots/{id}/chatbot/
+// GET /api/v1/chatbot/sessions/
+// GET /api/v1/chatbot/sessions/{id}/
+// ══════════════════════════════════════════════════════════════════════════════
 export const chatbotRepository = {
+  /** Envoie un message au bot et reçoit la réponse enrichie des actions. */
   testChat: (payload: ChatbotTestPayload): Promise<ChatbotTestResponse> =>
-    api.post("/api/v1/chatbot/test/", payload),
+    api.post<ChatbotTestResponse>("/api/v1/chatbot/test/", payload),
+
+  /** Lit la configuration IA d'un bot. Crée le chatbot si inexistant. */
+  getChatbotConfig: (botId: string): Promise<ChatbotConfig> =>
+    api.get<ChatbotConfig>(`/api/v1/bots/${botId}/chatbot/`),
+
+  /** Met à jour la configuration IA d'un bot (system_prompt, temperature, max_tokens). */
+  updateChatbotConfig: (
+    botId: string,
+    payload: UpdateChatbotConfigPayload,
+  ): Promise<ChatbotConfig> =>
+    api.patch<ChatbotConfig>(`/api/v1/bots/${botId}/chatbot/`, payload),
+
+  /** Liste les sessions de test d'un bot, triées par date décroissante. */
+  getSessions: (botId: string): Promise<PaginatedResponse<TestSessionSummary>> =>
+    api
+      .get("/api/v1/chatbot/sessions/", {
+        params: { bot: botId, ordering: "-created_at" },
+      })
+      .then((data: unknown) =>
+        Array.isArray(data)
+          ? {
+              results: data as TestSessionSummary[],
+              count: (data as TestSessionSummary[]).length,
+              next: null,
+              previous: null,
+            }
+          : (data as PaginatedResponse<TestSessionSummary>),
+      ),
+
+  /** Détail complet d'une session avec messages et emails imbriqués. */
+  getSessionDetail: (sessionId: string): Promise<TestSessionDetail> =>
+    api.get<TestSessionDetail>(`/api/v1/chatbot/sessions/${sessionId}/`),
 };

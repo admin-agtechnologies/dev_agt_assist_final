@@ -1,263 +1,724 @@
 // src/app/pme/bots/[id]/test/page.tsx
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
+import {
+  useState, useEffect, useRef, useCallback, useTransition,
+} from "react";
+import { useParams, useRouter } from "next/navigation";
+import {
+  ArrowLeft, MessageSquare, Phone, Send, Bot as BotIcon,
+  RotateCcw, User, Zap, AlertTriangle, Mail,
+  Calendar, UserCheck, ChevronDown, ChevronUp,
+  Save, Loader2, Clock, Wifi, WifiOff,
+} from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/components/ui/Toast";
-import { botsRepository, tenantsRepository, rendezVousRepository, servicesRepository } from "@/repositories";
-import { cn } from "@/lib/utils";
-import { Spinner } from "@/components/ui";
-import { ROUTES } from "@/lib/constants";
-import { ArrowLeft, Globe, GlobeLock, Bot, MessageSquare, Phone } from "lucide-react";
-import type { Bot as BotType, Tenant, RendezVous, Service } from "@/types/api";
-
+import { Badge, PageLoader } from "@/components/ui";
+import { cn, formatDateTime } from "@/lib/utils";
 import {
-  getTheme, addDays, type ClientReport, type HumanTransfer,
-  type EmailPhase, type LeftPanel, type SectorTheme,
-} from "./_components/test.types";
-import { LeftCockpitPanel }   from "./_components/LeftCockpitPanel";
-import { WhatsAppSimulator }  from "./_components/WhatsAppSimulator";
-import { VoiceSimulator }     from "./_components/VoiceSimulator";
-import { AgendaPanel }        from "./_components/AgendaPanel";
+  botsRepository,
+  chatbotRepository,
+} from "@/repositories";
+import type {
+  Bot,
+  ChatMessage,
+  ChatTestCanal,
+  ChatbotTestResponse,
+  ChatbotConfig,
+  CollectedData,
+  ChatAction,
+  TestSessionSummary,
+  UpdateChatbotConfigPayload,
+} from "@/types/api";
+
+// ── Types locaux ──────────────────────────────────────────────────────────────
+
+/** Message affiché dans le simulateur de chat. */
+interface DisplayMessage {
+  id: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  actions?: ChatAction[];
+  intentions?: string[];
+  tokens?: number;
+  isTyping?: boolean;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function actionIcon(type: ChatAction["type"]) {
+  switch (type) {
+    case "create_client":     return <UserCheck className="w-3.5 h-3.5 text-[#25D366]" />;
+    case "create_appointment":return <Calendar  className="w-3.5 h-3.5 text-amber-500" />;
+    case "send_email":        return <Mail      className="w-3.5 h-3.5 text-[#6C3CE1]" />;
+    case "human_handoff":     return <AlertTriangle className="w-3.5 h-3.5 text-red-400" />;
+  }
+}
+
+function actionLabel(type: ChatAction["type"], d: ReturnType<typeof useLanguage>["dictionary"]): string {
+  const map: Record<ChatAction["type"], string> = {
+    create_client:      d.bots.actionTypes.contact_collected,
+    create_appointment: d.bots.actionTypes.appointment,
+    send_email:         d.bots.actionTypes.faq,
+    human_handoff:      d.bots.actionTypes.handoff,
+  };
+  return map[type] ?? type;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
+// COMPOSANT PRINCIPAL
+// ─────────────────────────────────────────────────────────────────────────────
 
-export default function BotTestPage({ params }: { params: { id: string } }) {
-  const { id } = params;
-  const router  = useRouter();
-  const { user } = useAuth();
+export default function BotTestPage() {
+  const params   = useParams<{ id: string }>();
+  const router   = useRouter();
+  const botId    = params.id;
   const { dictionary: d } = useLanguage();
-  const t     = d.bots;
+  const t = d.bots;
   const toast = useToast();
-  // ── Fix boucle infinie : toast via ref, pas dans les deps ──────────────────
-  const toastRef = useRef(toast);
-  useEffect(() => { toastRef.current = toast; }, [toast]);
+  const [, startTransition] = useTransition();
 
-  const [bot, setBot]               = useState<BotType | null>(null);
-  const [tenant, setTenant]         = useState<Tenant | null>(null);
-  const [appointments, setAppointments]     = useState<RendezVous[]>([]);
-  const [mockAppointments, setMockAppointments] = useState<RendezVous[]>([]);
-  const [services, setServices]     = useState<Service[]>([]);
+  // ── État global ────────────────────────────────────────────────────────────
+  const [bot, setBot]               = useState<Bot | null>(null);
+  const [config, setConfig]         = useState<ChatbotConfig | null>(null);
+  const [sessions, setSessions]     = useState<TestSessionSummary[]>([]);
   const [loading, setLoading]       = useState(true);
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [activeSimulator, setActiveSimulator] = useState<"whatsapp" | "voice">("whatsapp");
 
-  const [openPanels, setOpenPanels]     = useState<Record<LeftPanel, boolean>>({ info: true, report: false, transfer: false, email: false });
-  const [highlightPanel, setHighlightPanel] = useState<LeftPanel | null>(null);
+  // ── Chat ───────────────────────────────────────────────────────────────────
+  const [canal, setCanal]           = useState<ChatTestCanal>("whatsapp");
+  const [messages, setMessages]     = useState<DisplayMessage[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const [isSending, setIsSending]   = useState(false);
+  const [isVoiceCalling, setIsVoiceCalling] = useState(false);
 
-  const [clientReport, setClientReport] = useState<ClientReport>({
-    name: null, phone: null, email: null, intention: null, services: [], appointmentDate: null, status: "idle",
-  });
-  const [humanTransfer, setHumanTransfer] = useState<HumanTransfer>({ triggered: false, reason: "", at: "" });
-  const [emailStep, setEmailStep]         = useState<EmailPhase | null>(null);
+  // Données live de la session courante
+  const [collected, setCollected]   = useState<CollectedData>({});
+  const [summary, setSummary]       = useState("");
+  const [hasHandoff, setHasHandoff] = useState(false);
 
-  // ── Helpers panel ─────────────────────────────────────────────────────────
-  const expandPanel = useCallback((panel: LeftPanel) => {
-    setOpenPanels(prev => ({ ...prev, [panel]: true }));
-    setHighlightPanel(panel);
-    setTimeout(() => setHighlightPanel(null), 3000);
-  }, []);
+  // ── Config IA ──────────────────────────────────────────────────────────────
+  const [configOpen, setConfigOpen] = useState(false);
+  const [editPrompt, setEditPrompt] = useState("");
+  const [editTemp, setEditTemp]     = useState(0.3);
+  const [editTokens, setEditTokens] = useState(1000);
+  const [isSavingConfig, setIsSavingConfig] = useState(false);
 
-  const togglePanel = (panel: LeftPanel) => setOpenPanels(prev => ({ ...prev, [panel]: !prev[panel] }));
+  // ── Sessions panel ─────────────────────────────────────────────────────────
+  const [sessionsOpen, setSessionsOpen] = useState(false);
 
-  // ── Callbacks partagés avec WhatsAppSimulator ─────────────────────────────
-  const handleReportUpdate = useCallback((patch: Partial<ClientReport>) => {
-    setClientReport(prev => {
-      const next = { ...prev, ...patch };
-      setOpenPanels(p => { if (!p.report) expandPanel("report"); return p; });
-      return next;
-    });
-  }, [expandPanel]);
+  // session_id unique par montage — immuable via useRef
+  const sessionIdRef = useRef<string>(crypto.randomUUID());
 
-  const handleHumanTransfer = useCallback((reason: string) => {
-    const at = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-    setHumanTransfer({ triggered: true, reason, at });
-    expandPanel("transfer");
-  }, [expandPanel]);
+  // historique LLM — maintenu localement pour chaque requête
+  const historyRef = useRef<ChatMessage[]>([]);
 
-  const handleEmailTrigger = useCallback(async (subject: string, body: string, to: string) => {
-    expandPanel("email");
-    setEmailStep({ phase: "drafting" });
-    await new Promise(r => setTimeout(r, 2000));
-    setEmailStep({ phase: "preview", subject, body });
-    await new Promise(r => setTimeout(r, 3000));
-    setEmailStep({ phase: "sent", to });
-  }, [expandPanel]);
+  // scroll auto vers le bas
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-  const handleMockAppointment = useCallback((apt: { date: Date; serviceId: string }) => {
-    const mock: RendezVous = {
-      id: `mock-${Date.now()}`,
-      agenda: "", agenda_nom: "", agence: null, agence_nom: null,
-      client: "",
-      client_nom: clientReport.name ?? "Client simulé",
-      client_telephone: clientReport.phone ?? "+237600000000",
-      bot: null, statut: "en_attente", canal: "whatsapp",
-      scheduled_at: apt.date.toISOString(),
-      reminder_sent: false, notes: "RDV simulé (test bot)", services_detail: [],
-      created_at: new Date().toISOString(),
-    };
-    setMockAppointments(prev => [...prev, mock]);
-    setCurrentDate(apt.date);
-
-    const svc       = services.find(s => s.id === apt.serviceId);
-    const dateLabel = apt.date.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
-    const timeLabel = apt.date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-    const subject   = `Confirmation de votre rendez-vous — ${dateLabel}`;
-    const body      = `Bonjour${clientReport.name ? " " + clientReport.name : ""},\n\nVotre rendez-vous a bien été enregistré :\n\n📅 Date : ${dateLabel} à ${timeLabel}\n🏥 Service : ${svc?.nom ?? "Consultation"}\n\nUn rappel vous sera envoyé 24h avant.\n\nCordialement,\nL'équipe`;
-    const to        = clientReport.email ?? "client@exemple.com";
-    handleEmailTrigger(subject, body, to);
-  }, [clientReport, services, handleEmailTrigger]);
-
-  // ── Fetch ─────────────────────────────────────────────────────────────────
-  const fetchData = useCallback(async () => {
+  // ── Chargement initial ─────────────────────────────────────────────────────
+  const loadAll = useCallback(async () => {
+    setLoading(true);
     try {
-      const b = await botsRepository.getById(id);
-      setBot(b);
-      if (user?.entreprise?.id) {
-        const [ten, aptsRes, svcsRes] = await Promise.all([
-          tenantsRepository.getById(user.entreprise.id),
-          rendezVousRepository.getList(),
-          servicesRepository.getList(),
-        ]);
-        setTenant(ten);
-        setAppointments(aptsRes.results);
-        setServices(svcsRes.results);
-      }
+      const [botData, configData, sessionsData] = await Promise.all([
+        botsRepository.getById(botId),
+        chatbotRepository.getChatbotConfig(botId),
+        chatbotRepository.getSessions(botId),
+      ]);
+      setBot(botData);
+      setConfig(configData);
+      setEditPrompt(configData.system_prompt);
+      setEditTemp(configData.temperature);
+      setEditTokens(configData.max_tokens);
+      setSessions(sessionsData.results ?? []);
     } catch {
-      toastRef.current.error(t.errorLoad); // ← ref stable, pas de boucle
+      toast.error(t.errorLoad);
     } finally {
       setLoading(false);
     }
-  }, [id, user?.entreprise?.id, t.errorLoad]);
+  }, [botId, t.errorLoad, toast]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { loadAll(); }, [loadAll]);
 
-  // ── Publier / Dépublier ───────────────────────────────────────────────────
-  const handlePublishToggle = async () => {
-    if (!bot) return;
+  // ── Réinitialisation session ───────────────────────────────────────────────
+  const resetSession = useCallback(() => {
+    sessionIdRef.current = crypto.randomUUID();
+    historyRef.current = [];
+    setMessages([]);
+    setCollected({});
+    setSummary("");
+    setHasHandoff(false);
+  }, []);
+
+  // ── Envoi d'un message WhatsApp ────────────────────────────────────────────
+  const sendMessage = useCallback(async () => {
+    const text = inputValue.trim();
+    if (!text || isSending || !botId) return;
+
+    setInputValue("");
+    setIsSending(true);
+
+    // Ajout du message utilisateur dans l'UI
+    const userMsg: DisplayMessage = {
+      id:      crypto.randomUUID(),
+      role:    "user",
+      content: text,
+    };
+    // Placeholder "typing"
+    const typingMsg: DisplayMessage = {
+      id:        "typing",
+      role:      "assistant",
+      content:   "",
+      isTyping:  true,
+    };
+    setMessages(prev => [...prev, userMsg, typingMsg]);
+
     try {
-      const newActive = !bot.is_active;
-      await botsRepository.patch(bot.id, { is_active: newActive });
-      setBot({ ...bot, is_active: newActive, statut: newActive ? "actif" : "en_pause" });
-      toast.success(newActive ? t.publishSuccess : t.unpublishSuccess);
+      const response: ChatbotTestResponse = await chatbotRepository.testChat({
+        bot_id:     botId,
+        session_id: sessionIdRef.current,
+        canal,
+        message:    text,
+        history:    historyRef.current,
+      });
+
+      // Mise à jour de l'historique LLM
+      historyRef.current = [
+        ...historyRef.current,
+        { role: "user"      as const, content: text },
+        { role: "assistant" as const, content: response.reply },
+      ].slice(-20); // garde les 20 derniers
+
+      // Mise à jour des données collectées
+      setCollected(response.collected_data ?? {});
+      if (response.conversation_summary) setSummary(response.conversation_summary);
+      if (response.human_handoff) setHasHandoff(true);
+
+      // Remplacement du placeholder par la vraie réponse
+      const assistantMsg: DisplayMessage = {
+        id:         crypto.randomUUID(),
+        role:       "assistant",
+        content:    response.reply,
+        actions:    response.actions ?? [],
+        intentions: response.intentions ?? [],
+        tokens:     response.tokens_used,
+      };
+      setMessages(prev => [...prev.filter(m => m.id !== "typing"), assistantMsg]);
+
+      // Rafraîchissement des sessions en arrière-plan
+      startTransition(() => {
+        chatbotRepository
+          .getSessions(botId)
+          .then(res => setSessions(res.results ?? []))
+          .catch(() => null);
+      });
     } catch {
-      toast.error(t.publishError);
+      setMessages(prev => prev.filter(m => m.id !== "typing"));
+      toast.error(t.testSendError);
+    } finally {
+      setIsSending(false);
+    }
+  }, [inputValue, isSending, botId, canal, t.testSendError, toast]);
+
+  // ── Appel vocal simulé ─────────────────────────────────────────────────────
+  const handleVoiceCall = useCallback(async () => {
+    if (isVoiceCalling) {
+      setIsVoiceCalling(false);
+      return;
+    }
+    setIsVoiceCalling(true);
+    // Démarre une session vocale avec un message d'accueil simulé
+    const fakeGreeting = bot?.message_accueil ?? "Bonjour !";
+    const systemMsg: DisplayMessage = {
+      id:      crypto.randomUUID(),
+      role:    "system",
+      content: `[${t.testVoiceConnected}] ${fakeGreeting}`,
+    };
+    setMessages(prev => [...prev, systemMsg]);
+  }, [isVoiceCalling, bot, t.testVoiceConnected]);
+
+  // ── Sauvegarde config ──────────────────────────────────────────────────────
+  const saveConfig = useCallback(async () => {
+    if (!botId) return;
+    setIsSavingConfig(true);
+    try {
+      const payload: UpdateChatbotConfigPayload = {
+        system_prompt: editPrompt,
+        temperature:   editTemp,
+        max_tokens:    editTokens,
+      };
+      const updated = await chatbotRepository.updateChatbotConfig(botId, payload);
+      setConfig(updated);
+      toast.success(t.testConfigSaved);
+    } catch {
+      toast.error(t.testConfigError);
+    } finally {
+      setIsSavingConfig(false);
+    }
+  }, [botId, editPrompt, editTemp, editTokens, t.testConfigSaved, t.testConfigError, toast]);
+
+  // ── Handlers clavier ──────────────────────────────────────────────────────
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      void sendMessage();
     }
   };
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]">
-      <Spinner className="w-8 h-8 border-[#25D366] border-t-transparent" />
-    </div>
-  );
-  if (!bot) return null;
+  // ── Loading state ──────────────────────────────────────────────────────────
+  if (loading) return <PageLoader />;
+  if (!bot)    return null;
 
-  const theme: SectorTheme = getTheme(tenant?.sector ?? "");
-  const allAppointments    = [...appointments, ...mockAppointments];
+  const isOnline = bot.statut === "actif";
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // RENDU
+  // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className={cn("min-h-screen bg-gradient-to-br", theme.bg)}>
-      {/* ── Navbar ── */}
-      <div className="sticky top-0 z-40 bg-[var(--bg-card)]/90 backdrop-blur-md border-b border-[var(--border)]">
-        <div className="max-w-[1400px] mx-auto px-4 h-14 flex items-center justify-between gap-4">
-          <button onClick={() => router.push(ROUTES.dashboard)}
-            className="flex items-center gap-2 text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text)] transition-colors">
-            <ArrowLeft className="w-4 h-4" /> {t.testBackDashboard}
-          </button>
+    <div className="flex flex-col h-full space-y-4 animate-fade-in">
 
-          <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: `${theme.primary}20` }}>
-              <Bot className="w-3.5 h-3.5" style={{ color: theme.primary }} />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-[var(--text)]">{bot.nom}</p>
-              <p className="text-[10px] text-[var(--text-muted)]">{tenant?.name}</p>
-            </div>
-          </div>
+      {/* ── Header ──────────────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <button
+          onClick={() => router.back()}
+          className="w-9 h-9 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] flex items-center justify-center hover:opacity-70 transition-opacity flex-shrink-0"
+        >
+          <ArrowLeft className="w-4 h-4 text-[var(--text-muted)]" />
+        </button>
 
-          <div className="flex items-center gap-2">
-            <span className={cn(
-              "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold",
-              bot.is_active ? "bg-[#25D366]/10 text-[#25D366]" : "bg-[var(--border)] text-[var(--text-muted)]",
-            )}>
-              <span className={cn("w-1.5 h-1.5 rounded-full",
-                bot.is_active ? "bg-[#25D366] animate-pulse" : "bg-[var(--text-muted)]")} />
-              {bot.is_active ? t.testPublishedBadge : t.testUnpublishedBadge}
-            </span>
-            <button onClick={handlePublishToggle}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors",
-                bot.is_active
-                  ? "border border-[var(--border)] text-[var(--text-muted)] hover:border-red-400 hover:text-red-400"
-                  : "text-white",
-              )}
-              style={!bot.is_active ? { backgroundColor: theme.primary } : {}}>
-              {bot.is_active
-                ? <><GlobeLock className="w-3.5 h-3.5" /> {t.unpublish}</>
-                : <><Globe     className="w-3.5 h-3.5" /> {t.publish}</>
-              }
-            </button>
-          </div>
+        <div className="w-10 h-10 rounded-2xl bg-[#25D366]/10 flex items-center justify-center flex-shrink-0">
+          <BotIcon className="w-5 h-5 text-[#25D366]" />
         </div>
+
+        <div className="flex-1 min-w-0">
+          <h1 className="text-lg font-bold text-[var(--text)] truncate">{bot.nom}</h1>
+          <p className="text-xs text-[var(--text-muted)]">{t.testSubtitle}</p>
+        </div>
+
+        {/* Statut en ligne */}
+        <Badge variant={isOnline ? "green" : "slate"}>
+          {isOnline
+            ? <><Wifi    className="w-3 h-3 mr-1" />{t.testPublishedBadge}</>
+            : <><WifiOff className="w-3 h-3 mr-1" />{t.testUnpublishedBadge}</>
+          }
+        </Badge>
+
+        {/* Switch canal */}
+        <div className="flex rounded-xl border border-[var(--border)] overflow-hidden bg-[var(--bg-card)]">
+          <button
+            onClick={() => setCanal("whatsapp")}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-colors",
+              canal === "whatsapp"
+                ? "bg-[#25D366] text-white"
+                : "text-[var(--text-muted)] hover:text-[var(--text)]",
+            )}
+          >
+            <MessageSquare className="w-3.5 h-3.5" /> {t.table.whatsapp}
+          </button>
+          <button
+            onClick={() => setCanal("vocal")}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-colors",
+              canal === "vocal"
+                ? "bg-[#6C3CE1] text-white"
+                : "text-[var(--text-muted)] hover:text-[var(--text)]",
+            )}
+          >
+            <Phone className="w-3.5 h-3.5" /> {t.testVoiceTitle}
+          </button>
+        </div>
+
+        {/* Reset */}
+        <button
+          onClick={resetSession}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[var(--border)] text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg)] transition-colors"
+        >
+          <RotateCcw className="w-3.5 h-3.5" /> {t.testResetSession}
+        </button>
       </div>
 
-      {/* ── Corps 3 colonnes ── */}
-      <div className="max-w-[1400px] mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-[300px_1fr_1fr] gap-5">
+      {/* ── Corps principal ──────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 flex-1 min-h-0">
 
-          {/* Col 1 : Cockpit */}
-          <LeftCockpitPanel
-            bot={bot} tenant={tenant} theme={theme}
-            clientReport={clientReport} humanTransfer={humanTransfer} emailStep={emailStep}
-            openPanels={openPanels} highlightPanel={highlightPanel}
-            onTogglePanel={togglePanel}
-          />
+        {/* ── Simulateur chat (3/5) ────────────────────────────────────────── */}
+        <div className="lg:col-span-3 flex flex-col card overflow-hidden">
 
-          {/* Col 2 : Simulateur */}
-          <div className="space-y-4">
-            {/* Toggle WA / Vocal */}
-            <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] p-1 flex gap-1 shadow-sm">
-              <button onClick={() => setActiveSimulator("whatsapp")}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition-all",
-                  activeSimulator === "whatsapp" ? "text-white shadow-md" : "text-[var(--text-muted)] hover:text-[var(--text)]",
-                )}
-                style={activeSimulator === "whatsapp" ? { backgroundColor: theme.primary } : {}}>
-                <MessageSquare className="w-3.5 h-3.5" /> WhatsApp
-              </button>
-              <button onClick={() => setActiveSimulator("voice")}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition-all",
-                  activeSimulator === "voice" ? "text-white shadow-md" : "text-[var(--text-muted)] hover:text-[var(--text)]",
-                )}
-                style={activeSimulator === "voice" ? { backgroundColor: "#6C3CE1" } : {}}>
-                <Phone className="w-3.5 h-3.5" /> Vocal IA
-              </button>
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[400px] max-h-[600px]">
+            {messages.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-full gap-3 py-10">
+                <div className="w-14 h-14 rounded-2xl bg-[#25D366]/10 flex items-center justify-center">
+                  <MessageSquare className="w-7 h-7 text-[#25D366]" />
+                </div>
+                <p className="text-sm text-[var(--text-muted)] text-center max-w-xs">
+                  {t.testSubtitle}
+                </p>
+              </div>
+            )}
+
+            {messages.map(msg => {
+              if (msg.role === "system") {
+                return (
+                  <div key={msg.id} className="flex justify-center">
+                    <span className="text-xs text-[var(--text-muted)] bg-[var(--bg)] px-3 py-1 rounded-full border border-[var(--border)]">
+                      {msg.content}
+                    </span>
+                  </div>
+                );
+              }
+
+              const isUser = msg.role === "user";
+              return (
+                <div key={msg.id} className={cn("flex gap-2", isUser ? "flex-row-reverse" : "flex-row")}>
+                  {/* Avatar */}
+                  <div className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5",
+                    isUser ? "bg-[#6C3CE1]/10" : "bg-[#25D366]/10",
+                  )}>
+                    {isUser
+                      ? <User className="w-4 h-4 text-[#6C3CE1]" />
+                      : <BotIcon  className="w-4 h-4 text-[#25D366]" />
+                    }
+                  </div>
+
+                  <div className={cn("flex flex-col gap-1 max-w-[75%]", isUser ? "items-end" : "items-start")}>
+                    {/* Bulle */}
+                    <div className={cn(
+                      "px-4 py-2.5 rounded-2xl text-sm leading-relaxed",
+                      isUser
+                        ? "bg-[#6C3CE1] text-white rounded-tr-sm"
+                        : "bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] rounded-tl-sm",
+                    )}>
+                      {msg.isTyping ? (
+                        <div className="flex gap-1 items-center h-4">
+                          <span className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce [animation-delay:0ms]" />
+                          <span className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce [animation-delay:150ms]" />
+                          <span className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce [animation-delay:300ms]" />
+                        </div>
+                      ) : (
+                        <p className="whitespace-pre-wrap">{msg.content}</p>
+                      )}
+                    </div>
+
+                    {/* Actions inline sous la réponse du bot */}
+                    {!isUser && !msg.isTyping && msg.actions && msg.actions.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        {msg.actions.map((action, i) => (
+                          <span
+                            key={i}
+                            className={cn(
+                              "inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border",
+                              action.status === "success"
+                                ? "bg-[#25D366]/10 border-[#25D366]/30 text-[#25D366]"
+                                : "bg-red-50 border-red-200 text-red-500 dark:bg-red-900/20",
+                            )}
+                          >
+                            {actionIcon(action.type)}
+                            {actionLabel(action.type, d)}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Tokens */}
+                    {!isUser && msg.tokens && msg.tokens > 0 && (
+                      <p className="text-[10px] text-[var(--text-muted)]">
+                        <Zap className="w-2.5 h-2.5 inline mr-0.5" />
+                        {msg.tokens} {t.testTokensUsed}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* ── Alerte handoff ───────────────────────────────────────────── */}
+          {hasHandoff && (
+            <div className="mx-4 mb-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+              <p className="text-xs text-amber-700 dark:text-amber-300 font-semibold">
+                {t.testHandoffAlert}
+              </p>
             </div>
+          )}
 
-            {activeSimulator === "whatsapp" ? (
-              <WhatsAppSimulator
-                bot={bot} tenant={tenant} theme={theme} d={d}
-                appointments={allAppointments} services={services}
-                clientReport={clientReport}
-                onMockAppointment={handleMockAppointment}
-                onReportUpdate={handleReportUpdate}
-                onHumanTransfer={handleHumanTransfer}
-              />
+          {/* ── Zone de saisie ─────────────────────────────────────────────── */}
+          <div className="border-t border-[var(--border)] p-4">
+            {canal === "whatsapp" ? (
+              <div className="flex items-end gap-2">
+                <textarea
+                  value={inputValue}
+                  onChange={e => setInputValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={t.testWhatsappPlaceholder}
+                  rows={1}
+                  disabled={isSending}
+                  className="flex-1 resize-none bg-[var(--bg)] border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#25D366]/40 disabled:opacity-50 min-h-[42px] max-h-[120px]"
+                />
+                <button
+                  onClick={() => void sendMessage()}
+                  disabled={!inputValue.trim() || isSending}
+                  className="w-10 h-10 rounded-xl bg-[#25D366] text-white flex items-center justify-center disabled:opacity-40 hover:opacity-90 transition-opacity flex-shrink-0"
+                >
+                  {isSending
+                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                    : <Send    className="w-4 h-4" />
+                  }
+                </button>
+              </div>
             ) : (
-              <VoiceSimulator bot={bot} theme={theme} d={d} />
+              /* Interface Vocal */
+              <div className="flex flex-col items-center gap-4 py-4">
+                <p className="text-xs text-[var(--text-muted)]">{t.testVoiceSubtitle}</p>
+                <button
+                  onClick={handleVoiceCall}
+                  className={cn(
+                    "w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-lg",
+                    isVoiceCalling
+                      ? "bg-red-500 text-white animate-pulse"
+                      : "bg-[#6C3CE1] text-white hover:opacity-90",
+                  )}
+                >
+                  <Phone className="w-7 h-7" />
+                </button>
+                <p className="text-xs font-semibold text-[var(--text-muted)]">
+                  {isVoiceCalling ? t.testVoiceCalling : t.testVoiceCallBtn}
+                </p>
+                {isVoiceCalling && (
+                  <button
+                    onClick={() => setIsVoiceCalling(false)}
+                    className="text-xs text-red-500 font-semibold hover:underline"
+                  >
+                    {t.testVoiceEndBtn}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Panneau droite (2/5) ─────────────────────────────────────────── */}
+        <div className="lg:col-span-2 flex flex-col gap-4 overflow-y-auto max-h-[700px] pr-1">
+
+          {/* ── Données collectées ──────────────────────────────────────── */}
+          <div className="card p-4">
+            <p className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-3">
+              {t.testCollectedData}
+            </p>
+            {Object.keys(collected).length === 0 ? (
+              <p className="text-xs text-[var(--text-muted)] italic">{t.testSessionsEmpty}</p>
+            ) : (
+              <div className="space-y-2">
+                {collected.nom && (
+                  <div className="flex items-center gap-2">
+                    <User className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                    <span className="text-sm font-semibold text-[var(--text)]">{collected.nom}</span>
+                  </div>
+                )}
+                {collected.telephone && (
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                    <span className="text-sm text-[var(--text)]">{collected.telephone}</span>
+                  </div>
+                )}
+                {collected.email && (
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                    <span className="text-sm text-[var(--text)]">{collected.email}</span>
+                  </div>
+                )}
+                {collected.notes_client && (
+                  <p className="text-xs text-[var(--text-muted)] mt-1 italic">{collected.notes_client}</p>
+                )}
+              </div>
+            )}
+            {summary && (
+              <div className="mt-3 pt-3 border-t border-[var(--border)]">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
+                  {t.testSummaryTitle}
+                </p>
+                <p className="text-xs text-[var(--text-muted)] leading-relaxed">{summary}</p>
+              </div>
             )}
           </div>
 
-          {/* Col 3 : Agenda */}
-          <AgendaPanel
-            allAppointments={allAppointments}
-            currentDate={currentDate}
-            theme={theme}
-            onDateChange={setCurrentDate}
-          />
+          {/* ── Config IA (accordéon) ───────────────────────────────────── */}
+          <div className="card overflow-hidden">
+            <button
+              onClick={() => setConfigOpen(v => !v)}
+              className="w-full flex items-center justify-between p-4 hover:bg-[var(--bg)] transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-[#075E54]" />
+                <span className="text-sm font-bold text-[var(--text)]">{t.testConfigTitle}</span>
+                {config && (
+                  <Badge variant={config.is_deployed ? "green" : "slate"}>
+                    {config.is_deployed ? t.testPublishedBadge : t.testUnpublishedBadge}
+                  </Badge>
+                )}
+              </div>
+              {configOpen
+                ? <ChevronUp   className="w-4 h-4 text-[var(--text-muted)]" />
+                : <ChevronDown className="w-4 h-4 text-[var(--text-muted)]" />
+              }
+            </button>
+
+            {configOpen && (
+              <div className="px-4 pb-4 space-y-4 border-t border-[var(--border)]">
+                {/* System prompt */}
+                <div className="space-y-1 pt-4">
+                  <label className="text-xs font-semibold text-[var(--text-muted)]">
+                    {t.testConfigPrompt}
+                  </label>
+                  <textarea
+                    value={editPrompt}
+                    onChange={e => setEditPrompt(e.target.value)}
+                    rows={5}
+                    className="w-full resize-none bg-[var(--bg)] border border-[var(--border)] rounded-xl px-3 py-2 text-xs text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[#075E54]/40"
+                  />
+                </div>
+
+                {/* Temperature */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-[var(--text-muted)]">
+                      {t.testConfigTemperature}
+                    </label>
+                    <span className="text-xs font-bold text-[#075E54]">{editTemp.toFixed(1)}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.1}
+                    value={editTemp}
+                    onChange={e => setEditTemp(parseFloat(e.target.value))}
+                    className="w-full accent-[#075E54]"
+                  />
+                  <div className="flex justify-between text-[10px] text-[var(--text-muted)]">
+                    <span>0.0</span><span>1.0</span>
+                  </div>
+                </div>
+
+                {/* Max tokens */}
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-[var(--text-muted)]">
+                    {t.testConfigMaxTokens}
+                  </label>
+                  <input
+                    type="number"
+                    min={100}
+                    max={4000}
+                    step={100}
+                    value={editTokens}
+                    onChange={e => setEditTokens(parseInt(e.target.value, 10))}
+                    className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-xl px-3 py-2 text-sm text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[#075E54]/40"
+                  />
+                </div>
+
+                <button
+                  onClick={() => void saveConfig()}
+                  disabled={isSavingConfig}
+                  className="w-full btn-primary text-sm disabled:opacity-50"
+                >
+                  {isSavingConfig
+                    ? <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                    : <><Save className="w-4 h-4" /> {t.testConfigSave}</>
+                  }
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* ── Sessions passées (accordéon) ────────────────────────────── */}
+          <div className="card overflow-hidden">
+            <button
+              onClick={() => setSessionsOpen(v => !v)}
+              className="w-full flex items-center justify-between p-4 hover:bg-[var(--bg)] transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-[var(--text-muted)]" />
+                <span className="text-sm font-bold text-[var(--text)]">{t.testSessions}</span>
+                {sessions.length > 0 && (
+                  <span className="text-xs bg-[#075E54]/10 text-[#075E54] font-bold px-1.5 py-0.5 rounded-full">
+                    {sessions.length}
+                  </span>
+                )}
+              </div>
+              {sessionsOpen
+                ? <ChevronUp   className="w-4 h-4 text-[var(--text-muted)]" />
+                : <ChevronDown className="w-4 h-4 text-[var(--text-muted)]" />
+              }
+            </button>
+
+            {sessionsOpen && (
+              <div className="border-t border-[var(--border)]">
+                {sessions.length === 0 ? (
+                  <p className="text-xs text-[var(--text-muted)] text-center py-6 italic">
+                    {t.testSessionsEmpty}
+                  </p>
+                ) : (
+                  <div className="divide-y divide-[var(--border)] max-h-[320px] overflow-y-auto">
+                    {sessions.map(session => (
+                      <div key={session.id} className="p-3 hover:bg-[var(--bg)] transition-colors">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-1.5">
+                            <Badge variant={session.canal === "whatsapp" ? "green" : "violet"}>
+                              {session.canal === "whatsapp"
+                                ? <MessageSquare className="w-2.5 h-2.5 mr-0.5" />
+                                : <Phone         className="w-2.5 h-2.5 mr-0.5" />
+                              }
+                              {session.canal}
+                            </Badge>
+                            {session.has_transfer && (
+                              <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                            )}
+                          </div>
+                          <span className="text-[10px] text-[var(--text-muted)]">
+                            {formatDateTime(session.created_at)}
+                          </span>
+                        </div>
+
+                        {session.collected_data?.nom && (
+                          <p className="text-xs font-semibold text-[var(--text)] truncate">
+                            {session.collected_data.nom}
+                          </p>
+                        )}
+
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-[10px] text-[var(--text-muted)]">
+                            {session.nb_messages} msg
+                          </span>
+                          <span className="text-[10px] text-[var(--text-muted)]">
+                            <Zap className="w-2.5 h-2.5 inline mr-0.5" />
+                            {session.tokens_total}
+                          </span>
+                        </div>
+
+                        {session.intentions.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {session.intentions.slice(0, 3).map((intent, i) => (
+                              <span
+                                key={i}
+                                className="text-[10px] bg-[var(--bg)] border border-[var(--border)] px-1.5 py-0.5 rounded-full text-[var(--text-muted)]"
+                              >
+                                {intent}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
     </div>
