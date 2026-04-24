@@ -25,10 +25,6 @@ import type {
   TenantFilters,
   EntrepriseInUser,
   SecteurActivite,
-<<<<<<< HEAD
-=======
-
->>>>>>> 9c827066ecdfbd6ba5fa611766a8c4a693f79945
   // Bots
   Bot,
   CreateBotPayload,
@@ -785,11 +781,7 @@ export const feedbackRepository = {
 
   createProbleme: (payload: CreateProblemePayload): Promise<unknown> =>
     api.post("/api/v1/feedback/problemes/", payload),
-<<<<<<< HEAD
-
-=======
   // Témoignages publics (lecture seule côté PME)
->>>>>>> 9c827066ecdfbd6ba5fa611766a8c4a693f79945
   getTemoignages: (params?: {
     featured_landing?: boolean;
     featured_login?: boolean;
@@ -803,7 +795,6 @@ export const feedbackRepository = {
       ),
 };
 
-<<<<<<< HEAD
 // ══════════════════════════════════════════════════════════════════════════════
 // ONBOARDING
 // ══════════════════════════════════════════════════════════════════════════════
@@ -822,7 +813,6 @@ export const onboardingRepository = {
   claimBonus: (): Promise<ClaimBonusResponse> =>
     api.post<ClaimBonusResponse>("/api/v1/onboarding/claim-bonus/", {}),
 };
-=======
 
 // ══════════════════════════════════════════════════════════════════════════════
 // CHATBOT BRIDGE
@@ -849,7 +839,9 @@ export const chatbotRepository = {
     api.patch<ChatbotConfig>(`/api/v1/bots/${botId}/chatbot/`, payload),
 
   /** Liste les sessions de test d'un bot, triées par date décroissante. */
-  getSessions: (botId: string): Promise<PaginatedResponse<TestSessionSummary>> =>
+  getSessions: (
+    botId: string,
+  ): Promise<PaginatedResponse<TestSessionSummary>> =>
     api
       .get("/api/v1/chatbot/sessions/", {
         params: { bot: botId, ordering: "-created_at" },
@@ -869,4 +861,3 @@ export const chatbotRepository = {
   getSessionDetail: (sessionId: string): Promise<TestSessionDetail> =>
     api.get<TestSessionDetail>(`/api/v1/chatbot/sessions/${sessionId}/`),
 };
->>>>>>> 9c827066ecdfbd6ba5fa611766a8c4a693f79945
