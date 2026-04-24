@@ -83,21 +83,58 @@ export interface User {
   tenant_id?: string | null;
 }
 
-export interface LoginPayload { email: string; password: string; }
-export interface RegisterPayload { email: string; password: string; name: string; }
-export interface GoogleAuthPayload { email: string; name?: string; google_id?: string; }
-export interface VerifyEmailPayload { token: string; }
-export interface ResendVerificationPayload { email: string; }
-export interface ForgotPasswordPayload { email: string; }
-export interface ResetPasswordPayload { token: string; new_password: string; }
-export interface MagicLinkRequestPayload { email: string; }
-export interface MagicLinkVerifyPayload { token: string; }
-export interface RefreshTokenPayload { refresh: string; }
-export interface LogoutPayload { refresh: string; }
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
+export interface RegisterPayload {
+  email: string;
+  password: string;
+  name: string;
+}
+export interface GoogleAuthPayload {
+  email: string;
+  name?: string;
+  google_id?: string;
+}
+export interface VerifyEmailPayload {
+  token: string;
+}
+export interface ResendVerificationPayload {
+  email: string;
+}
+export interface ForgotPasswordPayload {
+  email: string;
+}
+export interface ResetPasswordPayload {
+  token: string;
+  new_password: string;
+}
+export interface MagicLinkRequestPayload {
+  email: string;
+}
+export interface MagicLinkVerifyPayload {
+  token: string;
+}
+export interface RefreshTokenPayload {
+  refresh: string;
+}
+export interface LogoutPayload {
+  refresh: string;
+}
 
-export interface AuthResponse { access: string; refresh: string; user: User; }
-export interface TokenRefreshResponse { access: string; }
-export interface EmailNotVerifiedResponse { detail: "EMAIL_NOT_VERIFIED"; email: string; }
+export interface AuthResponse {
+  access: string;
+  refresh: string;
+  user: User;
+}
+export interface TokenRefreshResponse {
+  access: string;
+}
+export interface EmailNotVerifiedResponse {
+  detail: "EMAIL_NOT_VERIFIED";
+  email: string;
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // TENANT
@@ -116,7 +153,10 @@ export interface Tenant {
   is_active: boolean;
   created_at: string;
 }
-export type CreateTenantPayload = Omit<Tenant, "id" | "created_at" | "subscription_id" | "wallet_id">;
+export type CreateTenantPayload = Omit<
+  Tenant,
+  "id" | "created_at" | "subscription_id" | "wallet_id"
+>;
 export interface TenantFilters {
   search?: string;
   is_active?: boolean;
@@ -142,18 +182,18 @@ export type BotType = "whatsapp" | "vocal";
  */
 export interface Bot {
   id: string;
-  entreprise: string;           // UUID FK → Entreprise
+  entreprise: string; // UUID FK → Entreprise
   entreprise_name: string;
-  numero: string | null;        // UUID FK → NumeroTelephone (null si non assigné)
-  numero_value: string | null;  // Valeur lisible du numéro (ex: "+237699000001")
+  numero: string | null; // UUID FK → NumeroTelephone (null si non assigné)
+  numero_value: string | null; // Valeur lisible du numéro (ex: "+237699000001")
   bot_type: BotType;
   nom: string;
   message_accueil: string;
   personnalite: string;
-  langues: string[];            // JSONField Django — tableau de codes langue
-  config_whatsapp: string | null;   // UUID FK → ConfigProvider
-  config_voice_ai: string | null;   // UUID FK → ConfigProvider
-  bot_paire: string | null;     // UUID O2O → Bot (le WA pointe vers le Vocal)
+  langues: string[]; // JSONField Django — tableau de codes langue
+  config_whatsapp: string | null; // UUID FK → ConfigProvider
+  config_voice_ai: string | null; // UUID FK → ConfigProvider
+  bot_paire: string | null; // UUID O2O → Bot (le WA pointe vers le Vocal)
   statut: BotStatut;
   is_active: boolean;
   created_at: string;
@@ -169,8 +209,6 @@ export interface CreateBotPayload {
   bot_type?: BotType;
   is_active?: boolean;
   statut?: BotStatut;
-  // entreprise est injecté automatiquement côté backend (perform_create)
-  // pour les créations via l'espace PME
   entreprise?: string;
   numero?: string | null;
   bot_paire?: string | null;
@@ -187,7 +225,6 @@ export interface BotFilters {
 
 // ══════════════════════════════════════════════════════════════════════════════
 // NUMÉRO DE TÉLÉPHONE
-// Aligné avec apps/bots/models.py → NumeroTelephone + NumeroTelephoneSerializer
 // ══════════════════════════════════════════════════════════════════════════════
 export interface NumeroTelephone {
   id: string;
@@ -245,7 +282,7 @@ export interface DaySchedule {
   open: boolean;
   start: string;
   end: string;
-  slot_min?: number; // optionnel — non envoyé par le backend Django actuel
+  slot_min?: number;
 }
 
 export interface HorairesOuverture {
@@ -302,7 +339,7 @@ export interface CreateAgencePayload {
   transfer_phone?: string;
   extra_info?: string;
   is_active?: boolean;
-  service_ids?: string[]; 
+  service_ids?: string[];
 }
 export interface Agenda {
   id: string;
@@ -325,6 +362,7 @@ export interface CreateAgendaPayload {
   buffer_min?: number;
   is_active?: boolean;
 }
+
 // ══════════════════════════════════════════════════════════════════════════════
 // RENDEZ-VOUS
 // ══════════════════════════════════════════════════════════════════════════════
@@ -360,7 +398,7 @@ export interface CreateRendezVousPayload {
   client?: string;
   client_nom?: string;
   client_telephone?: string;
-  client_email?: string;        // ← AJOUT
+  client_email?: string;
   statut?: "en_attente" | "confirme" | "annule" | "termine";
   canal?: "whatsapp" | "vocal" | "manuel";
   scheduled_at: string;
@@ -458,7 +496,6 @@ export interface Plan {
 // ══════════════════════════════════════════════════════════════════════════════
 // STATS
 // Aligné avec apps/dashboard/serializers.py → EntrepriseStatsSerializer
-// Endpoint : GET /api/v1/dashboard/entreprise/
 // ══════════════════════════════════════════════════════════════════════════════
 export interface TenantStats {
   messages_aujourdhui: number;
@@ -471,8 +508,6 @@ export interface TenantStats {
   email_rappels_envoyes: number;
   email_rappels_echoues: number;
 }
-// Aligné avec apps/dashboard/serializers.py → AdminStatsSerializer
-// Endpoint : GET /api/v1/dashboard/admin/
 export interface AdminStats {
   total_entreprises: number;
   entreprises_actives: number;
@@ -619,7 +654,9 @@ export interface ServiceKnowledge {
   bot_tone?: string;
   extra_info?: string;
 }
-export interface CreateServiceKnowledgePayload extends Partial<Omit<ServiceKnowledge, "id">> {
+export interface CreateServiceKnowledgePayload extends Partial<
+  Omit<ServiceKnowledge, "id">
+> {
   tenant_id: string;
   service_id: string;
 }
@@ -651,4 +688,156 @@ export interface CreateTransactionPayload {
   type: string;
   label: string;
   service_paiement?: string | null;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CHATBOT BRIDGE
+// Aligné avec apps/chatbot_bridge — POST /api/v1/chatbot/test/
+//                                   GET/PATCH /api/v1/bots/{id}/chatbot/
+//                                   GET /api/v1/chatbot/sessions/
+// ══════════════════════════════════════════════════════════════════════════════
+
+/** Message de l'historique envoyé au LLM. */
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+/** Canal du simulateur. */
+export type ChatTestCanal = "whatsapp" | "vocal";
+
+/** Payload POST /api/v1/chatbot/test/ */
+export interface ChatbotTestPayload {
+  bot_id: string;
+  session_id: string;
+  canal?: ChatTestCanal;
+  message: string;
+  history: ChatMessage[];
+}
+
+/** Données client collectées par le LLM au fil de la conversation. */
+export interface CollectedData {
+  nom?: string;
+  telephone?: string;
+  email?: string;
+  notes_client?: string;
+}
+
+/** Payload d'une action exécutée par le bot (create_client, create_appointment…). */
+export interface ChatActionPayload {
+  // create_client
+  client_id?: string;
+  nom?: string;
+  telephone?: string;
+  email?: string;
+  created?: boolean;
+  is_test?: boolean;
+  // create_appointment
+  rdv_id?: string;
+  client_nom?: string;
+  client_phone?: string;
+  scheduled_at?: string;
+  service?: { id: string; nom: string };
+  agenda?: string;
+  agence?: string;
+  // send_email
+  email_id?: string;
+  to?: string;
+  subject?: string;
+  body?: string;
+  // human_handoff
+  raison?: string;
+  persisted?: boolean;
+  // erreur
+  error?: string;
+}
+
+export interface ChatAction {
+  type: "create_client" | "create_appointment" | "send_email" | "human_handoff";
+  status: "success" | "error";
+  payload: ChatActionPayload;
+}
+
+/** Réponse POST /api/v1/chatbot/test/ */
+export interface ChatbotTestResponse {
+  reply: string;
+  intentions: string[];
+  human_handoff: boolean;
+  tokens_used: number;
+  collected_data: CollectedData;
+  conversation_summary: string;
+  actions: ChatAction[];
+  session_id: string;
+}
+
+/** Configuration IA d'un bot — GET/PATCH /api/v1/bots/{id}/chatbot/ */
+export interface ChatbotConfig {
+  id: string;
+  bot: string;
+  system_prompt: string;
+  temperature: number;
+  max_tokens: number;
+  is_deployed: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UpdateChatbotConfigPayload {
+  system_prompt?: string;
+  temperature?: number;
+  max_tokens?: number;
+}
+
+/** Session de test — GET /api/v1/chatbot/sessions/ */
+export interface TestSessionSummary {
+  id: string;
+  bot: string;
+  bot_nom: string;
+  entreprise: string;
+  entreprise_name: string;
+  session_id: string;
+  canal: ChatTestCanal;
+  nb_messages: number;
+  has_transfer: boolean;
+  intentions: string[];
+  collected_data: CollectedData;
+  conversation_summary: string;
+  tokens_total: number;
+  is_test: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Message d'une session — GET /api/v1/chatbot/sessions/{id}/messages/ */
+export interface TestMessage {
+  id: string;
+  session: string;
+  role: "user" | "assistant";
+  contenu: string;
+  tokens: number;
+  metadata: {
+    intentions?: string[];
+    actions_executed?: ChatAction[];
+    collected_data?: CollectedData;
+    conversation_summary?: string;
+    raw_json?: Record<string, unknown>;
+  };
+  created_at: string;
+}
+
+/** Email d'une session — GET /api/v1/chatbot/sessions/{id}/emails/ */
+export interface TestEmail {
+  id: string;
+  session: string;
+  to: string;
+  subject: string;
+  body: string;
+  is_test: boolean;
+  created_at: string;
+}
+
+/** Session enrichie avec messages et emails imbriqués. */
+export interface TestSessionDetail extends TestSessionSummary {
+  messages: TestMessage[];
+  emails: TestEmail[];
 }

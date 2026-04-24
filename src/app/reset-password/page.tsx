@@ -1,7 +1,7 @@
 "use client";
 import { useState, useTransition, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { KeyRound, XCircle, Lock, CheckCircle, ArrowLeft, Loader2 } from "lucide-react";
+import { KeyRound, XCircle, Lock, CheckCircle, ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
 import { authRepository } from "@/repositories";
 import { tokenStorage, ApiError } from "@/lib/api-client";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -25,6 +25,7 @@ export default function ResetPasswordPage() {
 }
 
 function ResetPasswordForm() {
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { dictionary: d } = useLanguage();
@@ -90,15 +91,22 @@ function ResetPasswordForm() {
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     required
                     minLength={8}
-                    className="input-base pl-10"
+                    className="input-base pl-10 pr-10"
                     placeholder={t.passwordPlaceholder}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={isPending}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[#075E54] transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 
@@ -107,15 +115,22 @@ function ResetPasswordForm() {
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     required
                     minLength={8}
-                    className="input-base pl-10"
+                    className="input-base pl-10 pr-10"
                     placeholder={t.passwordPlaceholder}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     disabled={isPending}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[#075E54] transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 
