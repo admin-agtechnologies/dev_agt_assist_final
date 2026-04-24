@@ -18,6 +18,7 @@ import {
   botsRepository,
   chatbotRepository,
 } from "@/repositories";
+import { VoiceDemoPlayer, type TranscriptLine } from "./_components/VoiceDemoPlayer";
 import type {
   Bot,
   ChatMessage,
@@ -47,19 +48,22 @@ interface DisplayMessage {
 
 function actionIcon(type: ChatAction["type"]) {
   switch (type) {
-    case "create_client":     return <UserCheck className="w-3.5 h-3.5 text-[#25D366]" />;
-    case "create_appointment":return <Calendar  className="w-3.5 h-3.5 text-amber-500" />;
-    case "send_email":        return <Mail      className="w-3.5 h-3.5 text-[#6C3CE1]" />;
-    case "human_handoff":     return <AlertTriangle className="w-3.5 h-3.5 text-red-400" />;
+    case "create_client": return <UserCheck className="w-3.5 h-3.5 text-[#25D366]" />;
+    case "create_appointment": return <Calendar className="w-3.5 h-3.5 text-amber-500" />;
+    case "send_email": return <Mail className="w-3.5 h-3.5 text-[#6C3CE1]" />;
+    case "human_handoff": return <AlertTriangle className="w-3.5 h-3.5 text-red-400" />;
   }
 }
 
-function actionLabel(type: ChatAction["type"], d: ReturnType<typeof useLanguage>["dictionary"]): string {
+function actionLabel(
+  type: ChatAction["type"],
+  d: ReturnType<typeof useLanguage>["dictionary"],
+): string {
   const map: Record<ChatAction["type"], string> = {
-    create_client:      d.bots.actionTypes.contact_collected,
+    create_client: d.bots.actionTypes.contact_collected,
     create_appointment: d.bots.actionTypes.appointment,
-    send_email:         d.bots.actionTypes.faq,
-    human_handoff:      d.bots.actionTypes.handoff,
+    send_email: d.bots.actionTypes.faq,
+    human_handoff: d.bots.actionTypes.handoff,
   };
   return map[type] ?? type;
 }
@@ -69,36 +73,39 @@ function actionLabel(type: ChatAction["type"], d: ReturnType<typeof useLanguage>
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function BotTestPage() {
-  const params   = useParams<{ id: string }>();
-  const router   = useRouter();
-  const botId    = params.id;
+  const params = useParams<{ id: string }>();
+  const router = useRouter();
+  const botId = params.id;
   const { dictionary: d } = useLanguage();
   const t = d.bots;
   const toast = useToast();
   const [, startTransition] = useTransition();
 
   // ── État global ────────────────────────────────────────────────────────────
-  const [bot, setBot]               = useState<Bot | null>(null);
-  const [config, setConfig]         = useState<ChatbotConfig | null>(null);
-  const [sessions, setSessions]     = useState<TestSessionSummary[]>([]);
-  const [loading, setLoading]       = useState(true);
+  const [bot, setBot] = useState<Bot | null>(null);
+  const [config, setConfig] = useState<ChatbotConfig | null>(null);
+  const [sessions, setSessions] = useState<TestSessionSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // ── Transcription vocale ───────────────────────────────────────────────────
+  const [transcriptLines, setTranscriptLines] = useState<TranscriptLine[]>([]);
 
   // ── Chat ───────────────────────────────────────────────────────────────────
-  const [canal, setCanal]           = useState<ChatTestCanal>("whatsapp");
-  const [messages, setMessages]     = useState<DisplayMessage[]>([]);
+  const [canal, setCanal] = useState<ChatTestCanal>("whatsapp");
+  const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
-  const [isSending, setIsSending]   = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [isVoiceCalling, setIsVoiceCalling] = useState(false);
 
   // Données live de la session courante
-  const [collected, setCollected]   = useState<CollectedData>({});
-  const [summary, setSummary]       = useState("");
+  const [collected, setCollected] = useState<CollectedData>({});
+  const [summary, setSummary] = useState("");
   const [hasHandoff, setHasHandoff] = useState(false);
 
   // ── Config IA ──────────────────────────────────────────────────────────────
   const [configOpen, setConfigOpen] = useState(false);
   const [editPrompt, setEditPrompt] = useState("");
-  const [editTemp, setEditTemp]     = useState(0.3);
+  const [editTemp, setEditTemp] = useState(0.3);
   const [editTokens, setEditTokens] = useState(1000);
   const [isSavingConfig, setIsSavingConfig] = useState(false);
 
@@ -111,11 +118,18 @@ export default function BotTestPage() {
   // historique LLM — maintenu localement pour chaque requête
   const historyRef = useRef<ChatMessage[]>([]);
 
-  // scroll auto vers le bas
+  // scroll auto bas du chat
   const chatEndRef = useRef<HTMLDivElement>(null);
+  // scroll auto bas de la transcription
+  const transcriptEndRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [transcriptLines]);
 
   // ── Chargement initial ─────────────────────────────────────────────────────
   const loadAll = useCallback(async () => {
@@ -149,6 +163,8 @@ export default function BotTestPage() {
     setCollected({});
     setSummary("");
     setHasHandoff(false);
+    setTranscriptLines([]);
+    setIsVoiceCalling(false);
   }, []);
 
   // ── Envoi d'un message WhatsApp ────────────────────────────────────────────
@@ -159,54 +175,48 @@ export default function BotTestPage() {
     setInputValue("");
     setIsSending(true);
 
-    // Ajout du message utilisateur dans l'UI
     const userMsg: DisplayMessage = {
-      id:      crypto.randomUUID(),
-      role:    "user",
+      id: crypto.randomUUID(),
+      role: "user",
       content: text,
     };
-    // Placeholder "typing"
     const typingMsg: DisplayMessage = {
-      id:        "typing",
-      role:      "assistant",
-      content:   "",
-      isTyping:  true,
+      id: "typing",
+      role: "assistant",
+      content: "",
+      isTyping: true,
     };
     setMessages(prev => [...prev, userMsg, typingMsg]);
 
     try {
       const response: ChatbotTestResponse = await chatbotRepository.testChat({
-        bot_id:     botId,
+        bot_id: botId,
         session_id: sessionIdRef.current,
         canal,
-        message:    text,
-        history:    historyRef.current,
+        message: text,
+        history: historyRef.current,
       });
 
-      // Mise à jour de l'historique LLM
       historyRef.current = [
         ...historyRef.current,
-        { role: "user"      as const, content: text },
+        { role: "user" as const, content: text },
         { role: "assistant" as const, content: response.reply },
-      ].slice(-20); // garde les 20 derniers
+      ].slice(-20);
 
-      // Mise à jour des données collectées
       setCollected(response.collected_data ?? {});
       if (response.conversation_summary) setSummary(response.conversation_summary);
       if (response.human_handoff) setHasHandoff(true);
 
-      // Remplacement du placeholder par la vraie réponse
       const assistantMsg: DisplayMessage = {
-        id:         crypto.randomUUID(),
-        role:       "assistant",
-        content:    response.reply,
-        actions:    response.actions ?? [],
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: response.reply,
+        actions: response.actions ?? [],
         intentions: response.intentions ?? [],
-        tokens:     response.tokens_used,
+        tokens: response.tokens_used,
       };
       setMessages(prev => [...prev.filter(m => m.id !== "typing"), assistantMsg]);
 
-      // Rafraîchissement des sessions en arrière-plan
       startTransition(() => {
         chatbotRepository
           .getSessions(botId)
@@ -221,23 +231,6 @@ export default function BotTestPage() {
     }
   }, [inputValue, isSending, botId, canal, t.testSendError, toast]);
 
-  // ── Appel vocal simulé ─────────────────────────────────────────────────────
-  const handleVoiceCall = useCallback(async () => {
-    if (isVoiceCalling) {
-      setIsVoiceCalling(false);
-      return;
-    }
-    setIsVoiceCalling(true);
-    // Démarre une session vocale avec un message d'accueil simulé
-    const fakeGreeting = bot?.message_accueil ?? "Bonjour !";
-    const systemMsg: DisplayMessage = {
-      id:      crypto.randomUUID(),
-      role:    "system",
-      content: `[${t.testVoiceConnected}] ${fakeGreeting}`,
-    };
-    setMessages(prev => [...prev, systemMsg]);
-  }, [isVoiceCalling, bot, t.testVoiceConnected]);
-
   // ── Sauvegarde config ──────────────────────────────────────────────────────
   const saveConfig = useCallback(async () => {
     if (!botId) return;
@@ -245,8 +238,8 @@ export default function BotTestPage() {
     try {
       const payload: UpdateChatbotConfigPayload = {
         system_prompt: editPrompt,
-        temperature:   editTemp,
-        max_tokens:    editTokens,
+        temperature: editTemp,
+        max_tokens: editTokens,
       };
       const updated = await chatbotRepository.updateChatbotConfig(botId, payload);
       setConfig(updated);
@@ -258,7 +251,7 @@ export default function BotTestPage() {
     }
   }, [botId, editPrompt, editTemp, editTokens, t.testConfigSaved, t.testConfigError, toast]);
 
-  // ── Handlers clavier ──────────────────────────────────────────────────────
+  // ── Handler clavier ────────────────────────────────────────────────────────
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -266,9 +259,9 @@ export default function BotTestPage() {
     }
   };
 
-  // ── Loading state ──────────────────────────────────────────────────────────
+  // ── Loading / guard ────────────────────────────────────────────────────────
   if (loading) return <PageLoader />;
-  if (!bot)    return null;
+  if (!bot) return null;
 
   const isOnline = bot.statut === "actif";
 
@@ -299,7 +292,7 @@ export default function BotTestPage() {
         {/* Statut en ligne */}
         <Badge variant={isOnline ? "green" : "slate"}>
           {isOnline
-            ? <><Wifi    className="w-3 h-3 mr-1" />{t.testPublishedBadge}</>
+            ? <><Wifi className="w-3 h-3 mr-1" />{t.testPublishedBadge}</>
             : <><WifiOff className="w-3 h-3 mr-1" />{t.testUnpublishedBadge}</>
           }
         </Badge>
@@ -342,12 +335,14 @@ export default function BotTestPage() {
       {/* ── Corps principal ──────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 flex-1 min-h-0">
 
-        {/* ── Simulateur chat (3/5) ────────────────────────────────────────── */}
+        {/* ── Simulateur (3/5) ─────────────────────────────────────────────── */}
         <div className="lg:col-span-3 flex flex-col card overflow-hidden">
 
-          {/* Messages */}
+          {/* Zone messages / player */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[400px] max-h-[600px]">
-            {messages.length === 0 && (
+
+            {/* Placeholder WhatsApp vide */}
+            {canal === "whatsapp" && messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full gap-3 py-10">
                 <div className="w-14 h-14 rounded-2xl bg-[#25D366]/10 flex items-center justify-center">
                   <MessageSquare className="w-7 h-7 text-[#25D366]" />
@@ -358,7 +353,21 @@ export default function BotTestPage() {
               </div>
             )}
 
-            {messages.map(msg => {
+            {/* ── Player vidéo vocal ── */}
+            {canal === "vocal" && (
+              <VoiceDemoPlayer
+                videoSrc="/videos/demo_vocal.mp4"
+                onCallStart={() => {
+                  setIsVoiceCalling(true);
+                  setTranscriptLines([]);
+                }}
+                onCallEnd={() => setIsVoiceCalling(false)}
+                onLineAppear={(lines) => setTranscriptLines(lines)}
+              />
+            )}
+
+            {/* Bulles WhatsApp */}
+            {canal === "whatsapp" && messages.map(msg => {
               if (msg.role === "system") {
                 return (
                   <div key={msg.id} className="flex justify-center">
@@ -379,7 +388,7 @@ export default function BotTestPage() {
                   )}>
                     {isUser
                       ? <User className="w-4 h-4 text-[#6C3CE1]" />
-                      : <BotIcon  className="w-4 h-4 text-[#25D366]" />
+                      : <BotIcon className="w-4 h-4 text-[#25D366]" />
                     }
                   </div>
 
@@ -402,7 +411,7 @@ export default function BotTestPage() {
                       )}
                     </div>
 
-                    {/* Actions inline sous la réponse du bot */}
+                    {/* Actions */}
                     {!isUser && !msg.isTyping && msg.actions && msg.actions.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-1">
                         {msg.actions.map((action, i) => (
@@ -433,10 +442,11 @@ export default function BotTestPage() {
                 </div>
               );
             })}
+
             <div ref={chatEndRef} />
           </div>
 
-          {/* ── Alerte handoff ───────────────────────────────────────────── */}
+          {/* Alerte handoff */}
           {hasHandoff && (
             <div className="mx-4 mb-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
@@ -446,7 +456,7 @@ export default function BotTestPage() {
             </div>
           )}
 
-          {/* ── Zone de saisie ─────────────────────────────────────────────── */}
+          {/* Zone de saisie — WhatsApp uniquement, vocal géré dans le player */}
           <div className="border-t border-[var(--border)] p-4">
             {canal === "whatsapp" ? (
               <div className="flex items-end gap-2">
@@ -466,37 +476,13 @@ export default function BotTestPage() {
                 >
                   {isSending
                     ? <Loader2 className="w-4 h-4 animate-spin" />
-                    : <Send    className="w-4 h-4" />
+                    : <Send className="w-4 h-4" />
                   }
                 </button>
               </div>
             ) : (
-              /* Interface Vocal */
-              <div className="flex flex-col items-center gap-4 py-4">
-                <p className="text-xs text-[var(--text-muted)]">{t.testVoiceSubtitle}</p>
-                <button
-                  onClick={handleVoiceCall}
-                  className={cn(
-                    "w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-lg",
-                    isVoiceCalling
-                      ? "bg-red-500 text-white animate-pulse"
-                      : "bg-[#6C3CE1] text-white hover:opacity-90",
-                  )}
-                >
-                  <Phone className="w-7 h-7" />
-                </button>
-                <p className="text-xs font-semibold text-[var(--text-muted)]">
-                  {isVoiceCalling ? t.testVoiceCalling : t.testVoiceCallBtn}
-                </p>
-                {isVoiceCalling && (
-                  <button
-                    onClick={() => setIsVoiceCalling(false)}
-                    className="text-xs text-red-500 font-semibold hover:underline"
-                  >
-                    {t.testVoiceEndBtn}
-                  </button>
-                )}
-              </div>
+              /* Vocal : les contrôles sont dans VoiceDemoPlayer */
+              null
             )}
           </div>
         </div>
@@ -504,39 +490,88 @@ export default function BotTestPage() {
         {/* ── Panneau droite (2/5) ─────────────────────────────────────────── */}
         <div className="lg:col-span-2 flex flex-col gap-4 overflow-y-auto max-h-[700px] pr-1">
 
-          {/* ── Données collectées ──────────────────────────────────────── */}
+          {/* ── Données collectées / Transcription ─────────────────────────── */}
           <div className="card p-4">
             <p className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-3">
-              {t.testCollectedData}
+              {canal === "vocal" ? "Transcription" : t.testCollectedData}
             </p>
-            {Object.keys(collected).length === 0 ? (
-              <p className="text-xs text-[var(--text-muted)] italic">{t.testSessionsEmpty}</p>
-            ) : (
-              <div className="space-y-2">
-                {collected.nom && (
-                  <div className="flex items-center gap-2">
-                    <User className="w-3.5 h-3.5 text-[var(--text-muted)]" />
-                    <span className="text-sm font-semibold text-[var(--text)]">{collected.nom}</span>
-                  </div>
+
+            {canal === "vocal" ? (
+              /* ── Mode vocal : transcription synchronisée ── */
+              <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
+                {transcriptLines.length === 0 ? (
+                  <p className="text-xs text-[var(--text-muted)] italic">
+                    {isVoiceCalling
+                      ? "En attente de la première réplique…"
+                      : t.testSessionsEmpty
+                    }
+                  </p>
+                ) : (
+                  transcriptLines.map(line => (
+                    <div
+                      key={line.id}
+                      className={cn(
+                        "flex gap-2 items-start",
+                        line.speaker === "client" ? "flex-row-reverse" : "flex-row",
+                      )}
+                    >
+                      {/* Badge speaker */}
+                      <span className={cn(
+                        "text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full flex-shrink-0 mt-0.5",
+                        line.speaker === "bot"
+                          ? "bg-[#6C3CE1]/10 text-[#6C3CE1]"
+                          : "bg-[#25D366]/10 text-[#25D366]",
+                      )}>
+                        {line.speaker === "bot" ? "Bot" : "Vous"}
+                      </span>
+                      {/* Texte */}
+                      <p className={cn(
+                        "text-xs leading-relaxed rounded-xl px-2.5 py-1.5 max-w-[80%]",
+                        line.speaker === "bot"
+                          ? "bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]"
+                          : "bg-[#25D366]/10 text-[var(--text)]",
+                      )}>
+                        {line.text}
+                      </p>
+                    </div>
+                  ))
                 )}
-                {collected.telephone && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-3.5 h-3.5 text-[var(--text-muted)]" />
-                    <span className="text-sm text-[var(--text)]">{collected.telephone}</span>
-                  </div>
-                )}
-                {collected.email && (
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-3.5 h-3.5 text-[var(--text-muted)]" />
-                    <span className="text-sm text-[var(--text)]">{collected.email}</span>
-                  </div>
-                )}
-                {collected.notes_client && (
-                  <p className="text-xs text-[var(--text-muted)] mt-1 italic">{collected.notes_client}</p>
-                )}
+                {/* Scroll auto vers la dernière ligne */}
+                <div ref={transcriptEndRef} />
               </div>
+            ) : (
+              /* ── Mode WhatsApp : données collectées classiques ── */
+              Object.keys(collected).length === 0 ? (
+                <p className="text-xs text-[var(--text-muted)] italic">{t.testSessionsEmpty}</p>
+              ) : (
+                <div className="space-y-2">
+                  {collected.nom && (
+                    <div className="flex items-center gap-2">
+                      <User className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                      <span className="text-sm font-semibold text-[var(--text)]">{collected.nom}</span>
+                    </div>
+                  )}
+                  {collected.telephone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                      <span className="text-sm text-[var(--text)]">{collected.telephone}</span>
+                    </div>
+                  )}
+                  {collected.email && (
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                      <span className="text-sm text-[var(--text)]">{collected.email}</span>
+                    </div>
+                  )}
+                  {collected.notes_client && (
+                    <p className="text-xs text-[var(--text-muted)] mt-1 italic">{collected.notes_client}</p>
+                  )}
+                </div>
+              )
             )}
-            {summary && (
+
+            {/* Résumé session (WhatsApp uniquement) */}
+            {canal !== "vocal" && summary && (
               <div className="mt-3 pt-3 border-t border-[var(--border)]">
                 <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
                   {t.testSummaryTitle}
@@ -546,7 +581,7 @@ export default function BotTestPage() {
             )}
           </div>
 
-          {/* ── Config IA (accordéon) ───────────────────────────────────── */}
+          {/* ── Config IA (accordéon) ───────────────────────────────────────── */}
           <div className="card overflow-hidden">
             <button
               onClick={() => setConfigOpen(v => !v)}
@@ -562,7 +597,7 @@ export default function BotTestPage() {
                 )}
               </div>
               {configOpen
-                ? <ChevronUp   className="w-4 h-4 text-[var(--text-muted)]" />
+                ? <ChevronUp className="w-4 h-4 text-[var(--text-muted)]" />
                 : <ChevronDown className="w-4 h-4 text-[var(--text-muted)]" />
               }
             </button>
@@ -634,7 +669,7 @@ export default function BotTestPage() {
             )}
           </div>
 
-          {/* ── Sessions passées (accordéon) ────────────────────────────── */}
+          {/* ── Sessions passées (accordéon) ────────────────────────────────── */}
           <div className="card overflow-hidden">
             <button
               onClick={() => setSessionsOpen(v => !v)}
@@ -650,7 +685,7 @@ export default function BotTestPage() {
                 )}
               </div>
               {sessionsOpen
-                ? <ChevronUp   className="w-4 h-4 text-[var(--text-muted)]" />
+                ? <ChevronUp className="w-4 h-4 text-[var(--text-muted)]" />
                 : <ChevronDown className="w-4 h-4 text-[var(--text-muted)]" />
               }
             </button>
@@ -670,7 +705,7 @@ export default function BotTestPage() {
                             <Badge variant={session.canal === "whatsapp" ? "green" : "violet"}>
                               {session.canal === "whatsapp"
                                 ? <MessageSquare className="w-2.5 h-2.5 mr-0.5" />
-                                : <Phone         className="w-2.5 h-2.5 mr-0.5" />
+                                : <Phone className="w-2.5 h-2.5 mr-0.5" />
                               }
                               {session.canal}
                             </Badge>
