@@ -356,7 +356,7 @@ export default function BotTestPage() {
             {/* ── Player vidéo vocal ── */}
             {canal === "vocal" && (
               <VoiceDemoPlayer
-                videoSrc="https://www.google.com/url?sa=E&q=https%3A%2F%2Fapi.salma.agtgroupholding.com%2Fmedia%2Fseed%2Fbourses%2Fdemo_test.mp4"
+              videoSrc="https://api.salma.agtgroupholding.com/media/seed/bourses/demo_test.mp4"
                 onCallStart={() => {
                   setIsVoiceCalling(true);
                   setTranscriptLines([]);
