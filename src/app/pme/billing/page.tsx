@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/components/ui/Toast";
+import { useRouter } from "next/navigation";
 import {
   subscriptionsRepository,
   walletsRepository,
@@ -28,6 +29,7 @@ import { PlanList } from "./components/PlanList";
 import { TransactionList } from "./components/TransactionList";
 import { TopUpModal } from "./components/TopUpModal";
 import { ChangePlanModal } from "./components/ChangePlanModal";
+import { ROUTES } from "@/lib/constants";
 
 export default function PmeBillingPage() {
   const { user } = useAuth();
@@ -45,7 +47,7 @@ export default function PmeBillingPage() {
   const { dictionary: d } = useLanguage();
   const t = d.billing;
   const toast = useToast();
-
+  const router = useRouter();
   const [sub, setSub] = useState<Subscription | null>(null);
   const [wallet, setWallet] = useState<WalletType | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -195,8 +197,8 @@ export default function PmeBillingPage() {
           tenantId={user?.entreprise?.id ?? ""}
           onClose={() => setChangePlanId(null)}
           onSuccess={() => {
-            setChangePlanId(null);
-            fetchData();
+           setChangePlanId(null);
+          router.push(ROUTES.dashboard);
           }}
         />
       )}

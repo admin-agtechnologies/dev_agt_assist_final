@@ -83,10 +83,7 @@ import type {
   TestSessionSummary,
   TestSessionDetail,
 } from "@/types/api";
-import type {
-  OnboardingResponse,
-  OnboardingCheckRequest,
-} from "@/types/onboarding";
+import type { ClaimBonusResponse, OnboardingCheckRequest, OnboardingResponse } from "@/types/onboarding";
 
 // ── Helper params ─────────────────────────────────────────────────────────────
 const p = (f?: object): Record<string, string> =>
@@ -798,13 +795,7 @@ export const feedbackRepository = {
 // ══════════════════════════════════════════════════════════════════════════════
 // ONBOARDING
 // ══════════════════════════════════════════════════════════════════════════════
-export interface ClaimBonusResponse {
-  success: boolean;
-  already_claimed: boolean;
-  montant: number;
-  nouveau_solde: number;
-  devise: string;
-}
+
 
 export const onboardingRepository = {
   check: (payload: OnboardingCheckRequest): Promise<OnboardingResponse> =>

@@ -26,3 +26,11 @@ export interface OnboardingCheckRequest {
   page: string;
   context?: Record<string, unknown>;
 }
+
+export interface ClaimBonusResponse {
+  success: boolean;
+  already_claimed: boolean;
+  montant: number;
+  nouveau_solde: number;
+  devise: string;
+}

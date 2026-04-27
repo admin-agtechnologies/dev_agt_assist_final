@@ -12,6 +12,11 @@ export const fr = {
     fr: "Français", en: "English", back: "Retour", continue: "Continuer",
     confirm: "Confirmer", perMonth: "/ mois", unlimited: "Illimité",
     recommended: "Recommandé",
+    espacePME: "Espace PME",
+    lightMode: "Mode clair",
+    darkMode: "Mode sombre",
+    bonusCredited: "🎉 Bonus crédité ! +{amount} {devise} sur votre wallet.",
+    bonusError: "Une erreur est survenue. Veuillez réessayer.",
   },
 
   nav: {

@@ -71,7 +71,9 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
         const res = await onboardingRepository.claimBonus();
         if (!res.already_claimed) {
           toast.success(
-            `🎉 Bonus de bienvenue crédité ! +${res.montant.toLocaleString("fr-FR")} ${res.devise} sur votre wallet.`,
+           d.common.bonusCredited
+              .replace("{amount}", res.montant.toLocaleString("fr-FR"))
+              .replace("{devise}", res.devise),
           );
           // Rafraîchir le solde si déjà sur billing
           if (
@@ -115,7 +117,7 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
           <div>
             <p className="font-bold text-sm text-[var(--text)]">AGT Platform</p>
             <p className="text-[10px] text-[var(--text-muted)] font-medium">
-              Espace PME
+              {d.common.espacePME}
             </p>
           </div>
         </div>
@@ -239,7 +241,7 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
           ) : (
             <Moon className="w-4 h-4 flex-shrink-0" />
           )}
-          {theme === "dark" ? "Mode clair" : "Mode sombre"}
+          {theme === "dark" ? d.common.lightMode : d.common.darkMode}
         </button>
 
         {/* Langue */}
@@ -248,7 +250,7 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-[var(--text-sidebar)] hover:bg-[var(--bg)] transition-colors"
         >
           <Globe className="w-4 h-4 flex-shrink-0" />
-          {locale === "fr" ? "English" : "Français"}
+          {theme === "dark" ? d.common.lightMode : d.common.darkMode}
         </button>
 
         {/* Logout */}
