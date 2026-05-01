@@ -9,8 +9,8 @@ interface ConnectionStatusProps {
 }
 
 /**
- * Affiche les infos de la session WhatsApp connectée :
- * numéro formaté, date de connexion, badge "Connecté".
+ * Affiche les infos d'une session WhatsApp connectée.
+ * Version compacte pour la colonne droite.
  */
 export function ConnectionStatus({
   phoneNumber,
@@ -21,7 +21,6 @@ export function ConnectionStatus({
 
   const formatPhone = (raw: string): string => {
     if (!raw) return "—";
-    // 237699000001 → +237 699 000 001
     if (raw.length < 9) return `+${raw}`;
     return `+${raw.slice(0, 3)} ${raw.slice(3, 6)} ${raw.slice(6, 9)} ${raw.slice(9)}`.trim();
   };
@@ -30,9 +29,8 @@ export function ConnectionStatus({
     if (!iso) return "—";
     try {
       return new Date(iso).toLocaleString(locale === "fr" ? "fr-FR" : "en-US", {
-        year: "numeric",
-        month: "long",
         day: "numeric",
+        month: "short",
         hour: "2-digit",
         minute: "2-digit",
       });
@@ -42,40 +40,35 @@ export function ConnectionStatus({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2.5">
       {/* Badge */}
-      <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-full text-sm font-medium">
-        <CheckCircle2 className="w-4 h-4" />
+      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-full text-[11px] font-medium">
+        <CheckCircle2 className="w-3.5 h-3.5" />
         <span>{t.statusWorking}</span>
       </div>
 
-      {/* Carte info */}
-      <div className="bg-[var(--bg-soft)] border border-[var(--border)] rounded-2xl p-5 space-y-4">
+      {/* Carte info compacte */}
+      <div className="bg-[var(--bg-soft)] border border-[var(--border)] rounded-xl p-3 space-y-2.5">
         <div>
-          <div className="flex items-center gap-2 mb-1.5 text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-semibold">
-            <Phone className="w-3 h-3" />
+          <div className="flex items-center gap-1.5 mb-0.5 text-[9px] text-[var(--text-muted)] uppercase tracking-widest font-semibold">
+            <Phone className="w-2.5 h-2.5" />
             <span>{t.phoneLabel}</span>
           </div>
-          <p className="text-base font-mono font-semibold text-[var(--text)]">
+          <p className="text-sm font-mono font-semibold text-[var(--text)]">
             {formatPhone(phoneNumber)}
           </p>
         </div>
 
-        <div>
-          <div className="flex items-center gap-2 mb-1.5 text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-semibold">
-            <Clock className="w-3 h-3" />
+        <div className="pt-2 border-t border-[var(--border)]">
+          <div className="flex items-center gap-1.5 mb-0.5 text-[9px] text-[var(--text-muted)] uppercase tracking-widest font-semibold">
+            <Clock className="w-2.5 h-2.5" />
             <span>{t.connectedAtLabel}</span>
           </div>
-          <p className="text-sm text-[var(--text)]">
+          <p className="text-xs text-[var(--text)]">
             {formatDate(connectedAt)}
           </p>
         </div>
       </div>
-
-      {/* Note */}
-      <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-        {t.workingNote}
-      </p>
     </div>
   );
 }

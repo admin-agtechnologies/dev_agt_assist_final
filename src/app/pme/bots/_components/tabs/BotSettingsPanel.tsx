@@ -1,6 +1,6 @@
 // src/app/pme/bots/_components/tabs/BotSettingsPanel.tsx
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Settings,
   MessageSquare,
@@ -9,6 +9,7 @@ import {
   Activity,
   AlertCircle,
   Save,
+  ShieldCheck,
 } from "lucide-react";
 import { Badge, Spinner } from "@/components/ui";
 import { cn } from "@/lib/utils";
@@ -28,7 +29,6 @@ interface BotSettingsPanelProps {
 export function BotSettingsPanel({
   pair,
   d,
-  colors,
   onRefresh,
 }: BotSettingsPanelProps) {
   const toast = useToast();
@@ -38,6 +38,12 @@ export function BotSettingsPanel({
   const [voiceDisplayName, setVoiceDisplayName] = useState(
     pair.voiceBot?.nom ?? "",
   );
+
+  // ── État de connexion WhatsApp synchronisé via le callback du panneau ──
+  const [isWaConnected, setIsWaConnected] = useState(false);
+
+  const isActive = pair.waBot.statut === "actif";
+  const phoneDisplay = pair.waBot.numero_value ?? "Non configuré";
 
   const handleSave = async () => {
     setSaving(true);
@@ -57,13 +63,57 @@ export function BotSettingsPanel({
     }
   };
 
-  const isActive = pair.waBot.statut === "actif";
-  const phoneDisplay = pair.waBot.numero_value ?? "Non configuré";
+  // ── Lignes du bloc statut (mémorisées pour éviter re-renders inutiles) ──
+  const statusRows = useMemo(
+    () => [
+      {
+        key: "llm",
+        label: "Moteur IA",
+        value: (
+          <div className="flex items-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#25D366]" />
+            <span className="text-xs font-bold text-[#25D366]">IA locale</span>
+          </div>
+        ),
+        sub: "Ollama · serveur AGT",
+      },
+      {
+        key: "wa",
+        label: "Canal WhatsApp",
+        value: (
+          <span
+            className={cn(
+              "text-xs font-bold",
+              isWaConnected ? "text-[#25D366]" : "text-white/40",
+            )}
+          >
+            {isWaConnected ? "Connecté" : "Non connecté"}
+          </span>
+        ),
+      },
+      {
+        key: "voice",
+        label: "Canal Vocal",
+        value: (
+          <span
+            className={cn(
+              "text-xs font-bold",
+              pair.voiceBot ? "text-sky-300" : "text-white/40",
+            )}
+          >
+            {pair.voiceBot ? "Configuré" : "Non configuré"}
+          </span>
+        ),
+      },
+    ],
+    [isWaConnected, pair.voiceBot],
+  );
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-in">
-      {/* ── Colonne gauche : formulaire (7/12) ── */}
+      {/* ═══════════════ COLONNE GAUCHE — Formulaire (7/12) ═══════════════ */}
       <div className="lg:col-span-7 space-y-6">
+        {/* Identité des agents */}
         <div className="bg-[var(--bg)] p-6 rounded-3xl border border-[var(--border)] space-y-6">
           <div className="flex items-center gap-2 pb-2 border-b border-[var(--border)]">
             <Settings className="w-4 h-4 text-[var(--text-muted)]" />
@@ -110,6 +160,7 @@ export function BotSettingsPanel({
           </div>
         </div>
 
+        {/* Numéro de téléphone */}
         <div className="bg-[var(--bg)] p-6 rounded-3xl border border-[var(--border)]">
           <label className="label-base font-bold mb-3 flex items-center gap-2">
             <Globe className="w-4 h-4 text-sky-500" /> Numéro de téléphone
@@ -135,7 +186,8 @@ export function BotSettingsPanel({
           </div>
         </div>
 
-        <div className="flex justify-end pt-4">
+        {/* Bouton Enregistrer */}
+        <div className="flex justify-end pt-2">
           <button
             onClick={handleSave}
             disabled={saving}
@@ -151,81 +203,84 @@ export function BotSettingsPanel({
         </div>
       </div>
 
-      {/* ── Colonne droite : résumé & statut (5/12) ── */}
+      {/* ═══════════════ COLONNE DROITE — Statut + WhatsApp (5/12) ═══════════════ */}
       <div className="lg:col-span-5 space-y-6">
-        <div className="bg-[#075E54] text-white p-8 rounded-[2.5rem] relative overflow-hidden shadow-2xl">
+        {/* ── Statut en direct (épuré, sans données simulées) ── */}
+        <div className="bg-[#075E54] text-white p-6 rounded-[2rem] relative overflow-hidden shadow-2xl">
           <div className="relative z-10">
             <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.2em] mb-4">
-              Statut en direct
+              Statut
             </p>
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-3xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
-                <Activity className="w-8 h-8 text-[#25D366]" />
+
+            {/* Header statut */}
+            <div className="flex items-center gap-4 mb-5">
+              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
+                <Activity
+                  className={cn(
+                    "w-7 h-7",
+                    isActive ? "text-[#25D366]" : "text-white/40",
+                  )}
+                />
               </div>
               <div>
-                <h4 className="text-xl font-black">
+                <h4 className="text-lg font-black">
                   {isActive ? "Opérationnel" : "En pause"}
                 </h4>
                 <p className="text-white/60 text-xs">
-                  Dernière activité il y a 2 min
+                  {isActive
+                    ? "Bot publié et prêt à répondre"
+                    : "Bot non publié — pas de réponses automatiques"}
                 </p>
               </div>
             </div>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10">
-                <span className="text-xs">Intelligence (LLM)</span>
-                <Badge className="bg-[#25D366] text-[#075E54] border-none">
-                  Gemini Pro
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10">
-                <span className="text-xs">Canal WhatsApp</span>
-                <span className="text-xs font-bold text-[#25D366]">
-                  Connecté
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10">
-                <span className="text-xs">Canal Vocal</span>
-                <span
-                  className={cn(
-                    "text-xs font-bold",
-                    pair.voiceBot ? "text-sky-300" : "text-white/40",
-                  )}
+
+            {/* Lignes d'info */}
+            <div className="space-y-2.5">
+              {statusRows.map((row) => (
+                <div
+                  key={row.key}
+                  className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10"
                 >
-                  {pair.voiceBot ? "Prêt" : "Non configuré"}
-                </span>
-              </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs">{row.label}</span>
+                    {row.sub && (
+                      <span className="text-[10px] text-white/40 mt-0.5">
+                        {row.sub}
+                      </span>
+                    )}
+                  </div>
+                  {row.value}
+                </div>
+              ))}
             </div>
           </div>
           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-[#25D366] rounded-full blur-[80px] opacity-20" />
         </div>
 
-        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 p-6 rounded-3xl">
-          <div className="flex gap-4">
-            <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+        {/* ── Connexion WhatsApp (le panneau livré précédemment) ── */}
+        <WhatsAppPanel
+          botId={pair.waBot.id}
+          isBotPublished={isActive}
+          onConnectionChange={setIsWaConnected}
+        />
+
+        {/* ── Aide AGT (compact) ── */}
+        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 p-4 rounded-2xl">
+          <div className="flex gap-3">
+            <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-bold text-amber-900 dark:text-amber-100 mb-1">
+              <p className="text-xs font-bold text-amber-900 dark:text-amber-100 mb-0.5">
                 Besoin d&apos;aide ?
               </p>
-              <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
-                Si vous souhaitez changer de numéro ou modifier les capacités
-                profondes de l&apos;IA, veuillez contacter votre conseiller AGT.
+              <p className="text-[11px] text-amber-700 dark:text-amber-300 leading-relaxed">
+                Pour changer de numéro ou modifier les capacités profondes de
+                l&apos;IA, contactez votre conseiller AGT.
               </p>
             </div>
           </div>
         </div>
       </div>
-
-      <div className="lg:col-span-12">
-        <WhatsAppPanel
-          botId={pair.waBot.id}
-          isBotPublished={pair.waBot.statut === "actif"}
-          onConnectionChange={(connected) => {
-            // Optionnel : refresh des données parent
-            if (connected) onRefresh();
-          }}
-        />
-      </div>
     </div>
   );
 }
+// END OF FILE: src/app/pme/bots/_components/tabs/BotSettingsPanel.tsx
