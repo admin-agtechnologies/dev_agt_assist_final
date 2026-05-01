@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/components/ui/ThemeProvider";
-import { PLANS_CONFIG, ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants";
+import { plansRepository } from "@/repositories";
+import type { Plan } from "@/types/api";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import {
@@ -390,6 +392,11 @@ export default function LandingPage() {
   const tp = d.plans;
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [landingPlans, setLandingPlans] = useState<Plan[]>([]);
+
+  useEffect(() => {
+    plansRepository.getList().then(setLandingPlans).catch(() => {});
+  }, []);
 
   const features = [
     { title: t.feature1Title, desc: t.feature1Desc },
@@ -527,7 +534,8 @@ export default function LandingPage() {
         <div className="relative rounded-3xl overflow-hidden border border-[var(--border)] shadow-modal bg-[var(--bg-card)] group">
           <video
             ref={videoRef}
-            src="https://api.salma.agtgroupholding.com/media/seed/bourses/demo.mp4"
+            // https://api.salma.agtgroupholding.com/media/seed/bourses/demo.mp4
+            src="demo.mp4"
             className="w-full aspect-video object-cover"
             playsInline
             preload="metadata"
@@ -594,9 +602,9 @@ export default function LandingPage() {
           <p className="text-[var(--text-muted)] text-sm">{t.plansSubtitle}</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {PLANS_CONFIG.map((plan) => (
+          {landingPlans.map((plan) => (
             <div
-              key={plan.slug}
+              key={plan.id}
               className={cn(
                 "card p-6 flex flex-col gap-4 relative transition-all",
                 plan.highlight ? "ring-2 ring-[#25D366] shadow-card-hover" : "hover:shadow-card-hover"
@@ -609,24 +617,20 @@ export default function LandingPage() {
               )}
               <div>
                 <p className="text-sm font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
-                  {plan.name}
+                  {plan.nom}
                 </p>
                 <p className="text-3xl font-black text-[var(--text)]">
-                  {formatCurrency(plan.price)}
-                  <span className="text-sm font-normal text-[var(--text-muted)]">{d.common.perMonth}</span>
+                  {formatCurrency(plan.prix)}
+                  <span className="text-sm font-normal text-[var(--text-muted)]">/ {plan.billing_cycle === "annuel" ? "an" : "mois"}</span>
                 </p>
               </div>
               <ul className="space-y-2 flex-1">
-                {plan.features_keys.map((key) => {
-                  const parts = key.split(".") as ["plans", "features", keyof typeof d.plans.features];
-                  const label = d.plans.features[parts[2]];
-                  return (
-                    <li key={key} className="flex items-start gap-2 text-xs text-[var(--text-muted)]">
-                      <Check className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-[#25D366]" />
-                      {label}
-                    </li>
-                  );
-                })}
+                {plan.features.map((feature, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-[var(--text-muted)]">
+                    <Check className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-[#25D366]" />
+                    {feature}
+                  </li>
+                ))}
               </ul>
               <Link
                 href={ROUTES.onboarding}

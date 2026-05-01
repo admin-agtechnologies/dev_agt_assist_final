@@ -82,6 +82,8 @@ import type {
   UpdateChatbotConfigPayload,
   TestSessionSummary,
   TestSessionDetail,
+  // Platform help
+  HelpEntry,
 } from "@/types/api";
 import type { ClaimBonusResponse, OnboardingCheckRequest, OnboardingResponse } from "@/types/onboarding";
 
@@ -542,7 +544,7 @@ export const walletsRepository = {
 export const plansRepository = {
   getList: (): Promise<Plan[]> =>
     api
-      .get("/api/v1/billing/plans/")
+      .get("/api/v1/billing/plans/", { params: { is_active: "true" } })
       .then((data: unknown) =>
         Array.isArray(data)
           ? (data as Plan[])
@@ -803,6 +805,20 @@ export const onboardingRepository = {
 
   claimBonus: (): Promise<ClaimBonusResponse> =>
     api.post<ClaimBonusResponse>("/api/v1/onboarding/claim-bonus/", {}),
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PLATFORM HELP (FAQ gérée par admin, lue par PME)
+// ══════════════════════════════════════════════════════════════════════════════
+export const platformHelpRepository = {
+  getList: (): Promise<HelpEntry[]> =>
+    api
+      .get("/api/v1/platform/help/")
+      .then((data: unknown) =>
+        Array.isArray(data)
+          ? (data as HelpEntry[])
+          : ((data as { results?: HelpEntry[] }).results ?? []),
+      ),
 };
 
 // ══════════════════════════════════════════════════════════════════════════════

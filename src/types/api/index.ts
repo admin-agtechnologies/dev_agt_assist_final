@@ -841,3 +841,18 @@ export interface TestSessionDetail extends TestSessionSummary {
   messages: TestMessage[];
   emails: TestEmail[];
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PLATFORM HELP (FAQ gérée par l'admin AGT)
+// ══════════════════════════════════════════════════════════════════════════════
+export type HelpCategorie = "general" | "bots" | "billing" | "rdv" | "technique";
+
+export interface HelpEntry {
+  id: string;
+  categorie: HelpCategorie;
+  question_fr: string;
+  question_en: string;
+  reponse_fr: string;
+  reponse_en: string;
+  ordre: number;
+}

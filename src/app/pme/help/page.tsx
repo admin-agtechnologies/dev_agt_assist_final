@@ -1,6 +1,6 @@
 // src/app/pme/help/page.tsx
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { SectionHeader } from "@/components/ui";
@@ -8,173 +8,46 @@ import {
   HelpCircle, ChevronDown, MessageCircle, ExternalLink,
   Search, Tag,
 } from "lucide-react";
+import { platformHelpRepository } from "@/repositories";
+import type { HelpEntry } from "@/types/api";
 
-// ── Ouvre le widget chat programmatiquement ────────────────────────────────────
 function openSupportChat() {
   window.dispatchEvent(new CustomEvent("agt:open-chat"));
 }
 
-// ── FAQ statiques AGT Platform ─────────────────────────────────────────────────
-interface PlatformFAQ {
-  id: string;
-  question: string;
-  answer: string;
-  category: string;
+const CATEGORIE_LABELS: Record<string, { fr: string; en: string }> = {
+  general:   { fr: "Général",     en: "General" },
+  bots:      { fr: "Assistants",  en: "Assistants" },
+  billing:   { fr: "Facturation", en: "Billing" },
+  rdv:       { fr: "Rendez-vous", en: "Appointments" },
+  technique: { fr: "Technique",   en: "Technical" },
+};
+
+function categoryLabel(cat: string, locale: string): string {
+  return CATEGORIE_LABELS[cat]?.[locale as "fr" | "en"] ?? cat;
 }
-
-const PLATFORM_FAQ_FR: PlatformFAQ[] = [
-  {
-    id: "1", category: "Compte",
-    question: "Comment créer mon compte AGT Platform ?",
-    answer: "Rendez-vous sur la page d'accueil et cliquez sur \"Créer mon compte\". Renseignez les informations de votre entreprise, choisissez votre plan et effectuez le paiement via Mobile Money. Votre assistant est prêt en moins de 5 minutes.",
-  },
-  {
-    id: "2", category: "Compte",
-    question: "J'ai oublié mon mot de passe, que faire ?",
-    answer: "Sur la page de connexion, cliquez sur \"Mot de passe oublié ?\" et saisissez votre adresse email. Vous recevrez un lien de réinitialisation dans votre boîte mail. Vérifiez également vos spams.",
-  },
-  {
-    id: "3", category: "Compte",
-    question: "Puis-je changer l'email de mon compte ?",
-    answer: "Oui, rendez-vous dans Mon Profil > Modifier le profil. Mettez à jour votre adresse email et sauvegardez. Un email de confirmation vous sera envoyé à la nouvelle adresse.",
-  },
-  {
-    id: "4", category: "Bots",
-    question: "Comment créer mon premier bot WhatsApp ?",
-    answer: "Dans \"Mes Bots\", cliquez sur \"Nouveau bot\". Donnez-lui un nom, un message d'accueil et choisissez votre fournisseur WhatsApp. Utilisez ensuite \"Tester le bot\" pour vérifier son comportement avant de le publier.",
-  },
-  {
-    id: "5", category: "Bots",
-    question: "Quelle est la différence entre WAHA et Meta API ?",
-    answer: "WAHA est une solution open-source sans approbation Meta, idéale pour démarrer. Meta API est la solution officielle WhatsApp Business, recommandée pour les volumes élevés et une intégration certifiée.",
-  },
-  {
-    id: "6", category: "Bots",
-    question: "Mon bot ne répond pas correctement, que faire ?",
-    answer: "Vérifiez que votre base de connaissance est bien remplie (horaires, services, FAQ). Utilisez l'interface de test pour simuler des conversations. Si le bot ne détecte pas une intention, enrichissez vos réponses dans la base de connaissance.",
-  },
-  {
-    id: "7", category: "Facturation",
-    question: "Comment recharger mon portefeuille ?",
-    answer: "Dans Facturation, cliquez sur \"Recharger\". Choisissez Orange Money ou MTN MoMo, saisissez votre numéro et le montant. La recharge est instantanée. Montant minimum : 1 000 XAF.",
-  },
-  {
-    id: "8", category: "Facturation",
-    question: "Que se passe-t-il si mon solde est insuffisant au renouvellement ?",
-    answer: "Votre abonnement sera suspendu et votre bot ne répondra plus à vos clients. Rechargez votre portefeuille pour réactiver le service. Aucune donnée n'est perdue.",
-  },
-  {
-    id: "9", category: "Facturation",
-    question: "Puis-je changer de plan à tout moment ?",
-    answer: "Oui, depuis la section Facturation. Le montant du nouveau plan est débité de votre portefeuille. Le changement est effectif immédiatement.",
-  },
-  {
-    id: "10", category: "Rendez-vous",
-    question: "Comment le bot prend-il des rendez-vous automatiquement ?",
-    answer: "Le bot analyse les messages pour détecter une intention de RDV. Il consulte votre agenda en temps réel pour proposer les créneaux libres, selon la durée et le tampon configurés dans vos paramètres.",
-  },
-  {
-    id: "11", category: "Rendez-vous",
-    question: "Comment configurer mes créneaux de disponibilité ?",
-    answer: "Dans Rendez-vous, cliquez sur l'icône de configuration. Définissez la durée d'un RDV et le tampon entre consultations. Vos horaires d'ouverture se configurent dans Base de connaissance > Infos générales.",
-  },
-  {
-    id: "12", category: "Base de connaissance",
-    question: "Pourquoi ma base de connaissance est-elle importante ?",
-    answer: "C'est le \"cerveau\" de votre bot. Plus elle est complète, plus votre assistant donnera des réponses précises. Renseignez horaires, services, agences, FAQ et contacts pour le meilleur résultat.",
-  },
-  {
-    id: "13", category: "Base de connaissance",
-    question: "Mon bot peut-il répondre en plusieurs langues ?",
-    answer: "Oui ! Sélectionnez les langues lors de la création du bot. Dans la Base de connaissance, renseignez vos informations dans chaque langue pour que le bot réponde dans la langue du client.",
-  },
-];
-
-const PLATFORM_FAQ_EN: PlatformFAQ[] = [
-  {
-    id: "1", category: "Account",
-    question: "How do I create my AGT Platform account?",
-    answer: "Go to the homepage and click \"Create my account\". Fill in your business information, choose your plan and pay via Mobile Money. Your assistant is ready in less than 5 minutes.",
-  },
-  {
-    id: "2", category: "Account",
-    question: "I forgot my password, what should I do?",
-    answer: "On the login page, click \"Forgot password?\" and enter your email. You will receive a reset link in your inbox. Also check your spam folder.",
-  },
-  {
-    id: "3", category: "Account",
-    question: "Can I change my account email?",
-    answer: "Yes, go to My Profile > Edit profile. Update your email address and save. A confirmation email will be sent to the new address.",
-  },
-  {
-    id: "4", category: "Bots",
-    question: "How do I create my first WhatsApp bot?",
-    answer: "In \"My Bots\", click \"New bot\". Give it a name, a welcome message and choose your WhatsApp provider. Then use \"Test bot\" to verify its behavior before publishing.",
-  },
-  {
-    id: "5", category: "Bots",
-    question: "What is the difference between WAHA and Meta API?",
-    answer: "WAHA is an open-source solution without Meta approval, ideal for getting started. Meta API is WhatsApp Business's official solution, recommended for high volumes and certified integration.",
-  },
-  {
-    id: "6", category: "Bots",
-    question: "My bot isn't responding correctly, what should I do?",
-    answer: "Check that your knowledge base is properly filled in (hours, services, FAQ). Use the test interface to simulate conversations and identify issues.",
-  },
-  {
-    id: "7", category: "Billing",
-    question: "How do I top up my wallet?",
-    answer: "In Billing, click \"Top up\". Choose Orange Money or MTN MoMo, enter your number and amount. Top-up is instant. Minimum: 1,000 XAF.",
-  },
-  {
-    id: "8", category: "Billing",
-    question: "What happens if my balance is insufficient at renewal?",
-    answer: "Your subscription will be suspended and your bot will stop responding. Top up your wallet to reactivate the service. No data is lost.",
-  },
-  {
-    id: "9", category: "Billing",
-    question: "Can I change plans at any time?",
-    answer: "Yes, from the Billing section. The new plan amount is debited from your wallet. The change takes effect immediately.",
-  },
-  {
-    id: "10", category: "Appointments",
-    question: "How does the bot take appointments automatically?",
-    answer: "The bot detects appointment intent in messages, then checks your agenda in real time to suggest available slots based on your configured duration and buffer.",
-  },
-  {
-    id: "11", category: "Appointments",
-    question: "How do I configure my availability slots?",
-    answer: "In Appointments, click the configuration icon. Set the appointment duration and buffer. Opening hours are configured in Knowledge base > General info.",
-  },
-  {
-    id: "12", category: "Knowledge base",
-    question: "Why is my knowledge base important?",
-    answer: "It's your bot's \"brain\". The more complete it is, the more precise your assistant's responses will be. Fill in hours, services, locations, FAQ and contacts for the best results.",
-  },
-  {
-    id: "13", category: "Knowledge base",
-    question: "Can my bot respond in multiple languages?",
-    answer: "Yes! Select languages when creating the bot. In the Knowledge base, fill in your information in each language so the bot can respond in the customer's language.",
-  },
-];
 
 export default function PmeHelpPage() {
   const { dictionary: d, locale } = useLanguage();
   const t = d.help;
-  const faqs = locale === "fr" ? PLATFORM_FAQ_FR : PLATFORM_FAQ_EN;
 
+  const [entries, setEntries] = useState<HelpEntry[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
 
-  const categories = ["all", ...Array.from(new Set(faqs.map(f => f.category)))];
+  useEffect(() => {
+    platformHelpRepository.getList().then(setEntries).catch(() => setEntries([]));
+  }, []);
 
-  const filtered = faqs.filter(faq => {
-    const matchCat = activeCategory === "all" || faq.category === activeCategory;
+  const categories = ["all", ...Array.from(new Set(entries.map(e => e.categorie)))];
+
+  const filtered = entries.filter(entry => {
+    const matchCat = activeCategory === "all" || entry.categorie === activeCategory;
     const q = search.toLowerCase();
-    const matchSearch = !q
-      || faq.question.toLowerCase().includes(q)
-      || faq.answer.toLowerCase().includes(q);
+    const question = locale === "fr" ? entry.question_fr : entry.question_en;
+    const reponse  = locale === "fr" ? entry.reponse_fr  : entry.reponse_en;
+    const matchSearch = !q || question.toLowerCase().includes(q) || reponse.toLowerCase().includes(q);
     return matchCat && matchSearch;
   });
 
@@ -252,7 +125,7 @@ export default function PmeHelpPage() {
             >
               {cat === "all"
                 ? (t.categories?.all ?? "Toutes")
-                : <><Tag className="w-3 h-3" />{cat}</>
+                : <><Tag className="w-3 h-3" />{categoryLabel(cat, locale)}</>
               }
             </button>
           ))}
@@ -271,38 +144,42 @@ export default function PmeHelpPage() {
               <HelpCircle className="w-8 h-8 text-[var(--text-muted)] mx-auto mb-3 opacity-40" />
               <p className="text-sm text-[var(--text-muted)]">{t.faqEmpty}</p>
             </div>
-          ) : filtered.map(faq => (
-            <div key={faq.id} className="card overflow-hidden">
-              <button
-                className="w-full flex items-center justify-between px-6 py-4 hover:bg-[var(--bg)] transition-colors text-left"
-                onClick={() => setExpanded(expanded === faq.id ? null : faq.id)}
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#075E54]/10 flex items-center justify-center">
-                    <HelpCircle className="w-3.5 h-3.5 text-[#075E54]" />
-                  </span>
-                  <span className="text-sm font-semibold text-[var(--text)] truncate">
-                    {faq.question}
-                  </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--bg)] border border-[var(--border)] text-[var(--text-muted)] font-medium flex-shrink-0 hidden sm:inline-flex">
-                    {faq.category}
-                  </span>
-                </div>
-                <ChevronDown className={cn(
-                  "w-4 h-4 text-[var(--text-muted)] transition-transform flex-shrink-0 ml-3",
-                  expanded === faq.id && "rotate-180"
-                )} />
-              </button>
+          ) : filtered.map(entry => {
+            const question = locale === "fr" ? entry.question_fr : entry.question_en;
+            const reponse  = locale === "fr" ? entry.reponse_fr  : entry.reponse_en;
+            return (
+              <div key={entry.id} className="card overflow-hidden">
+                <button
+                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-[var(--bg)] transition-colors text-left"
+                  onClick={() => setExpanded(expanded === entry.id ? null : entry.id)}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#075E54]/10 flex items-center justify-center">
+                      <HelpCircle className="w-3.5 h-3.5 text-[#075E54]" />
+                    </span>
+                    <span className="text-sm font-semibold text-[var(--text)] truncate">
+                      {question}
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--bg)] border border-[var(--border)] text-[var(--text-muted)] font-medium flex-shrink-0 hidden sm:inline-flex">
+                      {categoryLabel(entry.categorie, locale)}
+                    </span>
+                  </div>
+                  <ChevronDown className={cn(
+                    "w-4 h-4 text-[var(--text-muted)] transition-transform flex-shrink-0 ml-3",
+                    expanded === entry.id && "rotate-180"
+                  )} />
+                </button>
 
-              {expanded === faq.id && (
-                <div className="px-6 pb-5 pt-3 border-t border-[var(--border)]">
-                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                    {faq.answer}
-                  </p>
-                </div>
-              )}
-            </div>
-          ))}
+                {expanded === entry.id && (
+                  <div className="px-6 pb-5 pt-3 border-t border-[var(--border)]">
+                    <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+                      {reponse}
+                    </p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

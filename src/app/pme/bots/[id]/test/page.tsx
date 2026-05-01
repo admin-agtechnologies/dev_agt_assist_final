@@ -1,4 +1,5 @@
 // src/app/pme/bots/[id]/test/page.tsx
+// "https://api.salma.agtgroupholding.com/media/seed/bourses/demo_test.mp4"
 "use client";
 import {
   useState, useEffect, useRef, useCallback, useTransition,
@@ -356,7 +357,7 @@ export default function BotTestPage() {
             {/* ── Player vidéo vocal ── */}
             {canal === "vocal" && (
               <VoiceDemoPlayer
-              videoSrc="https://api.salma.agtgroupholding.com/media/seed/bourses/demo_test.mp4"
+              videoSrc="demo_test.mp4"
                 onCallStart={() => {
                   setIsVoiceCalling(true);
                   setTranscriptLines([]);

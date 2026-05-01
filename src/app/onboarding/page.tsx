@@ -8,10 +8,10 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { useToast } from "@/components/ui/Toast";
 import { Spinner } from "@/components/ui";
-import { authRepository, tenantsRepository } from "@/repositories";
-import { PLANS_CONFIG, ROUTES, WELCOME_BONUS_XAF } from "@/lib/constants";
+import { authRepository, tenantsRepository, plansRepository } from "@/repositories";
+import { ROUTES, WELCOME_BONUS_XAF } from "@/lib/constants";
 import { formatCurrency, cn } from "@/lib/utils";
-import type { PlanSlug } from "@/lib/constants";
+import type { Plan } from "@/types/api";
 import {
   Check, Gift, Building2, CreditCard, PartyPopper,
   ChevronRight, Star, Mail, Lock, User, MailCheck,
@@ -50,7 +50,8 @@ function OnboardingContent() {
   const router = useRouter();
 
   const [step, setStep] = useState<Step>("account");
-  const [selectedPlan, setSelectedPlan] = useState<PlanSlug>("starter");
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<string>("");
   const [walletBalance] = useState(WELCOME_BONUS_XAF);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
@@ -67,8 +68,15 @@ function OnboardingContent() {
     name: "", sector: "", description: "", whatsapp_number: "", phone_number: "",
   });
 
-  const plan = PLANS_CONFIG.find(p => p.slug === selectedPlan)!;
-  const canPay = walletBalance >= plan.price;
+  const plan = plans.find(p => p.id === selectedPlan) ?? null;
+  const canPay = plan ? walletBalance >= plan.prix : false;
+
+  useEffect(() => {
+    plansRepository.getList().then(data => {
+      setPlans(data);
+      if (data.length > 0) setSelectedPlan(data[0].id);
+    }).catch(() => {});
+  }, []);
 
   // ── Stepper visuel (seulement pour profile/plan/payment)
   const STEPS_LABELS = t.stepLabels; // ["Votre entreprise", "Votre abonnement", "Paiement", "Confirmation"]
@@ -447,12 +455,12 @@ function OnboardingContent() {
               <h1 className="text-2xl font-bold text-[var(--text)] mb-1">{t.planTitle}</h1>
               <p className="text-sm text-[var(--text-muted)] mb-6">{t.planSubtitle}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                {PLANS_CONFIG.map(pl => (
-                  <button key={pl.slug} type="button"
-                    onClick={() => setSelectedPlan(pl.slug)}
+                {plans.map(pl => (
+                  <button key={pl.id} type="button"
+                    onClick={() => setSelectedPlan(pl.id)}
                     className={cn(
                       "text-left p-5 rounded-2xl border-2 transition-all",
-                      selectedPlan === pl.slug
+                      selectedPlan === pl.id
                         ? "border-[#25D366] bg-[#25D366]/5"
                         : "border-[var(--border)] hover:border-[var(--text-muted)]"
                     )}>
@@ -461,21 +469,18 @@ function OnboardingContent() {
                         ★ {d.common.recommended}
                       </span>
                     )}
-                    <p className="font-black text-[var(--text)]">{pl.name}</p>
+                    <p className="font-black text-[var(--text)]">{pl.nom}</p>
                     <p className="text-2xl font-black text-[#075E54] mt-1">
-                      {formatCurrency(pl.price)}
-                      <span className="text-xs font-normal text-[var(--text-muted)]">{d.common.perMonth}</span>
+                      {formatCurrency(pl.prix)}
+                      <span className="text-xs font-normal text-[var(--text-muted)]">/ {pl.billing_cycle === "annuel" ? "an" : "mois"}</span>
                     </p>
                     <ul className="mt-3 space-y-1">
-                      {pl.features_keys.slice(0, 3).map(key => {
-                        const k = key.split(".")[2] as keyof typeof d.plans.features;
-                        return (
-                          <li key={key} className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
-                            <Check className="w-3 h-3 text-[#25D366] flex-shrink-0" />
-                            {d.plans.features[k]}
-                          </li>
-                        );
-                      })}
+                      {pl.features.slice(0, 3).map((feature, i) => (
+                        <li key={i} className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
+                          <Check className="w-3 h-3 text-[#25D366] flex-shrink-0" />
+                          {feature}
+                        </li>
+                      ))}
                     </ul>
                   </button>
                 ))}
@@ -499,7 +504,7 @@ function OnboardingContent() {
               <div className="bg-[var(--bg)] rounded-2xl p-5 mb-6 space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-[var(--text-muted)]">{t.selectedPlan}</span>
-                  <span className="font-bold text-[var(--text)]">{plan.name}</span>
+                  <span className="font-bold text-[var(--text)]">{plan?.nom ?? "—"}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-[var(--text-muted)]">{t.walletBalance}</span>
@@ -507,7 +512,7 @@ function OnboardingContent() {
                 </div>
                 <div className="border-t border-[var(--border)] pt-3 flex justify-between">
                   <span className="font-bold text-[var(--text)]">{t.toPay}</span>
-                  <span className="font-black text-xl text-[var(--text)]">{formatCurrency(plan.price)}</span>
+                  <span className="font-black text-xl text-[var(--text)]">{formatCurrency(plan?.prix ?? 0)}</span>
                 </div>
               </div>
 

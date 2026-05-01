@@ -55,7 +55,7 @@ export function PlanList({ plans, sub, wallet, onSelectPlan }: PlanListProps) {
                 <p className="text-3xl font-black text-[#075E54]">
                   {formatCurrency(plan.prix)}
                 </p>
-                <p className="text-xs text-[var(--text-muted)]">/ mois</p>
+                <p className="text-xs text-[var(--text-muted)]">/ {plan.billing_cycle === "annuel" ? "an" : "mois"}</p>
               </div>
 
               <ul className="space-y-1.5 flex-1 text-xs text-[var(--text-muted)]">
