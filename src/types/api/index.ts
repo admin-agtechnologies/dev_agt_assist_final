@@ -841,3 +841,45 @@ export interface TestSessionDetail extends TestSessionSummary {
   messages: TestMessage[];
   emails: TestEmail[];
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DIFF À APPLIQUER MANUELLEMENT
+// Fichier cible : src/types/api/index.ts
+// Action        : AJOUTER ce bloc à la fin du fichier (juste avant la
+//                 dernière accolade ou en fin de fichier — peu importe l'ordre)
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════════════════════
+// WAHA / WHATSAPP SESSIONS
+// ══════════════════════════════════════════════════════════════════════════════
+
+/** Statuts possibles d'une session WhatsApp via WAHA. */
+export type WahaSessionStatus =
+  | "STARTING"
+  | "SCAN_QR_CODE"
+  | "WORKING"
+  | "STOPPED"
+  | "FAILED";
+
+/**
+ * Réponse de GET /api/v1/bots/{id}/whatsapp/status/
+ * Inclut qr_base64 quand status === "SCAN_QR_CODE".
+ */
+export interface WahaStatusResponse {
+  status: WahaSessionStatus;
+  phone_number: string; // Format: "237699000001" (sans le +)
+  connected_at: string | null; // ISO datetime
+  qr_base64: string | null; // PNG base64, présent uniquement en SCAN_QR_CODE
+}
+
+/** Réponse de POST /api/v1/bots/{id}/whatsapp/connect/ */
+export interface WahaConnectResponse {
+  status: WahaSessionStatus; // En général "STARTING"
+  phone_number: string;
+  connected_at: string | null;
+}
+
+/** Réponse de POST /api/v1/bots/{id}/whatsapp/disconnect/ */
+export interface WahaDisconnectResponse {
+  status: "STOPPED";
+}

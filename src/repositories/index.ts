@@ -83,7 +83,11 @@ import type {
   TestSessionSummary,
   TestSessionDetail,
 } from "@/types/api";
-import type { ClaimBonusResponse, OnboardingCheckRequest, OnboardingResponse } from "@/types/onboarding";
+import type {
+  ClaimBonusResponse,
+  OnboardingCheckRequest,
+  OnboardingResponse,
+} from "@/types/onboarding";
 
 // ── Helper params ─────────────────────────────────────────────────────────────
 const p = (f?: object): Record<string, string> =>
@@ -796,7 +800,6 @@ export const feedbackRepository = {
 // ONBOARDING
 // ══════════════════════════════════════════════════════════════════════════════
 
-
 export const onboardingRepository = {
   check: (payload: OnboardingCheckRequest): Promise<OnboardingResponse> =>
     api.post<OnboardingResponse>("/api/v1/onboarding/check/", payload),
@@ -851,4 +854,39 @@ export const chatbotRepository = {
   /** Détail complet d'une session avec messages et emails imbriqués. */
   getSessionDetail: (sessionId: string): Promise<TestSessionDetail> =>
     api.get<TestSessionDetail>(`/api/v1/chatbot/sessions/${sessionId}/`),
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DIFF À APPLIQUER MANUELLEMENT
+// Fichier cible : src/repositories/index.ts
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ─── 1. AJOUTER ces imports dans le bloc d'imports en haut du fichier ─────
+//     (à la suite des imports existants venant de @/types/api) :
+
+import type {
+  // ... imports existants ...
+  // ⬇️ AJOUTER CES TROIS LIGNES :
+  WahaStatusResponse,
+  WahaConnectResponse,
+  WahaDisconnectResponse,
+} from "@/types/api";
+
+// ─── 2. AJOUTER ce bloc à la fin du fichier ───────────────────────────────
+
+// ══════════════════════════════════════════════════════════════════════════════
+// WAHA / WHATSAPP — Sessions WhatsApp via WAHA
+// ══════════════════════════════════════════════════════════════════════════════
+export const wahaRepository = {
+  /** GET — Statut courant de la session WhatsApp du bot (inclut qr_base64). */
+  getStatus: (botId: string): Promise<WahaStatusResponse> =>
+    api.get(`/api/v1/bots/${botId}/whatsapp/status/`),
+
+  /** POST — Démarre une session WhatsApp pour le bot (bot doit être publié). */
+  connect: (botId: string): Promise<WahaConnectResponse> =>
+    api.post(`/api/v1/bots/${botId}/whatsapp/connect/`, {}),
+
+  /** POST — Stoppe la session WhatsApp et libère le bot. */
+  disconnect: (botId: string): Promise<WahaDisconnectResponse> =>
+    api.post(`/api/v1/bots/${botId}/whatsapp/disconnect/`, {}),
 };
