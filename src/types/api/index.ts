@@ -850,6 +850,20 @@ export interface TestSessionDetail extends TestSessionSummary {
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ══════════════════════════════════════════════════════════════════════════════
+// PLATFORM HELP
+// ══════════════════════════════════════════════════════════════════════════════
+export interface HelpEntry {
+  id: string;
+  question_fr: string;
+  question_en: string;
+  reponse_fr: string;
+  reponse_en: string;
+  categorie: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // WAHA / WHATSAPP SESSIONS
 // ══════════════════════════════════════════════════════════════════════════════
 
