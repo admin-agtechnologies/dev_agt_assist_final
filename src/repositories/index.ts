@@ -561,13 +561,20 @@ export const plansRepository = {
 // Endpoint réel : /api/v1/dashboard/entreprise/ (auth-based, pas de tenant_id)
 // Endpoint admin : /api/v1/dashboard/admin/
 // ══════════════════════════════════════════════════════════════════════════════
+export interface WeeklyDataPoint {
+  day: string;
+  date: string;
+  messages: number;
+  calls: number;
+}
+
 export const statsRepository = {
-  // Le paramètre _tenantId est conservé pour compatibilité des call-sites existants
-  // mais n'est pas transmis — le backend filtre automatiquement par user connecté.
   getByTenant: (_tenantId?: string | null): Promise<TenantStats | null> =>
     api.get<TenantStats>("/api/v1/dashboard/entreprise/").catch(() => null),
   getAdmin: (): Promise<AdminStats> =>
     api.get<AdminStats>("/api/v1/dashboard/admin/"),
+  getWeekly: (): Promise<WeeklyDataPoint[]> =>
+    api.get<WeeklyDataPoint[]>("/api/v1/dashboard/entreprise/weekly/").catch(() => []),
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -808,6 +815,17 @@ export const onboardingRepository = {
 
   claimBonus: (): Promise<ClaimBonusResponse> =>
     api.post<ClaimBonusResponse>("/api/v1/onboarding/claim-bonus/", {}),
+};
+
+export const tutorialRepository = {
+  getProgress: (): Promise<{ last_step: number; has_completed_tutorial: boolean }> =>
+    api.get("/api/v1/onboarding/tutorial/"),
+
+  saveStep: (last_step: number): Promise<{ last_step: number; has_completed_tutorial: boolean }> =>
+    api.patch("/api/v1/onboarding/tutorial/", { last_step }),
+
+  complete: (): Promise<{ last_step: number; has_completed_tutorial: boolean }> =>
+    api.patch("/api/v1/onboarding/tutorial/", { completed: true }),
 };
 
 // ══════════════════════════════════════════════════════════════════════════════

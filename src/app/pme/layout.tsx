@@ -1,6 +1,6 @@
 // src/app/pme/layout.tsx
 "use client";
-import { useState, ReactNode } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,7 +9,7 @@ import { useTheme } from "@/components/ui/ThemeProvider";
 import { useToast } from "@/components/ui/Toast";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { OnboardingPopup } from "@/components/OnboardingPopup";
-import { onboardingRepository } from "@/repositories";
+import { onboardingRepository, tutorialRepository } from "@/repositories";
 import { cn, initials } from "@/lib/utils";
 import { ROUTES } from "@/lib/constants";
 import {
@@ -49,6 +49,14 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const toast = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [tutorialDone, setTutorialDone] = useState(true); // true par défaut pour éviter le flash
+
+  // ── Charger l'état du tutoriel ────────────────────────────────────────────
+  useEffect(() => {
+    tutorialRepository.getProgress()
+      .then(res => setTutorialDone(res.has_completed_tutorial))
+      .catch(() => {});
+  }, []);
 
   // ── Onboarding ─────────────────────────────────────────────────────────────
   const {
@@ -71,11 +79,10 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
         const res = await onboardingRepository.claimBonus();
         if (!res.already_claimed) {
           toast.success(
-           d.common.bonusCredited
+            d.common.bonusCredited
               .replace("{amount}", res.montant.toLocaleString("fr-FR"))
               .replace("{devise}", res.devise),
           );
-          // Rafraîchir le solde si déjà sur billing
           if (
             pathname === ROUTES.billing ||
             pathname.startsWith(ROUTES.billing + "/")
@@ -83,25 +90,20 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
             router.refresh();
           }
         }
-        // Règle générale : re-check immédiat après action CTA
-        // Si le backend retourne un nouveau popup (ex: CONGRATS), il s'affiche directement
         await recheckCurrentPage();
       } catch {
-        // Erreur réseau — popup reste ouvert
         toast.error("Une erreur est survenue. Veuillez réessayer.");
       }
       return;
     }
 
-    // CTA avec href (navigation) — re-check immédiat, puis navigation
-    // Si le re-check retourne NONE, closePopup est déjà appelé dans applyCheck
     await recheckCurrentPage();
     await handleCta(href);
   };
 
   const items = navItems(d);
 
-  const Sidebar = ({ mobile = false }) => (
+  const Sidebar = ({ mobile = false }: { mobile?: boolean }) => (
     <aside
       className={cn(
         "flex flex-col h-full bg-[var(--bg-sidebar)] border-r border-[var(--border)]",
@@ -168,7 +170,8 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
 
       {/* Footer */}
       <div className="p-4 border-t border-[var(--border)] space-y-1">
-        {/* Tutoriel interface */}
+
+        {/* Tutoriel interface — badge orange si non terminé */}
         <Link
           href={ROUTES.tutorial}
           onClick={() => setSidebarOpen(false)}
@@ -181,6 +184,9 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
         >
           <GraduationCap className="w-4 h-4 flex-shrink-0" />
           {d.nav.tutorial}
+          {!tutorialDone && (
+            <span className="ml-auto w-2 h-2 rounded-full bg-[#F97316] flex-shrink-0" />
+          )}
         </Link>
 
         {/* Demander de l'aide */}
@@ -250,7 +256,7 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-[var(--text-sidebar)] hover:bg-[var(--bg)] transition-colors"
         >
           <Globe className="w-4 h-4 flex-shrink-0" />
-          {theme === "dark" ? d.common.lightMode : d.common.darkMode}
+          {locale === "fr" ? "English" : "Français"}
         </button>
 
         {/* Logout */}

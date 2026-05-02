@@ -106,12 +106,13 @@ export function TabFaq({
                 const faqQuestions = questions.filter(q => q.faq === faq.id);
                 return (
                     <div key={faq.id} className="card overflow-hidden">
-                        {/* Header FAQ */}
-                        <button
-                            onClick={() => setExpanded(expanded === faq.id ? null : faq.id)}
-                            className="w-full px-5 py-4 flex items-center justify-between hover:bg-[var(--bg)] transition-colors text-left"
-                        >
-                            <div className="flex items-center gap-3">
+                        {/* Header FAQ — bouton Ajouter visible en permanence */}
+                        <div className="w-full px-5 py-4 flex items-center justify-between hover:bg-[var(--bg)] transition-colors">
+                            {/* Partie gauche cliquable pour dérouler */}
+                            <button
+                                onClick={() => setExpanded(expanded === faq.id ? null : faq.id)}
+                                className="flex items-center gap-3 flex-1 text-left"
+                            >
                                 <Badge variant={faq.is_active ? "green" : "slate"}>
                                     {faq.is_active ? d.common.active : d.common.inactive}
                                 </Badge>
@@ -119,11 +120,26 @@ export function TabFaq({
                                 <span className="text-xs text-[var(--text-muted)]">
                                     ({faqQuestions.length} {t.faqCount})
                                 </span>
+                            </button>
+
+                            {/* Partie droite : bouton Ajouter + chevron */}
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                                <button
+                                    onClick={() => openNewQ(faq.id)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#075E54] border border-[#075E54]/30 hover:bg-[#075E54]/5 transition-colors"
+                                >
+                                    <Plus className="w-3.5 h-3.5" /> Ajouter
+                                </button>
+                                <button
+                                    onClick={() => setExpanded(expanded === faq.id ? null : faq.id)}
+                                    className="p-1"
+                                >
+                                    {expanded === faq.id
+                                        ? <ChevronUp   className="w-4 h-4 text-[var(--text-muted)]" />
+                                        : <ChevronDown className="w-4 h-4 text-[var(--text-muted)]" />}
+                                </button>
                             </div>
-                            {expanded === faq.id
-                                ? <ChevronUp   className="w-4 h-4 text-[var(--text-muted)]" />
-                                : <ChevronDown className="w-4 h-4 text-[var(--text-muted)]" />}
-                        </button>
+                        </div>
 
                         {/* Contenu FAQ déroulé */}
                         {expanded === faq.id && (
@@ -157,12 +173,6 @@ export function TabFaq({
                                         </div>
                                     ))
                                 )}
-                                <button
-                                    onClick={() => openNewQ(faq.id)}
-                                    className="flex items-center gap-2 text-xs text-[#075E54] font-semibold hover:underline"
-                                >
-                                    <Plus className="w-3.5 h-3.5" /> Ajouter une question
-                                </button>
                             </div>
                         )}
                     </div>

@@ -60,8 +60,9 @@ export function BotPairDetailPanel({ pair, d, colors, onRefresh }: BotPairDetail
   const voiceConvs    = conversations.filter(c => c.bot_type === "vocal");
   const totalMessages = conversations.reduce((acc, c) => acc + c.nb_messages, 0);
   const totalCalls    = voiceConvs.length;
-  const totalRdv      = conversations.filter(c => c.rapport?.rdv_planifies && c.rapport.rdv_planifies > 0).length;
+  const totalRdv      = conversations.reduce((acc, c) => acc + (c.rapport?.rdv_planifies ?? 0), 0);
   const totalHandoffs = conversations.filter(c => c.human_handoff).length;
+  const totalEmails   = conversations.reduce((acc, c) => acc + (c.rapport?.emails_envoyes ?? 0), 0);
 
   // ── Onglets ───────────────────────────────────────────────────────────────
   const tabs: { id: DetailTab; label: string; icon: React.ElementType }[] = [
@@ -84,7 +85,7 @@ export function BotPairDetailPanel({ pair, d, colors, onRefresh }: BotPairDetail
           { label: t.statsCalls,         value: totalCalls,    icon: Phone,          color: "#6C3CE1" },
           { label: t.statsAppointments,  value: totalRdv,      icon: CalendarDays,   color: "#F59E0B" },
           { label: "Transferts humains", value: totalHandoffs, icon: ArrowRightLeft, color: "#EF4444" },
-          { label: "Emails envoyés",     value: 128,           icon: MessageSquare,  color: "#0EA5E9" },
+          { label: "Emails envoyés", value: totalEmails, icon: MessageSquare, color: "#0EA5E9" },
         ].map((stat, i) => (
           <div key={i} className={cn("px-4 py-3 flex items-center gap-3", i < 4 && "border-r border-[var(--border)]")}>
             <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"

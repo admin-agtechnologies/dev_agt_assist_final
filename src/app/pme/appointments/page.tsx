@@ -274,6 +274,11 @@ export default function AppointmentsPage() {
                         <p className="text-[11px] font-semibold truncate">
                           {rdv.client_nom}
                         </p>
+                        {rdv.bot && (
+                          <span className="text-[9px] font-black bg-[#6C3CE1]/10 text-[#6C3CE1] px-1.5 py-0.5 rounded-full">
+                            🤖 Bot
+                          </span>
+                        )}
                       </div>
 
                       <div className="flex gap-1">

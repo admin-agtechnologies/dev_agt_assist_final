@@ -119,20 +119,30 @@ export function ConfirmDeleteModal({
 }
 
 // ── Usage bar (billing) ───────────────────────────────────────────────────────
-export function UsageBar({ label, used, total, pct, color }: {
-  label: string; used: number; total: number; pct: number; color: string;
+// APRÈS
+export function UsageBar({ label, used, total, pct, color, unlimited = false }: {
+  label: string; used: number; total: number | null; pct: number; color: string; unlimited?: boolean;
 }) {
   return (
     <div>
       <div className="flex justify-between text-xs mb-1.5">
         <span className="text-[var(--text-muted)] font-medium">{label}</span>
-        <span className="font-bold text-[var(--text)]">{used.toLocaleString()} / {total.toLocaleString()}</span>
+        <span className="font-bold text-[var(--text)]">
+          {unlimited
+            ? `${used.toLocaleString()} / ∞`
+            : `${used.toLocaleString()} / ${(total ?? 0).toLocaleString()}`
+          }
+        </span>
       </div>
       <div className="h-2 bg-[var(--border)] rounded-full overflow-hidden">
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: color }}
-        />
+        {unlimited ? (
+          <div className="h-full rounded-full w-full opacity-20" style={{ backgroundColor: color }} />
+        ) : (
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: color }}
+          />
+        )}
       </div>
     </div>
   );

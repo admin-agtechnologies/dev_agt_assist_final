@@ -462,7 +462,10 @@ export interface Subscription {
   date_renouvellement: string | null;
   usage_messages: number;
   usage_appels: number;
+  days_remaining: number;
   created_at: string;
+  usage_rdv: number;
+  usage_emails: number;
 }
 
 export interface Wallet {
@@ -483,10 +486,13 @@ export interface Plan {
   prix: number;
   devise: string;
   billing_cycle: string;
-  limite_messages: number;
-  limite_appels: number;
+  limite_messages: number | null;
+  limite_appels: number | null;
   limite_bots: number;
-  limite_rdv: number;
+  limite_rdv: number | null;
+  limite_emails: number | null;
+  limite_agences: number;
+  limite_services: number;
   is_active: boolean;
   highlight: boolean;
   features: string[];

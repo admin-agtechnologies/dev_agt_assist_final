@@ -12,13 +12,6 @@ interface BillingHeaderProps {
   onTopUp: () => void;
 }
 
-function daysRemaining(dateStr: string): number {
-  const fin = new Date(dateStr);
-  const now = new Date();
-  const diff = Math.ceil((fin.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  return Math.max(0, diff);
-}
-
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("fr-FR", {
     day: "2-digit",
@@ -27,18 +20,30 @@ function formatDate(dateStr: string): string {
   });
 }
 
+// Calcule le pourcentage d'usage — gère null (illimité) et 0 (absent)
+function calcPct(used: number, limite: number | null | undefined): number {
+  if (!limite || limite === -1) return 0;
+  return Math.min(Math.round((used / limite) * 100), 100);
+}
+
+// Retourne true si la fonctionnalité est incluse dans le plan
+function isIncluded(limite: number | null | undefined): boolean {
+  if (limite === null || limite === undefined) return true; // illimité
+  if (limite === -1) return true; // illimité
+  if (limite === 0) return false; // absent du plan
+  return true;
+}
+
 export function BillingHeader({ wallet, sub, onTopUp }: BillingHeaderProps) {
   const { dictionary: d } = useLanguage();
   const t = d.billing;
 
-  const msgPct = sub
-    ? Math.min(Math.round((sub.usage_messages / (sub.plan?.limite_messages || 1)) * 100), 100)
-    : 0;
-  const callPct = sub
-    ? Math.min(Math.round((sub.usage_appels / (sub.plan?.limite_appels || 1)) * 100), 100)
-    : 0;
+  const msgPct   = calcPct(sub?.usage_messages ?? 0, sub?.plan?.limite_messages);
+  const callPct  = calcPct(sub?.usage_appels   ?? 0, sub?.plan?.limite_appels);
+  const rdvPct   = calcPct(sub?.usage_rdv      ?? 0, sub?.plan?.limite_rdv);
+  const emailPct = calcPct(sub?.usage_emails   ?? 0, sub?.plan?.limite_emails);
 
-  const joursRestants = sub?.periode_fin ? daysRemaining(sub.periode_fin) : null;
+  const joursRestants  = sub?.days_remaining ?? null;
   const isExpiringSoon = joursRestants !== null && joursRestants <= 7;
 
   return (
@@ -62,10 +67,7 @@ export function BillingHeader({ wallet, sub, onTopUp }: BillingHeaderProps) {
             {wallet?.devise ?? "XAF"}
           </p>
         </div>
-        <button
-          onClick={onTopUp}
-          className="btn-primary w-full justify-center mt-auto"
-        >
+        <button onClick={onTopUp} className="btn-primary w-full justify-center mt-auto">
           <ArrowDownLeft className="w-4 h-4" /> {t.topUp}
         </button>
       </div>
@@ -94,12 +96,8 @@ export function BillingHeader({ wallet, sub, onTopUp }: BillingHeaderProps) {
             <div className="flex items-center gap-2 p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)]">
               <CalendarDays className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" />
               <div>
-                <p className="text-[10px] text-[var(--text-muted)] font-medium uppercase tracking-wide">
-                  Début
-                </p>
-                <p className="text-xs font-semibold text-[var(--text)]">
-                  {formatDate(sub.periode_debut)}
-                </p>
+                <p className="text-[10px] text-[var(--text-muted)] font-medium uppercase tracking-wide">Début</p>
+                <p className="text-xs font-semibold text-[var(--text)]">{formatDate(sub.periode_debut)}</p>
               </div>
             </div>
             <div className={`flex items-center gap-2 p-3 rounded-xl border ${
@@ -141,20 +139,53 @@ export function BillingHeader({ wallet, sub, onTopUp }: BillingHeaderProps) {
         {/* Barres d'usage */}
         {sub && (
           <div className="space-y-3">
-            <UsageBar
-              label={t.messagesUsage}
-              used={sub.usage_messages}
-              total={sub.plan?.limite_messages ?? 0}
-              pct={msgPct}
-              color="#25D366"
-            />
-            <UsageBar
-              label={t.callsUsage}
-              used={sub.usage_appels}
-              total={sub.plan?.limite_appels ?? 0}
-              pct={callPct}
-              color="#6C3CE1"
-            />
+            {/* Messages */}
+            {isIncluded(sub.plan?.limite_messages) && (
+              <UsageBar
+                label={t.messagesUsage}
+                used={sub.usage_messages}
+                total={sub.plan?.limite_messages ?? null}
+                pct={msgPct}
+                color="#25D366"
+                unlimited={sub.plan?.limite_messages === null || sub.plan?.limite_messages === -1}
+              />
+            )}
+
+            {/* Appels */}
+            {isIncluded(sub.plan?.limite_appels) && (
+              <UsageBar
+                label={t.callsUsage}
+                used={sub.usage_appels}
+                total={sub.plan?.limite_appels ?? null}
+                pct={callPct}
+                color="#6C3CE1"
+                unlimited={sub.plan?.limite_appels === null || sub.plan?.limite_appels === -1}
+              />
+            )}
+
+            {/* RDV */}
+            {isIncluded(sub.plan?.limite_rdv) && (
+              <UsageBar
+                label="RDV utilisés"
+                used={sub.usage_rdv ?? 0}
+                total={sub.plan?.limite_rdv ?? null}
+                pct={rdvPct}
+                color="#F59E0B"
+                unlimited={sub.plan?.limite_rdv === null || sub.plan?.limite_rdv === -1}
+              />
+            )}
+
+            {/* Emails */}
+            {isIncluded(sub.plan?.limite_emails) && (
+              <UsageBar
+                label="Emails utilisés"
+                used={sub.usage_emails ?? 0}
+                total={sub.plan?.limite_emails ?? null}
+                pct={emailPct}
+                color="#0EA5E9"
+                unlimited={sub.plan?.limite_emails === null || sub.plan?.limite_emails === -1}
+              />
+            )}
           </div>
         )}
       </div>

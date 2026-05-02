@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/lib/constants";
+import { tutorialRepository } from "@/repositories";
 import {
   LayoutDashboard, Bot, BookOpen, CalendarDays,
   CreditCard, PlayCircle, ChevronRight, ChevronLeft,
@@ -29,6 +30,23 @@ interface TutorialTab {
   color: string;
   bg: string;
   steps: TutorialStep[];
+}
+
+// ── Helpers progression globale ────────────────────────────────────────────────
+
+function toGlobalStep(tabIdx: number, stepIdx: number): number {
+  let global = 0;
+  for (let i = 0; i < tabIdx; i++) global += TABS[i].steps.length;
+  return global + stepIdx;
+}
+
+function fromGlobalStep(globalStep: number): { tabIdx: number; stepIdx: number } {
+  let remaining = globalStep;
+  for (let i = 0; i < TABS.length; i++) {
+    if (remaining < TABS[i].steps.length) return { tabIdx: i, stepIdx: remaining };
+    remaining -= TABS[i].steps.length;
+  }
+  return { tabIdx: TABS.length - 1, stepIdx: TABS[TABS.length - 1].steps.length - 1 };
 }
 
 // ── Données ────────────────────────────────────────────────────────────────────
@@ -299,7 +317,6 @@ function ServicesIllustration() {
   return (
     <svg viewBox="0 0 320 200" className="w-full h-full" fill="none">
       <rect x="10" y="10" width="300" height="180" rx="16" fill="var(--bg-card)" stroke="var(--border)" strokeWidth="1.5" />
-      {/* 3 cartes services */}
       {[0, 1, 2].map(i => (
         <g key={i}>
           <rect x={18 + i * 98} y="20" width="88" height="90" rx="12"
@@ -316,7 +333,6 @@ function ServicesIllustration() {
           <rect x={44 + i * 98} y="92" width="36" height="6" rx="3" fill="white" opacity="0.7" />
         </g>
       ))}
-      {/* Tableau liste */}
       <rect x="18" y="120" width="284" height="60" rx="10" fill="var(--bg)" stroke="var(--border)" strokeWidth="1" />
       <rect x="28" y="130" width="60" height="6" rx="3" fill="var(--border)" opacity="0.7" />
       <rect x="150" y="130" width="40" height="6" rx="3" fill="var(--border)" opacity="0.5" />
@@ -372,20 +388,16 @@ function ProfileIllustration() {
   return (
     <svg viewBox="0 0 320 200" className="w-full h-full" fill="none">
       <rect x="10" y="10" width="300" height="180" rx="16" fill="var(--bg-card)" stroke="var(--border)" strokeWidth="1.5" />
-      {/* Avatar */}
       <circle cx="85" cy="70" r="40" fill="#EC4899" opacity="0.1" stroke="#EC4899" strokeWidth="1.5" strokeDasharray="4 2" />
       <circle cx="85" cy="62" r="20" fill="#EC4899" opacity="0.3" />
       <ellipse cx="85" cy="100" rx="30" ry="14" fill="#EC4899" opacity="0.2" />
-      {/* Infos profil */}
       <rect x="138" y="26" width="162" height="10" rx="5" fill="#EC4899" opacity="0.5" />
       <rect x="138" y="44" width="120" height="7" rx="3.5" fill="var(--border)" />
       <rect x="138" y="58" width="100" height="7" rx="3.5" fill="var(--border)" opacity="0.7" />
-      {/* Badges */}
       <rect x="138" y="76" width="54" height="18" rx="9" fill="#EC4899" opacity="0.15" stroke="#EC4899" strokeWidth="1" />
       <rect x="146" y="81" width="38" height="8" rx="4" fill="#EC4899" opacity="0.5" />
       <rect x="198" y="76" width="54" height="18" rx="9" fill="#25D366" opacity="0.15" stroke="#25D366" strokeWidth="1" />
       <rect x="206" y="81" width="38" height="8" rx="4" fill="#25D366" opacity="0.5" />
-      {/* Formulaire préférences */}
       <rect x="18" y="116" width="284" height="64" rx="10" fill="var(--bg)" stroke="var(--border)" strokeWidth="1" />
       <rect x="28" y="126" width="80" height="7" rx="3.5" fill="var(--border)" />
       {[0, 1].map(i => (
@@ -444,11 +456,9 @@ function HelpIllustration() {
   return (
     <svg viewBox="0 0 320 200" className="w-full h-full" fill="none">
       <rect x="10" y="10" width="300" height="180" rx="16" fill="var(--bg-card)" stroke="var(--border)" strokeWidth="1.5" />
-      {/* Icone centrale aide */}
       <circle cx="85" cy="70" r="38" fill="#0EA5E9" opacity="0.1" stroke="#0EA5E9" strokeWidth="1" strokeDasharray="4 2" />
       <circle cx="85" cy="70" r="22" fill="#0EA5E9" opacity="0.2" />
       <text x="79" y="78" fontSize="22" fill="#0EA5E9" opacity="0.8" fontWeight="bold">?</text>
-      {/* Cards ressources */}
       {[0, 1, 2].map(i => (
         <g key={i}>
           <rect x="136" y={18 + i * 52} width="164" height="44" rx="10"
@@ -462,7 +472,6 @@ function HelpIllustration() {
           <rect x="192" y={42 + i * 52} width="60" height="5" rx="2.5" fill="var(--border)" />
         </g>
       ))}
-      {/* Zone contact */}
       <rect x="18" y="120" width="106" height="60" rx="10" fill="#0EA5E9" opacity="0.08" stroke="#0EA5E9" strokeWidth="1" />
       <rect x="28" y="132" width="60" height="7" rx="3.5" fill="#0EA5E9" opacity="0.4" />
       <rect x="28" y="146" width="86" height="12" rx="6" fill="#0EA5E9" opacity="0.2" />
@@ -476,7 +485,6 @@ function FeedbackIllustration() {
   return (
     <svg viewBox="0 0 320 200" className="w-full h-full" fill="none">
       <rect x="10" y="10" width="300" height="180" rx="16" fill="var(--bg-card)" stroke="var(--border)" strokeWidth="1.5" />
-      {/* Étoiles */}
       {[0, 1, 2, 3, 4].map(i => (
         <g key={i}>
           <polygon
@@ -486,13 +494,11 @@ function FeedbackIllustration() {
           />
         </g>
       ))}
-      {/* Zone texte témoignage */}
       <rect x="18" y="66" width="284" height="80" rx="10" fill="var(--bg)" stroke="var(--border)" strokeWidth="1" />
       <rect x="28" y="78" width="244" height="6" rx="3" fill="var(--border)" opacity="0.6" />
       <rect x="28" y="92" width="200" height="6" rx="3" fill="var(--border)" opacity="0.5" />
       <rect x="28" y="106" width="220" height="6" rx="3" fill="var(--border)" opacity="0.4" />
       <rect x="28" y="120" width="140" height="6" rx="3" fill="var(--border)" opacity="0.3" />
-      {/* Bouton envoyer */}
       <rect x="18" y="158" width="284" height="24" rx="12" fill="#F59E0B" opacity="0.8" />
       <rect x="106" y="163" width="108" height="14" rx="7" fill="white" opacity="0.6" />
     </svg>
@@ -503,21 +509,17 @@ function BugIllustration() {
   return (
     <svg viewBox="0 0 320 200" className="w-full h-full" fill="none">
       <rect x="10" y="10" width="300" height="180" rx="16" fill="var(--bg-card)" stroke="var(--border)" strokeWidth="1.5" />
-      {/* Icone alerte */}
       <polygon points="100,20 160,20 190,70 130,70" fill="#EF4444" opacity="0.1" stroke="#EF4444" strokeWidth="1.5" />
       <rect x="126" y="36" width="8" height="20" rx="4" fill="#EF4444" opacity="0.7" />
       <circle cx="130" cy="62" r="4" fill="#EF4444" opacity="0.7" />
-      {/* Catégorie */}
       <rect x="18" y="86" width="284" height="18" rx="9" fill="var(--bg)" stroke="var(--border)" strokeWidth="1" />
       <rect x="24" y="92" width="100" height="6" rx="3" fill="#EF4444" opacity="0.3" />
       <rect x="272" y="90" width="22" height="10" rx="5" fill="var(--border)" opacity="0.5" />
-      {/* Sévérité pills */}
       <rect x="18" y="112" width="284" height="18" rx="9" fill="var(--bg)" stroke="var(--border)" strokeWidth="1" />
       {["#EF4444", "#F97316", "#F59E0B"].map((c, i) => (
         <rect key={i} x={24 + i * 96} y="116" width="86" height="10" rx="5"
           fill={c} opacity={i === 0 ? 0.3 : 0.1} stroke={c} strokeWidth="1" />
       ))}
-      {/* Zone description */}
       <rect x="18" y="138" width="284" height="42" rx="10" fill="var(--bg)" stroke="var(--border)" strokeWidth="1" />
       <rect x="28" y="150" width="200" height="5" rx="2.5" fill="var(--border)" opacity="0.5" />
       <rect x="28" y="162" width="160" height="5" rx="2.5" fill="var(--border)" opacity="0.4" />
@@ -542,6 +544,29 @@ export default function PmeTutorialPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [activeStep, setActiveStep] = useState(0);
   const [completedTabs, setCompletedTabs] = useState<Set<number>>(new Set());
+  const [tutorialCompleted, setTutorialCompleted] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(true);
+
+  // ── Charger la progression au démarrage ──────────────────────────────────
+  useEffect(() => {
+    tutorialRepository.getProgress()
+      .then(res => {
+        if (res.has_completed_tutorial) {
+          setTutorialCompleted(true);
+          setStarted(true);
+        } else if (res.last_step > 0) {
+          const { tabIdx, stepIdx } = fromGlobalStep(res.last_step);
+          setActiveTab(tabIdx);
+          setActiveStep(stepIdx);
+          setStarted(true);
+          const done = new Set<number>();
+          for (let i = 0; i < tabIdx; i++) done.add(i);
+          setCompletedTabs(done);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingProgress(false));
+  }, []);
 
   const tab = TABS[activeTab];
   const step = tab.steps[activeStep];
@@ -561,12 +586,22 @@ export default function PmeTutorialPage() {
 
   const handleNext = () => {
     if (isVeryLast) {
+      tutorialRepository.complete().catch(() => {});
+      setTutorialCompleted(true);
       router.push(ROUTES.dashboard);
-    } else if (isLastStepOfTab) {
-      setActiveTab(t => t + 1);
-      setActiveStep(0);
     } else {
-      setActiveStep(s => s + 1);
+      let nextTab = activeTab;
+      let nextStep = activeStep;
+      if (isLastStepOfTab) {
+        nextTab = activeTab + 1;
+        nextStep = 0;
+        setActiveTab(nextTab);
+        setActiveStep(0);
+      } else {
+        nextStep = activeStep + 1;
+        setActiveStep(nextStep);
+      }
+      tutorialRepository.saveStep(toGlobalStep(nextTab, nextStep)).catch(() => {});
     }
   };
 
@@ -585,6 +620,46 @@ export default function PmeTutorialPage() {
     setActiveStep(0);
   };
 
+  // ── Écran de chargement ──────────────────────────────────────────────────
+  if (loadingProgress) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-[#075E54] border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  // ── Écran tutoriel terminé ───────────────────────────────────────────────
+  if (tutorialCompleted) {
+    return (
+      <div className="min-h-[80vh] flex flex-col items-center justify-center animate-fade-in px-4">
+        <div className="max-w-md w-full text-center space-y-6">
+          <div className="w-20 h-20 rounded-3xl bg-[#25D366]/10 flex items-center justify-center mx-auto">
+            <CheckCircle className="w-10 h-10 text-[#25D366]" />
+          </div>
+          <h1 className="text-3xl font-black text-[var(--text)]">Tutoriel terminé !</h1>
+          <p className="text-[var(--text-muted)]">
+            Vous maîtrisez maintenant toutes les fonctionnalités d&apos;AGT Platform.
+          </p>
+          <button
+            onClick={() => router.push(ROUTES.dashboard)}
+            className="flex items-center gap-2 px-8 py-3.5 rounded-2xl text-white font-bold text-sm mx-auto transition-all hover:scale-105 shadow-lg"
+            style={{ backgroundColor: "#075E54" }}
+          >
+            Retour au dashboard
+            <ArrowRight className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => { setTutorialCompleted(false); setActiveTab(0); setActiveStep(0); setStarted(true); }}
+            className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+          >
+            Revoir le tutoriel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // ── Écran d'accueil ──────────────────────────────────────────────────────────
   if (!started) {
     return (
@@ -599,7 +674,6 @@ export default function PmeTutorialPage() {
             <p className="text-[var(--text-muted)] leading-relaxed">{t.subtitle}</p>
           </div>
 
-          {/* Aperçu des 4 tabs */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {TABS.map((tab) => {
               const tabT = t.tabs[tab.key as keyof typeof t.tabs];

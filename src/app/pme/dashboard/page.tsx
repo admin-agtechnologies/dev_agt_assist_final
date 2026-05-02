@@ -8,6 +8,7 @@ import {
   conversationsRepository,
   subscriptionsRepository,
   rendezVousRepository,
+  type WeeklyDataPoint,
 } from "@/repositories";
 import { PageLoader } from "@/components/ui";
 import { PLANS_CONFIG } from "@/lib/constants";
@@ -23,17 +24,6 @@ import { EmailStats }          from "./_components/EmailStats";
 import { QuickLinks }          from "./_components/QuickLinks";
 import { ConversationModal }   from "./_components/ConversationModal";
 
-// ── Données semaine fallback (backend ne retourne pas de données par jour) ────
-const WEEK_FALLBACK = [
-  { day: "Lun", messages: 38, calls: 3 },
-  { day: "Mar", messages: 52, calls: 5 },
-  { day: "Mer", messages: 45, calls: 2 },
-  { day: "Jeu", messages: 61, calls: 7 },
-  { day: "Ven", messages: 48, calls: 4 },
-  { day: "Sam", messages: 32, calls: 2 },
-  { day: "Dim", messages: 36, calls: 3 },
-];
-
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function PmeDashboardPage() {
@@ -41,17 +31,18 @@ export default function PmeDashboardPage() {
   const { dictionary: d } = useLanguage();
   const t = d.dashboard.pme;
 
-  const [stats, setStats]                       = useState<TenantStats | null>(null);
-  const [conversations, setConversations]       = useState<Conversation[]>([]);
-  const [subscription, setSubscription]         = useState<Subscription | null>(null);
+  const [stats, setStats]                         = useState<TenantStats | null>(null);
+  const [conversations, setConversations]         = useState<Conversation[]>([]);
+  const [subscription, setSubscription]           = useState<Subscription | null>(null);
   const [todayAppointments, setTodayAppointments] = useState<RendezVous[]>([]);
-  const [loading, setLoading]                   = useState(true);
-  const [selectedConv, setSelectedConv]         = useState<Conversation | null>(null);
+  const [weeklyData, setWeeklyData]               = useState<WeeklyDataPoint[]>([]);
+  const [loading, setLoading]                     = useState(true);
+  const [selectedConv, setSelectedConv]           = useState<Conversation | null>(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     const today = new Date().toISOString().split("T")[0];
-    const [s, c, sub, appts] = await Promise.all([
+    const [s, c, sub, appts, weekly] = await Promise.all([
       statsRepository.getByTenant().catch(() => null),
       conversationsRepository
         .getList()
@@ -60,6 +51,7 @@ export default function PmeDashboardPage() {
       rendezVousRepository
         .getList()
         .catch(() => ({ results: [] as RendezVous[], count: 0, next: null, previous: null })),
+      statsRepository.getWeekly().catch(() => []),
     ]);
     setStats(s);
     setConversations((c.results ?? []).slice(0, 5));
@@ -69,6 +61,7 @@ export default function PmeDashboardPage() {
         .filter((a: RendezVous) => a.scheduled_at?.startsWith(today))
         .slice(0, 3),
     );
+    setWeeklyData(weekly);
     setLoading(false);
   }, []);
 
@@ -129,7 +122,7 @@ export default function PmeDashboardPage() {
 
           {/* Colonne gauche 3/5 */}
           <div className="lg:col-span-3 space-y-6">
-            <WeekChart data={WEEK_FALLBACK} title={t.thisWeek} />
+            <WeekChart data={weeklyData} title={t.thisWeek} />
             <RecentConversations
               conversations={conversations}
               onSelect={setSelectedConv}

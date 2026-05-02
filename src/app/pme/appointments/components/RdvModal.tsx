@@ -242,19 +242,20 @@ export function RdvModal({
           {/* Canal */}
           <div className="space-y-1">
             <label className="text-xs font-bold text-[var(--text)]">Canal</label>
-            <div className="flex gap-2">
-              {(["whatsapp", "vocal", "manuel"] as const).map((c) => (
-                <button key={c} type="button" onClick={() => setForm({ ...form, canal: c })}
-                  className={cn(
-                    "flex-1 py-1.5 rounded-lg border text-xs font-semibold transition-all capitalize",
-                    form.canal === c
-                      ? "border-[#075E54] bg-[#075E54]/5 text-[#075E54]"
-                      : "border-[var(--border)] text-[var(--text-muted)] hover:border-[#075E54]/30",
-                  )}>
-                  {c}
-                </button>
-              ))}
-            </div>
+            {rdv?.bot ? (
+              // RDV créé par le bot — canal en lecture seule
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#6C3CE1]/5 border border-[#6C3CE1]/20">
+                <span className="text-xs">🤖</span>
+                <span className="text-xs font-semibold text-[#6C3CE1] capitalize">{form.canal}</span>
+                <span className="text-[10px] text-[var(--text-muted)] ml-auto">Défini par le bot</span>
+              </div>
+            ) : (
+              // RDV manuel — canal fixe à "manuel", affiché en lecture seule
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)]">
+                <span className="text-xs font-semibold text-[var(--text-muted)] capitalize">Manuel</span>
+                <span className="text-[10px] text-[var(--text-muted)] ml-auto">RDV créé manuellement</span>
+              </div>
+            )}
           </div>
 
           {/* Statut (édition uniquement) */}
