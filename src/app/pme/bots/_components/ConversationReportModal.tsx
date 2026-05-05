@@ -1,6 +1,6 @@
 // src/app/pme/bots/_components/ConversationReportModal.tsx
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Activity,
   MessageSquare,
@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { Conversation } from "@/types/api";
 import { conversationsRepository } from "@/repositories";
+import { MOCK_HISTORY, type MockMessage } from "./bots.types";
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 interface ConversationReportModalProps {
@@ -27,16 +28,17 @@ interface ConversationReportModalProps {
   colors: { primary: string; accent: string };
 }
 
-// ── Type local pour un message backend ───────────────────────────────────────
-// Aligné avec MessageConversationSerializer (apps/conversations/serializers.py).
+// Forme attendue d'un message backend (apps/conversations/serializers.py).
 interface BackendMessage {
   id: string;
-  conversation: string;
-  role: "bot" | "client" | "humain";
+  role: "bot" | "client" | "humain" | string;
   contenu: string;
-  metadata: Record<string, unknown>;
   created_at: string;
 }
+
+// Délai au-delà duquel on considère que l'API ne répondra pas — on bascule
+// alors sur les messages de démonstration plutôt que de tourner indéfiniment.
+const FETCH_TIMEOUT_MS = 5000;
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -50,10 +52,17 @@ export function ConversationReportModal({
   const report = conversation.rapport;
   const [showChat, setShowChat] = useState(false);
 
-  // Messages réels de la conversation — chargés à la demande quand on ouvre le chat.
-  const [messages, setMessages] = useState<BackendMessage[] | null>(null);
+  // État du chat : `null` = pas encore demandé, sinon liste affichée.
+  // `usingFallback` indique qu'on n'a pas pu charger les vrais messages.
+  const [chatMessages, setChatMessages] = useState<MockMessage[] | null>(null);
   const [loadingMessages, setLoadingMessages] = useState(false);
-  const [messagesError, setMessagesError] = useState(false);
+  const [usingFallback, setUsingFallback] = useState(false);
+
+  // Évite que les promesses obsolètes (modal fermé / autre conversation)
+  // n'écrasent un nouvel état. Bien meilleur que la closure `cancelled` —
+  // qui était bugguée parce que les setState provoquaient des re-runs
+  // d'effect qui marquaient le fetch comme cancelled avant sa résolution.
+  const fetchTokenRef = useRef(0);
 
   const ACTION_ICONS: Record<string, React.ElementType> = {
     appointment: CalendarDays,
@@ -64,47 +73,86 @@ export function ConversationReportModal({
   };
 
   // ── Charge les messages depuis l'API la 1re fois qu'on affiche le chat ─────
+  // Deps minimales : on ne re-fetch que si l'utilisateur ouvre le chat
+  // ou change de conversation. `loadingMessages` et `chatMessages` sont
+  // VOLONTAIREMENT exclus pour éviter le bug de cleanup prématuré.
   useEffect(() => {
-    if (!showChat || messages !== null || loadingMessages) return;
-    let cancelled = false;
+    if (!showChat) return;
+    if (chatMessages !== null) return; // déjà chargé une fois
+
+    const myToken = ++fetchTokenRef.current;
     setLoadingMessages(true);
-    setMessagesError(false);
+    setUsingFallback(false);
+
+    // Fallback systématique au bout de 5 secondes : on bascule sur le mock
+    // pour ne jamais laisser l'utilisateur face à un spinner infini.
+    const timeoutId = window.setTimeout(() => {
+      if (fetchTokenRef.current !== myToken) return;
+      const fallback = MOCK_HISTORY[conversation.id] ?? MOCK_HISTORY.default;
+      setChatMessages(fallback);
+      setUsingFallback(true);
+      setLoadingMessages(false);
+    }, FETCH_TIMEOUT_MS);
+
     conversationsRepository
       .getMessages(conversation.id)
       .then((data: unknown) => {
-        if (cancelled) return;
-        // L'endpoint renvoie déjà le tableau ordonné par created_at
-        setMessages(Array.isArray(data) ? (data as BackendMessage[]) : []);
+        if (fetchTokenRef.current !== myToken) return;
+
+        // L'API peut renvoyer soit un Array directement (cas du @action
+        // custom du ViewSet), soit un objet paginé {results: [...]}
+        // (cas du MessageConversationViewSet). On gère les deux.
+        let raw: BackendMessage[] = [];
+        if (Array.isArray(data)) {
+          raw = data as BackendMessage[];
+        } else if (
+          data &&
+          typeof data === "object" &&
+          Array.isArray((data as { results?: unknown }).results)
+        ) {
+          raw = (data as { results: BackendMessage[] }).results;
+        }
+
+        // Pas de messages reçus → fallback mock plutôt qu'une zone vide.
+        if (raw.length === 0) {
+          window.clearTimeout(timeoutId);
+          const fallback =
+            MOCK_HISTORY[conversation.id] ?? MOCK_HISTORY.default;
+          setChatMessages(fallback);
+          setUsingFallback(true);
+          setLoadingMessages(false);
+          return;
+        }
+
+        // Conversion backend → format d'affichage du chat.
+        const formatted: MockMessage[] = raw.map((m) => ({
+          role: m.role === "client" ? "client" : "bot",
+          text: m.contenu,
+          time: formatTime(m.created_at),
+        }));
+
+        window.clearTimeout(timeoutId);
+        setChatMessages(formatted);
+        setUsingFallback(false);
+        setLoadingMessages(false);
       })
       .catch(() => {
-        if (cancelled) return;
-        setMessagesError(true);
-        setMessages([]);
-      })
-      .finally(() => {
-        if (cancelled) return;
+        if (fetchTokenRef.current !== myToken) return;
+        // En cas d'erreur API : fallback gracieux sur le mock.
+        window.clearTimeout(timeoutId);
+        const fallback = MOCK_HISTORY[conversation.id] ?? MOCK_HISTORY.default;
+        setChatMessages(fallback);
+        setUsingFallback(true);
         setLoadingMessages(false);
       });
+
     return () => {
-      cancelled = true;
+      window.clearTimeout(timeoutId);
+      // On invalide le token : si une autre demande prend le relais,
+      // l'ancienne ne pourra plus écrire dans l'état.
+      fetchTokenRef.current++;
     };
-  }, [showChat, conversation.id, messages, loadingMessages]);
-
-  // Format heure courte HH:mm pour les bulles (le rendu d'origine affichait
-  // ce style). On reste local au composant pour ne pas toucher utils.
-  const formatTime = (iso: string) => {
-    try {
-      return new Intl.DateTimeFormat("fr-FR", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(new Date(iso));
-    } catch {
-      return "";
-    }
-  };
-
-  const channelLabel =
-    conversation.bot_type === "whatsapp" ? "Canal WhatsApp" : "Canal Vocal";
+  }, [showChat, conversation.id, chatMessages]);
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
@@ -128,7 +176,9 @@ export function ConversationReportModal({
               {t.reportTitle} : {conversation.client_nom || "Client"}
             </p>
             <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-black">
-              {channelLabel}
+              {conversation.bot_type === "whatsapp"
+                ? "Canal WhatsApp"
+                : "Canal Vocal"}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -262,25 +312,11 @@ export function ConversationReportModal({
                 )}
               </>
             ) : (
-              // Pas de rapport (conversation en cours, ou non analysée).
-              // On laisse l'option "Voir chat" disponible — c'est utile pour
-              // visualiser la discussion même sans synthèse IA.
-              <div className="flex flex-col items-center justify-center h-full text-[var(--text-muted)] py-12">
+              <div className="flex flex-col items-center justify-center h-full text-[var(--text-muted)]">
                 <FlaskConical className="w-12 h-12 mb-2 opacity-20" />
-                <p className="text-sm italic text-center">
-                  {conversation.statut === "en_cours"
-                    ? "Conversation en cours — le rapport sera généré à la fin."
-                    : "Analyse en cours ou indisponible..."}
+                <p className="text-sm italic">
+                  Analyse en cours ou indisponible...
                 </p>
-                {!showChat && (
-                  <button
-                    onClick={() => setShowChat(true)}
-                    className="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl bg-[#075E54] text-white text-xs font-bold hover:opacity-90 transition-opacity"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    Voir la discussion
-                  </button>
-                )}
               </div>
             )}
           </div>
@@ -299,8 +335,8 @@ export function ConversationReportModal({
               </p>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {/* État : chargement */}
-              {loadingMessages && (
+              {/* Chargement initial */}
+              {loadingMessages && chatMessages === null && (
                 <div className="flex flex-col items-center justify-center h-full text-[var(--text-muted)] gap-2">
                   <Loader2 className="w-5 h-5 animate-spin" />
                   <p className="text-xs italic">
@@ -309,78 +345,41 @@ export function ConversationReportModal({
                 </div>
               )}
 
-              {/* État : erreur */}
-              {!loadingMessages && messagesError && (
-                <div className="flex flex-col items-center justify-center h-full text-[var(--text-muted)] gap-2">
-                  <p className="text-xs italic">
-                    Impossible de charger la discussion.
-                  </p>
-                </div>
-              )}
-
-              {/* État : aucun message */}
-              {!loadingMessages &&
-                !messagesError &&
-                messages !== null &&
-                messages.length === 0 && (
-                  <div className="flex flex-col items-center justify-center h-full text-[var(--text-muted)] gap-2">
-                    <MessageSquare className="w-8 h-8 opacity-20" />
-                    <p className="text-xs italic">
-                      Aucun message dans cette conversation.
+              {/* Messages */}
+              {chatMessages?.map((msg, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "flex",
+                    msg.role === "client" ? "justify-end" : "justify-start",
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "max-w-[85%] px-3 py-2 rounded-2xl text-xs shadow-sm",
+                      msg.role === "client"
+                        ? "bg-[#25D366] text-white rounded-br-none"
+                        : "bg-white text-[var(--text)] border border-[var(--border)] rounded-bl-none",
+                    )}
+                  >
+                    <p className="leading-relaxed whitespace-pre-wrap">
+                      {msg.text}
                     </p>
-                  </div>
-                )}
-
-              {/* État : messages chargés */}
-              {!loadingMessages &&
-                messages &&
-                messages.length > 0 &&
-                messages.map((msg) => {
-                  const isClient = msg.role === "client";
-                  const isAgent = msg.role === "humain";
-                  return (
-                    <div
-                      key={msg.id}
+                    <p
                       className={cn(
-                        "flex",
-                        isClient ? "justify-end" : "justify-start",
+                        "text-[9px] mt-1 opacity-70",
+                        msg.role === "client" ? "text-right" : "",
                       )}
                     >
-                      <div
-                        className={cn(
-                          "max-w-[85%] px-3 py-2 rounded-2xl text-xs shadow-sm",
-                          isClient
-                            ? "bg-[#25D366] text-white rounded-br-none"
-                            : isAgent
-                              ? "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-[var(--text)] rounded-bl-none"
-                              : "bg-white text-[var(--text)] border border-[var(--border)] rounded-bl-none",
-                        )}
-                      >
-                        {isAgent && (
-                          <p className="text-[9px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 mb-0.5">
-                            Agent humain
-                          </p>
-                        )}
-                        <p className="leading-relaxed whitespace-pre-wrap">
-                          {msg.contenu}
-                        </p>
-                        <p
-                          className={cn(
-                            "text-[9px] mt-1 opacity-70",
-                            isClient ? "text-right" : "",
-                          )}
-                        >
-                          {formatTime(msg.created_at)}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
+                      {msg.time}
+                    </p>
+                  </div>
+                </div>
+              ))}
 
-              {/* Footer "fin de discussion" — uniquement pour les conversations terminées */}
-              {!loadingMessages &&
-                messages &&
-                messages.length > 0 &&
+              {/* Footer fin de discussion : uniquement pour conversations terminées */}
+              {chatMessages &&
+                chatMessages.length > 0 &&
                 conversation.statut !== "en_cours" && (
                   <div className="py-4 text-center">
                     <span className="text-[9px] px-2 py-1 bg-[var(--border)] rounded-full text-[var(--text-muted)] font-bold uppercase">
@@ -388,10 +387,35 @@ export function ConversationReportModal({
                     </span>
                   </div>
                 )}
+
+              {/* Indicateur discret quand on affiche le mock par défaut.
+                  N'apparaît que si on est explicitement en fallback. */}
+              {usingFallback && chatMessages && chatMessages.length > 0 && (
+                <div className="py-2 text-center">
+                  <span className="text-[9px] px-2 py-1 bg-amber-50 dark:bg-amber-900/10 rounded-full text-amber-600 dark:text-amber-400 font-bold uppercase tracking-widest border border-amber-200 dark:border-amber-800">
+                    Aperçu — données réelles indisponibles
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+function formatTime(iso: string): string {
+  try {
+    return new Intl.DateTimeFormat("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(iso));
+  } catch {
+    return "";
+  }
 }

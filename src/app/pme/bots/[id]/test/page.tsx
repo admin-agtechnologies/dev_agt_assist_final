@@ -151,37 +151,14 @@ export default function BotTestPage() {
   const transcriptEndRef = useRef<HTMLDivElement>(null);
 
   // ── Session courante ───────────────────────────────────────────────────────
-  // On filtre la liste des sessions backend pour ne garder que celle qui
-  // correspond à l'UUID frontend en cours. `messages` est dans les deps pour
-  // que le useMemo se ré-évalue après un reset (sessionIdRef.current change).
+  // On ne garde que la session correspondant à l'UUID frontend en cours.
+  // `messages` est dans les deps pour que le useMemo se rafraîchisse quand
+  // la session backend est mise à jour après un nouveau message.
   const currentSession = useMemo(
     () => sessions.find((s) => s.session_id === sessionIdRef.current) ?? null,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [sessions, messages],
   );
-
-  // ── Dernière action `human_handoff` exécutée avec succès ───────────────────
-  // Parcouru en sens inverse pour récupérer la plus récente.
-  const lastHandoffAction = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const a = messages[i].actions?.find(
-        (ac) => ac.type === "human_handoff" && ac.status === "success",
-      );
-      if (a) return a;
-    }
-    return null;
-  }, [messages]);
-
-  // ── Dernière action `create_appointment` exécutée avec succès ──────────────
-  const lastAppointmentAction = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const a = messages[i].actions?.find(
-        (ac) => ac.type === "create_appointment" && ac.status === "success",
-      );
-      if (a) return a;
-    }
-    return null;
-  }, [messages]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -540,6 +517,159 @@ export default function BotTestPage() {
                           {msg.tokens} {t.testTokensUsed}
                         </p>
                       )}
+
+                      {/* ── Composants d'action inline (bot uniquement) ─── */}
+                      {/* Affichés en plus des tags compacts ci-dessus quand
+                        le bot a exécuté une action `human_handoff` ou
+                        `create_appointment` avec succès. */}
+                      {!isUser &&
+                        !msg.isTyping &&
+                        msg.actions?.map((action, idx) => {
+                          // Composant : Transfert humain
+                          if (
+                            action.type === "human_handoff" &&
+                            action.status === "success"
+                          ) {
+                            return (
+                              <div
+                                key={`handoff-${idx}`}
+                                className="w-full max-w-[420px] rounded-2xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10 overflow-hidden mt-1 animate-fade-in"
+                              >
+                                <div className="px-3 py-2 bg-amber-100/50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center flex-shrink-0">
+                                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-bold text-[var(--text)]">
+                                      {actionLabel("human_handoff", d)}
+                                    </p>
+                                    <p className="text-[9px] text-[var(--text-muted)] uppercase tracking-widest font-black">
+                                      Action exécutée
+                                    </p>
+                                  </div>
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-[#25D366] flex-shrink-0" />
+                                </div>
+                                <div className="px-3 py-2.5 space-y-2">
+                                  {action.payload.raison && (
+                                    <div>
+                                      <p className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-0.5">
+                                        Motif
+                                      </p>
+                                      <p className="text-[11px] text-[var(--text)] leading-relaxed">
+                                        {action.payload.raison}
+                                      </p>
+                                    </div>
+                                  )}
+                                  <div className="flex items-center gap-1.5 text-[10px] text-[var(--text-muted)]">
+                                    {action.payload.persisted ? (
+                                      <>
+                                        <CheckCircle2 className="w-2.5 h-2.5 text-[#25D366]" />
+                                        <span>
+                                          Enregistré — un agent sera notifié.
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <AlertTriangle className="w-2.5 h-2.5 text-amber-500" />
+                                        <span>
+                                          Mode test — pas de notification
+                                          réelle.
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }
+                          // Composant : Prise de RDV
+                          if (
+                            action.type === "create_appointment" &&
+                            action.status === "success"
+                          ) {
+                            return (
+                              <div
+                                key={`rdv-${idx}`}
+                                className="w-full max-w-[420px] rounded-2xl border border-[#25D366]/30 bg-[#25D366]/5 overflow-hidden mt-1 animate-fade-in"
+                              >
+                                <div className="px-3 py-2 bg-[#25D366]/10 border-b border-[#25D366]/20 flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded-lg bg-[#25D366]/15 flex items-center justify-center flex-shrink-0">
+                                    <Calendar className="w-3.5 h-3.5 text-[#25D366]" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-bold text-[var(--text)]">
+                                      {actionLabel("create_appointment", d)}
+                                    </p>
+                                    <p className="text-[9px] text-[var(--text-muted)] uppercase tracking-widest font-black">
+                                      Action exécutée
+                                    </p>
+                                  </div>
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-[#25D366] flex-shrink-0" />
+                                </div>
+                                <div className="px-3 py-2.5 space-y-1.5">
+                                  {action.payload.client_nom && (
+                                    <div className="flex items-center gap-2">
+                                      <User className="w-3 h-3 text-[var(--text-muted)] flex-shrink-0" />
+                                      <span className="text-[11px] font-semibold text-[var(--text)] truncate">
+                                        {action.payload.client_nom}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {action.payload.client_phone && (
+                                    <div className="flex items-center gap-2">
+                                      <Phone className="w-3 h-3 text-[var(--text-muted)] flex-shrink-0" />
+                                      <span className="text-[11px] text-[var(--text)]">
+                                        {action.payload.client_phone}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {action.payload.scheduled_at && (
+                                    <div className="flex items-center gap-2">
+                                      <Clock className="w-3 h-3 text-[var(--text-muted)] flex-shrink-0" />
+                                      <span className="text-[11px] text-[var(--text)]">
+                                        {formatDateTime(
+                                          action.payload.scheduled_at,
+                                        )}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {action.payload.service?.nom && (
+                                    <div className="flex items-center gap-2">
+                                      <Wrench className="w-3 h-3 text-[var(--text-muted)] flex-shrink-0" />
+                                      <span className="text-[11px] text-[var(--text)] truncate">
+                                        {action.payload.service.nom}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {action.payload.agence && (
+                                    <div className="flex items-center gap-2">
+                                      <MapPin className="w-3 h-3 text-[var(--text-muted)] flex-shrink-0" />
+                                      <span className="text-[11px] text-[var(--text-muted)] truncate">
+                                        {action.payload.agence}
+                                      </span>
+                                    </div>
+                                  )}
+                                  <div className="flex items-center gap-1.5 text-[10px] text-[var(--text-muted)] pt-1.5 mt-1 border-t border-[#25D366]/15">
+                                    {action.payload.is_test ? (
+                                      <>
+                                        <AlertTriangle className="w-2.5 h-2.5 text-amber-500" />
+                                        <span>Mode test — aucun RDV réel.</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <CheckCircle2 className="w-2.5 h-2.5 text-[#25D366]" />
+                                        <span>
+                                          RDV enregistré dans l&apos;agenda.
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })}
                     </div>
                   </div>
                 );
@@ -696,146 +826,6 @@ export default function BotTestPage() {
             )}
           </div>
 
-          {/* ── Action déclenchée : Transfert humain ────────────────────────── */}
-          {/* S'affiche uniquement si le bot a exécuté avec succès l'action
-              `human_handoff` au cours de cette session. */}
-          {lastHandoffAction && (
-            <div className="card overflow-hidden border-amber-200 dark:border-amber-800 animate-fade-in">
-              <div className="p-4 bg-amber-50 dark:bg-amber-900/10 border-b border-amber-200 dark:border-amber-800">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
-                    <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-[var(--text)]">
-                      {actionLabel("human_handoff", d)}
-                    </p>
-                    <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-black">
-                      Action exécutée par le bot
-                    </p>
-                  </div>
-                  <CheckCircle2 className="w-4 h-4 text-[#25D366] flex-shrink-0" />
-                </div>
-              </div>
-
-              <div className="p-4 space-y-3">
-                {lastHandoffAction.payload.raison && (
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
-                      Motif du transfert
-                    </p>
-                    <p className="text-xs text-[var(--text)] leading-relaxed">
-                      {lastHandoffAction.payload.raison}
-                    </p>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2 text-[10px] text-[var(--text-muted)]">
-                  {lastHandoffAction.payload.persisted ? (
-                    <>
-                      <CheckCircle2 className="w-3 h-3 text-[#25D366]" />
-                      <span>Enregistré en base — un agent sera notifié.</span>
-                    </>
-                  ) : (
-                    <>
-                      <AlertTriangle className="w-3 h-3 text-amber-500" />
-                      <span>
-                        Mode test — aucun agent n&apos;est réellement notifié.
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── Action déclenchée : Prise de rendez-vous ────────────────────── */}
-          {/* S'affiche uniquement si le bot a exécuté avec succès l'action
-              `create_appointment` au cours de cette session. */}
-          {lastAppointmentAction && (
-            <div className="card overflow-hidden border-[#25D366]/30 animate-fade-in">
-              <div className="p-4 bg-[#25D366]/5 border-b border-[#25D366]/20">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-[#25D366]/10 flex items-center justify-center flex-shrink-0">
-                    <Calendar className="w-4 h-4 text-[#25D366]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-[var(--text)]">
-                      {actionLabel("create_appointment", d)}
-                    </p>
-                    <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-black">
-                      Action exécutée par le bot
-                    </p>
-                  </div>
-                  <CheckCircle2 className="w-4 h-4 text-[#25D366] flex-shrink-0" />
-                </div>
-              </div>
-
-              <div className="p-4 space-y-2.5">
-                {lastAppointmentAction.payload.client_nom && (
-                  <div className="flex items-center gap-2">
-                    <User className="w-3.5 h-3.5 text-[var(--text-muted)] flex-shrink-0" />
-                    <span className="text-xs font-semibold text-[var(--text)] truncate">
-                      {lastAppointmentAction.payload.client_nom}
-                    </span>
-                  </div>
-                )}
-
-                {lastAppointmentAction.payload.client_phone && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-3.5 h-3.5 text-[var(--text-muted)] flex-shrink-0" />
-                    <span className="text-xs text-[var(--text)]">
-                      {lastAppointmentAction.payload.client_phone}
-                    </span>
-                  </div>
-                )}
-
-                {lastAppointmentAction.payload.scheduled_at && (
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-3.5 h-3.5 text-[var(--text-muted)] flex-shrink-0" />
-                    <span className="text-xs text-[var(--text)]">
-                      {formatDateTime(
-                        lastAppointmentAction.payload.scheduled_at,
-                      )}
-                    </span>
-                  </div>
-                )}
-
-                {lastAppointmentAction.payload.service?.nom && (
-                  <div className="flex items-center gap-2">
-                    <Wrench className="w-3.5 h-3.5 text-[var(--text-muted)] flex-shrink-0" />
-                    <span className="text-xs text-[var(--text)] truncate">
-                      {lastAppointmentAction.payload.service.nom}
-                    </span>
-                  </div>
-                )}
-
-                {lastAppointmentAction.payload.agence && (
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-3.5 h-3.5 text-[var(--text-muted)] flex-shrink-0" />
-                    <span className="text-xs text-[var(--text-muted)] truncate">
-                      {lastAppointmentAction.payload.agence}
-                    </span>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2 text-[10px] text-[var(--text-muted)] pt-1 border-t border-[var(--border)]">
-                  {lastAppointmentAction.payload.is_test ? (
-                    <>
-                      <AlertTriangle className="w-3 h-3 text-amber-500" />
-                      <span>Mode test — aucun RDV réel n&apos;est créé.</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-3 h-3 text-[#25D366]" />
-                      <span>RDV enregistré dans l&apos;agenda.</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* ── Config IA (accordéon) ───────────────────────────────────────── */}
           <div className="card overflow-hidden">
             <button
@@ -939,8 +929,7 @@ export default function BotTestPage() {
 
           {/* ── Session en cours (accordéon) ────────────────────────────────── */}
           {/* On affiche uniquement la session correspondant à l'UUID frontend
-              en cours, et plus l'historique complet — l'historique reste
-              disponible côté backend si besoin. */}
+              en cours, pour éviter la confusion avec l'historique global. */}
           <div className="card overflow-hidden">
             <button
               onClick={() => setSessionsOpen((v) => !v)}
