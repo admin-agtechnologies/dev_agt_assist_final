@@ -1,6 +1,6 @@
 # AGT PME Frontend
 
-Interface PME de la plateforme AGT Bot.
+Interface PME de la plateforme AGT Bots.
 
 **Port :** 3000 | **Backend :** agt-platform :8000
 
@@ -17,16 +17,18 @@ npm run dev:mock
 ```
 
 ## Comptes démo (mode mock)
+
 - `pharmacie@example.com` / n'importe quel mot de passe
 - `cabinet@example.com` / n'importe quel mot de passe
 
 ## Routes
-| Route | Description |
-|---|---|
-| `/login` | Connexion PME |
-| `/pme/dashboard` | Tableau de bord |
-| `/pme/bots` | Gestion des bots |
-| `/pme/services` | Services |
-| `/pme/appointments` | Rendez-vous |
-| `/pme/billing` | Facturation |
-| `/pme/profile` | Profil |
+
+| Route               | Description      |
+| ------------------- | ---------------- |
+| `/login`            | Connexion PME    |
+| `/pme/dashboard`    | Tableau de bord  |
+| `/pme/bots`         | Gestion des bots |
+| `/pme/services`     | Services         |
+| `/pme/appointments` | Rendez-vous      |
+| `/pme/billing`      | Facturation      |
+| `/pme/profile`      | Profil           |
