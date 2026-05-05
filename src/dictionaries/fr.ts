@@ -377,6 +377,7 @@ export const fr = {
     conversationsTab: "Conversations",
     agendaTab: "Agenda",
     statsTab: "Statistiques",
+    whatsappTab: "WhatsApp",
     testBtn: "Tester le bot",
     // ── Stats ─────────────────────────────────────────────────────────────────────
     statsMessages: "Messages traités",

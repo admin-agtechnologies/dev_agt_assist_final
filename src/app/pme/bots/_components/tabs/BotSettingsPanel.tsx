@@ -17,7 +17,6 @@ import { botsRepository } from "@/repositories";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/components/ui/Toast";
 import type { BotPair } from "../bots.types";
-import { WhatsAppPanel } from "../whatsapp/WhatsAppPanel";
 
 interface BotSettingsPanelProps {
   pair: BotPair;
@@ -40,7 +39,6 @@ export function BotSettingsPanel({
   );
 
   // ── État de connexion WhatsApp synchronisé via le callback du panneau ──
-  const [isWaConnected, setIsWaConnected] = useState(false);
 
   const isActive = pair.waBot.statut === "actif";
   const phoneDisplay = pair.waBot.numero_value ?? "Non configuré";
@@ -78,20 +76,6 @@ export function BotSettingsPanel({
         sub: "Ollama · serveur AGT",
       },
       {
-        key: "wa",
-        label: "Canal WhatsApp",
-        value: (
-          <span
-            className={cn(
-              "text-xs font-bold",
-              isWaConnected ? "text-[#25D366]" : "text-white/40",
-            )}
-          >
-            {isWaConnected ? "Connecté" : "Non connecté"}
-          </span>
-        ),
-      },
-      {
         key: "voice",
         label: "Canal Vocal",
         value: (
@@ -106,7 +90,7 @@ export function BotSettingsPanel({
         ),
       },
     ],
-    [isWaConnected, pair.voiceBot],
+    [pair.voiceBot],
   );
 
   return (
@@ -256,13 +240,6 @@ export function BotSettingsPanel({
           </div>
           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-[#25D366] rounded-full blur-[80px] opacity-20" />
         </div>
-
-        {/* ── Connexion WhatsApp (le panneau livré précédemment) ── */}
-        <WhatsAppPanel
-          botId={pair.waBot.id}
-          isBotPublished={isActive}
-          onConnectionChange={setIsWaConnected}
-        />
 
         {/* ── Aide AGT (compact) ── */}
         <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 p-4 rounded-2xl">

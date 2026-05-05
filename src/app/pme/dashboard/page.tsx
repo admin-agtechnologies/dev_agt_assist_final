@@ -12,18 +12,23 @@ import {
 } from "@/repositories";
 import { PageLoader } from "@/components/ui";
 import { PLANS_CONFIG } from "@/lib/constants";
-import type { TenantStats, Conversation, Subscription, RendezVous } from "@/types/api";
+import type {
+  TenantStats,
+  Conversation,
+  Subscription,
+  RendezVous,
+} from "@/types/api";
 
-import { KpiCards }            from "./_components/KpiCards";
-import { WeekChart }           from "./_components/WeekChart";
+import { KpiCards } from "./_components/KpiCards";
+import { WeekChart } from "./_components/WeekChart";
 import { ActiveConversations } from "./_components/ActiveConversations";
 import { RecentConversations } from "./_components/RecentConversations";
-import { SubscriptionUsage }   from "./_components/SubscriptionUsage";
-import { TodayAppointments }   from "./_components/TodayAppointments";
-import { EmailStats }          from "./_components/EmailStats";
-import { QuickLinks }          from "./_components/QuickLinks";
-import { ConversationModal }   from "./_components/ConversationModal";
-
+import { SubscriptionUsage } from "./_components/SubscriptionUsage";
+import { TodayAppointments } from "./_components/TodayAppointments";
+import { EmailStats } from "./_components/EmailStats";
+import { QuickLinks } from "./_components/QuickLinks";
+import { ConversationReportModal } from "../bots/_components/ConversationReportModal";
+import { SECTOR_COLORS } from "../bots/_components/bots.types";
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function PmeDashboardPage() {
@@ -31,26 +36,32 @@ export default function PmeDashboardPage() {
   const { dictionary: d } = useLanguage();
   const t = d.dashboard.pme;
 
-  const [stats, setStats]                         = useState<TenantStats | null>(null);
-  const [conversations, setConversations]         = useState<Conversation[]>([]);
-  const [subscription, setSubscription]           = useState<Subscription | null>(null);
+  const [stats, setStats] = useState<TenantStats | null>(null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [todayAppointments, setTodayAppointments] = useState<RendezVous[]>([]);
-  const [weeklyData, setWeeklyData]               = useState<WeeklyDataPoint[]>([]);
-  const [loading, setLoading]                     = useState(true);
-  const [selectedConv, setSelectedConv]           = useState<Conversation | null>(null);
+  const [weeklyData, setWeeklyData] = useState<WeeklyDataPoint[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     const today = new Date().toISOString().split("T")[0];
     const [s, c, sub, appts, weekly] = await Promise.all([
       statsRepository.getByTenant().catch(() => null),
-      conversationsRepository
-        .getList()
-        .catch(() => ({ results: [] as Conversation[], count: 0, next: null, previous: null })),
+      conversationsRepository.getList().catch(() => ({
+        results: [] as Conversation[],
+        count: 0,
+        next: null,
+        previous: null,
+      })),
       subscriptionsRepository.getMine().catch(() => null),
-      rendezVousRepository
-        .getList()
-        .catch(() => ({ results: [] as RendezVous[], count: 0, next: null, previous: null })),
+      rendezVousRepository.getList().catch(() => ({
+        results: [] as RendezVous[],
+        count: 0,
+        next: null,
+        previous: null,
+      })),
       statsRepository.getWeekly().catch(() => []),
     ]);
     setStats(s);
@@ -65,25 +76,28 @@ export default function PmeDashboardPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
 
   if (loading) return <PageLoader />;
 
   // ── Plan courant (pour UsageBar) ─────────────────────────────────────────
   const currentPlan = subscription
-    ? (PLANS_CONFIG.find(p => p.slug === subscription.plan?.slug) ?? null)
+    ? (PLANS_CONFIG.find((p) => p.slug === subscription.plan?.slug) ?? null)
     : null;
 
   return (
     <>
       <div className="space-y-6 animate-fade-in">
-
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <div>
           <h1 className="text-2xl font-bold text-[var(--text)]">{t.title}</h1>
           <p className="text-sm text-[var(--text-muted)] mt-0.5">
             {t.welcome},{" "}
-            <span className="font-semibold text-[var(--text)]">{user?.name}</span>
+            <span className="font-semibold text-[var(--text)]">
+              {user?.name}
+            </span>
           </p>
         </div>
 
@@ -91,10 +105,10 @@ export default function PmeDashboardPage() {
         <KpiCards
           stats={stats}
           labels={{
-            messagesToday:     t.messagesToday,
-            callsToday:        t.callsToday,
+            messagesToday: t.messagesToday,
+            callsToday: t.callsToday,
             appointmentsToday: t.appointmentsToday,
-            thisWeek:          t.thisWeek,
+            thisWeek: t.thisWeek,
           }}
         />
 
@@ -109,17 +123,16 @@ export default function PmeDashboardPage() {
         {/* ── Accès rapides ────────────────────────────────────────────────── */}
         <QuickLinks
           labels={{
-            title:        t.quickLinks,
-            bots:         d.nav.bots,
-            services:     d.nav.services,
+            title: t.quickLinks,
+            bots: d.nav.bots,
+            services: d.nav.services,
             appointments: d.nav.appointments,
-            billing:      d.nav.billing,
+            billing: d.nav.billing,
           }}
         />
 
         {/* ── Contenu principal 2 colonnes ─────────────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-
           {/* Colonne gauche 3/5 */}
           <div className="lg:col-span-3 space-y-6">
             <WeekChart data={weeklyData} title={t.thisWeek} />
@@ -127,10 +140,10 @@ export default function PmeDashboardPage() {
               conversations={conversations}
               onSelect={setSelectedConv}
               labels={{
-                title:           t.recentConversations,
-                empty:           t.noConversations,
+                title: t.recentConversations,
+                empty: t.noConversations,
                 channelWhatsapp: t.channel_whatsapp,
-                channelVoice:    t.channel_voice,
+                channelVoice: t.channel_voice,
               }}
             />
           </div>
@@ -142,60 +155,50 @@ export default function PmeDashboardPage() {
               stats={stats}
               currentPlan={currentPlan}
               labels={{
-                title:           t.subscription,
-                active:          d.billing.statusActive,
-                suspended:       d.billing.statusSuspended,
-                renewsOn:        d.billing.renewsOn,
-                changePlan:      d.billing.changePlan,
-                usageMessages:   t.usageMessages,
-                usageCalls:      t.usageCalls,
-                noSubscription:  t.noSubscription,
+                title: t.subscription,
+                active: d.billing.statusActive,
+                suspended: d.billing.statusSuspended,
+                renewsOn: d.billing.renewsOn,
+                changePlan: d.billing.changePlan,
+                usageMessages: t.usageMessages,
+                usageCalls: t.usageCalls,
+                noSubscription: t.noSubscription,
               }}
             />
             <TodayAppointments
               appointments={todayAppointments}
               labels={{
-                title:      t.todayAppointments,
+                title: t.todayAppointments,
                 viewAgenda: t.viewAgenda,
-                none:       t.noAppointmentsToday,
+                none: t.noAppointmentsToday,
                 statuses: {
-                  confirme:   d.appointments.statuses.confirmed,
+                  confirme: d.appointments.statuses.confirmed,
                   en_attente: d.appointments.statuses.pending,
-                  termine:    d.appointments.statuses.done,
-                  annule:     d.appointments.statuses.cancelled,
+                  termine: d.appointments.statuses.done,
+                  annule: d.appointments.statuses.cancelled,
                 },
               }}
             />
             <EmailStats
               stats={stats}
               labels={{
-                title:     t.emailStats,
-                sentWeek:  t.emailsSentWeek,
-                opened:    t.emailsOpened,
-                failed:    t.emailsFailed,
+                title: t.emailStats,
+                sentWeek: t.emailsSentWeek,
+                opened: t.emailsOpened,
+                failed: t.emailsFailed,
               }}
             />
           </div>
         </div>
       </div>
 
-      {/* ── Modale conversation ──────────────────────────────────────────── */}
+      {/* ── Modale conversation (rapport détaillé + chat coulissant) ───────── */}
       {selectedConv && (
-        <ConversationModal
-          conv={selectedConv}
+        <ConversationReportModal
+          conversation={selectedConv}
           onClose={() => setSelectedConv(null)}
-          labels={{
-            historyTitle:         t.conversationHistory,
-            channelWhatsapp:      t.channel_whatsapp,
-            channelVoice:         t.channel_voice,
-            summary:              d.bots.reportSummary,
-            keyPoints:            d.bots.reportTakeaways,
-            actionTitle:          t.conversationAction,
-            actionNoAction:       t.conversationNoAction,
-            appointmentConfirmed: d.appointments.statuses.confirmed,
-            handoffRequired:      d.bots.reportHandoff,
-            appointments:         d.appointments.title,
-          }}
+          d={d}
+          colors={SECTOR_COLORS.default}
         />
       )}
     </>
