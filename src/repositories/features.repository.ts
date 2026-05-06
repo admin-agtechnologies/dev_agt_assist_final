@@ -24,49 +24,40 @@ export interface ActiveFeaturesResponse {
 // Slugs alignés exactement avec le seed backend (04_seed_data.md)
 const FALLBACK_FEATURES: Record<SectorSlug, string[]> = {
   hotel: [
-    "dashboard", "chatbot_whatsapp", "agent_vocal",
-    "faq", "emails_rappel",
+    "dashboard", "chatbot_whatsapp", "agent_vocal", "faq", "emails_rappel",
     "reservation_chambre", "conciergerie",
   ],
   restaurant: [
-    "dashboard", "chatbot_whatsapp", "agent_vocal",
-    "faq", "emails_rappel",
+    "dashboard", "chatbot_whatsapp", "agent_vocal", "faq", "emails_rappel",
     "reservation_table", "menu_digital", "commande_paiement",
   ],
   clinical: [
-    "dashboard", "chatbot_whatsapp", "agent_vocal",
-    "faq", "emails_rappel",
-    "prise_rdv", "orientation_patient",
+    "dashboard", "chatbot_whatsapp", "agent_vocal", "faq", "emails_rappel", "prise_rdv",
+    "orientation_patient",
   ],
   banking: [
-    "dashboard", "chatbot_whatsapp", "agent_vocal",
-    "faq", "emails_rappel",
+    "dashboard", "chatbot_whatsapp", "agent_vocal", "faq", "emails_rappel", "prise_rdv",
     "catalogue_produits_financiers", "multi_agences",
   ],
   school: [
-    "dashboard", "chatbot_whatsapp", "agent_vocal",
-    "faq", "emails_rappel",
-    "inscription_admission", "communication_etablissement", "prise_rdv",
+    "dashboard", "chatbot_whatsapp", "agent_vocal", "faq", "emails_rappel", "prise_rdv",
+    "inscription_admission", "communication_etablissement",
   ],
   ecommerce: [
-    "dashboard", "chatbot_whatsapp", "agent_vocal",
-    "faq", "emails_rappel",
+    "dashboard", "chatbot_whatsapp", "agent_vocal", "faq", "emails_rappel",
     "catalogue_produits", "commande_paiement", "suivi_commande",
   ],
   transport: [
-    "dashboard", "chatbot_whatsapp", "agent_vocal",
-    "faq", "emails_rappel",
+    "dashboard", "chatbot_whatsapp", "agent_vocal", "faq", "emails_rappel",
     "catalogue_trajets", "reservation_billet",
   ],
   pme: [
-    "dashboard", "chatbot_whatsapp", "agent_vocal",
-    "faq", "emails_rappel",
-    "catalogue_services", "prise_rdv", "conversion_prospects",
+    "dashboard", "chatbot_whatsapp", "agent_vocal", "faq", "emails_rappel", "prise_rdv",
+    "catalogue_services", "conversion_prospects",
   ],
   public: [
-    "dashboard", "chatbot_whatsapp", "agent_vocal",
-    "faq", "emails_rappel",
-    "orientation_citoyens", "prise_rdv",
+    "dashboard", "chatbot_whatsapp", "agent_vocal", "faq", "emails_rappel", "prise_rdv",
+    "orientation_citoyens",
   ],
   custom: [
     "dashboard", "chatbot_whatsapp", "faq",
