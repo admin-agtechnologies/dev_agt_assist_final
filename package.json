@@ -5,11 +5,21 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "dev:next": "next dev -p 3000",
+    "dev:hotel": "cross-env NEXT_PUBLIC_SECTOR=hotel next dev -p 3000",
+    "dev:restaurant": "cross-env NEXT_PUBLIC_SECTOR=restaurant next dev -p 3000",
+    "dev:clinical": "cross-env NEXT_PUBLIC_SECTOR=clinical next dev -p 3000",
+    "dev:banking": "cross-env NEXT_PUBLIC_SECTOR=banking next dev -p 3000",
+    "dev:school": "cross-env NEXT_PUBLIC_SECTOR=school next dev -p 3000",
+    "dev:ecommerce": "cross-env NEXT_PUBLIC_SECTOR=ecommerce next dev -p 3000",
+    "dev:transport": "cross-env NEXT_PUBLIC_SECTOR=transport next dev -p 3000",
+    "dev:pme": "cross-env NEXT_PUBLIC_SECTOR=pme next dev -p 3000",
+    "dev:public": "cross-env NEXT_PUBLIC_SECTOR=public next dev -p 3000",
+    "dev:custom": "cross-env NEXT_PUBLIC_SECTOR=custom next dev -p 3000",
     "dev:api": "json-server --watch db/db.json --port 4000 --routes db/routes.json",
+    "dev:mock": "concurrently \"next dev -p 3000\" \"json-server --watch db/db.json --port 4000 --routes db/routes.json\"",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
-    "dev:mock": "concurrently \"next dev -p 3000\" \"json-server --watch db/db.json --port 4000 --routes db/routes.json\""
+    "lint": "eslint ."
   },
   "dependencies": {
     "@react-oauth/google": "^0.12.1",
@@ -30,6 +40,7 @@
     "@types/react-dom": "^18",
     "autoprefixer": "^10",
     "concurrently": "^8.2.2",
+    "cross-env": "^10.1.0",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
     "json-server": "^0.17.4",

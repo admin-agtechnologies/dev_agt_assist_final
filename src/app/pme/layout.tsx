@@ -8,6 +8,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { useToast } from "@/components/ui/Toast";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import { useSector } from "@/hooks/useSector";
 import { OnboardingPopup } from "@/components/OnboardingPopup";
 import { onboardingRepository, tutorialRepository } from "@/repositories";
 import { cn, initials } from "@/lib/utils";
@@ -44,12 +45,13 @@ const navItems = (t: ReturnType<typeof useLanguage>["dictionary"]) => [
 export default function PmeLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const { dictionary: d, locale, setLocale } = useLanguage();
-  const { theme, toggle } = useTheme();
+  const { theme: uiTheme, toggle } = useTheme();   // ← renommé uiTheme
+  const { theme: sectorTheme } = useSector();       // ← renommé sectorTheme
   const pathname = usePathname();
   const router = useRouter();
   const toast = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [tutorialDone, setTutorialDone] = useState(true); // true par défaut pour éviter le flash
+  const [tutorialDone, setTutorialDone] = useState(true);
 
   // ── Charger l'état du tutoriel ────────────────────────────────────────────
   useEffect(() => {
@@ -67,7 +69,6 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
     recheckCurrentPage,
   } = useOnboarding();
 
-  // Gestion des actions spéciales (DISMISS, CLAIM_BONUS, etc.)
   const handleCtaWithActions = async (href?: string, action?: string) => {
     if (action === "DISMISS") {
       closePopup();
@@ -113,19 +114,28 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
       {/* Logo */}
       <div className="p-6 border-b border-[var(--border)]">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-[#075E54] flex items-center justify-center text-white font-black text-sm">
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-black text-sm"
+            style={{ backgroundColor: sectorTheme.primary }}
+          >
             A
           </div>
           <div>
             <p className="font-bold text-sm text-[var(--text)]">AGT Platform</p>
             <p className="text-[10px] text-[var(--text-muted)] font-medium">
-              {d.common.espacePME}
+              {sectorTheme.label}
             </p>
           </div>
         </div>
         {user && (
           <div className="mt-4 flex items-center gap-2.5 bg-[var(--bg)] rounded-xl p-3">
-            <div className="w-8 h-8 rounded-full bg-[#075E54]/10 flex items-center justify-center text-[#075E54] text-xs font-bold flex-shrink-0">
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+              style={{
+                backgroundColor: `${sectorTheme.primary}18`,
+                color: sectorTheme.primary,
+              }}
+            >
               {initials(user.name)}
             </div>
             <div className="min-w-0">
@@ -171,7 +181,6 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
       {/* Footer */}
       <div className="p-4 border-t border-[var(--border)] space-y-1">
 
-        {/* Tutoriel interface — badge orange si non terminé */}
         <Link
           href={ROUTES.tutorial}
           onClick={() => setSidebarOpen(false)}
@@ -189,7 +198,6 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
           )}
         </Link>
 
-        {/* Demander de l'aide */}
         <Link
           href={ROUTES.help}
           onClick={() => setSidebarOpen(false)}
@@ -204,7 +212,6 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
           {d.nav.help}
         </Link>
 
-        {/* Laisser un témoignage */}
         <Link
           href={ROUTES.feedback}
           onClick={() => setSidebarOpen(false)}
@@ -219,7 +226,6 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
           {d.nav.feedback}
         </Link>
 
-        {/* Signaler un problème */}
         <Link
           href={ROUTES.bug}
           onClick={() => setSidebarOpen(false)}
@@ -234,23 +240,20 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
           {d.nav.bug}
         </Link>
 
-        {/* Séparateur */}
         <div className="border-t border-[var(--border)] my-1" />
 
-        {/* Thème */}
         <button
           onClick={toggle}
           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-[var(--text-sidebar)] hover:bg-[var(--bg)] transition-colors"
         >
-          {theme === "dark" ? (
+          {uiTheme === "dark" ? (
             <Sun className="w-4 h-4 flex-shrink-0" />
           ) : (
             <Moon className="w-4 h-4 flex-shrink-0" />
           )}
-          {theme === "dark" ? d.common.lightMode : d.common.darkMode}
+          {uiTheme === "dark" ? d.common.lightMode : d.common.darkMode}
         </button>
 
-        {/* Langue */}
         <button
           onClick={() => setLocale(locale === "fr" ? "en" : "fr")}
           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-[var(--text-sidebar)] hover:bg-[var(--bg)] transition-colors"
@@ -259,7 +262,6 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
           {locale === "fr" ? "English" : "Français"}
         </button>
 
-        {/* Logout */}
         <button
           onClick={logout}
           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
@@ -272,10 +274,16 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[var(--bg)]">
+    <div
+      className="flex h-screen overflow-hidden bg-[var(--bg)]"
+      style={{
+        "--color-primary": sectorTheme.primary,
+        "--color-accent": sectorTheme.accent,
+        "--color-bg": sectorTheme.bg,
+      } as React.CSSProperties}
+    >
       <Sidebar />
 
-      {/* Mobile overlay */}
       {sidebarOpen && (
         <div className="lg:hidden fixed inset-0 z-40 flex">
           <div
@@ -288,9 +296,7 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Mobile header */}
         <header className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-card)]">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -303,7 +309,10 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
             )}
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-[#075E54] flex items-center justify-center text-white font-black text-xs">
+            <div
+              className="w-6 h-6 rounded-lg flex items-center justify-center text-white font-black text-xs"
+              style={{ backgroundColor: sectorTheme.primary }}
+            >
               A
             </div>
             <span className="font-bold text-sm text-[var(--text)]">
@@ -315,10 +324,8 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
         <main className="flex-1 overflow-y-auto p-6 lg:p-8">{children}</main>
       </div>
 
-      {/* Widgets support */}
       <SupportWidgets />
 
-      {/* Onboarding popup — s'affiche par-dessus tout */}
       {isPopupOpen && onboardingData?.payload && (
         <OnboardingPopup
           popupKey={onboardingData.popup_key!}
