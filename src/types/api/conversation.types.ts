@@ -1,5 +1,6 @@
 // src/types/api/conversation.types.ts
 // Conversation, RapportConversation, ChatbotBridge, WAHA
+// ── Ancien backend (pme/bots) — NE PAS MODIFIER, encore utilisé ──────────────
 
 export interface RapportConversation {
   id: string;
@@ -118,6 +119,7 @@ export interface ChatbotConfig {
   created_at: string;
   updated_at: string;
 }
+
 export interface UpdateChatbotConfigPayload {
   system_prompt?: string;
   temperature?: number;
@@ -189,11 +191,63 @@ export interface WahaStatusResponse {
   connected_at: string | null;
   qr_base64: string | null;
 }
+
 export interface WahaConnectResponse {
   status: WahaSessionStatus;
   phone_number: string;
   connected_at: string | null;
 }
+
 export interface WahaDisconnectResponse {
   status: 'STOPPED';
+}
+
+// ── Nouveau backend AGT v2 — Agent IA ────────────────────────────────────────
+
+export type MessageRole = 'user' | 'assistant' | 'system' | 'status';
+
+export interface AIMessage {
+  id: string;
+  role: MessageRole;
+  contenu: string;
+  created_at: string;
+}
+
+export interface AIActionDeclenchee {
+  action_slug: string;
+  statut: 'succes' | 'echec' | 'en_cours';
+  created_at: string;
+}
+
+export interface AIContactResume {
+  id: string;
+  nom: string;
+  phone: string;
+}
+
+export interface AIConversation {
+  id: string;
+  statut: 'active' | 'terminee' | 'transferee';
+  canal: 'web' | 'whatsapp' | 'vocal';
+  contact: AIContactResume | null;
+  messages: AIMessage[];
+  actions_declenchees: AIActionDeclenchee[];
+}
+
+export interface AIConversationFilters {
+  statut?: 'active' | 'terminee' | 'transferee';
+  canal?: 'web' | 'whatsapp' | 'vocal';
+  page?: number;
+  page_size?: number;
+}
+
+export interface SendMessagePayload {
+  message: string;
+  conversation_id: string | null;
+  canal: 'web' | 'whatsapp' | 'vocal';
+}
+
+export interface SendMessageResponse {
+  conversation_id: string;
+  status: 'processing';
 }

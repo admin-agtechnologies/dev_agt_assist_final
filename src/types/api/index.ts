@@ -10,3 +10,5 @@ export * from './contact.types';
 export * from './commande.types';
 export * from './catalogue.types';
 export * from './conversation.types';
+// Nouveau backend AGT v2
+export * from './reservation.types';

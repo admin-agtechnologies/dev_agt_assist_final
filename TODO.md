@@ -61,20 +61,20 @@
 
 ## Phase 1 — Modules base (parallèle, débloqué après Phase 0)
 
-- [x] **1.1 — Dashboard + layout shell**
+- [] **1.1 — Dashboard + layout shell**
   > Shell principal de l'application. Charge le thème sectoriel, injecte les CSS variables, affiche la navigation dynamique selon les features actives.
-  - [x] `app/(dashboard)/layout.tsx` — charge thème + injecte CSS variables
-  - [x] `components/layout/Sidebar.tsx` — navigation filtrée par features actives
-  - [x] `components/layout/Header.tsx` — header avec user menu
-  - [x] `app/(dashboard)/page.tsx` — dashboard avec widgets dynamiques selon features
+  - [] `app/(dashboard)/layout.tsx` — charge thème + injecte CSS variables
+  - [] `components/layout/Sidebar.tsx` — navigation filtrée par features actives
+  - [] `components/layout/Header.tsx` — header avec user menu
+  - [] `app/(dashboard)/page.tsx` — dashboard avec widgets dynamiques selon features
 
 - [ ] **1.2 — Conversations + Agent IA**
   > Liste et détail des conversations avec l'agent IA. Polling toutes les 2 secondes pour les messages en cours.
-  - [x] `app/(dashboard)/conversations/page.tsx` — liste conversations
-  - [x] `app/(dashboard)/conversations/[id]/page.tsx` — détail avec polling
-  - [x] `components/conversations/MessageBubble.tsx`
-  - [x] `components/conversations/StatusMessage.tsx`
-  - [x] `components/conversations/ConversationStatus.tsx`
+  - [] `app/(dashboard)/conversations/page.tsx` — liste conversations
+  - [] `app/(dashboard)/conversations/[id]/page.tsx` — détail avec polling
+  - [] `components/conversations/MessageBubble.tsx`
+  - [] `components/conversations/StatusMessage.tsx`
+  - [] `components/conversations/ConversationStatus.tsx`
   - [ ] `repositories/conversations.repository.ts` — branché sur API réelle
 
 - [ ] **1.3 — Contacts / CRM**
