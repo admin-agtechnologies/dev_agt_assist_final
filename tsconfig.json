@@ -14,7 +14,13 @@
     "jsx": "preserve",
     "incremental": true,
     "plugins": [{ "name": "next" }],
-    "paths": { "@/*": ["./src/*"] }
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/types": ["./src/types/api/index.ts"],
+      "@/repositories": ["./src/repositories/index.ts"],
+      "@/components/ui": ["./src/components/ui/index.tsx"],
+      "@/dictionaries": ["./src/dictionaries/index.ts"]
+    }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]

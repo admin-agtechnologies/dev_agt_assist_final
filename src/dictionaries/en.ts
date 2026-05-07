@@ -449,14 +449,6 @@ export const en = {
     testHandoffAlert: "Human handoff triggered",
     testResetSession: "Reset session",
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // DIFF À APPLIQUER MANUELLEMENT
-    // Fichier cible : src/dictionaries/en.ts
-    // Action        : AJOUTER le bloc `whatsapp:` à l'intérieur de l'objet `bots: { ... }`
-    //                 (les MÊMES CLÉS que dans fr.ts — sinon erreur TypeScript).
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    // ─────── À COLLER À L'INTÉRIEUR DE bots: { ... } ───────────────────────────
 
     whatsapp: {
       // Panel

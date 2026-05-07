@@ -1,50 +1,42 @@
 // src/lib/sector-config.ts
-import { ENV } from "./env";
+// Détection du secteur courant — priorité env var, fallback sous-domaine
 
 export type SectorSlug =
-  | "hotel"
-  | "restaurant"
-  | "clinical"
-  | "banking"
-  | "school"
-  | "ecommerce"
-  | "transport"
-  | "pme"
-  | "public"
-  | "custom"
-  | "central";
+  | 'pme'
+  | 'banking'
+  | 'clinical'
+  | 'school'
+  | 'ecommerce'
+  | 'hotel'
+  | 'public'
+  | 'restaurant'
+  | 'transport'
+  | 'custom'
+  | 'central';
 
 const SUBDOMAIN_MAP: Record<string, SectorSlug> = {
-  hotel: "hotel",
-  restaurant: "restaurant",
-  clinical: "clinical",
-  banking: "banking",
-  school: "school",
-  "e-commerce": "ecommerce",
-  ecommerce: "ecommerce",
-  travell: "transport",
-  transport: "transport",
-  pme: "pme",
-  public: "public",
-  custom: "custom",
-  www: "central",
+  pme: 'pme',
+  banking: 'banking',
+  clinical: 'clinical',
+  school: 'school',
+  'e-commerce': 'ecommerce',
+  hotel: 'hotel',
+  public: 'public',
+  restaurant: 'restaurant',
+  travell: 'transport',
+  www: 'central',
 };
 
-const VALID_SECTORS: SectorSlug[] = [
-  "hotel", "restaurant", "clinical", "banking", "school",
-  "ecommerce", "transport", "pme", "public", "custom", "central",
-];
-
 export function getCurrentSector(): SectorSlug {
-  // Priorité 1 : variable d'environnement (dev local ou déploiement CI)
-  if (ENV.SECTOR && VALID_SECTORS.includes(ENV.SECTOR as SectorSlug)) {
-    return ENV.SECTOR as SectorSlug;
+  const envSector = process.env.NEXT_PUBLIC_SECTOR as SectorSlug | undefined;
+  if (envSector && envSector.length > 0) return envSector;
+
+  if (typeof window !== 'undefined') {
+    const subdomain = window.location.hostname.split('.')[0];
+    return SUBDOMAIN_MAP[subdomain] ?? 'custom';
   }
-  // Priorité 2 : sous-domaine (production sur agt-bot.com)
-  if (typeof window !== "undefined") {
-    const subdomain = window.location.hostname.split(".")[0];
-    if (subdomain in SUBDOMAIN_MAP) return SUBDOMAIN_MAP[subdomain];
-  }
-  // Fallback : pme (ton front actuel par défaut)
-  return "pme";
+
+  return 'central';
 }
+
+export { SUBDOMAIN_MAP };

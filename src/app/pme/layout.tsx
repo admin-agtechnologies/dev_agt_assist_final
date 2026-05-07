@@ -1,79 +1,37 @@
-// src/app/pme/layout.tsx
 "use client";
 import { useState, useEffect, ReactNode } from "react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
+import { useRouter, usePathname } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useTheme } from "@/components/ui/ThemeProvider";
 import { useToast } from "@/components/ui/Toast";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useSector } from "@/hooks/useSector";
 import { OnboardingPopup } from "@/components/OnboardingPopup";
-import { onboardingRepository, tutorialRepository } from "@/repositories";
-import { cn, initials } from "@/lib/utils";
-import { ROUTES } from "@/lib/constants";
-import {
-  LayoutDashboard,
-  Bot,
-  CalendarDays,
-  CreditCard,
-  UserCircle,
-  HelpCircle,
-  Sun,
-  Moon,
-  Globe,
-  LogOut,
-  Menu,
-  X,
-  BookOpen,
-  GraduationCap,
-  Star,
-  AlertTriangle,
-} from "lucide-react";
 import { SupportWidgets } from "@/components/SupportWidgets";
-
-const navItems = (t: ReturnType<typeof useLanguage>["dictionary"]) => [
-  { href: ROUTES.dashboard, icon: LayoutDashboard, label: t.nav.dashboard },
-  { href: ROUTES.bots, icon: Bot, label: t.nav.bots },
-  { href: ROUTES.knowledge, icon: BookOpen, label: t.nav.knowledge },
-  { href: ROUTES.appointments, icon: CalendarDays, label: t.nav.appointments },
-  { href: ROUTES.billing, icon: CreditCard, label: t.nav.billing },
-  { href: ROUTES.profile, icon: UserCircle, label: t.nav.profile },
-];
+import { onboardingRepository, tutorialRepository } from "@/repositories";
+import { cn } from "@/lib/utils";
+import { ROUTES } from "@/lib/constants";
+import { PmeSidebarNav } from "./_components/PmeSidebarNav";
+import { PmeMobileHeader } from "./_components/PmeMobileHeader";
 
 export default function PmeLayout({ children }: { children: ReactNode }) {
-  const { user, logout } = useAuth();
-  const { dictionary: d, locale, setLocale } = useLanguage();
-  const { theme: uiTheme, toggle } = useTheme();   // ← renommé uiTheme
-  const { theme: sectorTheme } = useSector();       // ← renommé sectorTheme
+  const { dictionary: d } = useLanguage();
+  const { theme: sectorTheme } = useSector();
   const pathname = usePathname();
   const router = useRouter();
   const toast = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tutorialDone, setTutorialDone] = useState(true);
 
-  // ── Charger l'état du tutoriel ────────────────────────────────────────────
   useEffect(() => {
     tutorialRepository.getProgress()
       .then(res => setTutorialDone(res.has_completed_tutorial))
       .catch(() => {});
   }, []);
 
-  // ── Onboarding ─────────────────────────────────────────────────────────────
-  const {
-    onboardingData,
-    isPopupOpen,
-    closePopup,
-    handleCta,
-    recheckCurrentPage,
-  } = useOnboarding();
+  const { onboardingData, isPopupOpen, closePopup, handleCta, recheckCurrentPage } = useOnboarding();
 
   const handleCtaWithActions = async (href?: string, action?: string) => {
-    if (action === "DISMISS") {
-      closePopup();
-      return;
-    }
+    if (action === "DISMISS") { closePopup(); return; }
 
     if (action === "CLAIM_BONUS") {
       try {
@@ -84,10 +42,7 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
               .replace("{amount}", res.montant.toLocaleString("fr-FR"))
               .replace("{devise}", res.devise),
           );
-          if (
-            pathname === ROUTES.billing ||
-            pathname.startsWith(ROUTES.billing + "/")
-          ) {
+          if (pathname === ROUTES.billing || pathname.startsWith(ROUTES.billing + "/")) {
             router.refresh();
           }
         }
@@ -102,177 +57,6 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
     await handleCta(href);
   };
 
-  const items = navItems(d);
-
-  const Sidebar = ({ mobile = false }: { mobile?: boolean }) => (
-    <aside
-      className={cn(
-        "flex flex-col h-full bg-[var(--bg-sidebar)] border-r border-[var(--border)]",
-        mobile ? "w-64" : "w-64 hidden lg:flex",
-      )}
-    >
-      {/* Logo */}
-      <div className="p-6 border-b border-[var(--border)]">
-        <div className="flex items-center gap-2.5">
-          <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-black text-sm"
-            style={{ backgroundColor: sectorTheme.primary }}
-          >
-            A
-          </div>
-          <div>
-            <p className="font-bold text-sm text-[var(--text)]">AGT Platform</p>
-            <p className="text-[10px] text-[var(--text-muted)] font-medium">
-              {sectorTheme.label}
-            </p>
-          </div>
-        </div>
-        {user && (
-          <div className="mt-4 flex items-center gap-2.5 bg-[var(--bg)] rounded-xl p-3">
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-              style={{
-                backgroundColor: `${sectorTheme.primary}18`,
-                color: sectorTheme.primary,
-              }}
-            >
-              {initials(user.name)}
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-[var(--text)] truncate">
-                {user.name}
-              </p>
-              <p className="text-[10px] text-[var(--text-muted)] truncate">
-                {user.email}
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Nav principale */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {items.map((item) => {
-          const active =
-            pathname === item.href || pathname.startsWith(item.href + "/");
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setSidebarOpen(false)}
-              className={cn(
-                "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all",
-                active
-                  ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)] font-semibold"
-                  : "text-[var(--text-sidebar)] hover:bg-[var(--bg)] hover:text-[var(--text)]",
-              )}
-            >
-              <Icon
-                className="w-4 h-4 flex-shrink-0"
-                strokeWidth={active ? 2.5 : 2}
-              />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Footer */}
-      <div className="p-4 border-t border-[var(--border)] space-y-1">
-
-        <Link
-          href={ROUTES.tutorial}
-          onClick={() => setSidebarOpen(false)}
-          className={cn(
-            "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-colors",
-            pathname === ROUTES.tutorial
-              ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)] font-semibold"
-              : "text-[var(--text-sidebar)] hover:bg-[var(--bg)]",
-          )}
-        >
-          <GraduationCap className="w-4 h-4 flex-shrink-0" />
-          {d.nav.tutorial}
-          {!tutorialDone && (
-            <span className="ml-auto w-2 h-2 rounded-full bg-[#F97316] flex-shrink-0" />
-          )}
-        </Link>
-
-        <Link
-          href={ROUTES.help}
-          onClick={() => setSidebarOpen(false)}
-          className={cn(
-            "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-colors",
-            pathname === ROUTES.help
-              ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)] font-semibold"
-              : "text-[var(--text-sidebar)] hover:bg-[var(--bg)]",
-          )}
-        >
-          <HelpCircle className="w-4 h-4 flex-shrink-0" />
-          {d.nav.help}
-        </Link>
-
-        <Link
-          href={ROUTES.feedback}
-          onClick={() => setSidebarOpen(false)}
-          className={cn(
-            "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-colors",
-            pathname === ROUTES.feedback
-              ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)] font-semibold"
-              : "text-[var(--text-sidebar)] hover:bg-[var(--bg)]",
-          )}
-        >
-          <Star className="w-4 h-4 flex-shrink-0" />
-          {d.nav.feedback}
-        </Link>
-
-        <Link
-          href={ROUTES.bug}
-          onClick={() => setSidebarOpen(false)}
-          className={cn(
-            "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-colors",
-            pathname === ROUTES.bug
-              ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)] font-semibold"
-              : "text-[var(--text-sidebar)] hover:bg-[var(--bg)]",
-          )}
-        >
-          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-          {d.nav.bug}
-        </Link>
-
-        <div className="border-t border-[var(--border)] my-1" />
-
-        <button
-          onClick={toggle}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-[var(--text-sidebar)] hover:bg-[var(--bg)] transition-colors"
-        >
-          {uiTheme === "dark" ? (
-            <Sun className="w-4 h-4 flex-shrink-0" />
-          ) : (
-            <Moon className="w-4 h-4 flex-shrink-0" />
-          )}
-          {uiTheme === "dark" ? d.common.lightMode : d.common.darkMode}
-        </button>
-
-        <button
-          onClick={() => setLocale(locale === "fr" ? "en" : "fr")}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-[var(--text-sidebar)] hover:bg-[var(--bg)] transition-colors"
-        >
-          <Globe className="w-4 h-4 flex-shrink-0" />
-          {locale === "fr" ? "English" : "Français"}
-        </button>
-
-        <button
-          onClick={logout}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-        >
-          <LogOut className="w-4 h-4 flex-shrink-0" />
-          {d.common.logout}
-        </button>
-      </div>
-    </aside>
-  );
-
   return (
     <div
       className="flex h-screen overflow-hidden bg-[var(--bg)]"
@@ -282,45 +66,28 @@ export default function PmeLayout({ children }: { children: ReactNode }) {
         "--color-bg": sectorTheme.bg,
       } as React.CSSProperties}
     >
-      <Sidebar />
+      {/* Sidebar desktop */}
+      <aside className="w-64 hidden lg:flex flex-col h-full bg-[var(--bg-sidebar)] border-r border-[var(--border)]">
+        <PmeSidebarNav sectorTheme={sectorTheme} tutorialDone={tutorialDone} />
+      </aside>
 
+      {/* Sidebar mobile overlay */}
       {sidebarOpen && (
         <div className="lg:hidden fixed inset-0 z-40 flex">
-          <div
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setSidebarOpen(false)}
-          />
-          <div className="relative z-10">
-            <Sidebar mobile />
-          </div>
+          <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
+          <aside className={cn("relative z-10 w-64 flex flex-col h-full bg-[var(--bg-sidebar)] border-r border-[var(--border)]")}>
+            <PmeSidebarNav sectorTheme={sectorTheme} tutorialDone={tutorialDone} onClose={() => setSidebarOpen(false)} />
+          </aside>
         </div>
       )}
 
+      {/* Contenu principal */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-card)]">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-xl hover:bg-[var(--bg)] transition-colors"
-          >
-            {sidebarOpen ? (
-              <X className="w-5 h-5 text-[var(--text)]" />
-            ) : (
-              <Menu className="w-5 h-5 text-[var(--text)]" />
-            )}
-          </button>
-          <div className="flex items-center gap-2">
-            <div
-              className="w-6 h-6 rounded-lg flex items-center justify-center text-white font-black text-xs"
-              style={{ backgroundColor: sectorTheme.primary }}
-            >
-              A
-            </div>
-            <span className="font-bold text-sm text-[var(--text)]">
-              AGT Platform
-            </span>
-          </div>
-        </header>
-
+        <PmeMobileHeader
+          isOpen={sidebarOpen}
+          sectorTheme={sectorTheme}
+          onToggle={() => setSidebarOpen(p => !p)}
+        />
         <main className="flex-1 overflow-y-auto p-6 lg:p-8">{children}</main>
       </div>
 

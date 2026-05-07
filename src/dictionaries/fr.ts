@@ -459,16 +459,6 @@ export const fr = {
     testHandoffAlert: "Transfert humain déclenché",
     testResetSession: "Réinitialiser la session",
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // DIFF À APPLIQUER MANUELLEMENT
-    // Fichier cible : src/dictionaries/fr.ts
-    // Action        : AJOUTER le bloc `whatsapp:` à l'intérieur de l'objet `bots: { ... }`
-    //                 (par ex. juste après la dernière clé existante de `bots`,
-    //                  AVANT la fermeture de `bots`).
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    // ─────── À COLLER À L'INTÉRIEUR DE bots: { ... } ───────────────────────────
-
     whatsapp: {
       // Panel
       panelTitle: "Connexion WhatsApp",

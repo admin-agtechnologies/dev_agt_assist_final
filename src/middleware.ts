@@ -1,9 +1,6 @@
 // src/middleware.ts
 import { NextRequest, NextResponse } from "next/server";
 
-// Routes publiques accessibles sans token
-// Routes publiques accessibles sans token
-// Routes publiques accessibles sans token
 const PUBLIC_ROUTES = ["/", "/login", "/pending", "/verify-email", "/reset-password", "/magic-link"];
 const PME_PREFIX = "/pme";
 const DASHBOARD = "/dashboard";
@@ -20,7 +17,6 @@ export function middleware(request: NextRequest) {
 
   // ── Route publique : landing "/" ─────────────────────────────────────────
   if (pathname === "/") {
-    // Si connecté, rediriger vers dashboard
     if (auth) return NextResponse.redirect(new URL(DASHBOARD, request.url));
     return NextResponse.next();
   }
@@ -31,15 +27,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // ── Page pending (compte inactif) ────────────────────────────────────────
- // ── Page pending (compte inactif) ────────────────────────────────────────
+  // ── Page pending ─────────────────────────────────────────────────────────
   if (pathname.startsWith("/pending")) {
     return NextResponse.next();
   }
 
   // ── Pages auth flow (token dans URL, pas dans cookie) ────────────────────
-  // verify-email, reset-password, magic-link : utilisateur arrive depuis un
-  // email avec un token en query string. Accès libre.
   if (
     pathname.startsWith("/verify-email") ||
     pathname.startsWith("/reset-password") ||
@@ -53,7 +46,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // ── Dashboard & routes PME : protégées ──────────────────────────────────
+  // ── Dashboard & routes PME : protégées ───────────────────────────────────
+  // PME_PREFIX conservé pendant la migration 0-B — sera retiré en Phase 4
   if (pathname.startsWith(DASHBOARD) || pathname.startsWith(PME_PREFIX)) {
     if (!auth) {
       return NextResponse.redirect(new URL(`/login?redirect=${pathname}`, request.url));

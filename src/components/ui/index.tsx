@@ -47,8 +47,7 @@ export function PageLoader() {
   );
 }
 
-// ── Empty state ───────────────────────────────────────────────────────────────
-// Option A : icon est un composant LucideIcon typé
+// ── Empty state (ancienne version — conservée pour compatibilité) ─────────────
 export function EmptyState({ message, icon: Icon }: {
   message: string;
   icon?: LucideIcon;
@@ -61,7 +60,7 @@ export function EmptyState({ message, icon: Icon }: {
   );
 }
 
-// ── Section header ────────────────────────────────────────────────────────────
+// ── Section header (conservé pour compatibilité) ──────────────────────────────
 export function SectionHeader({ title, subtitle, action }: {
   title: string; subtitle?: string; action?: React.ReactNode;
 }) {
@@ -76,7 +75,7 @@ export function SectionHeader({ title, subtitle, action }: {
   );
 }
 
-// ── Confirm delete modal ─────────────────────────────────────────────────────
+// ── Confirm delete modal (conservé pour compatibilité) ────────────────────────
 interface ConfirmDeleteProps {
   isOpen: boolean; isLoading: boolean;
   onClose: () => void; onConfirm: () => void;
@@ -119,7 +118,6 @@ export function ConfirmDeleteModal({
 }
 
 // ── Usage bar (billing) ───────────────────────────────────────────────────────
-// APRÈS
 export function UsageBar({ label, used, total, pct, color, unlimited = false }: {
   label: string; used: number; total: number | null; pct: number; color: string; unlimited?: boolean;
 }) {
@@ -147,3 +145,34 @@ export function UsageBar({ label, used, total, pct, color, unlimited = false }: 
     </div>
   );
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── Nouveaux composants UI 0-D — re-exports ───────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export { StatusBadge }        from "./StatusBadge";
+export type { StatusBadgeProps, StatusVariant, StatusSize } from "./StatusBadge";
+
+export { EmptyState as EmptyStateV2 } from "./EmptyState";
+export type { EmptyStateProps }       from "./EmptyState";
+
+export { PageHeader }         from "./PageHeader";
+export type { PageHeaderProps, BreadcrumbItem } from "./PageHeader";
+
+export { Modal }              from "./Modal";
+export type { ModalProps, ModalSize } from "./Modal";
+
+export { ConfirmDialog }      from "./ConfirmDialog";
+export type { ConfirmDialogProps, ConfirmDialogVariant } from "./ConfirmDialog";
+
+export { FilterBar }          from "./FilterBar";
+export type { FilterBarProps, FilterSelectConfig, FilterOption } from "./FilterBar";
+
+export { DetailCard }         from "./DetailCard";
+export type { DetailCardProps, DetailSection, DetailField } from "./DetailCard";
+
+export { StatusFlow }         from "./StatusFlow";
+export type { StatusFlowProps, StatusStep, StepState } from "./StatusFlow";
+
+export { DataTable }          from "./DataTable";
+export type { DataTableProps, DataTableColumn, DataTablePagination } from "./DataTable";

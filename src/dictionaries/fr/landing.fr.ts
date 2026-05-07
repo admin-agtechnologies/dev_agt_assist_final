@@ -1,0 +1,22 @@
+// src/dictionaries/fr/landing.fr.ts
+export const landing = {
+  heroTitle: "Votre assistant virtuel,",
+  heroTitleAccent: "prêt en 5 minutes.",
+  heroSubtitle: "AGT Platform donne à chaque entreprise camerounaise un assistant WhatsApp et vocal intelligent.",
+  heroCta: "Démarrer maintenant",
+  heroCtaSub: "Premier mois offert avec votre bonus de bienvenue",
+  plansTitle: "Des tarifs pensés pour le Cameroun",
+  plansSubtitle: "Commencez avec le Starter, évoluez à votre rythme.",
+  ctaTitle: "Prêt à transformer votre relation client ?",
+  ctaBtn: "Créer mon compte",
+  loginCta: "Déjà un compte ?",
+  loginLink: "Se connecter",
+  welcomeBadge: "{amount} offerts à l'inscription",
+  featuresTitle: "Des fonctionnalités pensées pour le Cameroun",
+  footerRights: "AGT Technologies. Tous droits réservés.",
+  navFeatures: "Fonctionnalités",
+  navDemo: "Démo",
+  navPlans: "Tarifs",
+  navTestimonials: "Témoignages",
+  footerTagline: "L'assistant virtuel intelligent pour les entreprises africaines — WhatsApp & IA vocale.",
+} as const;
