@@ -72,20 +72,20 @@ export function RdvModal({
 
   // Agence initiale : celle du RDV en édition, sinon la pré-sélectionnée, sinon la première
   const initAgenceId = rdv?.agence ?? defaultAgenceId ?? agences[0]?.id ?? "";
-  const initAgendas  = agendasPourAgence(agendas, initAgenceId);
+  const initAgendas = agendasPourAgence(agendas, initAgenceId);
   const initAgendaId = rdv?.agenda ?? initAgendas[0]?.id ?? agendas[0]?.id ?? "";
 
   const [form, setForm] = useState<FormState>({
-    agenceId:         initAgenceId,
-    agenda:           initAgendaId,
-    client_nom:       rdv?.client_nom       ?? "",
+    agenceId: initAgenceId,
+    agenda: initAgendaId,
+    client_nom: rdv?.client_nom ?? "",
     client_telephone: rdv?.client_telephone ?? "",
-    client_email:     "",
-    scheduled_at:     rdv
+    client_email: "",
+    scheduled_at: rdv
       ? rdv.scheduled_at.slice(0, 16)
       : buildDefaultStr(prefillDate, prefillTime),
-    notes:  rdv?.notes  ?? "",
-    canal:  (rdv?.canal  ?? "manuel") as "whatsapp" | "vocal" | "manuel",
+    notes: rdv?.notes ?? "",
+    canal: (rdv?.canal ?? "manuel") as "whatsapp" | "vocal" | "manuel",
     statut: (rdv?.statut ?? "en_attente") as AppointmentStatus,
   });
 
@@ -96,7 +96,7 @@ export function RdvModal({
 
   // Changer l'agence → reset de l'agenda sur le premier de la nouvelle agence
   const handleAgenceChange = (newAgenceId: string) => {
-    const nextAgendas  = agendasPourAgence(agendas, newAgenceId);
+    const nextAgendas = agendasPourAgence(agendas, newAgenceId);
     const nextAgendaId = nextAgendas[0]?.id ?? "";
     setForm({ ...form, agenceId: newAgenceId, agenda: nextAgendaId });
   };
@@ -113,14 +113,14 @@ export function RdvModal({
     setSaving(true);
     try {
       const payload: CreateRendezVousPayload & { statut?: string } = {
-        agenda:           form.agenda,
-        agence:           form.agenceId || undefined,
-        client_nom:       form.client_nom.trim(),
+        agenda: form.agenda,
+        agence: form.agenceId || undefined,
+        client_nom: form.client_nom.trim(),
         client_telephone: form.client_telephone.trim(),
-        client_email:     form.client_email.trim() || undefined,
-        scheduled_at:     new Date(form.scheduled_at).toISOString(),
-        notes:            form.notes.trim(),
-        canal:            form.canal,
+        client_email: form.client_email.trim() || undefined,
+        scheduled_at: new Date(form.scheduled_at).toISOString(),
+        notes: form.notes.trim(),
+        canal: form.canal,
       };
       if (isEdit && rdv) {
         await rendezVousRepository.patch(rdv.id, { ...payload, statut: form.statut });
@@ -264,10 +264,10 @@ export function RdvModal({
               <label className="text-xs font-bold text-[var(--text)]">Statut</label>
               <select className="input-base w-full" value={form.statut}
                 onChange={(e) => setForm({ ...form, statut: e.target.value as AppointmentStatus })}>
-                <option value="en_attente">En attente</option>
-                <option value="confirme">Confirmé</option>
-                <option value="termine">Terminé</option>
-                <option value="annule">Annulé</option>
+                <option value="en_attente">{d.reservations.statuses.pending}</option>
+                <option value="confirme">{d.reservations.statuses.confirmed}</option>
+                <option value="termine">{d.reservations.statuses.done}</option>
+                <option value="annule">{d.reservations.statuses.cancelled}</option>
               </select>
             </div>
           )}

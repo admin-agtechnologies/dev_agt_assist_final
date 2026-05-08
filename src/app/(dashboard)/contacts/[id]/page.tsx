@@ -1,152 +1,101 @@
 // src/app/(dashboard)/contacts/[id]/page.tsx
 "use client";
-
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useLanguage } from "@/hooks/useLanguage";
-import { useSector } from "@/hooks/useSector";
-import {
-  clientsRepository,
-  rendezVousRepository,
-} from "@/repositories/contacts.repository";
-import { conversationsRepository } from "@/repositories/conversations.repository";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { api } from "@/lib/api-client";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { DetailCard } from "@/components/ui/DetailCard";
-import { InteractionTimeline } from "@/components/contacts/InteractionTimeline";
-import { CRMSignalChart } from "@/components/contacts/CRMSignalChart";
-import { contacts as contFr } from "@/dictionaries/fr/contacts.fr";
-import { contacts as contEn } from "@/dictionaries/en/contacts.en";
-import { common as commonFr } from "@/dictionaries/fr/common.fr";
-import { common as commonEn } from "@/dictionaries/en/common.en";
-import type { Client, RendezVous, Conversation } from "@/types/api";
-import { StatusMessage } from "@/components/conversations/StatusMessage";
+import { Spinner } from "@/components/ui";
+import type { Contact } from "@/types/api/crm.types";
 
 export default function ContactDetailPage() {
-  const params = useParams();
+  const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { lang } = useLanguage();
-  const { theme } = useSector();
+  const { dictionary: d } = useLanguage();
+  const t = d.contacts.detail;
 
-  const d = lang === "fr" ? contFr : contEn;
-  const c = lang === "fr" ? commonFr : commonEn;
-
-  const contactId = typeof params.id === "string" ? params.id : null;
-
-  const [contact, setContact] = useState<Client | null>(null);
-  const [rdvs, setRdvs] = useState<RendezVous[]>([]);
-  const [convs, setConvs] = useState<Conversation[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [contact, setContact] = useState<Contact | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    if (!contactId) return;
-    setIsLoading(true);
+    if (!id) return;
+    setLoading(true);
+    api
+      .get(`/api/v1/contacts/${id}/`)
+      .then((data: unknown) => setContact(data as Contact))
+      .catch(() => setNotFound(true))
+      .finally(() => setLoading(false));
+  }, [id]);
 
-    Promise.all([
-      clientsRepository.getList().then((list) =>
-        list.find((c) => c.id === contactId) ?? null,
-      ),
-      rendezVousRepository.getList({ page_size: 50 }).then((r) =>
-        r.results.filter((rdv) => rdv.client === contactId),
-      ),
-      conversationsRepository.getList({ page_size: 50 }).then((r) =>
-        r.results.filter((conv) => conv.client === contactId),
-      ),
-    ])
-      .then(([c, r, convs]) => {
-        setContact(c);
-        setRdvs(r);
-        setConvs(convs);
-      })
-      .catch(() => {})
-      .finally(() => setIsLoading(false));
-  }, [contactId]);
+  const formatDate = (iso: string) =>
+    new Date(iso).toLocaleDateString("fr-FR", { dateStyle: "medium" });
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <StatusMessage content={c.loading} isAnimated />
+        <Spinner />
       </div>
     );
   }
 
-  if (!contact) {
+  if (notFound || !contact) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <StatusMessage content={d.noData} />
+      <div className="max-w-2xl mx-auto p-6">
+        <p className="text-[var(--text-muted)] text-sm">{t.notFound}</p>
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="mt-4 text-sm text-[var(--primary)] underline"
+        >
+          {d.common.back}
+        </button>
       </div>
     );
   }
-
-  const timelineItems = [
-    ...rdvs.map((r) => ({ type: "rdv" as const, data: r })),
-    ...convs.map((cv) => ({ type: "conversation" as const, data: cv })),
-  ].sort((a, b) => {
-    const dateA = a.type === "rdv" ? a.data.scheduled_at : a.data.created_at;
-    const dateB = b.type === "rdv" ? b.data.scheduled_at : b.data.created_at;
-    return new Date(dateB).getTime() - new Date(dateA).getTime();
-  });
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
-      <PageHeader
-        title={contact.nom}
-        subtitle={d.detail.title}
-        backLabel={c.back}
-        onBack={() => router.push("/contacts")}
-      />
+    <div className="space-y-6 max-w-2xl mx-auto">
+      <PageHeader title={contact.nom} onBack={() => router.back()} />
 
-      {/* Fiche informations */}
-      <DetailCard
-        title={d.detail.title}
-        sections={[
-          {
-            fields: [
-              { label: d.table.name,  value: contact.nom },
-              { label: d.table.phone, value: contact.telephone, hideIfEmpty: true },
-              { label: d.table.email, value: contact.email,     hideIfEmpty: true },
-              {
-                label: d.table.date,
-                value: new Date(contact.created_at).toLocaleDateString(
-                  lang === "fr" ? "fr-FR" : "en-US",
-                ),
-              },
-            ],
-          },
-        ]}
-      />
-
-      {/* CRM Signals */}
-      <div className="bg-white rounded-xl border border-gray-100 p-4">
-        <p
-          className="text-xs font-semibold uppercase tracking-wide mb-4"
-          style={{ color: theme.primary }}
-        >
-          CRM
-        </p>
-        <CRMSignalChart
-          rdvCount={rdvs.length}
-          conversationCount={convs.length}
-          labels={{
-            rdvCount: d.detail.rdvCount,
-            conversationCount: d.detail.conversationCount,
-          }}
-        />
+      <div className="card p-4 space-y-3 text-sm">
+        <div className="flex items-center justify-between">
+          <span className="text-[var(--text-muted)]">{d.contacts.table.phone}</span>
+          <span className="font-medium text-[var(--text)]">{contact.phone}</span>
+        </div>
+        {contact.email && (
+          <div className="flex items-center justify-between">
+            <span className="text-[var(--text-muted)]">{t.email}</span>
+            <span className="font-medium text-[var(--text)]">{contact.email}</span>
+          </div>
+        )}
+        <div className="flex items-center justify-between">
+          <span className="text-[var(--text-muted)]">{t.since}</span>
+          <span className="font-medium text-[var(--text)]">{formatDate(contact.created_at)}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-[var(--text-muted)]">{t.source}</span>
+          <span className="font-medium text-[var(--text)]">{contact.statut}</span>
+        </div>
       </div>
 
-      {/* Historique interactions */}
-      <div className="bg-white rounded-xl border border-gray-100 p-4">
-        <p
-          className="text-xs font-semibold uppercase tracking-wide mb-4"
-          style={{ color: theme.primary }}
-        >
-          {d.detail.history}
-        </p>
-        <InteractionTimeline
-          items={timelineItems}
-          labels={d.detail}
-          lang={lang}
-        />
-      </div>
+      {contact.crm_signals.length > 0 ? (
+        <div className="card p-4">
+          <h2 className="font-semibold text-[var(--text)] text-sm mb-3">{t.history}</h2>
+          <ul className="space-y-2">
+            {contact.crm_signals.map((signal) => (
+              <li key={signal.id} className="flex justify-between text-xs">
+                <span className="text-[var(--text)]">{signal.type}</span>
+                <span className="text-[var(--text-muted)]">{formatDate(signal.created_at)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <div className="card p-12 text-center">
+          <p className="text-[var(--text-muted)] text-sm">{t.noHistory}</p>
+        </div>
+      )}
     </div>
   );
 }

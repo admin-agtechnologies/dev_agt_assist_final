@@ -21,4 +21,16 @@ export const catalogue = {
     btnCreate: "Create",
     btnUpdate: "Update",
   },
+  detail: {
+    notFound: "Catalogue not found.",
+    categories: "category",
+    categories_plural: "categories",
+    items: "item",
+    items_plural: "items",
+    noCats: "No categories.",
+    noItems: "No items.",
+    gratuit: "Free",
+    surDevis: "On quote",
+    indisponible: "Unavailable",
+  },
 } as const;

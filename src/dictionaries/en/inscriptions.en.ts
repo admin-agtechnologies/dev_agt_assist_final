@@ -19,10 +19,17 @@ export const inscriptions = {
     date: "Date",
   },
   detail: {
-    title: "Admission file",
-    documents: "Required documents",
-    noDocuments: "No documents.",
-    notes: "Notes",
+    notFound: "Admission not found.",
+    docs: "Documents",
+    provided: "Provided",
+    missing: "Missing",
+    advance: "Move to",
+    statuses: {
+      soumise: "Submitted",
+      en_etude: "Under review",
+      acceptee: "Accepted",
+      refusee: "Refused",
+    },
   },
   documents: {
     cni: "National identity card",

@@ -18,10 +18,18 @@ export const dossiers = {
     statut: "Statut",
     date: "Date",
   },
-  detail: {
-    title: "Dossier",
-    documents: "Documents",
-    noDocuments: "Aucun document.",
-    notes: "Notes",
+ detail: {
+    notFound: "File not found.",
+    createdAt: "Created",
+    updatedAt: "Updated",
+    adminNotes: "Notes",
+    advance: "Move to",
+    statuses: {
+      ouvert:               "Open",
+      en_traitement:        "In progress",
+      en_attente_documents: "Awaiting documents",
+      cloture:              "Closed",
+      rejete:               "Rejected",
+    },
   },
 } as const;

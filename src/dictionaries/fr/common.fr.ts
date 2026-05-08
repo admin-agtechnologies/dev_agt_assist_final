@@ -28,6 +28,8 @@ export const common = {
   fr: "Français",
   en: "English",
   back: "Retour",
+  createdAt: "Créé le",
+  updatedAt: "Mis à jour le",
   continue: "Continuer",
   confirm: "Confirmer",
   perMonth: "/ mois",

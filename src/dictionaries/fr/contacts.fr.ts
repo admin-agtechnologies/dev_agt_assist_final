@@ -11,11 +11,13 @@ export const contacts = {
     email: "Email",
     date: "Créé le",
   },
-  detail: {
-    title: "Fiche contact",
-    history: "Historique des interactions",
+detail: {
+    notFound: "Contact introuvable.",
+    email: "Email",
+    source: "Source",
+    since: "Depuis",
+    notes: "Notes",
+    history: "Historique",
     noHistory: "Aucune interaction enregistrée.",
-    rdvCount: "RDV pris",
-    conversationCount: "Conversations",
-  },
+  },  
 } as const;

@@ -12,10 +12,12 @@ export const contacts = {
     date: "Created",
   },
   detail: {
-    title: "Contact profile",
-    history: "Interaction history",
+    notFound: "Contact not found.",
+    email: "Email",
+    source: "Source",
+    since: "Since",
+    notes: "Notes",
+    history: "History",
     noHistory: "No interactions recorded.",
-    rdvCount: "Appointments booked",
-    conversationCount: "Conversations",
   },
 } as const;

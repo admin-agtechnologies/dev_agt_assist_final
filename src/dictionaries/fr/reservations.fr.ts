@@ -61,5 +61,28 @@ export const reservations = {
       status: "Statut",
       notes: "Notes",
     },
+
+  },
+  detail: {
+    notFound: "Réservation introuvable.",
+    ref: "Réservation #",
+    client: "Client",
+    phone: "Téléphone",
+    resource: "Ressource",
+    payment: "Paiement",
+    paid: "Payé",
+    unpaid: "Non payé",
+    start: "Début",
+    end: "Fin",
+    notes: "Notes",
+    rappelStaff: "Rappel staff requis",
+    advance: "Avancer vers",
+    statuses: {
+      en_attente: "En attente",
+      en_attente_confirmation: "En attente de confirmation",
+      confirmee: "Confirmée",
+      annulee: "Annulée",
+      terminee: "Terminée",
+    },
   },
 } as const;
