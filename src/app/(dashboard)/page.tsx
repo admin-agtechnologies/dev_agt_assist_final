@@ -46,7 +46,7 @@ export default function DashboardPage() {
   const { theme } = useSector();
   const { features, isLoading } = useActiveFeatures();
 
-  const d = lang === "fr" ? dashFr : dashEn;
+  const d = lang === "fr" ? dashFr.pme : dashEn.pme;
   const c = lang === "fr" ? commonFr : commonEn;
 
   const activeCount = features.filter((f) => f.is_active).length;

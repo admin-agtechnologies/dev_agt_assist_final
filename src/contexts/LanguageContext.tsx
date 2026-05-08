@@ -1,3 +1,4 @@
+
 "use client";
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { LOCALE_KEY } from "@/lib/constants";
@@ -5,7 +6,12 @@ import { fr } from "@/dictionaries/fr";
 import { en } from "@/dictionaries/en";
 
 export type Locale = "fr" | "en";
-export type Dictionary = typeof fr;
+
+// Helper qui retire le readonly et les littéraux pour permettre l'union FR/EN
+type DeepMutable<T> = {
+  -readonly [K in keyof T]: T[K] extends object ? DeepMutable<T[K]> : T[K];
+};
+export type Dictionary = DeepMutable<typeof fr>;
 
 interface LanguageContextType {
   locale: Locale;
@@ -13,7 +19,10 @@ interface LanguageContextType {
   setLocale: (l: Locale) => void;
 }
 
-const dicts: Record<Locale, Dictionary> = { fr, en };
+const dicts: Record<Locale, Dictionary> = {
+  fr: fr as Dictionary,
+  en: en as unknown as Dictionary,
+};
 const LanguageContext = createContext<LanguageContextType | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
