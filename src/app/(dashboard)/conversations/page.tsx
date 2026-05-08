@@ -1,5 +1,5 @@
-// src/app/(dashboard)/conversations/page.tsx
 "use client";
+// src/app/(dashboard)/conversations/page.tsx
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -140,8 +140,15 @@ export default function ConversationsPage() {
         emptyTitle={cv.noData}
         pagination={{
           page,
-          totalPages: Math.ceil(total / PAGE_SIZE),
+          pageSize: PAGE_SIZE,
+          total,
           onPageChange: setPage,
+          labels: {
+            previous: c.prev,
+            next: c.next,
+            of: "/",
+            results: c.noData,
+          },
         }}
       />
     </div>

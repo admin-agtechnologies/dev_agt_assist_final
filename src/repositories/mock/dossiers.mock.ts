@@ -1,2 +1,4 @@
-// TODO ó ‡ implÈmenter en Session 3 (AGT-F02)
-
+// src/repositories/mock/dossiers.mock.ts
+// Fichier conserv√© pour compatibilit√© des imports existants
+// Les donn√©es r√©elles viennent de GET /api/v1/dossiers/ (backend AGT)
+export {};

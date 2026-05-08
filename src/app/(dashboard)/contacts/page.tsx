@@ -1,5 +1,5 @@
-// src/app/(dashboard)/contacts/page.tsx
 "use client";
+// src/app/(dashboard)/contacts/page.tsx
 import { useState, useEffect, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useActiveFeatures } from "@/hooks/useFeatures";
@@ -18,6 +18,14 @@ const STATUTS: { value: ContactStatut | ""; label: { fr: string; en: string } }[
   { value: "client",   label: { fr: "Clients",   en: "Clients" } },
   { value: "inactif",  label: { fr: "Inactifs",  en: "Inactive" } },
 ];
+
+// Convertit un objet filtres en Record<string, string> pour api.get
+const p = (f?: object): Record<string, string> =>
+  Object.fromEntries(
+    Object.entries(f ?? {})
+      .filter(([, v]) => v !== undefined && v !== "" && v !== null)
+      .map(([k, v]) => [k, String(v)]),
+  );
 
 export default function ContactsPage() {
   const { locale } = useLanguage();
@@ -42,7 +50,7 @@ export default function ContactsPage() {
     if (search) filters.search = search;
 
     api
-      .get("/api/v1/contacts/", { params: filters })
+      .get("/api/v1/contacts/", { params: p(filters) })
       .then((data: unknown) => {
         const res = data as PaginatedResponse<Contact>;
         setContacts(Array.isArray(data) ? (data as Contact[]) : res.results ?? []);

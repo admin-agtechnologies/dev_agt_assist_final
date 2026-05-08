@@ -1,2 +1,10 @@
-// TODO ó ‡ implÈmenter en Session 3 (AGT-F02)
+// src/types/api/whatsapp.types.ts
+// Types WhatsApp / WAHA ‚Äî r√©export√©s depuis chatbot.types pour compatibilit√©
+// Les types complets vivent dans chatbot.types.ts
 
+export type {
+  WahaStatus,
+  WahaStatusResponse,
+  WahaConnectResponse,
+  WahaDisconnectResponse,
+} from './chatbot.types';

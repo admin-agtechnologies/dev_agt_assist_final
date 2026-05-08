@@ -1,3 +1,4 @@
-// Re-export forms — à compléter en Session 3
-export * from './FormField';
-export * from './SelectInput';
+// src/components/forms/index.ts
+export { FormField } from './FormField';
+export { SelectInput } from './SelectInput';
+export type { SelectOption } from './SelectInput';

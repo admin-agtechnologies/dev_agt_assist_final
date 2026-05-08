@@ -1,2 +1,16 @@
-// TODO — à implémenter en Session 3 (AGT-F02)
+// src/types/api/service.types.ts
+// Re-export depuis agence.types â€” Service et Agence vivent dans le mÃªme fichier
+// car ils partagent le mÃªme app backend (apps/services/)
 
+export type {
+  Service,
+  CreateServicePayload,
+  ServiceFilters,
+  Agence,
+  CreateAgencePayload,
+  HorairesOuverture,
+  DaySchedule,
+  UpdateHorairesPayload,
+  Agenda,
+  CreateAgendaPayload,
+} from './agence.types';
