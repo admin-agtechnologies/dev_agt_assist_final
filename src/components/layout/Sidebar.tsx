@@ -1,186 +1,124 @@
 // src/components/layout/Sidebar.tsx
 "use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { LucideIcon } from "lucide-react";
 import {
-  LayoutDashboard,
-  Bot,
-  MessageSquare,
-  CreditCard,
-  Settings,
-  HelpCircle,
-  Calendar,
-  ShoppingCart,
-  UtensilsCrossed,
-  Hotel,
-  Bus,
-  Users,
-  Briefcase,
-  ClipboardList,
-  Building2,
-  Star,
-  Layers,
-  BookOpen,
+  LayoutDashboard, MessageSquare, Users,
+  CreditCard, BookOpen, Bot, Settings,
+  Sun, Moon, Globe, LogOut,
 } from "lucide-react";
-import { useActiveFeatures } from "@/hooks/useFeatures";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useTheme } from "@/components/ui/ThemeProvider";
 import { useSector } from "@/hooks/useSector";
-import { useLanguage } from "@/hooks/useLanguage";
-import { getFeatureLabel } from "@/lib/sector-labels";
-import { common as commonFr } from "@/dictionaries/fr/common.fr";
-import { common as commonEn } from "@/dictionaries/en/common.en";
+import { SidebarDynamicNav } from "./SidebarDynamicNav";
+import { DASHBOARD_ROUTES } from "./Sidebar.config";
+import { cn, initials } from "@/lib/utils";
 
-// ── Icônes par feature slug ──────────────────────────────────────────────────
-const FEATURE_ICONS: Record<string, LucideIcon> = {
-  reservation_table:             UtensilsCrossed,
-  reservation_chambre:           Hotel,
-  reservation_billet:            Bus,
-  prise_rdv:                     Calendar,
-  menu_digital:                  UtensilsCrossed,
-  catalogue_produits:            Layers,
-  catalogue_services:            Briefcase,
-  catalogue_trajets:             Bus,
-  catalogue_produits_financiers: Briefcase,
-  commande_paiement:             ShoppingCart,
-  conciergerie:                  Star,
-  suivi_commande:                ClipboardList,
-  multi_agences:                 Building2,
-  inscription_admission:         BookOpen,
-  orientation_patient:           Users,
-  orientation_citoyens:          ClipboardList,
-  conversion_prospects:          Users,
-  communication_etablissement:   MessageSquare,
-};
-
-// ── Route par feature slug ───────────────────────────────────────────────────
-const FEATURE_ROUTES: Record<string, string> = {
-  reservation_table:             "/modules/reservations",
-  reservation_chambre:           "/modules/reservations",
-  reservation_billet:            "/modules/reservations",
-  prise_rdv:                     "/appointments",
-  menu_digital:                  "/modules/catalogue",
-  catalogue_produits:            "/modules/catalogue",
-  catalogue_services:            "/modules/catalogue",
-  catalogue_trajets:             "/modules/catalogue",
-  catalogue_produits_financiers: "/modules/catalogue",
-  commande_paiement:             "/modules/commandes",
-  conciergerie:                  "/modules/commandes",
-  suivi_commande:                "/modules/commandes",
-  multi_agences:                 "/modules/agences",
-  inscription_admission:         "/modules/inscriptions",
-  orientation_patient:           "/modules/contacts",
-  orientation_citoyens:          "/modules/dossiers",
-  conversion_prospects:          "/modules/contacts",
-  communication_etablissement:   "/modules/catalogue",
-};
-
-// ── NavItem ──────────────────────────────────────────────────────────────────
-interface NavItemProps {
-  href: string;
-  label: string;
-  Icon: LucideIcon;
-  primaryColor: string;
+interface Props {
+  onClose?: () => void;
 }
 
-function NavItem({ href, label, Icon, primaryColor }: NavItemProps) {
+export function Sidebar({ onClose }: Props) {
+  const { user, logout } = useAuth();
+  const { dictionary: d, locale, setLocale } = useLanguage();
+  const { theme: uiTheme, toggle } = useTheme();
+  const { theme: sectorTheme } = useSector();
   const pathname = usePathname();
-  const isActive = pathname === href || pathname.startsWith(href + "/");
+
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(href + "/");
+
+  const linkClass = (href: string) =>
+    cn(
+      "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all",
+      isActive(href)
+        ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)] font-semibold"
+        : "text-[var(--text-sidebar)] hover:bg-[var(--bg)] hover:text-[var(--text)]",
+    );
+
+  const STATIC_ITEMS = [
+    { href: DASHBOARD_ROUTES.home,          icon: LayoutDashboard, label: d.nav.dashboard },
+    // Remplacer les deux lignes concernées par :
+    { href: DASHBOARD_ROUTES.conversations, icon: MessageSquare, label: d.nav.conversations },
+    { href: DASHBOARD_ROUTES.contacts,      icon: Users,         label: d.nav.contacts },
+    { href: DASHBOARD_ROUTES.bots,          icon: Bot,             label: d.nav.bots },
+    { href: DASHBOARD_ROUTES.knowledge,     icon: BookOpen,        label: d.nav.knowledge },
+    { href: DASHBOARD_ROUTES.billing,       icon: CreditCard,      label: d.nav.billing },
+    { href: DASHBOARD_ROUTES.settings,      icon: Settings,        label: d.common.settings },
+  ];
 
   return (
-    <Link
-      href={href}
-      className={[
-        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-        isActive
-          ? "text-white"
-          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
-      ].join(" ")}
-      style={isActive ? { backgroundColor: primaryColor } : undefined}
-    >
-      <Icon size={18} className="flex-shrink-0" />
-      <span className="truncate">{label}</span>
-    </Link>
-  );
-}
+    <>
+      {/* Logo + Secteur */}
+      <div className="p-6 border-b border-[var(--border)]">
+        <div className="flex items-center gap-2.5">
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-black text-sm"
+            style={{ backgroundColor: sectorTheme.primary }}
+          >A</div>
+          <div>
+            <p className="font-bold text-sm text-[var(--text)]">AGT Platform</p>
+            <p className="text-[10px] text-[var(--text-muted)] font-medium">{sectorTheme.label}</p>
+          </div>
+        </div>
 
-// ── Sidebar principale ───────────────────────────────────────────────────────
-export function Sidebar() {
-  const { features, isLoading } = useActiveFeatures();
-  const { theme } = useSector();
-  const { lang } = useLanguage();
-  const common = lang === "fr" ? commonFr : commonEn;
-  const nav = common.nav;
-
-  // Dédupliquer les routes (ex: reservation_table + reservation_chambre → même route)
-  const seen = new Set<string>();
-  const sectorItems = features
-    .filter((f) => f.is_active && FEATURE_ROUTES[f.slug])
-    .filter((f) => {
-      const route = FEATURE_ROUTES[f.slug];
-      if (seen.has(route)) return false;
-      seen.add(route);
-      return true;
-    })
-    .map((f) => ({
-      href:  FEATURE_ROUTES[f.slug],
-      label: getFeatureLabel(f.slug, lang).nav,
-      Icon:  FEATURE_ICONS[f.slug] ?? Layers,
-    }));
-
-  return (
-    <aside className="flex flex-col w-64 min-h-screen border-r border-gray-200 bg-white">
-      {/* Logo / marque */}
-      <div className="flex items-center h-16 px-4 border-b border-gray-100">
-        <span
-          className="text-xl font-bold tracking-tight"
-          style={{ color: theme.primary }}
-        >
-          AGT Platform
-        </span>
-      </div>
-
-      {/* Navigation principale */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {/* Modules communs fixes */}
-        <NavItem href="/dashboard"     label={nav.dashboard}  Icon={LayoutDashboard} primaryColor={theme.primary} />
-        <NavItem href="/bots"          label={nav.bots}       Icon={Bot}             primaryColor={theme.primary} />
-        <NavItem href="/conversations" label={nav.knowledge}  Icon={MessageSquare}   primaryColor={theme.primary} />
-
-        {/* Modules sectoriels — dynamiques via features actives */}
-        {!isLoading && sectorItems.length > 0 && (
-          <div className="pt-3">
-            <div className="h-px bg-gray-100 mb-3" />
-            <div className="space-y-1">
-              {sectorItems.map((item) => (
-                <NavItem
-                  key={item.href}
-                  href={item.href}
-                  label={item.label}
-                  Icon={item.Icon}
-                  primaryColor={theme.primary}
-                />
-              ))}
+        {/* User card */}
+        {user && (
+          <div className="mt-4 flex items-center gap-2.5 bg-[var(--bg)] rounded-xl p-3">
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+              style={{ backgroundColor: `${sectorTheme.primary}18`, color: sectorTheme.primary }}
+            >{initials(user.name)}</div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-[var(--text)] truncate">{user.name}</p>
+              <p className="text-[10px] text-[var(--text-muted)] truncate">{user.email}</p>
             </div>
           </div>
         )}
+      </div>
 
-        {/* Skeleton de chargement */}
-        {isLoading && (
-          <div className="pt-3 space-y-2">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-9 rounded-lg bg-gray-100 animate-pulse" />
-            ))}
-          </div>
-        )}
+      {/* Nav principale + modules dynamiques */}
+      <nav className="flex-1 p-4 space-y-0.5 overflow-y-auto">
+        {STATIC_ITEMS.map(({ href, icon: Icon, label }) => (
+          <Link key={href} href={href} onClick={onClose} className={linkClass(href)}>
+            <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={isActive(href) ? 2.5 : 2} />
+            {label}
+          </Link>
+        ))}
+
+        {/* Séparateur + modules sectoriels */}
+        <div className="border-t border-[var(--border)] my-2" />
+        <SidebarDynamicNav locale={locale} onClose={onClose} />
       </nav>
 
-      {/* Bas de sidebar — liens permanents */}
-      <div className="px-3 py-4 border-t border-gray-100 space-y-1">
-        <NavItem href="/billing"  label={nav.billing}       Icon={CreditCard} primaryColor={theme.primary} />
-        <NavItem href="/faq"      label={nav.faq}           Icon={HelpCircle} primaryColor={theme.primary} />
-        <NavItem href="/settings" label={common.settings}   Icon={Settings}   primaryColor={theme.primary} />
+      {/* Footer */}
+      <div className="p-4 border-t border-[var(--border)] space-y-0.5">
+        <div className="border-t border-[var(--border)] my-1" />
+        <button
+          onClick={toggle}
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-[var(--text-sidebar)] hover:bg-[var(--bg)] transition-colors"
+        >
+          {uiTheme === "dark"
+            ? <Sun className="w-4 h-4 flex-shrink-0" />
+            : <Moon className="w-4 h-4 flex-shrink-0" />}
+          {uiTheme === "dark" ? d.common.lightMode : d.common.darkMode}
+        </button>
+        <button
+          onClick={() => setLocale(locale === "fr" ? "en" : "fr")}
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-[var(--text-sidebar)] hover:bg-[var(--bg)] transition-colors"
+        >
+          <Globe className="w-4 h-4 flex-shrink-0" />
+          {locale === "fr" ? "English" : "Français"}
+        </button>
+        <button
+          onClick={logout}
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+        >
+          <LogOut className="w-4 h-4 flex-shrink-0" />
+          {d.common.logout}
+        </button>
       </div>
-    </aside>
+    </>
   );
 }

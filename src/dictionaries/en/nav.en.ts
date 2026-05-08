@@ -1,0 +1,22 @@
+// src/dictionaries/en/nav.en.ts
+export const nav = {
+  dashboard: "Dashboard",
+  bots: "My Bots",
+  services: "Services",
+  appointments: "Appointments",
+  billing: "Billing",
+  profile: "My Profile",
+  faq: "FAQ",
+  providers: "Providers",
+  subscriptions: "Subscriptions",
+  restartOnboarding: "Restart assistant",
+  quickSetup: "Quick setup",
+  help: "Get help",
+  tutorial: "Interface tutorial",
+  knowledge: "Knowledge base",
+  feedback: "Leave a testimonial",
+  bug: "Report an issue",
+  conversations: "Conversations",
+  contacts: "Contacts",
+  settings: "Settings",
+} as const;

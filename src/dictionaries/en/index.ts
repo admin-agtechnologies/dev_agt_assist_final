@@ -17,6 +17,19 @@ import { profile } from "./profile.en";
 import { feedback } from "./feedback.en";
 import { dossiers } from "./dossiers.en";
 import { inscriptions } from "./inscriptions.en";
+import { nav } from "./nav.en";
+import { errors } from "./errors.en";
+import { plans } from "./plans.en";
+import { pending } from "./pending.en";
+import { verifyEmail } from "./verifyEmail.en";
+import { resetPassword } from "./resetPassword.en";
+import { magicLink } from "./magicLink.en";
+import { faq } from "./faq.en";
+import { support } from "./support.en";
+import { help } from "./help.en";
+import { tutorial } from "./tutorial.en";
+import { bug } from "./bug.en";
+import { appointments } from "./appointments.en";
 
 export const en = {
   common,
@@ -37,6 +50,19 @@ export const en = {
   feedback,
   dossiers,
   inscriptions,
+  nav,
+  errors,
+  plans,
+  pending,
+  verifyEmail,
+  resetPassword,
+  magicLink,
+  faq,
+  support,
+  help,
+  tutorial,
+  bug,
+  appointments,
 } as const;
 
 export type EnDict = typeof en;
