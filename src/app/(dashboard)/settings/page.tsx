@@ -1,34 +1,49 @@
 // src/app/(dashboard)/settings/page.tsx
 "use client";
 
-import { useLanguage } from "@/hooks/useLanguage";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useSector } from "@/hooks/useSector";
 import { useActiveFeatures } from "@/hooks/useFeatures";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { SectorBadge } from "@/components/sector/SectorBadge";
-import { getFeatureLabel } from "@/lib/sector-labels";
-import { common as commonFr } from "@/dictionaries/fr/common.fr";
-import { common as commonEn } from "@/dictionaries/en/common.en";
-import { Zap, Building2, User } from "lucide-react";
+import { FeatureGrid } from "@/components/settings/FeatureGrid";
+import { Building2, User } from "lucide-react";
 
 export default function SettingsPage() {
-  const { lang } = useLanguage();
+  const { dictionary: d, locale } = useLanguage();
   const { theme } = useSector();
   const { user } = useAuth();
-  const { features, isLoading } = useActiveFeatures();
-
-  const c = lang === "fr" ? commonFr : commonEn;
+  const { features, isLoading, refetch } = useActiveFeatures();
 
   const entreprise = user?.entreprise;
+  const s = d.settings.modules;
+  const c = d.common;
+
+  const base        = features.filter((f) => f.categorie === "base");
+  const sectorielle = features.filter(
+    (f) => f.categorie === "sectorielle" || !f.categorie
+  );
+
+  const cardLabels = {
+    active:             s.active,
+    inactive:           s.inactive,
+    mandatory:          s.mandatory,
+    toggleActivate:     s.toggleActivate,
+    toggleDeactivate:   s.toggleDeactivate,
+    mandatoryTooltip:   s.mandatoryTooltip,
+    errorToggle:        s.errorToggle,
+    successActivated:   s.successActivated,
+    successDeactivated: s.successDeactivated,
+  };
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       <PageHeader title={c.settings} />
 
       {/* Infos entreprise */}
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+      <div className="card overflow-hidden">
+        <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Building2 size={15} style={{ color: theme.primary }} />
             <h3 className="text-sm font-bold" style={{ color: theme.primary }}>
@@ -39,72 +54,58 @@ export default function SettingsPage() {
         </div>
         <div className="px-5 py-4 grid grid-cols-2 gap-4">
           {[
-            { label: c.profile, value: entreprise?.name ?? "—" },
-            { label: "Email",   value: user?.email ?? "—" },
-            { label: "Slug",    value: entreprise?.slug ?? "—" },
-            { label: c.active,  value: entreprise?.is_active ? c.active : c.inactive },
+            { label: c.profile,  value: entreprise?.name ?? "—" },
+            { label: "Email",    value: user?.email ?? "—" },
+            { label: "Slug",     value: entreprise?.slug ?? "—" },
+            { label: c.status,   value: entreprise?.is_active ? c.active : c.inactive },
           ].map(({ label, value }) => (
             <div key={label}>
-              <p className="text-xs text-gray-400 mb-0.5">{label}</p>
-              <p className="text-sm font-medium text-gray-800 truncate">{value}</p>
+              <p className="text-xs text-[var(--text-muted)] mb-0.5">{label}</p>
+              <p className="text-sm font-medium text-[var(--text)] truncate">{value}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Features actives */}
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
-          <Zap size={15} style={{ color: theme.accent }} />
+      {/* Modules — avec toggles */}
+      <div className="card overflow-hidden">
+        <div className="px-5 py-4 border-b border-[var(--border)]">
           <h3 className="text-sm font-bold" style={{ color: theme.primary }}>
-            {lang === "fr" ? "Modules actifs" : "Active modules"}
+            {s.pageTitle}
           </h3>
+          <p className="text-xs text-[var(--text-muted)] mt-0.5">{s.pageSubtitle}</p>
         </div>
-
-        {isLoading ? (
-          <div className="p-5 space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-8 rounded-lg bg-gray-100 animate-pulse" />
-            ))}
-          </div>
-        ) : features.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-8">{c.noData}</p>
-        ) : (
-          <ul className="divide-y divide-gray-50">
-            {features.map((f) => {
-              const label = getFeatureLabel(f.slug, lang);
-              return (
-                <li
-                  key={f.slug}
-                  className="flex items-center justify-between px-5 py-3"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">
-                      {label.nav}
-                    </p>
-                    <p className="text-xs text-gray-400">{f.slug}</p>
-                  </div>
-                  <span
-                    className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
-                    style={{
-                      backgroundColor: f.is_active
-                        ? `${theme.primary}15`
-                        : "#f3f4f6",
-                      color: f.is_active ? theme.primary : "#9ca3af",
-                    }}
-                  >
-                    {f.is_active ? c.active : c.inactive}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+        <div className="p-5 space-y-6">
+          {isLoading ? (
+            <div className="space-y-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-16 rounded-2xl bg-[var(--border)] animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <>
+              <FeatureGrid
+                features={base}
+                title={s.sectionBase}
+                locale={locale}
+                labels={cardLabels}
+                onToggled={refetch}
+              />
+              <FeatureGrid
+                features={sectorielle}
+                title={s.sectionSectorielle}
+                locale={locale}
+                labels={cardLabels}
+                onToggled={refetch}
+              />
+            </>
+          )}
+        </div>
       </div>
 
       {/* Compte utilisateur */}
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+      <div className="card overflow-hidden">
+        <div className="px-5 py-4 border-b border-[var(--border)] flex items-center gap-2">
           <User size={15} style={{ color: theme.primary }} />
           <h3 className="text-sm font-bold" style={{ color: theme.primary }}>
             {c.profile}
@@ -112,12 +113,12 @@ export default function SettingsPage() {
         </div>
         <div className="px-5 py-4 grid grid-cols-2 gap-4">
           {[
-            { label: "Nom",   value: user?.name ?? "—" },
-            { label: "Email", value: user?.email ?? "—" },
+            { label: d.nav.profile, value: user?.name ?? "—" },
+            { label: "Email",       value: user?.email ?? "—" },
           ].map(({ label, value }) => (
             <div key={label}>
-              <p className="text-xs text-gray-400 mb-0.5">{label}</p>
-              <p className="text-sm font-medium text-gray-800 truncate">{value}</p>
+              <p className="text-xs text-[var(--text-muted)] mb-0.5">{label}</p>
+              <p className="text-sm font-medium text-[var(--text)] truncate">{value}</p>
             </div>
           ))}
         </div>

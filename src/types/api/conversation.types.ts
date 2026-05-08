@@ -1,6 +1,4 @@
 // src/types/api/conversation.types.ts
-// Conversation, RapportConversation, ChatbotBridge, WAHA
-// ── Ancien backend (pme/bots) — NE PAS MODIFIER, encore utilisé ──────────────
 
 export interface RapportConversation {
   id: string;
@@ -202,7 +200,7 @@ export interface WahaDisconnectResponse {
   status: 'STOPPED';
 }
 
-// ── Nouveau backend AGT v2 — Agent IA ────────────────────────────────────────
+// ── Agent IA ──────────────────────────────────────────────────────────────────
 
 export type MessageRole = 'user' | 'assistant' | 'system' | 'status';
 

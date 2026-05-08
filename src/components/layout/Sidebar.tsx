@@ -1,4 +1,4 @@
-// src/components/layout/Sidebar.tsx
+﻿// src/components/layout/Sidebar.tsx
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -6,6 +6,8 @@ import {
   LayoutDashboard, MessageSquare, Users,
   CreditCard, BookOpen, Bot, Settings,
   Sun, Moon, Globe, LogOut,
+  HelpCircle, MessageCircle, Star, AlertTriangle,
+  UserCircle,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -39,17 +41,24 @@ export function Sidebar({ onClose }: Props) {
 
   const STATIC_ITEMS = [
     { href: DASHBOARD_ROUTES.home,          icon: LayoutDashboard, label: d.nav.dashboard },
-    // Remplacer les deux lignes concernées par :
-    { href: DASHBOARD_ROUTES.conversations, icon: MessageSquare, label: d.nav.conversations },
-    { href: DASHBOARD_ROUTES.contacts,      icon: Users,         label: d.nav.contacts },
+    { href: DASHBOARD_ROUTES.conversations, icon: MessageSquare,   label: d.nav.conversations },
+    { href: DASHBOARD_ROUTES.contacts,      icon: Users,           label: d.nav.contacts },
     { href: DASHBOARD_ROUTES.bots,          icon: Bot,             label: d.nav.bots },
     { href: DASHBOARD_ROUTES.knowledge,     icon: BookOpen,        label: d.nav.knowledge },
     { href: DASHBOARD_ROUTES.billing,       icon: CreditCard,      label: d.nav.billing },
     { href: DASHBOARD_ROUTES.settings,      icon: Settings,        label: d.common.settings },
+    { href: DASHBOARD_ROUTES.profile, icon: UserCircle, label: d.nav.profile },
+  ];
+
+  const SUPPORT_ITEMS = [
+    { href: DASHBOARD_ROUTES.tutorial,  icon: HelpCircle,     label: locale === "fr" ? "Tutoriel interface" : "Interface tutorial" },
+    { href: DASHBOARD_ROUTES.help,      icon: MessageCircle,  label: locale === "fr" ? "Demander de l'aide" : "Get help" },
+    { href: DASHBOARD_ROUTES.feedback,  icon: Star,           label: locale === "fr" ? "Laisser un témoignage" : "Leave a review" },
+    { href: DASHBOARD_ROUTES.report,    icon: AlertTriangle,  label: locale === "fr" ? "Signaler un problème" : "Report an issue" },
   ];
 
   return (
-    <>
+    <aside className="flex flex-col h-screen w-64 shrink-0 bg-[var(--bg-sidebar)] border-r border-[var(--border)] overflow-hidden">
       {/* Logo + Secteur */}
       <div className="p-6 border-b border-[var(--border)]">
         <div className="flex items-center gap-2.5">
@@ -63,7 +72,6 @@ export function Sidebar({ onClose }: Props) {
           </div>
         </div>
 
-        {/* User card */}
         {user && (
           <div className="mt-4 flex items-center gap-2.5 bg-[var(--bg)] rounded-xl p-3">
             <div
@@ -90,11 +98,19 @@ export function Sidebar({ onClose }: Props) {
         {/* Séparateur + modules sectoriels */}
         <div className="border-t border-[var(--border)] my-2" />
         <SidebarDynamicNav locale={locale} onClose={onClose} />
+
+        {/* Séparateur + support */}
+        <div className="border-t border-[var(--border)] my-2" />
+        {SUPPORT_ITEMS.map(({ href, icon: Icon, label }) => (
+          <Link key={href} href={href} onClick={onClose} className={linkClass(href)}>
+            <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={isActive(href) ? 2.5 : 2} />
+            {label}
+          </Link>
+        ))}
       </nav>
 
       {/* Footer */}
       <div className="p-4 border-t border-[var(--border)] space-y-0.5">
-        <div className="border-t border-[var(--border)] my-1" />
         <button
           onClick={toggle}
           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-[var(--text-sidebar)] hover:bg-[var(--bg)] transition-colors"
@@ -119,6 +135,6 @@ export function Sidebar({ onClose }: Props) {
           {d.common.logout}
         </button>
       </div>
-    </>
+    </aside>
   );
 }

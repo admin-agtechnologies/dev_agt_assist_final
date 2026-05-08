@@ -1,17 +1,17 @@
 // src/hooks/useConversation.ts
 "use client";
 import { useState, useEffect, useRef } from "react";
-import type { Conversation } from "@/types/api";
-import { conversationsRepository } from "@/repositories/conversations.repository";
+import type { AIConversation } from "@/types/api";
+import { agentRepository } from "@/repositories/agent.repository";
 
 interface UseConversationReturn {
-  conversation: Conversation | null;
+  conversation: AIConversation | null;
   isLoading: boolean;
   error: string | null;
 }
 
 export function useConversation(conversationId: string | null): UseConversationReturn {
-  const [conversation, setConversation] = useState<Conversation | null>(null);
+  const [conversation, setConversation] = useState<AIConversation | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -23,9 +23,16 @@ export function useConversation(conversationId: string | null): UseConversationR
     }
 
     const fetch = () => {
-      conversationsRepository
-        .getById(conversationId)
-        .then((data) => { setConversation(data); setError(null); })
+      agentRepository
+        .getConversation(conversationId)
+        .then((data) => {
+          setConversation(data);
+          setError(null);
+          // Stopper le polling si conversation terminée ou transférée
+          if (data.statut === "terminee" || data.statut === "transferee") {
+            if (intervalRef.current) clearInterval(intervalRef.current);
+          }
+        })
         .catch(() => setError("Erreur de chargement"))
         .finally(() => setIsLoading(false));
     };

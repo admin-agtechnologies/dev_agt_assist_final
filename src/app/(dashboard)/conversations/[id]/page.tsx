@@ -2,43 +2,25 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useLanguage } from "@/hooks/useLanguage";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useSector } from "@/hooks/useSector";
 import { useConversation } from "@/hooks/useConversation";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { MessageBubble } from "@/components/conversations/MessageBubble";
 import { StatusMessage } from "@/components/conversations/StatusMessage";
 import { ConversationStatus } from "@/components/conversations/ConversationStatus";
-import { conversations as convFr } from "@/dictionaries/fr/conversations.fr";
-import { conversations as convEn } from "@/dictionaries/en/conversations.en";
-import { common as commonFr } from "@/dictionaries/fr/common.fr";
-import { common as commonEn } from "@/dictionaries/en/common.en";
-import type { ChatMessage } from "@/types/api";
-import { conversationsRepository } from "@/repositories/conversations.repository";
-import { useState, useEffect } from "react";
 
 export default function ConversationDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { lang } = useLanguage();
+  const { dictionary: d, locale } = useLanguage();
   const { theme } = useSector();
-
-  const d = lang === "fr" ? convFr : convEn;
-  const c = lang === "fr" ? commonFr : commonEn;
 
   const conversationId = typeof params.id === "string" ? params.id : null;
   const { conversation, isLoading, error } = useConversation(conversationId);
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-
-  // Charger les messages une fois la conversation disponible
-  useEffect(() => {
-    if (!conversationId) return;
-    conversationsRepository
-      .getMessages(conversationId)
-      .then((data) => setMessages(data as ChatMessage[]))
-      .catch(() => setMessages([]));
-  }, [conversationId, conversation?.dernier_message_at]);
+  const c = d.common;
+  const cv = d.conversations;
 
   if (isLoading && !conversation) {
     return (
@@ -51,95 +33,108 @@ export default function ConversationDetailPage() {
   if (error || !conversation) {
     return (
       <div className="flex items-center justify-center h-64">
-        <StatusMessage content={error ?? d.detail.noMessages} />
+        <StatusMessage content={error ?? cv.detail.noMessages} />
       </div>
     );
   }
 
+  const contactNom = conversation.contact?.nom ?? "—";
+  const messagesCount = conversation.messages.length;
+
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       <PageHeader
-        title={`${d.detail.title} — ${conversation.client_nom}`}
+        title={`${cv.detail.title} — ${contactNom}`}
         backLabel={c.back}
         onBack={() => router.push("/conversations")}
         badge={
           <ConversationStatus
             statut={conversation.statut}
-            labels={d.statuses}
+            labels={cv.statuses}
             size="sm"
           />
         }
       />
 
       {/* Métadonnées */}
-      <div className="bg-white rounded-xl border border-gray-100 p-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+      <div className="card p-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
         <div>
-          <p className="text-xs text-gray-400">{d.table.bot}</p>
-          <p className="font-medium text-gray-900">{conversation.bot_nom}</p>
+          <p className="text-xs text-[var(--text-muted)]">{cv.table.canal}</p>
+          <p className="font-medium text-[var(--text)]">{conversation.canal}</p>
         </div>
         <div>
-          <p className="text-xs text-gray-400">{d.table.messages}</p>
-          <p className="font-medium text-gray-900">{conversation.nb_messages}</p>
+          <p className="text-xs text-[var(--text-muted)]">{cv.table.messages}</p>
+          <p className="font-medium text-[var(--text)]">{messagesCount}</p>
         </div>
         <div>
-          <p className="text-xs text-gray-400">{d.table.date}</p>
-          <p className="font-medium text-gray-900">
-            {new Date(conversation.created_at).toLocaleDateString(
-              lang === "fr" ? "fr-FR" : "en-US",
-            )}
+          <p className="text-xs text-[var(--text-muted)]">{cv.table.contact}</p>
+          <p className="font-medium text-[var(--text)]">
+            {conversation.contact?.phone ?? "—"}
           </p>
         </div>
       </div>
 
       {/* Transfert humain */}
-      {conversation.human_handoff && (
-        <StatusMessage content={d.detail.humanHandoff} />
+      {conversation.statut === "transferee" && (
+        <StatusMessage content={cv.detail.humanHandoff} />
       )}
 
       {/* Messages */}
-      <div className="bg-white rounded-xl border border-gray-100 p-4">
+      <div className="card p-4">
         <p
           className="text-xs font-semibold uppercase tracking-wide mb-4"
           style={{ color: theme.primary }}
         >
-          {d.detail.messages}
+          {cv.detail.messages}
         </p>
 
         <div className="flex flex-col gap-3">
-          {messages.length === 0 ? (
-            <StatusMessage content={d.detail.noMessages} />
+          {conversation.messages.length === 0 ? (
+            <StatusMessage content={cv.detail.noMessages} />
           ) : (
-            messages.map((msg, i) => (
+            conversation.messages.map((msg) => (
               <MessageBubble
-                key={i}
+                key={msg.id}
                 role={msg.role}
-                content={msg.content}
+                content={msg.contenu}
               />
             ))
           )}
 
-          {/* Indicateur polling si conversation en cours */}
-          {conversation.statut === "en_cours" && (
+          {conversation.statut === "active" && (
             <StatusMessage
-              content={d.statuses.en_cours}
+              content={cv.statuses.active}
               isAnimated
             />
           )}
         </div>
       </div>
 
-      {/* Rapport */}
-      {conversation.rapport && (
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+      {/* Actions déclenchées */}
+      {conversation.actions_declenchees.length > 0 && (
+        <div className="card p-4">
           <p
             className="text-xs font-semibold uppercase tracking-wide mb-3"
             style={{ color: theme.primary }}
           >
-            {d.detail.rapport}
+            {cv.detail.actions}
           </p>
-          <p className="text-sm text-gray-700 leading-relaxed">
-            {conversation.rapport.resume}
-          </p>
+          <div className="flex flex-col gap-2">
+            {conversation.actions_declenchees.map((action, i) => (
+              <div key={i} className="flex items-center justify-between text-sm">
+                <span className="text-[var(--text)]">{action.action_slug}</span>
+                <span className={`badge ${
+                  action.statut === "succes"
+                    ? "bg-green-100 text-green-700"
+                    : action.statut === "echec"
+                    ? "bg-red-100 text-red-700"
+                    : "bg-yellow-100 text-yellow-700"
+                }`}>
+                  {action.statut}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

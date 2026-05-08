@@ -1,4 +1,4 @@
-// src/dictionaries/fr/index.ts
+﻿// src/dictionaries/fr/index.ts
 import { common } from "./common.fr";
 import { dashboard } from "./dashboard.fr";
 import { auth } from "./auth.fr";
@@ -24,6 +24,7 @@ import { pending } from "./pending.fr";
 import { verifyEmail } from "./verifyEmail.fr";
 import { resetPassword } from "./resetPassword.fr";
 import { magicLink } from "./magicLink.fr";
+import { settings } from "./settings.fr";
 import { faq } from "./faq.fr";
 import { support } from "./support.fr";
 import { help } from "./help.fr";
@@ -57,6 +58,7 @@ export const fr = {
   verifyEmail,
   resetPassword,
   magicLink,
+  settings,
   faq,
   support,
   help,
@@ -66,3 +68,4 @@ export const fr = {
 } as const;
 
 export type FrDict = typeof fr;
+

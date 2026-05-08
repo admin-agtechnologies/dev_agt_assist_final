@@ -1,22 +1,23 @@
 // src/dictionaries/en/conversations.en.ts
 export const conversations = {
   title: "Conversations",
-  subtitle: "All conversations from your bots.",
+  subtitle: "All your client conversations.",
   noData: "No conversations.",
-  errorLoad: "Error loading.",
+  errorLoad: "Error loading conversations.",
   filters: {
     allStatuses: "All statuses",
-    allBots: "All bots",
+    allCanaux: "All channels",
   },
   statuses: {
-    en_cours: "In progress",
+    active: "Active",
     terminee: "Completed",
-    abandonnee: "Abandoned",
+    transferee: "Transferred",
   },
   table: {
     client: "Client",
     bot: "Bot",
     canal: "Channel",
+    contact: "Contact",
     statut: "Status",
     messages: "Messages",
     date: "Date",
@@ -25,8 +26,9 @@ export const conversations = {
     title: "Conversation",
     rapport: "Report",
     messages: "Messages",
+    actions: "Triggered actions",
     noMessages: "No messages.",
     noRapport: "No report available.",
-    humanHandoff: "Human handoff performed",
+    humanHandoff: "Transferred to a human agent",
   },
 } as const;

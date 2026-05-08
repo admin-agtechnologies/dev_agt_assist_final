@@ -7,6 +7,7 @@ export * from "./reservations.repository";
 export * from "./agences.repository";
 export * from "./catalogues.repository";
 export * from "./commandes.repository";
+export * from "./knowledge.repository";
 
 // Tout le reste — auth, tenants, bots, chatbot, waha, feedback, onboarding
 // reste ici jusqu'à migration progressive en Phase 1 et 2

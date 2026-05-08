@@ -1,33 +1,26 @@
 // src/components/conversations/ConversationStatus.tsx
 "use client";
-
-import React from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { StatusVariant } from "@/components/ui/StatusBadge";
-import type { Conversation } from "@/types/api";
+import type { AIConversation } from "@/types/api";
 
 interface ConversationStatusProps {
-  statut: Conversation["statut"];
-  /** Labels — viennent du dictionnaire appelant */
+  statut: AIConversation["statut"];
   labels: {
-    en_cours: string;
+    active: string;
     terminee: string;
-    abandonnee: string;
+    transferee: string;
   };
   size?: "xs" | "sm" | "md";
 }
 
-const STATUT_VARIANT: Record<Conversation["statut"], StatusVariant> = {
-  en_cours:   "en_cours",
+const STATUT_VARIANT: Record<AIConversation["statut"], StatusVariant> = {
+  active:     "en_cours",
   terminee:   "terminee",
-  abandonnee: "abandonnee",
+  transferee: "abandonnee",
 };
 
-export function ConversationStatus({
-  statut,
-  labels,
-  size = "sm",
-}: ConversationStatusProps) {
+export function ConversationStatus({ statut, labels, size = "sm" }: ConversationStatusProps) {
   return (
     <StatusBadge
       variant={STATUT_VARIANT[statut]}

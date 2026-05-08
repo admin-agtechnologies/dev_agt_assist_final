@@ -1,100 +1,102 @@
 // src/app/(dashboard)/contacts/page.tsx
 "use client";
-
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { useLanguage } from "@/hooks/useLanguage";
-import { useSector } from "@/hooks/useSector";
-import { clientsRepository } from "@/repositories/contacts.repository";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { FilterBar } from "@/components/ui/FilterBar";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useActiveFeatures } from "@/hooks/useFeatures";
+import { getFeatureLabel } from "@/lib/sector-labels";
 import { ContactCard } from "@/components/contacts/ContactCard";
-import { contacts as contFr } from "@/dictionaries/fr/contacts.fr";
-import { contacts as contEn } from "@/dictionaries/en/contacts.en";
-import { common as commonFr } from "@/dictionaries/fr/common.fr";
-import { common as commonEn } from "@/dictionaries/en/common.en";
-import type { Client } from "@/types/api";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Spinner } from "@/components/ui";
+import type { Contact, ContactStatut, ContactFilters } from "@/types/api/crm.types";
+import { api } from "@/lib/api-client";
+import type { PaginatedResponse } from "@/types/api";
+
+const STATUTS: { value: ContactStatut | ""; label: { fr: string; en: string } }[] = [
+  { value: "",         label: { fr: "Tous",      en: "All" } },
+  { value: "prospect", label: { fr: "Prospects", en: "Prospects" } },
+  { value: "contact",  label: { fr: "Contacts",  en: "Contacts" } },
+  { value: "client",   label: { fr: "Clients",   en: "Clients" } },
+  { value: "inactif",  label: { fr: "Inactifs",  en: "Inactive" } },
+];
 
 export default function ContactsPage() {
-  const router = useRouter();
-  const { lang } = useLanguage();
-  const { theme } = useSector();
+  const { locale } = useLanguage();
+  const { features } = useActiveFeatures();
 
-  const d = lang === "fr" ? contFr : contEn;
-  const c = lang === "fr" ? commonFr : commonEn;
-
-  const [rows, setRows] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [statut, setStatut] = useState<ContactStatut | "">("");
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const activeFeature = features.find(
+    (f) => ["conversion_prospects", "orientation_patient"].includes(f.slug) && f.is_active,
+  );
+  const pageTitle = activeFeature
+    ? getFeatureLabel(activeFeature.slug, locale).pageTitle
+    : locale === "fr" ? "Contacts" : "Contacts";
 
   const load = useCallback(() => {
-    setIsLoading(true);
-    clientsRepository
-      .getList()
-      .then(setRows)
-      .catch(() => setRows([]))
-      .finally(() => setIsLoading(false));
-  }, []);
+    setLoading(true);
+    const filters: ContactFilters = {};
+    if (statut) filters.statut = statut;
+    if (search) filters.search = search;
 
-  useEffect(() => { load(); }, [load]);
+    api
+      .get("/api/v1/contacts/", { params: filters })
+      .then((data: unknown) => {
+        const res = data as PaginatedResponse<Contact>;
+        setContacts(Array.isArray(data) ? (data as Contact[]) : res.results ?? []);
+      })
+      .catch(() => setContacts([]))
+      .finally(() => setLoading(false));
+  }, [statut, search]);
 
-  const filtered = search
-    ? rows.filter(
-        (r) =>
-          r.nom.toLowerCase().includes(search.toLowerCase()) ||
-          r.telephone?.toLowerCase().includes(search.toLowerCase()) ||
-          r.email?.toLowerCase().includes(search.toLowerCase()),
-      )
-    : rows;
-
-  const formatDate = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString(lang === "fr" ? "fr-FR" : "en-US", {
-      day: "2-digit",
-      month: "short",
-    });
+  useEffect(() => {
+    const t = setTimeout(load, search ? 300 : 0);
+    return () => clearTimeout(t);
+  }, [load, search]);
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={d.title}
-        subtitle={d.subtitle}
-        badge={
-          <span
-            className="text-xs font-medium px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: `${theme.primary}15`, color: theme.primary }}
+    <div className="space-y-4 max-w-2xl mx-auto">
+      <PageHeader title={pageTitle} />
+
+      <input
+        type="text"
+        placeholder={locale === "fr" ? "Rechercher un contact…" : "Search a contact…"}
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="input-base w-full"
+      />
+
+      <div className="flex gap-2 flex-wrap">
+        {STATUTS.map((s) => (
+          <button
+            key={s.value}
+            type="button"
+            onClick={() => setStatut(s.value)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+              statut === s.value
+                ? "bg-[var(--primary)] text-white border-[var(--primary)]"
+                : "bg-transparent text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)]"
+            }`}
           >
-            {rows.length}
-          </span>
-        }
-      />
+            {s.label[locale]}
+          </button>
+        ))}
+      </div>
 
-      <FilterBar
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder={c.search}
-        onReset={() => setSearch("")}
-        resetLabel={c.all}
-        hasActiveFilters={search !== ""}
-      />
-
-      {isLoading ? (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="h-20 rounded-xl bg-gray-100 animate-pulse" />
-          ))}
+      {loading ? (
+        <div className="flex items-center justify-center h-32"><Spinner /></div>
+      ) : contacts.length === 0 ? (
+        <div className="card p-12 text-center">
+          <p className="text-[var(--text-muted)] text-sm">
+            {locale === "fr" ? "Aucun contact trouvé" : "No contacts found"}
+          </p>
         </div>
-      ) : filtered.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center py-12">{d.noData}</p>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((contact) => (
-            <ContactCard
-              key={contact.id}
-              contact={contact}
-              labels={d.table}
-              dateFormatted={formatDate(contact.created_at)}
-              onClick={() => router.push(`/contacts/${contact.id}`)}
-            />
+        <div className="space-y-2">
+          {contacts.map((c) => (
+            <ContactCard key={c.id} contact={c} locale={locale} />
           ))}
         </div>
       )}

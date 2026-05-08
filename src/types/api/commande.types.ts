@@ -1,5 +1,48 @@
 // src/types/api/commande.types.ts
-// Billing, Plan, Subscription, Wallet, Transaction, Stats
+export type CommandeStatut =
+  | 'en_attente'
+  | 'confirmee'
+  | 'en_preparation'
+  | 'prete'
+  | 'livree'
+  | 'annulee';
+
+export interface LigneCommande {
+  id: string;
+  item_id: string;
+  item_nom: string;
+  quantite: number;
+  prix_unitaire: number;
+  sous_total: number;
+}
+
+export interface Commande {
+  id: string;
+  contact_nom: string;
+  contact_phone: string;
+  statut: CommandeStatut;
+  montant_total: number;
+  devise: string;
+  est_paye: boolean;
+  lignes: LigneCommande[];
+  notes: string | null;
+  agence_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CommandeFilters {
+  statut?: CommandeStatut;
+  agence_id?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export interface UpdateCommandeStatutPayload {
+  statut: CommandeStatut;
+}
+
+// ── Billing (conservé — utilisé par pages billing existantes) ─────────────────
 
 export type SubscriptionStatus = 'actif' | 'suspendu' | 'expire' | 'en_attente';
 
@@ -70,6 +113,7 @@ export interface Transaction {
   label: string;
   created_at: string;
 }
+
 export interface CreateTransactionPayload {
   wallet: string;
   montant: number;
@@ -89,6 +133,7 @@ export interface TenantStats {
   email_rappels_envoyes: number;
   email_rappels_echoues: number;
 }
+
 export interface AdminStats {
   total_entreprises: number;
   entreprises_actives: number;
