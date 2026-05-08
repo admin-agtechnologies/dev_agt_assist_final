@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const PUBLIC_ROUTES = ["/", "/login", "/pending", "/verify-email", "/reset-password", "/magic-link"];
-const PME_PREFIX = "/pme";
 const DASHBOARD = "/dashboard";
 const ONBOARDING = "/onboarding";
 
@@ -48,7 +47,7 @@ export function middleware(request: NextRequest) {
 
   // ── Dashboard & routes PME : protégées ───────────────────────────────────
   // PME_PREFIX conservé pendant la migration 0-B — sera retiré en Phase 4
-  if (pathname.startsWith(DASHBOARD) || pathname.startsWith(PME_PREFIX)) {
+  if (pathname.startsWith(DASHBOARD)) {
     if (!auth) {
       return NextResponse.redirect(new URL(`/login?redirect=${pathname}`, request.url));
     }
@@ -67,7 +66,7 @@ export const config = {
     "/reset-password", "/reset-password/:path*",
     "/magic-link", "/magic-link/:path*",
     "/dashboard/:path*",
-    "/pme/:path*",
+    "/:path*",
     "/admin/:path*",
     "/onboarding/:path*",
   ],

@@ -1,137 +1,171 @@
-// src/app/(dashboard)/bots/page.tsx
+// src/app/pme/bots/page.tsx
 "use client";
-
-import { useState, useEffect, useCallback } from "react";
-import { useLanguage } from "@/hooks/useLanguage";
-import { useSector } from "@/hooks/useSector";
+import { useState, useEffect, useCallback, useTransition, useRef } from "react";
+import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
+import { Bot, Plus } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useToast } from "@/components/ui/Toast";
 import { botsRepository } from "@/repositories";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { bots as botsFr } from "@/dictionaries/fr/bots.fr";
-import { bots as botsEn } from "@/dictionaries/en/bots.en";
-import { common as commonFr } from "@/dictionaries/fr/common.fr";
-import { common as commonEn } from "@/dictionaries/en/common.en";
-import type { Bot } from "@/types/api";
-import type { StatusVariant } from "@/components/ui/StatusBadge";
-import { Bot as BotIcon, Phone, MessageSquare } from "lucide-react";
+import { Badge, SectionHeader, EmptyState, ConfirmDeleteModal } from "@/components/ui";
+import type { Bot as BotData, BotStatut } from "@/types/api";
 
-const STATUT_VARIANT: Record<string, StatusVariant> = {
-  actif:    "actif",
-  en_pause: "en_pause",
-  archive:  "archive",
-};
+import { type BotPair }  from "./_components/bots.types";
+import { BotPairCard }   from "./_components/BotPairCard";
+import { BotFormModal }  from "./_components/BotFormModal";
 
-function BotCard({
-  bot,
-  labels,
-}: {
-  bot: Bot;
-  labels: {
-    statusActive: string;
-    statusPaused: string;
-    statusArchived: string;
+// ─────────────────────────────────────────────────────────────────────────────
+
+export default function PmeBotsPage() {
+  const { user } = useAuth();
+  const { dictionary: d } = useLanguage();
+  const t = d.bots;
+  const toast = useToast();
+  const router = useRouter();
+
+  const [bots, setBots]       = useState<BotData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  const [, startTransition]   = useTransition();
+
+  const [formModal, setFormModal]           = useState<{ open: boolean; editId: string | null }>({ open: false, editId: null });
+  const [deleteId, setDeleteId]             = useState<string | null>(null);
+  const [isDeleting, setIsDeleting]         = useState(false);
+  const [expandedPairId, setExpandedPairId] = useState<string | null>(null);
+
+  useEffect(() => { setMounted(true); }, []);
+
+  // ── Chargement ──────────────────────────────────────────────────────────────
+  const toastRef = useRef(toast);
+  useEffect(() => { toastRef.current = toast; }, [toast]);
+
+  const fetchBots = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await botsRepository.getList();
+      setBots(res.results ?? []);
+    } catch {
+      toastRef.current.error(t.errorLoad);
+    } finally {
+      setLoading(false);
+    }
+  }, [t.errorLoad]);
+
+  useEffect(() => { fetchBots(); }, [fetchBots]);
+
+  // ── Construction des paires WA / Vocal ────────────────────────────────────
+  const botPairs: BotPair[] = bots
+    .filter(b => b.bot_type === "whatsapp")
+    .map(waBot => ({
+      waBot,
+      voiceBot: bots.find(b => b.id === waBot.bot_paire && b.bot_type === "vocal") ?? null,
+    }));
+
+  // ── Publish / Unpublish ───────────────────────────────────────────────────
+  const handlePublishToggle = async (pair: BotPair) => {
+    const isActive = pair.waBot.statut === "actif";
+    const newStatut: BotStatut = isActive ? "en_pause" : "actif";
+    try {
+      await Promise.all([
+        botsRepository.patch(pair.waBot.id, { is_active: !isActive, statut: newStatut }),
+        pair.voiceBot
+          ? botsRepository.patch(pair.voiceBot.id, { is_active: !isActive, statut: newStatut })
+          : Promise.resolve(),
+      ]);
+      toast.success(isActive ? t.unpublishSuccess : t.publishSuccess);
+      startTransition(() => { fetchBots(); });
+    } catch {
+      toast.error(t.publishError);
+    }
   };
-}) {
-  const statusLabel =
-    bot.statut === "actif"
-      ? labels.statusActive
-      : bot.statut === "en_pause"
-      ? labels.statusPaused
-      : labels.statusArchived;
 
-  const TypeIcon = bot.bot_type === "vocal" ? Phone : MessageSquare;
+  // ── Suppression ───────────────────────────────────────────────────────────
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setIsDeleting(true);
+    try {
+      await botsRepository.delete(deleteId);
+      toast.success(t.deleteSuccess);
+      setDeleteId(null);
+      fetchBots();
+    } catch {
+      toast.error(t.deleteError);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
-  return (
-    <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: "var(--color-primary)", opacity: 0.9 }}
-          >
-            <TypeIcon size={15} className="text-white" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">
-              {bot.nom}
-            </p>
-            <p className="text-xs text-gray-400 capitalize">{bot.bot_type}</p>
-          </div>
-        </div>
-        <StatusBadge
-          variant={STATUT_VARIANT[bot.statut] ?? "info"}
-          label={statusLabel}
-          size="xs"
-        />
-      </div>
+  const sector = user?.entreprise?.secteur?.slug ?? "";
 
-      {bot.message_accueil && (
-        <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
-          {bot.message_accueil}
-        </p>
-      )}
-
-      {bot.numero_value && (
-        <p className="text-xs text-gray-400">{bot.numero_value}</p>
-      )}
+  // ── Rendu ─────────────────────────────────────────────────────────────────
+  if (loading) return (
+    <div className="space-y-4 animate-pulse">
+      {[...Array(2)].map((_, i) => (
+        <div key={i} className="h-28 card bg-[var(--bg)]" />
+      ))}
     </div>
   );
-}
-
-export default function BotsPage() {
-  const { lang } = useLanguage();
-  const { theme } = useSector();
-
-  const d = lang === "fr" ? botsFr : botsEn;
-  const c = lang === "fr" ? commonFr : commonEn;
-
-  const [bots, setBots] = useState<Bot[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const load = useCallback(() => {
-    setIsLoading(true);
-    botsRepository
-      .getList()
-      .then((res) => setBots(res.results))
-      .catch(() => setBots([]))
-      .finally(() => setIsLoading(false));
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={d.title}
-        subtitle={d.subtitle}
-        badge={
-          <span
-            className="text-xs font-medium px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: `${theme.primary}15`, color: theme.primary }}
-          >
-            {bots.length}
-          </span>
-        }
-      />
+    <>
+      <div className="space-y-4 animate-fade-in">
+        <SectionHeader
+          title={t.title}
+          subtitle={t.subtitle}
+          action={
+            <button
+              onClick={() => setFormModal({ open: true, editId: null })}
+              className="btn-primary"
+            >
+              <Plus className="w-4 h-4" /> {t.newBtn}
+            </button>
+          }
+        />
 
-      {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2].map((i) => (
-            <div key={i} className="h-32 rounded-xl bg-gray-100 animate-pulse" />
-          ))}
-        </div>
-      ) : bots.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 gap-3">
-          <BotIcon size={40} style={{ color: `${theme.primary}40` }} />
-          <p className="text-sm text-gray-400">{d.noData}</p>
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {bots.map((bot) => (
-            <BotCard key={bot.id} bot={bot} labels={d} />
-          ))}
-        </div>
+        {botPairs.length === 0 ? (
+          <div className="card"><EmptyState message={t.noData} icon={Bot} /></div>
+        ) : (
+          <div className="space-y-3">
+            {botPairs.map(pair => (
+              <BotPairCard
+                key={pair.waBot.id}
+                pair={pair}
+                isExpanded={expandedPairId === pair.waBot.id}
+                sector={sector}
+                onToggleExpand={() =>
+                  setExpandedPairId(expandedPairId === pair.waBot.id ? null : pair.waBot.id)
+                }
+                onEdit={() => setFormModal({ open: true, editId: pair.waBot.id })}
+                onDelete={() => setDeleteId(pair.waBot.id)}
+                onPublishToggle={() => handlePublishToggle(pair)}
+                onTest={() => router.push(`/bots/${pair.waBot.id}/test`)}
+                onRefresh={fetchBots}
+                d={d}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Modale création / édition */}
+      {mounted && formModal.open && createPortal(
+        <BotFormModal
+          editId={formModal.editId}
+          onClose={() => setFormModal({ open: false, editId: null })}
+          onSave={fetchBots}
+        />,
+        document.body,
       )}
-    </div>
+
+      {/* Modale suppression */}
+      <ConfirmDeleteModal
+        isOpen={!!deleteId}
+        isLoading={isDeleting}
+        onClose={() => !isDeleting && setDeleteId(null)}
+        onConfirm={handleDelete}
+        message={t.confirmDelete}
+      />
+    </>
   );
 }

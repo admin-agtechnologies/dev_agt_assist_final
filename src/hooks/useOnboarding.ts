@@ -8,18 +8,17 @@ import type { OnboardingResponse } from "@/types/onboarding";
 
 // Mapping route complète → slug envoyé au backend
 const ROUTE_TO_PAGE_SLUG: Record<string, string> = {
-  "/pme/dashboard": "dashboard",
-  "/pme/bots": "bots",
-  "/pme/knowledge": "knowledge",
-  "/pme/billing": "billing",
-  "/pme/appointments": "appointments",
-  "/pme/services": "services",
-  "/pme/tutorial": "tutorial",
-  "/pme/help": "help",
-  "/pme/feedback": "feedback",
-  "/pme/bug": "bug",
-  "/pme/profile": "profile",
   "/dashboard": "dashboard",
+  "/bots": "bots",
+  "/knowledge": "knowledge",
+  "/billing": "billing",
+  "/appointments": "appointments",
+  "/services": "services",
+  "/tutorial": "tutorial",
+  "/help": "help",
+  "/feedback": "feedback",
+  "/bug": "bug",
+  "/profile": "profile",
 };
 
 export function useOnboarding() {
@@ -133,9 +132,9 @@ export function useOnboarding() {
           const firstBot = res.results[0];
           href = firstBot
             ? href.replace("{first_bot_id}", firstBot.id)
-            : "/pme/bots";
+            : "/bots";
         } catch {
-          href = "/pme/bots";
+          href = "/bots";
         }
       }
 
