@@ -1,7 +1,8 @@
 "use client";
 // ============================================================
-// FICHIER : src/app/(auth)/onboarding/page.tsx  — v4
-// Ajout : double fetch (secteur + custom) pour groupe PERSONNALISATION
+// FICHIER : src/app/(auth)/onboarding/page.tsx  — v5
+// Migration : SECTOR_COLORS → SECTOR_THEMES (source unique)
+// BUG-020 : setStoredSector() au choix de secteur (persistance avant auth)
 // ============================================================
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -18,7 +19,9 @@ import { publicFeaturesRepository, type PublicFeature } from "@/repositories/pub
 import { authRepository } from "@/repositories/auth.repository";
 import { tenantsRepository } from "@/repositories/tenants.repository";
 import { featuresRepository } from "@/repositories/features.repository";
-import { SectorPicker, SECTOR_COLORS } from "@/components/onboarding/SectorPicker";
+import { SectorPicker } from "@/components/onboarding/SectorPicker";
+import { SECTOR_THEMES } from "@/lib/sector-theme";
+import { setStoredSector, isValidSector } from "@/lib/sector-config";
 import { IdentityStep } from "@/components/onboarding/IdentityStep";
 import { FeaturePicker } from "@/components/onboarding/FeaturePicker";
 import { AccountStep } from "@/components/onboarding/AccountStep";
@@ -39,6 +42,7 @@ interface Draft {
 
 const DRAFT_KEY = "agt_ob_draft";
 const EMPTY: Draft = { sector_slug: "", sector_id: "", company_name: "", feature_slugs: [] };
+const FALLBACK_ACCENT = "#075E54";
 
 const saveDraft  = (d: Partial<Draft>) => { try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...getDraft(), ...d })); } catch {} };
 const getDraft   = (): Draft => { try { return { ...EMPTY, ...JSON.parse(localStorage.getItem(DRAFT_KEY) ?? "{}") }; } catch { return EMPTY; } };
@@ -49,6 +53,11 @@ const STEP_LABELS = {
   en: ["Sector",  "Business",   "Features",        "Account"],
 };
 
+/** Résout l'accent depuis SECTOR_THEMES (source unique). */
+function resolveAccent(slug: string): string {
+  return isValidSector(slug) ? SECTOR_THEMES[slug].accent : FALLBACK_ACCENT;
+}
+
 export default function OnboardingPage() {
   const { user, refreshUser } = useAuth();
   const { locale }            = useLanguage();
@@ -57,14 +66,14 @@ export default function OnboardingPage() {
 
   const [step,        setStep]       = useState<Step>("sector");
   const [secteurs,    setSecteurs]   = useState<SecteurActivite[]>([]);
-  const [features,    setFeatures]   = useState<PublicFeature[]>([]);   // features du secteur
-  const [allFeatures, setAllFeatures] = useState<PublicFeature[]>([]);  // toutes les features
+  const [features,    setFeatures]   = useState<PublicFeature[]>([]);
+  const [allFeatures, setAllFeatures] = useState<PublicFeature[]>([]);
   const [draft,       setDraftState] = useState<Draft>(EMPTY);
   const [loading,     setLoading]    = useState(true);
   const [regError,    setRegError]   = useState("");
   const [email,       setEmail]      = useState("");
 
-  const accentColor = SECTOR_COLORS[draft.sector_slug] ?? "#075E54";
+  const accentColor = resolveAccent(draft.sector_slug);
 
   useEffect(() => {
     if (user?.entreprise?.secteur) router.replace(ROUTES.dashboard);
@@ -74,6 +83,8 @@ export default function OnboardingPage() {
     const stored     = getDraft();
     const presetSlug = searchParams.get("sector") ?? stored.sector_slug ?? "";
     setDraftState({ ...stored, sector_slug: presetSlug });
+    // Persister le slug si pré-sélectionné via URL ou draft (BUG-020)
+    if (presetSlug && isValidSector(presetSlug)) setStoredSector(presetSlug);
     secteursRepository.getList().then(setSecteurs).catch(() => {}).finally(() => setLoading(false));
     if (user && !user.entreprise?.secteur && stored.sector_id) setStep("finalize");
   }, [searchParams, user]);
@@ -82,18 +93,24 @@ export default function OnboardingPage() {
     setDraftState(prev => { const next = { ...prev, ...patch }; saveDraft(patch); return next; });
   }, []);
 
+  /** Sélection du secteur dans le SectorPicker — persiste localStorage (BUG-020). */
+  const handleSectorSelect = useCallback((slug: string) => {
+    patchDraft({ sector_slug: slug });
+    if (isValidSector(slug)) setStoredSector(slug);
+  }, [patchDraft]);
+
   const goBack = () => {
     const idx = ORDERED.indexOf(step as Step);
     if (idx > 0) setStep(ORDERED[idx - 1]);
   };
 
-  // ── Étape 1 : secteur — double fetch en parallèle ───────────────────────────
+  // ── Étape 1 : secteur — double fetch en parallèle ────────────────────────
   const handleSectorConfirm = async (slug: string) => {
     const found = secteurs.find(s => s.slug === slug);
     patchDraft({ sector_slug: slug, sector_id: found?.id ?? "" });
+    if (isValidSector(slug)) setStoredSector(slug);
     setLoading(true);
     try {
-      // Fetch en parallèle : features du secteur + toutes les features (custom)
       const [sectorFeats, customFeats] = await Promise.all([
         publicFeaturesRepository.getBySector(slug),
         publicFeaturesRepository.getBySector("custom"),
@@ -230,7 +247,7 @@ export default function OnboardingPage() {
 
           {step === "sector" && (
             <SectorPicker secteurs={secteurs} selected={draft.sector_slug} locale={locale}
-              onSelect={slug => patchDraft({ sector_slug: slug })}
+              onSelect={handleSectorSelect}
               onConfirm={() => handleSectorConfirm(draft.sector_slug)} />
           )}
           {step === "identity" && (
@@ -260,3 +277,5 @@ export default function OnboardingPage() {
     </div>
   );
 }
+
+// END OF FILE: src/app/(auth)/onboarding/page.tsx
