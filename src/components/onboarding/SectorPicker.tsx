@@ -1,7 +1,8 @@
 "use client";
 // ============================================================
 // FICHIER : src/components/onboarding/SectorPicker.tsx
-// Améliorations : logos réels, descriptions, layout card, couleur sectorielle
+// Migration : SECTOR_COLORS supprimé → couleurs lues depuis SECTOR_THEMES
+// Layout    : 2 colonnes mobile / 3 desktop, cartes p-5 (lisibilité)
 // ============================================================
 
 import { Check } from "lucide-react";
@@ -9,20 +10,8 @@ import Image from "next/image";
 import type { Locale } from "@/contexts/LanguageContext";
 import type { SecteurActivite } from "@/types/api";
 import { getLogoAssets } from "@/lib/logo-config";
-
-// ── Couleur primaire par secteur ──────────────────────────────────────────────
-export const SECTOR_COLORS: Record<string, string> = {
-  restaurant: "#F97316",
-  hotel:      "#0EA5E9",
-  ecommerce:  "#8B5CF6",
-  transport:  "#14B8A6",
-  banking:    "#2563EB",
-  clinical:   "#10B981",
-  pme:        "#075E54",
-  school:     "#6366F1",
-  public:     "#64748B",
-  custom:     "#7C3AED",
-};
+import { SECTOR_THEMES } from "@/lib/sector-theme";
+import { isValidSector } from "@/lib/sector-config";
 
 // ── Description courte par secteur ───────────────────────────────────────────
 const SECTOR_DESC: Record<string, { fr: string; en: string }> = {
@@ -39,9 +28,24 @@ const SECTOR_DESC: Record<string, { fr: string; en: string }> = {
 };
 
 const LABELS = {
-  fr: { title: "Votre secteur d'activité", subtitle: "Le secteur détermine les fonctionnalités disponibles pour votre assistant.", confirm: "Choisir ce secteur" },
-  en: { title: "Your industry",            subtitle: "The sector determines the features available for your assistant.",           confirm: "Choose this sector" },
+  fr: {
+    title:    "Votre secteur d'activité",
+    subtitle: "Le secteur détermine les fonctionnalités disponibles pour votre assistant.",
+    confirm:  "Choisir ce secteur",
+  },
+  en: {
+    title:    "Your industry",
+    subtitle: "The sector determines the features available for your assistant.",
+    confirm:  "Choose this sector",
+  },
 } as const;
+
+const FALLBACK_ACCENT = "#075E54";
+
+/** Résout l'accent d'un secteur depuis SECTOR_THEMES (source unique). */
+function getAccent(slug: string): string {
+  return isValidSector(slug) ? SECTOR_THEMES[slug].accent : FALLBACK_ACCENT;
+}
 
 interface SectorPickerProps {
   secteurs:  SecteurActivite[];
@@ -54,6 +58,7 @@ interface SectorPickerProps {
 
 export function SectorPicker({ secteurs, selected, locale, onSelect, onConfirm, disabled }: SectorPickerProps) {
   const t = LABELS[locale];
+  const confirmAccent = selected ? getAccent(selected) : FALLBACK_ACCENT;
 
   return (
     <div className="flex flex-col gap-6">
@@ -62,13 +67,14 @@ export function SectorPicker({ secteurs, selected, locale, onSelect, onConfirm, 
         <p className="text-sm text-[var(--text-muted)] mt-1">{t.subtitle}</p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      {/* Grille : 2 cols mobile / 3 cols desktop, cartes p-5 (lisibilité) */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {secteurs.map((s) => {
-          const isSelected  = s.slug === selected;
-          const label       = locale === "fr" ? s.label_fr : s.label_en;
-          const desc        = SECTOR_DESC[s.slug]?.[locale] ?? "";
-          const color       = SECTOR_COLORS[s.slug] ?? "#075E54";
-          const logoLight = getLogoAssets(s.slug).light;
+          const isSelected = s.slug === selected;
+          const label      = locale === "fr" ? s.label_fr : s.label_en;
+          const desc       = SECTOR_DESC[s.slug]?.[locale] ?? "";
+          const color      = getAccent(s.slug);
+          const logoLight  = getLogoAssets(s.slug).light;
 
           return (
             <button
@@ -78,57 +84,63 @@ export function SectorPicker({ secteurs, selected, locale, onSelect, onConfirm, 
               disabled={disabled}
               style={isSelected ? { borderColor: color, backgroundColor: `${color}10` } : undefined}
               className={[
-                "relative p-3 rounded-xl border-2 text-left transition-all group",
+                "relative p-5 rounded-2xl border-2 text-left transition-all group",
                 "focus:outline-none focus:ring-2 focus:ring-offset-1",
                 isSelected
-                  ? "shadow-sm"
-                  : "border-[var(--border)] bg-[var(--bg)] hover:border-[var(--border-hover,#d1d5db)]",
-                disabled && "opacity-50 cursor-not-allowed",
+                  ? "shadow-md"
+                  : "border-[var(--border)] hover:border-[var(--text-muted)] hover:shadow-sm",
+                disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
               ].join(" ")}
-              aria-pressed={isSelected}
             >
-              {/* Checkmark */}
+              {/* Badge "sélectionné" */}
               {isSelected && (
                 <div
-                  className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center"
+                  className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center"
                   style={{ backgroundColor: color }}
                 >
-                  <Check size={10} strokeWidth={3} className="text-white" />
+                  <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
                 </div>
               )}
 
-              {/* Logo ou fallback */}
-              <div className="mb-2 h-8 flex items-center">
-                {logoLight ? (
-                  <Image src={logoLight} alt={label} width={56} height={28} className="object-contain h-7 w-auto" />
-                ) : (
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-base font-bold" style={{ backgroundColor: color }}>
-                    {label[0]}
-                  </div>
-                )}
+              {/* Logo sectoriel + label */}
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center flex-shrink-0 border border-[var(--border)]">
+                  <Image
+                    src={logoLight}
+                    alt={label}
+                    width={36}
+                    height={36}
+                    className="object-contain"
+                  />
+                </div>
+                <h3 className="text-base font-bold text-[var(--text)] leading-tight">
+                  {label}
+                </h3>
               </div>
 
-              {/* Label */}
-              <p className="text-xs font-semibold text-[var(--text)] leading-tight">{label}</p>
-
-              {/* Description */}
+              {/* Description complète (pas de line-clamp, pas de truncate) */}
               {desc && (
-                <p className="text-[10px] text-[var(--text-muted)] mt-0.5 leading-snug line-clamp-2">{desc}</p>
+                <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+                  {desc}
+                </p>
               )}
             </button>
           );
         })}
       </div>
 
+      {/* Bouton confirmer */}
       <button
         type="button"
         onClick={onConfirm}
         disabled={!selected || disabled}
-        className="self-end px-6 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity"
-        style={{ backgroundColor: selected ? (SECTOR_COLORS[selected] ?? "#075E54") : "#075E54" }}
+        className="self-end px-6 py-3 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+        style={{ backgroundColor: confirmAccent }}
       >
         {t.confirm}
       </button>
     </div>
   );
 }
+
+// END OF FILE: src/components/onboarding/SectorPicker.tsx

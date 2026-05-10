@@ -5,15 +5,16 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSector } from "@/hooks/useSector";
 import { Spinner } from "@/components/ui";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import { Mail, Lock, ArrowLeft, CheckCircle } from "lucide-react";
+import { Mail, Lock, ArrowLeft, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/lib/constants";
 import { ApiError } from "@/lib/api-client";
 import { authRepository } from "@/repositories";
 import { AuthShell, GoogleButton } from "@/components/auth/AuthShell";
-import { Eye, EyeOff } from "lucide-react"; // Importe les icônes
+import { setStoredSector, isValidSector } from "@/lib/sector-config";
 import { redirectAfterAuth } from "@/lib/sector-redirect";
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
@@ -21,10 +22,9 @@ const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 type Tab = "password" | "magic";
 type View = "login" | "forgot" | "forgotSent" | "magicSent";
 
-// ════════════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════════════════
 // PAGE LOGIN
-// ════════════════════════════════════════════════════════════════════════════
-
+// ═════════════════════════════════════════════════════════════════════════════
 export default function LoginPage() {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID || "placeholder"}>
@@ -35,11 +35,12 @@ export default function LoginPage() {
   );
 }
 
-// ── Formulaire login ──────────────────────────────────────────────────────────
+// ── Formulaire login ─────────────────────────────────────────────────────────
 function LoginForm() {
   const { login, loginWithGoogle } = useAuth();
-  const [showPassword, setShowPassword] = useState(false); // Ajoute cette ligne
+  const [showPassword, setShowPassword] = useState(false);
   const { dictionary: d } = useLanguage();
+  const { theme } = useSector();
   const t = d.auth;
   const router = useRouter();
 
@@ -50,7 +51,12 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  // ── Connexion email/password ────────────────────────────────────────────
+  /** Persiste le secteur de l'entreprise après auth réussie. */
+  const persistSectorFromMe = (sectorSlug?: string | null) => {
+    if (sectorSlug && isValidSector(sectorSlug)) setStoredSector(sectorSlug);
+  };
+
+  // ── Connexion email/password ──────────────────────────────────────────────
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -58,7 +64,9 @@ function LoginForm() {
       try {
         await login({ email, password });
         const me = await authRepository.me();
-        const redirected = redirectAfterAuth(me?.entreprise?.secteur?.slug);
+        const sectorSlug = me?.entreprise?.secteur?.slug;
+        persistSectorFromMe(sectorSlug);
+        const redirected = redirectAfterAuth(sectorSlug);
         if (!redirected) {
           const params = new URLSearchParams(window.location.search);
           router.push(params.get("redirect") ?? ROUTES.dashboard);
@@ -74,34 +82,22 @@ function LoginForm() {
     });
   };
 
-  // ── Demande de magic link ────────────────────────────────────────────────
-  // Le backend renvoie toujours une réponse neutre (il ne révèle pas l'existence
-  // du compte). On affiche donc toujours l'écran "envoyé" côté UI.
+  // ── Demande de magic link (réponse neutre côté backend) ──────────────────
   const handleMagicLink = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     startTransition(async () => {
-      try {
-        await authRepository.magicLinkRequest(email);
-      } catch {
-        // Réponse neutre : même comportement visuel en cas d'erreur réseau
-      }
+      try { await authRepository.magicLinkRequest(email); } catch { /* neutre */ }
       setView("magicSent");
     });
   };
 
-  // ── Mot de passe oublié ──────────────────────────────────────────────────
-  // Même logique neutre : on affiche toujours "envoyé" pour ne pas divulguer
-  // l'existence du compte.
+  // ── Mot de passe oublié (réponse neutre côté backend) ────────────────────
   const handleForgotPassword = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     startTransition(async () => {
-      try {
-        await authRepository.forgotPassword(email);
-      } catch {
-        // Réponse neutre
-      }
+      try { await authRepository.forgotPassword(email); } catch { /* neutre */ }
       setView("forgotSent");
     });
   };
@@ -116,7 +112,7 @@ function LoginForm() {
         </button>
         {view === "forgotSent" ? (
           <div className="text-center py-8">
-            <CheckCircle className="w-12 h-12 text-[#25D366] mx-auto mb-4" />
+            <CheckCircle className="w-12 h-12 mx-auto mb-4" style={{ color: theme.accent }} />
             <h2 className="text-lg font-bold text-[var(--text)] mb-2">{t.forgotPasswordSent}</h2>
           </div>
         ) : (
@@ -132,7 +128,12 @@ function LoginForm() {
                     value={email} onChange={e => setEmail(e.target.value)} />
                 </div>
               </div>
-              <button type="submit" disabled={isPending} className="btn-primary w-full justify-center">
+              <button
+                type="submit"
+                disabled={isPending}
+                className="w-full justify-center py-3 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+                style={{ backgroundColor: theme.accent }}
+              >
                 {isPending
                   ? <><Spinner className="border-white/30 border-t-white" /> {d.common.loading}</>
                   : t.forgotPasswordBtn}
@@ -148,7 +149,7 @@ function LoginForm() {
   if (view === "magicSent") {
     return (
       <div className="text-center py-8 animate-fade-in">
-        <CheckCircle className="w-12 h-12 text-[#25D366] mx-auto mb-4" />
+        <CheckCircle className="w-12 h-12 mx-auto mb-4" style={{ color: theme.accent }} />
         <h2 className="text-lg font-bold text-[var(--text)] mb-2">{t.magicLinkSent}</h2>
         <button onClick={() => setView("login")}
           className="mt-4 text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors">
@@ -175,9 +176,11 @@ function LoginForm() {
             onSuccess={async (googleUser) => {
               try {
                 await loginWithGoogle(googleUser);
-                  const me = await authRepository.me();
-                  const redirected = redirectAfterAuth(me?.entreprise?.secteur?.slug);
-                  if (!redirected) router.push(ROUTES.dashboard);
+                const me = await authRepository.me();
+                const sectorSlug = me?.entreprise?.secteur?.slug;
+                persistSectorFromMe(sectorSlug);
+                const redirected = redirectAfterAuth(sectorSlug);
+                if (!redirected) router.push(ROUTES.dashboard);
               } catch {
                 setError(t.loginError);
               }
@@ -221,29 +224,30 @@ function LoginForm() {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="label-base mb-0">{t.password}</label>
-              <button type="button" onClick={() => setView("forgot")}
-                className="text-xs text-[#075E54] hover:underline font-medium">
+              <button
+                type="button"
+                onClick={() => setView("forgot")}
+                className="text-xs hover:underline font-medium"
+                style={{ color: theme.primary }}
+              >
                 {t.forgotPassword}
               </button>
             </div>
-
-            {/* CONTENEUR RELATIVE POUR POSITIONNER L'OEIL */}
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
               <input
-                type={showPassword ? "text" : "password"} // Bascule entre text et password
+                type={showPassword ? "text" : "password"}
                 required
                 autoComplete="current-password"
-                className="input-base pl-10 pr-10" // pr-10 pour laisser de la place à droite
+                className="input-base pl-10 pr-10"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
               />
-
-              {/* BOUTON OEIL À DROITE */}
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[#075E54] transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] transition-colors"
+                style={{ color: showPassword ? theme.primary : undefined }}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -254,7 +258,12 @@ function LoginForm() {
               {error}
             </p>
           )}
-          <button type="submit" disabled={isPending} className="btn-primary w-full justify-center py-3">
+          <button
+            type="submit"
+            disabled={isPending}
+            className="w-full justify-center py-3 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+            style={{ backgroundColor: theme.accent }}
+          >
             {isPending
               ? <><Spinner className="border-white/30 border-t-white" /> {t.loggingIn}</>
               : t.loginBtn}
@@ -274,7 +283,12 @@ function LoginForm() {
                 onChange={e => setEmail(e.target.value)} />
             </div>
           </div>
-          <button type="submit" disabled={isPending} className="btn-primary w-full justify-center py-3">
+          <button
+            type="submit"
+            disabled={isPending}
+            className="w-full justify-center py-3 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+            style={{ backgroundColor: theme.accent }}
+          >
             {isPending
               ? <><Spinner className="border-white/30 border-t-white" /> {d.common.loading}</>
               : t.magicLinkBtn}
@@ -285,10 +299,16 @@ function LoginForm() {
       {/* Lien inscription */}
       <p className="text-center text-sm text-[var(--text-muted)] mt-8">
         {t.noAccount}{" "}
-        <Link href={ROUTES.onboarding} className="text-[#075E54] font-semibold hover:underline">
+        <Link
+          href={ROUTES.onboarding}
+          className="font-semibold hover:underline"
+          style={{ color: theme.primary }}
+        >
           {t.signUp}
         </Link>
       </p>
     </div>
   );
 }
+
+// END OF FILE: src/app/login/page.tsx

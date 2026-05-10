@@ -1,8 +1,9 @@
 "use client";
 // ============================================================
 // FICHIER : src/app/verify-email/page.tsx
-// Couleur sectorielle : lit ?sector= (dev) ou NEXT_PUBLIC_SECTOR (prod)
-// BUG-018 corrigé : barre de progression en accentColor (pas #25D366 hardcodé)
+// Couleur sectorielle via useSector() (env > localStorage > subdomain)
+// BUG-018 : barre progression accentColor
+// BUG-020 : si ?sector=xxx présent, écriture localStorage pour persistance
 // ============================================================
 
 import { Suspense, useEffect, useState } from "react";
@@ -13,7 +14,8 @@ import { tokenStorage } from "@/lib/api-client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { ROUTES } from "@/lib/constants";
-import { SECTOR_COLORS } from "@/components/onboarding/SectorPicker";
+import { useSector } from "@/hooks/useSector";
+import { setStoredSector, isValidSector } from "@/lib/sector-config";
 import { redirectAfterAuth } from "@/lib/sector-redirect";
 
 type Status = "loading" | "success" | "error";
@@ -28,11 +30,16 @@ function VerifyEmailContent() {
   const [status,   setStatus]   = useState<Status>("loading");
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Couleur : param URL (dev) ou variable baked (prod)
-  const sectorParam = searchParams.get("sector") ?? "";
-  const builtSector = process.env.NEXT_PUBLIC_SECTOR ?? "";
-  const sector      = sectorParam || builtSector;
-  const accentColor = SECTOR_COLORS[sector] ?? "#25D366";
+  // Si l'email contient ?sector=xxx, persister AVANT le rendu sectoriel.
+  useEffect(() => {
+    const sectorParam = searchParams.get("sector");
+    if (sectorParam && isValidSector(sectorParam)) {
+      setStoredSector(sectorParam);
+    }
+  }, [searchParams]);
+
+  const { theme } = useSector();
+  const accentColor = theme.accent;
 
   useEffect(() => {
     const token = searchParams.get("token");
@@ -42,6 +49,8 @@ function VerifyEmailContent() {
       .then(async (res) => {
         tokenStorage.set(res.access, res.refresh ?? "");
         const sectorSlug = res.user?.entreprise?.secteur?.slug;
+        // Persister le secteur de l'entreprise (cas Google OAuth ou direct).
+        if (sectorSlug && isValidSector(sectorSlug)) setStoredSector(sectorSlug);
         await refreshUser();
         setStatus("success");
         setTimeout(() => {
@@ -109,7 +118,8 @@ function VerifyEmailContent() {
             <p className="text-sm text-[var(--text-muted)] mb-6">{errorMsg}</p>
             <button
               onClick={() => router.push(ROUTES.login)}
-              className="btn-primary w-full justify-center py-3"
+              className="w-full py-3 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: accentColor }}
             >
               {t.backToLogin}
             </button>
@@ -125,3 +135,5 @@ function VerifyEmailContent() {
 export default function VerifyEmailPage() {
   return <Suspense><VerifyEmailContent /></Suspense>;
 }
+
+// END OF FILE: src/app/verify-email/page.tsx

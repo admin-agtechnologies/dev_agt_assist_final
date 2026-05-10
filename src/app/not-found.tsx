@@ -1,46 +1,41 @@
 "use client";
 // ============================================================
 // FICHIER : src/app/not-found.tsx
-// Page 404 sectorielle — i18n via useLanguage + couleur sectorielle
-// BUG-019 : remplace le 404 Next.js générique
+// Page 404 sectorielle — i18n via useLanguage + couleur via useSector()
+// BUG-019 : 404 sectoriel
+// BUG-020 : useSector() (env > localStorage > subdomain)
+// Logo : vrai logo sectoriel via getLogoAssets (cohérence visuelle totale)
 // ============================================================
 
 import Link from "next/link";
+import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { SECTOR_COLORS } from "@/components/onboarding/SectorPicker";
+import { useSector } from "@/hooks/useSector";
+import { getLogoAssets } from "@/lib/logo-config";
 import { ROUTES } from "@/lib/constants";
-
-const SECTOR_NAMES: Record<string, { fr: string; en: string }> = {
-  restaurant: { fr: "AGT-BOT Restaurant",       en: "AGT-BOT Restaurant" },
-  hotel:      { fr: "AGT-BOT Hôtel",            en: "AGT-BOT Hotel" },
-  ecommerce:  { fr: "AGT-BOT E-commerce",       en: "AGT-BOT E-commerce" },
-  transport:  { fr: "AGT-BOT Transport",         en: "AGT-BOT Transport" },
-  banking:    { fr: "AGT-BOT Banque & Finance",  en: "AGT-BOT Banking & Finance" },
-  clinical:   { fr: "AGT-BOT Santé",             en: "AGT-BOT Health" },
-  pme:        { fr: "AGT-BOT PME",               en: "AGT-BOT SME" },
-  school:     { fr: "AGT-BOT Éducation",         en: "AGT-BOT Education" },
-  public:     { fr: "AGT-BOT Service Public",    en: "AGT-BOT Public Service" },
-  custom:     { fr: "AGT-BOT",                   en: "AGT-BOT" },
-};
 
 export default function NotFound() {
   const { dictionary: d, locale } = useLanguage();
+  const { sector, theme } = useSector();
   const t = d.errors;
 
-  const sector      = process.env.NEXT_PUBLIC_SECTOR ?? "";
-  const accentColor = SECTOR_COLORS[sector] ?? "#25D366";
-  const sectorName  = SECTOR_NAMES[sector]?.[locale] ?? "AGT-BOT";
-  const logoLetter  = sectorName.charAt(sectorName.lastIndexOf(" ") + 1);
+  const accentColor = theme.accent;
+  const sectorLabel = locale === "fr" ? theme.labelFr : theme.labelEn;
+  const sectorName  = sector === "central" ? "AGT-BOT" : `AGT-BOT ${sectorLabel}`;
+  const logo        = getLogoAssets(sector);
 
   return (
     <div className="min-h-screen bg-[var(--bg)] flex flex-col items-center justify-center px-4 text-center">
-
-      {/* Logo lettre sectoriel */}
-      <div
-        className="w-24 h-24 rounded-3xl flex items-center justify-center mb-8 text-white font-black text-4xl"
-        style={{ backgroundColor: accentColor }}
-      >
-        {logoLetter}
+      {/* Logo sectoriel — fond blanc pour cohérence avec versions claires */}
+      <div className="w-28 h-28 rounded-3xl bg-white shadow-md flex items-center justify-center mb-8 p-3 border border-[var(--border)]">
+        <Image
+          src={logo.lightSvg ?? logo.light}
+          alt={sectorName}
+          width={88}
+          height={88}
+          className="object-contain"
+          priority
+        />
       </div>
 
       {/* Code 404 */}
@@ -78,9 +73,10 @@ export default function NotFound() {
       </div>
 
       <p className="mt-12 text-xs text-[var(--text-muted)]">
-        {sectorName} &bull; AGT Technologies &bull; Cameroun
+        {sectorName} &bull; AG Technologies &bull; Cameroun
       </p>
-
     </div>
   );
 }
+
+// END OF FILE: src/app/not-found.tsx
