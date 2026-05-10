@@ -138,3 +138,23 @@ export const PLANS_CONFIG = [
 ] as const;
 
 export type PlanSlug = (typeof PLANS_CONFIG)[number]["slug"];
+
+// ── Sous-domaines sectoriels ──────────────────────────────────────────────────
+// ⚠️  EN LOCAL  : remplace les valeurs par tes ports localhost
+// ⚠️  EN PROD   : remplace par les vrais sous-domaines agt-bot.com
+// Un seul endroit à modifier pour toute l'app.
+export const SECTOR_URLS: Record<string, string> = {
+  pme:          "http://localhost:3001", // → https://pme.agt-bot.com
+  bancaire:     "http://localhost:3002", // → https://banking.agt-bot.com
+  clinique:     "http://localhost:3003", // → https://clinical.agt-bot.com
+  ecole:        "http://localhost:3004", // → https://school.agt-bot.com
+  ecommerce:    "http://localhost:3005", // → https://e-commerce.agt-bot.com
+  hotel:        "http://localhost:3006", // → https://hotel.agt-bot.com
+  public:       "http://localhost:3007", // → https://public.agt-bot.com
+  restaurant:   "http://localhost:3001", // → https://restaurant.agt-bot.com
+  voyage:       "http://localhost:3009", // → https://travell.agt-bot.com
+  personnalise: "/onboarding",           // → pas de sous-domaine, onboarding direct
+} as const;
+
+export type SectorKey = keyof typeof SECTOR_URLS;
+

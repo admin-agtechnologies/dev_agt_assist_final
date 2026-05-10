@@ -31,6 +31,7 @@ import { help } from "./help.fr";
 import { tutorial } from "./tutorial.fr";
 import { bug } from "./bug.fr";
 import { appointments } from "./appointments.fr";
+import { restaurant } from "./restaurant.fr";
 
 export const fr = {
   common,
@@ -65,6 +66,7 @@ export const fr = {
   tutorial,
   bug,
   appointments,
+  restaurant,
 } as const;
 
 export type FrDict = typeof fr;

@@ -31,6 +31,7 @@ import { tutorial } from "./tutorial.en";
 import { bug } from "./bug.en";
 import { appointments } from "./appointments.en";
 import { settings } from "./settings.en";
+import { restaurant } from "./restaurant.en";
 
 export const en = {
   common,
@@ -65,6 +66,7 @@ export const en = {
   bug,
   appointments,
   settings,
+  restaurant,
 } as const;
 
 export type EnDict = typeof en;

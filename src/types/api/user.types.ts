@@ -77,6 +77,9 @@ export interface RegisterPayload {
   email: string;
   password: string;
   name: string;
+  company_name?:  string;
+  sector_slug?:   string;
+  feature_slugs?: string[];
 }
 export interface GoogleAuthPayload {
   email: string;

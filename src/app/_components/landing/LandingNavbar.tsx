@@ -1,35 +1,88 @@
-// src/app/_components/landing/LandingNavbar.tsx
+// ============================================================
+// FICHIER : src/app/_components/landing/LandingNavbar.tsx
+// Navbar partagée hub + landings sectorielles.
+// Props optionnelles :
+//   - primaryColor : couleur CTA + accent nav
+//   - logoLight    : chemin logo fond clair
+//   - logoDark     : chemin logo fond sombre
+//   - backHref     : si défini → affiche "Voir les autres secteurs"
+//                   dans le menu desktop (pas à gauche du logo)
+// Sans props → comportement hub par défaut (vert AGT-BOT).
+// ============================================================
 "use client";
 import Link from "next/link";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Sparkles } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { ROUTES } from "@/lib/constants";
+import { getLogoAssets } from "@/lib/logo-config";
 
-export function LandingNavbar() {
+const DEFAULT_PRIMARY = "#075E54";
+const centralLogo = getLogoAssets("central");
+
+interface LandingNavbarProps {
+  primaryColor?: string;
+  logoLight?:    string;
+  logoDark?:     string;
+  /** Si défini, affiche "Voir les autres secteurs" dans le menu */
+  backHref?:     string;
+}
+
+export function LandingNavbar({
+  primaryColor = DEFAULT_PRIMARY,
+  logoLight    = centralLogo.light,
+  logoDark     = centralLogo.dark,
+  backHref,
+}: LandingNavbarProps) {
   const { dictionary: d, locale, setLocale } = useLanguage();
   const { theme, toggle } = useTheme();
   const t = d.landing;
 
+  const currentLogo = theme === "dark" ? logoDark : logoLight;
+
   return (
-    <nav className="sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--bg-card)]/80 backdrop-blur-md">
+    <nav className="sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--bg-card)]/85 backdrop-blur-md">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
 
-        <div className="flex items-center gap-2.5 flex-shrink-0">
-          <div className="w-8 h-8 rounded-xl bg-[#075E54] flex items-center justify-center text-white font-black text-sm">A</div>
-          <div className="flex flex-col leading-none">
-            <span className="font-black text-[var(--text)] text-sm">AGT Platform</span>
-            <span className="text-[10px] text-[var(--text-muted)] font-medium hidden sm:block">by AG Technologies</span>
-          </div>
-        </div>
+        {/* Logo */}
+        <Link href={ROUTES.home} className="flex items-center flex-shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={currentLogo}
+            alt="AGT-BOT"
+            className="h-9 w-auto object-contain"
+          />
+        </Link>
 
+        {/* Nav desktop */}
         <div className="hidden md:flex items-center gap-6 text-sm font-medium text-[var(--text-muted)]">
           <a href="#features"     className="hover:text-[var(--text)] transition-colors">{t.navFeatures}</a>
           <a href="#demo"         className="hover:text-[var(--text)] transition-colors">{t.navDemo}</a>
-          <a href="#plans"        className="hover:text-[var(--text)] transition-colors">{t.navPlans}</a>
           <a href="#testimonials" className="hover:text-[var(--text)] transition-colors">{t.navTestimonials}</a>
+
+          {/* Hub : "Nos solutions" | Secteur : "Voir les autres secteurs" */}
+          {!backHref ? (
+            <a
+              href="#secteurs"
+              className="flex items-center gap-1 font-semibold transition-colors"
+              style={{ color: primaryColor }}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              {locale === "fr" ? "Nos solutions" : "Our solutions"}
+            </a>
+          ) : (
+            <Link
+              href={ROUTES.home}
+              className="flex items-center gap-1 font-semibold transition-colors"
+              style={{ color: primaryColor }}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              {locale === "fr" ? "Voir les autres secteurs" : "Other solutions"}
+            </Link>
+          )}
         </div>
 
+        {/* Actions */}
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setLocale(locale === "fr" ? "en" : "fr")}
@@ -40,18 +93,29 @@ export function LandingNavbar() {
           <button
             onClick={toggle}
             className="p-2 rounded-xl hover:bg-[var(--bg)] text-[var(--text-muted)] transition-colors"
+            aria-label="Basculer le thème"
           >
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
-          <Link href={ROUTES.login} className="hidden sm:inline-flex px-4 py-2 rounded-xl text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg)] transition-colors">
-            {t.loginCta}
+          <Link
+            href={ROUTES.login}
+            className="hidden sm:inline-flex px-4 py-2 rounded-xl text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg)] transition-colors"
+          >
+            {locale === "fr" ? "Se connecter" : "Log in"}
           </Link>
-          <Link href={ROUTES.onboarding} className="btn-primary text-sm px-3 sm:px-4 whitespace-nowrap">
-            <span className="hidden sm:inline">{t.heroCta}</span>
-            <span className="sm:hidden">Démarrer</span>
+          <Link
+            href={ROUTES.onboarding}
+            className="px-3 sm:px-4 py-2 rounded-xl text-sm font-black text-white transition-all hover:scale-105 whitespace-nowrap"
+            style={{ backgroundColor: primaryColor, boxShadow: `0 4px 14px ${primaryColor}40` }}
+          >
+            <span className="hidden sm:inline">
+              {locale === "fr" ? "Créer mon assistant" : "Create my assistant"}
+            </span>
+            <span className="sm:hidden">
+              {locale === "fr" ? "Démarrer" : "Start"}
+            </span>
           </Link>
         </div>
-
       </div>
     </nav>
   );

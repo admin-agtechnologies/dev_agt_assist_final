@@ -1,9 +1,12 @@
 // src/dictionaries/fr/errors.fr.ts
 export const errors = {
-  notFoundTitle: "Page introuvable",
+  notFoundTitle:    "Page introuvable",
   notFoundSubtitle: "La page que vous cherchez n'existe pas ou a été déplacée.",
-  notFoundBtn: "Retour à l'accueil",
-  errorTitle: "Une erreur est survenue",
-  errorSubtitle: "Quelque chose s'est mal passé. Veuillez réessayer.",
-  retryBtn: "Réessayer",
+  notFoundBtn:      "Retour à l'accueil",
+  notFoundDashboard: "Retour au tableau de bord",
+  notFoundLogin:    "Se connecter",
+  errorTitle:       "Une erreur est survenue",
+  errorSubtitle:    "Quelque chose s'est mal passé. Veuillez réessayer.",
+  retryBtn:         "Réessayer",
 } as const;
+ 

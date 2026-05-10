@@ -14,6 +14,7 @@ import { ApiError } from "@/lib/api-client";
 import { authRepository } from "@/repositories";
 import { AuthShell, GoogleButton } from "@/components/auth/AuthShell";
 import { Eye, EyeOff } from "lucide-react"; // Importe les icônes
+import { redirectAfterAuth } from "@/lib/sector-redirect";
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 
@@ -56,8 +57,12 @@ function LoginForm() {
     startTransition(async () => {
       try {
         await login({ email, password });
-        const params = new URLSearchParams(window.location.search);
-        router.push(params.get("redirect") ?? ROUTES.dashboard);
+        const me = await authRepository.me();
+        const redirected = redirectAfterAuth(me?.entreprise?.secteur?.slug);
+        if (!redirected) {
+          const params = new URLSearchParams(window.location.search);
+          router.push(params.get("redirect") ?? ROUTES.dashboard);
+        }
       } catch (err) {
         if (err instanceof ApiError && err.isEmailNotVerified()) {
           const em = err.getEmail() ?? email;
@@ -170,7 +175,9 @@ function LoginForm() {
             onSuccess={async (googleUser) => {
               try {
                 await loginWithGoogle(googleUser);
-                router.push(ROUTES.dashboard);
+                  const me = await authRepository.me();
+                  const redirected = redirectAfterAuth(me?.entreprise?.secteur?.slug);
+                  if (!redirected) router.push(ROUTES.dashboard);
               } catch {
                 setError(t.loginError);
               }

@@ -24,3 +24,4 @@ export const faq = {
     },
   },
 } as const;
+

@@ -12,6 +12,7 @@ export * from "./agences.repository";
 export * from "./catalogues.repository";
 export * from "./commandes.repository";
 export * from "./knowledge.repository";
+export * from "./public-features.repository";
 
 // Alias de compatibilité — billingRepository → billingActionsRepository
 export { billingActionsRepository as billingRepository } from "./commandes.repository";
