@@ -26,7 +26,15 @@ const LOGO_MAP: Record<string, LogoAssets> = {
     light:    `${BASE}/logo_central/fond-blanc/png/centrale_b.png`,
     dark:     `${BASE}/logo_central/fond-pale/png/central.png`,
     lightSvg: `${BASE}/logo_central/fond-blanc/svg/centrale_b.svg`,
-    darkSvg:  `${BASE}/logo_central/fond-pale/svg/central.svg`,
+    darkSvg:  `${BASE}/logo_central/fond-pale/svg/centrale.svg`,
+    favicon:  `${BASE}/logo_central/fond-blanc/favicon/favicon.ico`,
+  },
+  // "hub" = alias de central (landing page www.agt-bot.com)
+  hub: {
+    light:    `${BASE}/logo_central/fond-blanc/png/centrale_b.png`,
+    dark:     `${BASE}/logo_central/fond-pale/png/central.png`,
+    lightSvg: `${BASE}/logo_central/fond-blanc/svg/centrale_b.svg`,
+    darkSvg:  `${BASE}/logo_central/fond-pale/svg/centrale.svg`,
     favicon:  `${BASE}/logo_central/fond-blanc/favicon/favicon.ico`,
   },
   restaurant: {

@@ -1,7 +1,7 @@
 // ============================================================
 // FICHIER : src/app/_components/sector/restaurant/RestaurantLandingContent.tsx
 // Orchestrateur landing sectorielle restaurant.
-// Passe primaryColor + logos restaurant à LandingNavbar et LandingFooter.
+// Passe primaryColor + logoSvg (transparent) à LandingNavbar.
 // ============================================================
 "use client";
 import Link from "next/link";
@@ -34,11 +34,10 @@ export default function RestaurantLandingContent() {
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
 
-      {/* Navbar — couleur et logo restaurant */}
+      {/* Navbar — SVG transparent restaurant, pas de fond blanc */}
       <LandingNavbar
         primaryColor={PRIMARY}
-        logoLight={logo.light}
-        logoDark={logo.dark}
+        logoSvg={logo.darkSvg}
         backHref="/"
       />
 
@@ -89,7 +88,7 @@ export default function RestaurantLandingContent() {
             {t.testimonialsSubtitle}
           </p>
         </div>
-       <TestimonialsCarousel accentColor={PRIMARY} />
+        <TestimonialsCarousel accentColor={PRIMARY} />
       </section>
 
       {/* CTA finale */}
@@ -126,13 +125,15 @@ export default function RestaurantLandingContent() {
         </div>
       </section>
 
-      {/* Footer — couleur et logo restaurant */}
-     <LandingFooter
-      primaryColor={PRIMARY}
-      accentColor={ACCENT}
-      logoDark={logo.dark}
-      bgColor="#1C0A00"
-    />
+      {/* Footer — logo PNG sombre restaurant sur fond brun */}
+      <LandingFooter
+        primaryColor={PRIMARY}
+        accentColor={ACCENT}
+        logoDark={logo.dark}
+        bgColor="#1C0A00"
+      />
     </div>
   );
 }
+
+// END OF FILE: src/app/_components/sector/restaurant/RestaurantLandingContent.tsx

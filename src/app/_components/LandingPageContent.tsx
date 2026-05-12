@@ -1,11 +1,13 @@
 // ============================================================
 // FICHIER : src/app/_components/LandingPageContent.tsx
 // Orchestrateur pur — assemble toutes les sections de la landing hub.
-// Aucune logique UI ici, uniquement la composition.
+// Logo navbar résolu via ENV.SECTOR (pattern existant du projet).
 // ============================================================
 "use client";
-import { Star } from "lucide-react";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { Star }                 from "lucide-react";
+import { useLanguage }          from "@/contexts/LanguageContext";
+import { getLogoAssets }        from "@/lib/logo-config";
+import { ENV }                  from "@/lib/env";
 import { LandingNavbar }        from "./landing/LandingNavbar";
 import { HeroCarousel }         from "./landing/HeroCarousel";
 import { StatsSection }         from "./landing/StatsSection";
@@ -16,23 +18,27 @@ import { TestimonialsCarousel } from "./landing/TestimonialsCarousel";
 import { CtaSection }           from "./landing/CtaSection";
 import { LandingFooter }        from "./landing/LandingFooter";
 
+// ENV.SECTOR = NEXT_PUBLIC_SECTOR baked au build (pattern projet existant)
+const sector      = ENV.SECTOR || "hub";
+const { darkSvg } = getLogoAssets(sector);
+
 export default function LandingPageContent() {
-  const { dictionary: d, locale } = useLanguage();
+  const { dictionary: d } = useLanguage();
   const t = d.landing;
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
 
-      {/* Navbar */}
-      <LandingNavbar />
+      {/* Navbar — logo SVG sectoriel transparent */}
+      <LandingNavbar logoSvg={darkSvg} />
 
-      {/* Hero — pleine hauteur, 7 slides */}
+      {/* Hero */}
       <HeroCarousel />
 
-      {/* Stats — 500+, 98%, <5min, 24/7 */}
+      {/* Stats */}
       <StatsSection />
 
-      {/* Secteurs — fond sombre, grille 9 cartes */}
+      {/* Secteurs */}
       <SectorsSection />
 
       {/* Démo vidéo */}
@@ -67,3 +73,5 @@ export default function LandingPageContent() {
     </div>
   );
 }
+
+// END OF FILE: src/app/_components/LandingPageContent.tsx

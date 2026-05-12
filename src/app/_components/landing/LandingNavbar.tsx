@@ -3,11 +3,11 @@
 // Navbar partagée hub + landings sectorielles.
 // Props optionnelles :
 //   - primaryColor : couleur CTA + accent nav
-//   - logoLight    : chemin logo fond clair
-//   - logoDark     : chemin logo fond sombre
+//   - logoSvg      : SVG transparent (prioritaire) — s'adapte à tout fond
+//   - logoLight    : PNG fond clair (fallback rétrocompat)
+//   - logoDark     : PNG fond sombre (fallback rétrocompat)
 //   - backHref     : si défini → affiche "Voir les autres secteurs"
-//                   dans le menu desktop (pas à gauche du logo)
-// Sans props → comportement hub par défaut (vert AGT-BOT).
+// Sans props → hub par défaut (SVG central transparent).
 // ============================================================
 "use client";
 import Link from "next/link";
@@ -18,11 +18,15 @@ import { ROUTES } from "@/lib/constants";
 import { getLogoAssets } from "@/lib/logo-config";
 
 const DEFAULT_PRIMARY = "#075E54";
-const centralLogo = getLogoAssets("central");
+const centralLogo     = getLogoAssets("hub");
 
 interface LandingNavbarProps {
   primaryColor?: string;
+  /** SVG transparent — prioritaire sur logoLight/logoDark */
+  logoSvg?:      string;
+  /** PNG fond clair — utilisé si logoSvg absent (rétrocompat) */
   logoLight?:    string;
+  /** PNG fond sombre — utilisé si logoSvg absent (rétrocompat) */
   logoDark?:     string;
   /** Si défini, affiche "Voir les autres secteurs" dans le menu */
   backHref?:     string;
@@ -30,6 +34,7 @@ interface LandingNavbarProps {
 
 export function LandingNavbar({
   primaryColor = DEFAULT_PRIMARY,
+  logoSvg      = centralLogo.darkSvg,
   logoLight    = centralLogo.light,
   logoDark     = centralLogo.dark,
   backHref,
@@ -38,7 +43,8 @@ export function LandingNavbar({
   const { theme, toggle } = useTheme();
   const t = d.landing;
 
-  const currentLogo = theme === "dark" ? logoDark : logoLight;
+  // Priorité : SVG transparent > PNG selon thème
+  const currentLogo = logoSvg ?? (theme === "dark" ? logoDark : logoLight);
 
   return (
     <nav className="sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--bg-card)]/85 backdrop-blur-md">
@@ -120,3 +126,5 @@ export function LandingNavbar({
     </nav>
   );
 }
+
+// END OF FILE: src/app/_components/landing/LandingNavbar.tsx

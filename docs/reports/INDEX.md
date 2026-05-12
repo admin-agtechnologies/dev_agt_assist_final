@@ -108,6 +108,19 @@
 
 ---
 
+## session_10_donpk
+
+- **Type :** Génération + Debug + Redesign — Landing page centrale
+- **Date :** 2026-05-12
+- **Flux couverts :** F1 (Landing centrale — améliorations multiples ✅)
+- **Bugs corrigés :** BUG-FAVICON-01 (favicon identique tous secteurs), BUG-LOGO-01 (logo navbar toujours central)
+- **Zones touchées :** `src/app/layout.tsx`, `src/lib/logo-config.ts`, `src/app/_components/LandingPageContent.tsx`, `src/app/_components/landing/LandingNavbar.tsx`, `src/app/_components/landing/FeaturesSection.tsx`, `src/app/_components/landing/FeatureCard.tsx`, `src/app/_components/landing/DemoSection.tsx`, `src/app/_components/landing/SectorsSection.tsx`, `src/app/_components/sector/restaurant/RestaurantLandingContent.tsx`
+- **Fichiers créés :** `FeatureCard.tsx`
+- **Fichiers modifiés :** 8
+- **Pattern établi :** Logo navbar sectoriel = toujours `logoSvg={logo.darkSvg}` (SVG transparent) — jamais `logoLight`/`logoDark` (PNG opaque). Lire le secteur via `ENV.SECTOR`, pas `process.env.NEXT_PUBLIC_SECTOR` directement.
+- **Dette créée :** SVG `centrale.svg` a un fond coloré en dur (asset à corriger), `SectorCard.tsx` orphelin (à supprimer), chat DemoSection hardcodé restaurant (à rendre sectoriel)
+- **Rapport :** `docs/reports/session_10_donpk.md`
+
 # 📚 NOTE PERMANENTE — Façon de travailler de Gabriel
 
 > **À LIRE EN PREMIER à chaque nouvelle session.** Cette section documente les
