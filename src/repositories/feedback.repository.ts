@@ -1,6 +1,11 @@
 // src/repositories/feedback.repository.ts
 import { api } from "@/lib/api-client";
-import type { ClaimBonusResponse, OnboardingCheckRequest, OnboardingResponse } from "@/types/onboarding";
+import type {
+    ClaimBonusResponse,
+    OnboardingCheckRequest,
+    OnboardingResponse,
+    WelcomeSeenResponse,
+} from "@/types/onboarding";
 
 export interface CreateTemoignagePayload {
     note: number;
@@ -37,6 +42,8 @@ export const onboardingRepository = {
         api.post<OnboardingResponse>("/api/v1/onboarding/check/", payload),
     claimBonus: (): Promise<ClaimBonusResponse> =>
         api.post<ClaimBonusResponse>("/api/v1/onboarding/claim-bonus/", {}),
+    markWelcomeSeen: (): Promise<WelcomeSeenResponse> =>
+        api.patch<WelcomeSeenResponse>("/api/v1/onboarding/welcome-seen/", {}),
 };
 
 export const tutorialRepository = {

@@ -1,9 +1,21 @@
 // src/components/OnboardingPopup.tsx
+// Modal d'onboarding (action SHOW_POPUP).
+// Comportement S7 — Vague 1 :
+//   - Délai 2 secondes avant ouverture (laisser respirer le user à l'arrivée)
+//   - Croix de fermeture TOUJOURS visible, même pour UPGRADE_PLAN
+//   - Escape ferme TOUJOURS le popup
+//   - Backdrop cliquable TOUJOURS pour fermer
+//
+// Rationale (UX) : le popup ne doit pas être perçu comme une prison.
+// Le user peut toujours le fermer ; il reviendra de toute façon au prochain
+// changement de page si la condition backend reste vraie.
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { Z_MODAL } from "@/lib/constants";
 import type { OnboardingPayload } from "@/types/onboarding";
+
+const OPEN_DELAY_MS = 2000;
 
 interface OnboardingPopupProps {
   popupKey: string;
@@ -13,48 +25,52 @@ interface OnboardingPopupProps {
 }
 
 export function OnboardingPopup({
-  popupKey,
+  popupKey: _popupKey,
   payload,
   onClose,
   onCtaClick,
 }: OnboardingPopupProps) {
-  // Certains popups ne doivent pas se fermer
-  // UPGRADE_PLAN est bloquant : l'utilisateur doit cliquer sur le CTA
-  const isBlocking = popupKey === "UPGRADE_PLAN";
+  const [visible, setVisible] = useState(false);
 
-  // Fermer avec Escape — désactivé pour les popups bloquants
+  // Délai d'apparition — laisser le user atterrir avant de l'interpeller
   useEffect(() => {
-    if (isBlocking) return; // Pas d'Escape pour UPGRADE_PLAN
+    const t = setTimeout(() => setVisible(true), OPEN_DELAY_MS);
+    return () => clearTimeout(t);
+  }, []);
 
+  // Escape ferme — toujours
+  useEffect(() => {
+    if (!visible) return;
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
-  }, [onClose, isBlocking]);
+  }, [onClose, visible]);
+
+  if (!visible) return null;
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center p-4"
+      className="fixed inset-0 flex items-center justify-center p-4 animate-fade-in"
       style={{ zIndex: Z_MODAL }}
     >
-      {/* Overlay — non cliquable si popup bloquant */}
+      {/* Overlay — cliquable pour fermer */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={isBlocking ? undefined : onClose}
+        onClick={onClose}
       />
 
       {/* Carte popup */}
       <div className="relative bg-[var(--bg-card)] rounded-2xl shadow-2xl w-full max-w-md p-6 border border-[var(--border)]">
-        {/* Bouton fermer — masqué si popup bloquant */}
-        {!isBlocking && (
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 p-1.5 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg)] transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
+        {/* Bouton fermer — toujours visible */}
+        <button
+          onClick={onClose}
+          aria-label="Fermer"
+          className="absolute top-4 right-4 p-1.5 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg)] hover:text-[var(--text)] transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </button>
 
         {/* Contenu */}
         <div className="space-y-3">
@@ -77,7 +93,7 @@ export function OnboardingPopup({
                     payload.cta_primary?.action,
                   )
                 }
-                className="w-full px-4 py-2.5 rounded-xl bg-[#075E54] text-white font-semibold text-sm hover:bg-[#064e46] transition-colors"
+                className="w-full px-4 py-2.5 rounded-xl bg-[var(--color-primary,#075E54)] text-white font-semibold text-sm hover:opacity-90 transition-opacity"
               >
                 {payload.cta_primary.label}
               </button>

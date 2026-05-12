@@ -1,57 +1,56 @@
 ﻿// src/components/layout/Sidebar.config.ts
-// Mapping feature slug â†’ route du module sectoriel
-// UtilisÃ© par SidebarDynamicNav pour construire la navigation dynamique.
-// RÃ¨gle : plusieurs features peuvent pointer vers la mÃªme route (ex: tous les
-// catalogues pointent vers /modules/catalogue). On dÃ©doublonne cÃ´tÃ© composant.
+// Mapping feature slug → route du module sectoriel
+// Utilisé par SidebarDynamicNav pour construire la navigation dynamique.
+// Règle : plusieurs features peuvent pointer vers la même route (ex: tous les
+// catalogues pointent vers /modules/catalogue). On dédoublonne côté composant.
 
 export const FEATURE_TO_ROUTE: Record<string, string> = {
-  // â”€â”€ Catalogue â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  menu_digital:                  '/modules/catalogue',
-  catalogue_produits:            '/modules/catalogue',
-  catalogue_services:            '/modules/catalogue',
-  catalogue_trajets:             '/modules/catalogue',
-  catalogue_produits_financiers: '/modules/catalogue',
+  // Réservations
+  reservation_table:   "/modules/reservations",
+  reservation_chambre: "/modules/reservations",
+  reservation_billet:  "/modules/reservations",
+  prise_rdv:           "/modules/reservations",
 
-  // â”€â”€ RÃ©servations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  reservation_table:             '/modules/reservations',
-  reservation_chambre:           '/modules/reservations',
-  reservation_billet:            '/modules/reservations',
-  prise_rdv:                     '/modules/reservations',
+  // Catalogues
+  menu_digital:        "/modules/catalogue",
+  catalogue_produits:  "/modules/catalogue",
+  catalogue_credits:   "/modules/catalogue",
+  catalogue_services:  "/modules/catalogue",
+  catalogue_filieres:  "/modules/catalogue",
+  catalogue_trajets:   "/modules/catalogue",
+  catalogue_demarches: "/modules/catalogue",
 
-  // â”€â”€ Commandes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  commande_paiement:             '/modules/commandes',
-  conciergerie:                  '/modules/commandes',
-  suivi_commande:                '/modules/commandes',
+  // Commandes
+  commande_paiement:   "/modules/commandes",
+  suivi_commande:      "/modules/commandes",
+  conciergerie:        "/modules/commandes",
 
-  // â”€â”€ Multi-agences â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  multi_agences:                 '/modules/agences',
+  // Inscriptions
+  inscription_etudiant: "/modules/inscriptions",
+  inscription_membre:   "/modules/inscriptions",
 
-  // â”€â”€ Ã‰ducation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  inscription_admission:         '/modules/inscriptions',
-  communication_etablissement:   '/modules/inscriptions',
+  // Dossiers
+  suivi_dossier:        "/modules/dossiers",
 
-  // â”€â”€ Secteur public â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  orientation_citoyens:          '/modules/dossiers',
-
-  // â”€â”€ CRM & Prospects â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  conversion_prospects:          '/contacts',
-
-  // â”€â”€ SantÃ© â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  orientation_patient:           '/contacts',
+  // Bots
+  chatbot_whatsapp:    "/bots",
+  agent_vocal:         "/bots",
 };
 
-// Routes statiques du dashboard â€” toujours visibles, indÃ©pendantes des features
+// Routes statiques du dashboard — toujours visibles, indépendantes des features
 export const DASHBOARD_ROUTES = {
-  tutorial:      '/tutorial',
-  help:          '/help',
-  feedback:      '/feedback',
-  report:        '/bug',
-  home:          '/dashboard',
-  conversations: '/conversations',
-  contacts:      '/contacts',
-  bots:          '/bots',
-  knowledge:     '/faq',
-  billing:       '/billing',
-  settings:      '/settings',
-  profile:       '/profile',   // ← ajouter cette ligne
+  tutorial:      "/tutorial",
+  help:          "/help",
+  feedback:      "/feedback",
+  report:        "/bug",
+  home:          "/dashboard",
+  conversations: "/conversations",
+  contacts:      "/contacts",
+  bots:          "/bots",
+  knowledge:     "/faq",
+  billing:       "/billing",
+  settings:      "/settings",
+  profile:       "/profile",
+  modules:       "/modules",
+  welcome:       "/welcome",
 } as const;

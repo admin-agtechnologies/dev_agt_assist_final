@@ -1,6 +1,6 @@
 // src/types/onboarding.ts
 
-export type OnboardingAction = "SHOW_POPUP" | "NONE";
+export type OnboardingAction = "SHOW_POPUP" | "SHOW_BANNER" | "NONE";
 
 export interface OnboardingCta {
   label: string;
@@ -33,4 +33,8 @@ export interface ClaimBonusResponse {
   montant: number;
   nouveau_solde: number;
   devise: string;
+}
+
+export interface WelcomeSeenResponse {
+  has_seen_welcome: boolean;
 }

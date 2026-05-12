@@ -3,7 +3,7 @@ import { api } from "@/lib/api-client";
 import type { PaginatedResponse } from "@/types/api";
 
 export interface ActiveFeature {
-  id?: string;
+  id: string;
   slug: string;
   nom?: string;
   description?: string;
@@ -11,6 +11,11 @@ export interface ActiveFeature {
   icone?: string;
   is_active: boolean;
   is_mandatory?: boolean;
+  is_pinned?: boolean;
+  used?: number;
+  quota?: number | null;
+  is_unlimited?: boolean;
+  included_in_plan?: boolean;
   config?: Record<string, unknown>;
 }
 
@@ -21,6 +26,12 @@ export interface ActiveFeaturesResponse {
 export interface ToggleFeatureResponse {
   slug: string;
   is_active: boolean;
+  updated_at: string;
+}
+
+export interface PinFeatureResponse {
+  slug: string;
+  is_pinned: boolean;
   updated_at: string;
 }
 
@@ -38,4 +49,7 @@ export const featuresRepository = {
 
   toggle: (slug: string, is_active: boolean): Promise<ToggleFeatureResponse> =>
     api.post(`/api/v1/features/${slug}/toggle/`, { is_active }),
+
+  pin: (slug: string): Promise<PinFeatureResponse> =>
+    api.post(`/api/v1/features/${slug}/pin/`, {}),
 };

@@ -26,16 +26,19 @@ export function useOnboarding() {
   const pathname = usePathname();
   const router = useRouter();
 
+  // État popup modal (SHOW_POPUP)
   const [onboardingData, setOnboardingData] =
     useState<OnboardingResponse | null>(null);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
 
-  // Mécanisme de déduplication par session.
-  // Reset automatique si l'utilisateur change (déco/reco).
+  // État bannière sticky (SHOW_BANNER) — séparé pour ne pas casser le popup
+  const [bannerData, setBannerData] = useState<OnboardingResponse | null>(null);
+  const [isBannerOpen, setIsBannerOpen] = useState(false);
+
+  // Mécanisme de déduplication par session (popup uniquement)
   const checkedSlugs = useRef<Set<string>>(new Set());
   const lastUserId = useRef<string | null>(null);
 
-  // Reset si l'utilisateur change
   useEffect(() => {
     const currentId = user?.id ?? null;
     if (currentId !== lastUserId.current) {
@@ -44,7 +47,6 @@ export function useOnboarding() {
     }
   }, [user]);
 
-  // Résoudre un pathname en slug backend
   const resolveSlug = useCallback((path: string): string | undefined => {
     for (const [route, pageSlug] of Object.entries(ROUTE_TO_PAGE_SLUG)) {
       if (path === route || path.startsWith(route + "/")) return pageSlug;
@@ -52,7 +54,7 @@ export function useOnboarding() {
     return undefined;
   }, []);
 
-  // Appel effectif à l'API et application de la réponse
+  // Appel effectif à l'API — dispatch popup vs banner selon action
   const applyCheck = useCallback(
     async (slug: string): Promise<OnboardingResponse> => {
       const response = await onboardingRepository.check({ page: slug });
@@ -60,10 +62,15 @@ export function useOnboarding() {
       if (response.action === "SHOW_POPUP") {
         setOnboardingData(response);
         setIsPopupOpen(true);
+        // Banner reste tel quel — un popup ne ferme pas la bannière
+      } else if (response.action === "SHOW_BANNER") {
+        setBannerData(response);
+        setIsBannerOpen(true);
+        // Popup reste tel quel
       } else {
-        // action: "NONE" — lever un popup bloquant éventuel
-        setIsPopupOpen(false);
-        setOnboardingData(null);
+        // NONE — fermer la bannière (mais pas le popup, qui doit être fermé manuellement)
+        setBannerData(null);
+        setIsBannerOpen(false);
       }
 
       return response;
@@ -71,7 +78,6 @@ export function useOnboarding() {
     [],
   );
 
-  // Check déclenché par le changement de pathname (avec déduplication)
   const checkOnboarding = useCallback(
     async (path: string) => {
       if (!user) return;
@@ -80,14 +86,21 @@ export function useOnboarding() {
       if (!slug) return;
 
       // Déduplication : skip si déjà checké, sauf "billing" (UPGRADE_PLAN peut bloquer)
-      if (checkedSlugs.current.has(slug) && slug !== "billing") return;
+      // Les SHOW_BANNER ne sont jamais dédoupliqués — la bannière doit rester sticky.
+      if (checkedSlugs.current.has(slug) && slug !== "billing") {
+        // On rappelle quand même pour rafraîchir la bannière (peut avoir disparu)
+        try { await applyCheck(slug); } catch {}
+        return;
+      }
 
       try {
         const response = await applyCheck(slug);
-        // Marquer comme checké seulement si non bloquant
-        if (response.popup_key !== "UPGRADE_PLAN") {
+        if (response.action === "SHOW_POPUP" && response.popup_key !== "UPGRADE_PLAN") {
+          checkedSlugs.current.add(slug);
+        } else if (response.action === "NONE") {
           checkedSlugs.current.add(slug);
         }
+        // SHOW_BANNER : jamais dédupliqué
       } catch {
         // Silencieux — l'onboarding ne doit jamais bloquer la navigation
       }
@@ -95,8 +108,6 @@ export function useOnboarding() {
     [user, resolveSlug, applyCheck],
   );
 
-  // Re-check forcé de la page courante — appelé après chaque action CTA.
-  // Bypass la déduplication pour obtenir l'état frais du backend.
   const recheckCurrentPage =
     useCallback(async (): Promise<OnboardingResponse | null> => {
       if (!user) return null;
@@ -105,7 +116,6 @@ export function useOnboarding() {
 
       try {
         const response = await applyCheck(slug);
-        // Invalider la déduplication pour ce slug après un re-check forcé
         checkedSlugs.current.delete(slug);
         return response;
       } catch {
@@ -113,7 +123,6 @@ export function useOnboarding() {
       }
     }, [user, pathname, resolveSlug, applyCheck]);
 
-  // Déclencher à chaque changement de pathname
   useEffect(() => {
     checkOnboarding(pathname);
   }, [pathname, checkOnboarding]);
@@ -123,9 +132,13 @@ export function useOnboarding() {
     setOnboardingData(null);
   }, []);
 
+  const closeBanner = useCallback(() => {
+    setIsBannerOpen(false);
+    setBannerData(null);
+  }, []);
+
   const handleCta = useCallback(
     async (href?: string) => {
-      // Résoudre le template {first_bot_id} si présent
       if (href?.includes("{first_bot_id}")) {
         try {
           const res = await botsRepository.getList();
@@ -137,16 +150,21 @@ export function useOnboarding() {
           href = "/bots";
         }
       }
-
       if (href) router.push(href);
     },
     [router],
   );
 
   return {
+    // Popup (SHOW_POPUP)
     onboardingData,
     isPopupOpen,
     closePopup,
+    // Banner (SHOW_BANNER)
+    bannerData,
+    isBannerOpen,
+    closeBanner,
+    // Shared
     handleCta,
     recheckCurrentPage,
   };

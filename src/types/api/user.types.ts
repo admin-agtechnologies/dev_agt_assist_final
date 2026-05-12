@@ -50,6 +50,26 @@ export interface EntrepriseInUser {
   updated_at: string;
 }
 
+/**
+ * État d'onboarding de l'utilisateur — exposé par GET /auth/me/.
+ *
+ * Utilisé côté frontend pour :
+ *  - rediriger vers /welcome si has_seen_welcome=false
+ *  - afficher les bannières de convergence (config/test/tutoriel)
+ *  - piloter le popup BONUS_CLAIM
+ *
+ * Pour un user qui n'a pas encore de OnboardingProgress en base
+ * (admin AGT, race condition au premier login), tous les booléens
+ * sont `false` par défaut côté backend.
+ */
+export interface UserOnboarding {
+  has_seen_welcome: boolean;
+  has_claimed_bonus: boolean;
+  has_configured_bot: boolean;
+  has_tested_bot: boolean;
+  has_visited_tutorial: boolean;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -62,6 +82,7 @@ export interface User {
   profil: Profil | null;
   entreprise: EntrepriseInUser | null;
   permissions: string[];
+  onboarding: UserOnboarding;
   created_at: string;
   /** @deprecated Conservé pour compatibilité pages non encore migrées */
   tenant_id?: string | null;
