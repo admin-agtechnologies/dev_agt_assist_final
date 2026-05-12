@@ -362,7 +362,7 @@ B11 → B13 — cosmétique, peuvent attendre.
 ## 📋 Prompt de début de S8 (à copier-coller au démarrage)
 
 ```
-Bonjour Claude, nous démarrons la session 8 de développement sur AGT Platform.
+Bonjour Claude, nous démarrons la session 8 de développement sur AGT Platform,renommé en AGT BOT pour cette mise à jour.
 
 **Membre :** Gabriel
 **Session N° :** 8

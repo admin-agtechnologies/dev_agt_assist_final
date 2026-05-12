@@ -1,7 +1,4 @@
 // src/app/(dashboard)/welcome/page.tsx
-// Page "First Contact" — 3 écrans séquentiels.
-// Affichée une seule fois après inscription (has_seen_welcome=False).
-// Marquée vue dès qu'un CTA final est cliqué (tous les chemins).
 "use client";
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -18,7 +15,7 @@ type Screen = 1 | 2 | 3;
 
 export default function WelcomePage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth(); // +refreshUser
   const { locale } = useLanguage();
   const { features, isLoading, refetch } = useActiveFeatures();
 
@@ -33,21 +30,20 @@ export default function WelcomePage() {
     setScreen((s) => (s === 3 ? 2 : 1) as Screen);
   }, []);
 
-  // Tous les clics du dernier écran convergent ici : marquer vu + rediriger.
-  // La convergence (test/config/tuto) sera gérée par la bannière post-welcome.
   const handleFinalChoice = useCallback(
     async (href: string) => {
       if (submitting) return;
       setSubmitting(true);
       try {
         await onboardingRepository.markWelcomeSeen();
+        await refreshUser(); // resync has_seen_welcome avant nav
       } catch {
         // Silencieux : la nav doit aller au bout
       } finally {
         router.push(href);
       }
     },
-    [router, submitting],
+    [router, submitting, refreshUser], // +refreshUser
   );
 
   if (isLoading) {

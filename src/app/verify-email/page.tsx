@@ -4,6 +4,17 @@
 // Couleur sectorielle via useSector() (env > localStorage > subdomain)
 // BUG-018 : barre progression accentColor
 // BUG-020 : si ?sector=xxx présent, écriture localStorage pour persistance
+//
+// Session 8 — B06 :
+//   Le backend route désormais le mail directement vers le port sectoriel
+//   (fix B05). Donc dans le cas nominal cette page S'EXÉCUTE déjà sur la
+//   bonne origine (:3001 pour restaurant), tokenStorage.set() écrit dans
+//   le BON localStorage, redirectAfterAuth() retourne false (déjà sur le
+//   bon secteur), et router.push('/dashboard') prend le relais.
+//
+//   Pour les cas résiduels (e.g. ancien mail toujours sur :3000, tests),
+//   on passe les tokens à redirectAfterAuth() qui route via /auth-handoff
+//   pour que le localStorage de la cible soit hydraté.
 // ============================================================
 
 import { Suspense, useEffect, useState } from "react";
@@ -47,14 +58,25 @@ function VerifyEmailContent() {
 
     authRepository.verifyEmail(token)
       .then(async (res) => {
+        // Écriture locale du token. Sur l'origine où cette page tourne,
+        // c'est le bon localStorage. Si redirectAfterAuth fait du cross-
+        // origin via /auth-handoff, cette écriture devient redondante mais
+        // pas nuisible (l'origine source aussi a le token).
         tokenStorage.set(res.access, res.refresh ?? "");
+
         const sectorSlug = res.user?.entreprise?.secteur?.slug;
-        // Persister le secteur de l'entreprise (cas Google OAuth ou direct).
         if (sectorSlug && isValidSector(sectorSlug)) setStoredSector(sectorSlug);
+
         await refreshUser();
         setStatus("success");
+
         setTimeout(() => {
-          const redirected = redirectAfterAuth(sectorSlug);
+          // Cross-origin → /auth-handoff?access=...&refresh=...
+          // Same-origin   → false ⇒ on prend le fallback router.push local
+          const redirected = redirectAfterAuth(sectorSlug, {
+            access: res.access,
+            refresh: res.refresh ?? "",
+          });
           if (!redirected) router.push(ROUTES.dashboard);
         }, 1500);
       })
@@ -135,5 +157,3 @@ function VerifyEmailContent() {
 export default function VerifyEmailPage() {
   return <Suspense><VerifyEmailContent /></Suspense>;
 }
-
-// END OF FILE: src/app/verify-email/page.tsx

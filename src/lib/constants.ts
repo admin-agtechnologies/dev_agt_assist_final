@@ -29,6 +29,7 @@ export const ROUTES = {
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
   magicLink: "/magic-link",
+  authHandoff: "/auth-handoff",   // S8 — propagation de token cross-origin
   dashboard: "/dashboard",
   bots: "/bots",
   services: "/services",
@@ -143,8 +144,10 @@ export type PlanSlug = (typeof PLANS_CONFIG)[number]["slug"];
 // ⚠️  EN LOCAL  : remplace les valeurs par tes ports localhost
 // ⚠️  EN PROD   : remplace par les vrais sous-domaines agt-bot.com
 // Un seul endroit à modifier pour toute l'app.
+// ⚠️  Doit rester synchronisé avec apps/auth_bridge/_email_urls.py SECTOR_DEV_BASES
+//     côté backend (pour les liens d'email).
 export const SECTOR_URLS: Record<string, string> = {
-  pme:          "http://localhost:3001", // → https://pme.agt-bot.com
+  pme:          "http://localhost:3008", // → https://pme.agt-bot.com
   bancaire:     "http://localhost:3002", // → https://banking.agt-bot.com
   clinique:     "http://localhost:3003", // → https://clinical.agt-bot.com
   ecole:        "http://localhost:3004", // → https://school.agt-bot.com
@@ -157,4 +160,3 @@ export const SECTOR_URLS: Record<string, string> = {
 } as const;
 
 export type SectorKey = keyof typeof SECTOR_URLS;
-
