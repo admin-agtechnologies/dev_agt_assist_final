@@ -288,14 +288,14 @@ Signaler un problème, langue (FR/EN), centre d'aide, tutoriels.
 
 #### F6 — Dashboard first contact
 
-- [ ] Layout : sidebar, header, zone contenu
-- [ ] État initial : sections vides + CTA "Ajouter votre premier..."
-- [ ] Tour guidé éventuel — testable et skippable
-- [ ] Navigation : Vue d'ensemble, Réservations, Menu, Tables, Clients, Stats, Agent, Wallet, Abonnement, Paramètres
-- [ ] Wallet : solde, historique consommations
-- [ ] Abonnement : plan, renouvellement, quotas
-- [ ] Sélecteur langue FR/EN sur tout le dashboard
-- [ ] Avatar → menu (profil, paramètres, déconnexion)
+- [x] Layout : sidebar, header, zone contenu
+- [x] État initial : sections vides + CTA "Ajouter votre premier..."
+- [x] Tour guidé éventuel — testable et skippable
+- [x] Navigation : Vue d'ensemble, Réservations, Menu, Tables, Clients, Stats, Agent, Wallet, Abonnement, Paramètres
+- [x] Wallet : solde, historique consommations
+- [x] Abonnement : plan, renouvellement, quotas
+- [x] Sélecteur langue FR/EN sur tout le dashboard
+- [x] Avatar → menu (profil, paramètres, déconnexion)
 
 > _Notes inline :_
 
