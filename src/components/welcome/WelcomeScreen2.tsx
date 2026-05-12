@@ -1,100 +1,107 @@
 // src/components/welcome/WelcomeScreen2.tsx
-// Écran 2 : Affiche les modules actifs du tenant avec leurs quotas.
 "use client";
-import { ArrowLeft, ArrowRight, Lock } from "lucide-react";
-import { useSector } from "@/hooks/useSector";
-import { getFeatureLabel } from "@/lib/sector-labels";
-import type { ActiveFeature } from "@/repositories/features.repository";
-import type { Locale } from "@/contexts/LanguageContext";
+import { useCallback } from "react";
+import { Check, Lock } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useDesiredFeatures, useSectorFeatures } from "@/hooks/useFeatures";
+import { Spinner } from "@/components/ui";
+
+export const MODULES_KEY = "AGT_WELCOME_MODULES";
 
 interface Props {
-  features: ActiveFeature[];
-  locale: Locale;
+  selectedSlugs: string[];
+  onSlugsChange: (slugs: string[]) => void;
+  locale: string;
   onBack: () => void;
   onContinue: () => void;
-  onFeaturesChanged: () => void;
 }
 
-export function WelcomeScreen2({ features, locale, onBack, onContinue }: Props) {
-  const { theme } = useSector();
+const T = {
+  fr: { title: "Vos modules", subtitle: "Sélectionnez les modules à activer sur votre compte.", back: "Retour", next: "C'est parti →", selected: (n: number) => `${n} sélectionné${n > 1 ? "s" : ""}` },
+  en: { title: "Your modules", subtitle: "Select the modules to activate on your account.", back: "Back", next: "Let's go →", selected: (n: number) => `${n} selected` },
+};
+
+export function WelcomeScreen2({ selectedSlugs, onSlugsChange, locale, onBack, onContinue }: Props) {
+  const { user } = useAuth();
+  const sectorSlug = user?.entreprise?.secteur?.slug ?? "";
+  const { features: desired, isLoading: loadingD } = useDesiredFeatures();
+  const { features: sector, isLoading: loadingS }  = useSectorFeatures(sectorSlug);
+  const { features: allSector, isLoading: loadingAll } = useSectorFeatures("custom");
+  const t = T[locale as keyof typeof T] ?? T.fr;
+
+  // Fusion desired + sector sans doublons — desired en premier
+  const allFeatures = [
+   ...desired,
+   ...sector
+     .filter(sf => !desired.some(d => d.slug === sf.slug))
+     .map(sf => ({ ...sf, is_active: false, is_desired: false })),
+   ...allSector
+     .filter(af =>
+       !desired.some(d => d.slug === af.slug) &&
+       !sector.some(s => s.slug === af.slug)
+     )
+     .map(af => ({ ...af, is_active: false, is_desired: false })),
+ ];
+
+  const selectedSet = new Set(selectedSlugs);
+
+  const toggle = useCallback((slug: string, mandatory: boolean) => {
+    if (mandatory) return;
+    const next = new Set(selectedSet);
+    next.has(slug) ? next.delete(slug) : next.add(slug);
+    const slugs = Array.from(next);
+    onSlugsChange(slugs);
+    try { localStorage.setItem(MODULES_KEY, JSON.stringify(slugs)); } catch { /* noop */ }
+  }, [selectedSet, onSlugsChange]);
+
+  if (loadingD || loadingS || loadingAll) return <div className="flex justify-center py-20"><Spinner /></div>;
 
   return (
-    <div className="card p-8 space-y-6">
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-black text-[var(--text)]">
-          {locale === "fr" ? "Vos modules actifs" : "Your active modules"}
-        </h2>
-        <p className="text-sm text-[var(--text-muted)]">
-          {locale === "fr"
-            ? "Voici les fonctionnalités prêtes à l'emploi sur votre compte."
-            : "Here are the features ready to use on your account."}
-        </p>
+    <div className="bg-[var(--bg-card)] rounded-2xl shadow-lg p-8 space-y-6">
+      <div className="text-center space-y-1">
+        <h1 className="text-2xl font-bold text-[var(--text)]">{t.title}</h1>
+        <p className="text-sm text-[var(--text-muted)]">{t.subtitle}</p>
       </div>
 
-      {/* Grille modules */}
-      {features.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-sm text-[var(--text-muted)]">
-            {locale === "fr" ? "Aucun module activé." : "No modules activated."}
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-1">
-          {features.map((f) => {
-            const lbl = getFeatureLabel(f.slug, locale);
-            const isUnlimited = f.is_unlimited || f.quota == null;
-            const used = f.used ?? 0;
-            const quota = f.quota ?? 0;
-            const quotaReached = !isUnlimited && quota > 0 && used >= quota;
-
-            return (
-              <div
-                key={f.slug}
-                className="border border-[var(--border)] rounded-xl p-3 bg-[var(--bg)] space-y-1"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-bold text-[var(--text)] truncate">
-                    {lbl.nav}
-                  </p>
-                  {f.is_mandatory && (
-                    <span
-                      className="text-[8px] uppercase font-bold px-1.5 py-0.5 rounded text-white flex-shrink-0"
-                      style={{ backgroundColor: theme.accent }}
-                    >
-                      {locale === "fr" ? "Inclus" : "Included"}
-                    </span>
-                  )}
-                </div>
-                <p className="text-[11px] text-[var(--text-muted)]">
-                  {isUnlimited
-                    ? (locale === "fr" ? "✨ Illimité" : "✨ Unlimited")
-                    : quotaReached
-                      ? <span className="text-red-600 font-bold inline-flex items-center gap-1"><Lock className="w-3 h-3" />{locale === "fr" ? "Quota atteint" : "Quota reached"}</span>
-                      : `${used}/${quota} ${locale === "fr" ? "utilisés" : "used"}`}
-                </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1">
+        {allFeatures.map(f => {
+          const selected  = selectedSet.has(f.slug);
+          const mandatory = f.is_mandatory;
+          return (
+            <button key={f.slug} onClick={() => toggle(f.slug, !!mandatory)} disabled={!!mandatory}
+              className={["flex items-center gap-3 p-3 rounded-xl border text-left transition-all",
+                selected ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10"
+                         : "border-[var(--border)] bg-[var(--bg)] hover:border-[var(--color-primary)]/50",
+                mandatory ? "cursor-default opacity-90" : "",
+              ].filter(Boolean).join(" ")}>
+              <div className={["w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0",
+                selected ? "border-[var(--color-primary)] bg-[var(--color-primary)]" : "border-[var(--border)]",
+              ].join(" ")}>
+                {mandatory ? <Lock className="w-2.5 h-2.5 text-[var(--text-muted)]" />
+                           : selected && <Check className="w-3 h-3 text-white" />}
               </div>
-            );
-          })}
-        </div>
-      )}
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-[var(--text)] truncate">{f.nom_fr}</p>
+                {f.is_desired && !mandatory && (
+                  <span className="text-[10px] text-[var(--color-accent)] font-semibold">Votre choix</span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
 
-      {/* Navigation */}
-      <div className="flex items-center justify-between pt-4 border-t border-[var(--border)]">
-        <button
-          onClick={onBack}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg)] transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {locale === "fr" ? "Retour" : "Back"}
+      <div className="flex items-center justify-between pt-2">
+        <button onClick={onBack} className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition">
+          ← {t.back}
         </button>
-        <button
-          onClick={onContinue}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-bold text-sm transition-all hover:scale-105 active:scale-95 shadow-md"
-          style={{ backgroundColor: theme.primary }}
-        >
-          {locale === "fr" ? "C'est parti" : "Let's go"}
-          <ArrowRight className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-[var(--text-muted)]">{t.selected(selectedSet.size)}</span>
+          <button onClick={onContinue} disabled={selectedSet.size === 0}
+            className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-[var(--color-primary)] hover:opacity-90 transition disabled:opacity-40">
+            {t.next}
+          </button>
+        </div>
       </div>
     </div>
   );
