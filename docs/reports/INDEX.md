@@ -188,3 +188,26 @@
 - Logos sectoriels : `getLogoAssets(slug)` dans `@/lib/logo-config` (NON `@/lib/sector-config`).
 - Toast : `useToast()` retourne `{success, error, info, warning}` (méthodes), PAS une fonction `toast({type, message})`.
 - PageHeader props : `title` + `subtitle` (PAS `description`).
+
+## session_9_gabriel
+
+- **Type :** Debug + Génération — Test Vague 1, Redesign Onboarding, Hub Modules
+- **Date :** 2026-05-12
+- **Flux couverts :** F4 (Onboarding welcome ✅ — 4 écrans, paiement, modules), F5 (Auth cross-origin ✅), F6 (Dashboard — Hub Modules socle posé)
+- **Bugs corrigés :** B01 (has_seen_welcome ✅), B02 (popup non-intrusif ✅), B03 (hrefs 404 ✅), B04 (claim-bonus ✅), B05 (mail → :3001 ✅), B06 (auth cross-origin ✅), P3 (boucle /welcome → refreshUser fix ✅), KeyError is_desired (services.py ✅), Régression PERSONNALISATION onboarding (custom sector ✅)
+- **Zones touchées :**
+  - `apps/features/` (models, migrations, serializers, services, views, urls)
+  - `apps/auth_bridge/` (_onboarding.py)
+  - `src/app/(dashboard)/welcome/` (page.tsx — 4 écrans)
+  - `src/app/(dashboard)/modules/` (layout.tsx, page.tsx + 11 pages Hub)
+  - `src/app/(dashboard)/layout.tsx`
+  - `src/components/welcome/` (WelcomeScreen2, WelcomeScreen3 NEW, WelcomeScreen4)
+  - `src/components/modules/ModuleHubTemplate.tsx` (NEW)
+  - `src/lib/hub-modules.ts` (NEW)
+  - `src/repositories/features.repository.ts`
+  - `src/hooks/useFeatures.ts`
+- **Fichiers créés :** 16 (migration 0003, WelcomeScreen3, WelcomeScreen4, ModuleHubTemplate, hub-modules.ts, modules/layout.tsx, modules/page.tsx, 11 pages modules Hub)
+- **Fichiers modifiés :** 13 (models.py, serializers.py, services.py, views.py, urls.py, _onboarding.py, welcome/page.tsx, WelcomeScreen2.tsx, layout.tsx, features.repository.ts, useFeatures.ts, welcome/page.tsx fix refreshUser)
+- **Bugs résiduels connus :** Slug uniqueness IntegrityError (register 500), /modules/manage 404, popup UPGRADE_PLAN même abonné (à investiguer engine.py), Sidebar sans lien Mes modules, mark_desired non testé proprement (bloqué par slug bug)
+- **Décisions architecture :** is_desired sur TenantFeature (Option B, analytics admin), popup central unique (plus de bannière), localStorage AGT_WELCOME_MODULES, Hub Modules = pages Next.js indépendantes /modules/[path]
+- **Rapport :** `docs/reports/session_9_gabriel.md`
