@@ -15,7 +15,7 @@ import { SECTORS }     from "./LandingData";
 import { FeatureCard } from "./FeatureCard";
 
 const SECTOR_ICONS: Record<string, React.ElementType> = {
-  pme: Briefcase, bancaire: Building2, clinique: Heart,
+  pme: Briefcase, banking: Building2, clinique: Heart,
   ecole: GraduationCap, ecommerce: ShoppingCart, hotel: Hotel,
   public: Landmark, restaurant: Utensils, voyage: Plane, personnalise: Sparkles,
 };

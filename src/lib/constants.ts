@@ -148,7 +148,7 @@ export type PlanSlug = (typeof PLANS_CONFIG)[number]["slug"];
 //     côté backend (pour les liens d'email).
 export const SECTOR_URLS: Record<string, string> = {
   pme:          "http://localhost:3008", // → https://pme.agt-bot.com
-  bancaire:     "http://localhost:3002", // → https://banking.agt-bot.com
+  banking:     "http://localhost:3002", // → https://banking.agt-bot.com
   clinique:     "http://localhost:3003", // → https://clinical.agt-bot.com
   ecole:        "http://localhost:3004", // → https://school.agt-bot.com
   ecommerce:    "http://localhost:3005", // → https://e-commerce.agt-bot.com

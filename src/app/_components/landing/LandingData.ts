@@ -14,7 +14,7 @@ import { SECTOR_URLS, ROUTES } from "@/lib/constants";
 // ── Icônes secteurs ───────────────────────────────────────────────────────────
 export const SECTOR_ICON_MAP: Record<string, React.ElementType> = {
   pme:          Briefcase,
-  bancaire:     Building2,
+  banking:      Building2,
   clinique:     Heart,
   ecole:        GraduationCap,
   ecommerce:    ShoppingCart,
@@ -67,7 +67,7 @@ export const SECTORS: Sector[] = [
     image: "https://images.unsplash.com/photo-1556761175-4b46a572b786?w=1400&q=80",
   },
   {
-    id: "bancaire",
+    id: "banking",
     nameFr: "Bancaire", nameEn: "Banking",
     descFr: "Conseil client automatisé et gestion de comptes.",
     descEn: "Automated customer advice and account management.",
