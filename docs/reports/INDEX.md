@@ -239,3 +239,17 @@
 - Toast : `useToast()` retourne `{success, error, info, warning}` (méthodes), PAS une fonction `toast({type, message})`.
 - PageHeader props : `title` + `subtitle` (PAS `description`).
 ---
+## session_11_gabriel
+
+- **Type :** Backend — Validation agent IA live + Tests E2E
+- **Date :** 2026-05-13
+- **Flux couverts :** Agent IA complet (19 actions validées E2E)
+- **Bugs corrigés :** BUG-S11-01 (seed_features description fields), BUG-S11-02 (contact absent), BUG-S11-03 (DeepSeek 401), BUG-S11-04 (crm.py statut_crm), BUG-S11-05 (system_extra TacheRelance), BUG-S11-06 (client_phone FK), BUG-S11-07 (prix_unitaire), BUG-S11-08 (ProtectedError cleanup)
+- **Zones touchées :** `apps/agent/actions/crm.py`, `apps/agent/actions/system_extra.py`, `apps/features/management/commands/seed_features.py`, `apps/agent/management/commands/test_agent.py`, `apps/agent/tests_e2e/` (7 fichiers)
+- **Fichiers créés :** 11 (test_agent + tests_e2e/* + SETUP_DEV.md)
+- **Fichiers modifiés :** 3 (crm.py, system_extra.py, seed_features.py)
+- **Résultat clé :** `python manage.py test_agent` → 19/19 reproductible sur env vierge
+- **Rapport :** `docs/reports/session_11_gabriel.md`
+- **Session suivante (S12) :** Bloc C — migrer interface test frontend vers nouveaux endpoints agent (`/api/v1/agent/conversations/message/` + polling)
+
+---
