@@ -37,6 +37,9 @@ import { school } from "./school.en"
 import { ecommerce } from './ecommerce.en';
 import { hotel }     from './hotel.en';
 import { transport } from './transport.en';
+import { clinical } from "./clinical.en";
+import { pme } from "./pme.en";
+import { public_ } from "./public.en";
 
 export const en = {
   common,
@@ -77,6 +80,9 @@ export const en = {
   ecommerce,
   hotel,
   transport,
+  clinical,
+  pme,
+  public_,
 } as const;
 
 export type EnDict = typeof en;
