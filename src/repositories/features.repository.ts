@@ -15,6 +15,7 @@ export interface ActiveFeature {
   is_mandatory?: boolean;
   is_pinned?: boolean;
   used?: number | null;
+  prix_unitaire?: number | null;
   quota?: number | null;
   is_unlimited?: boolean;
   included_in_plan?: boolean;
@@ -22,9 +23,9 @@ export interface ActiveFeature {
 }
 
 export interface SectorFeature {
-  id: string; slug: string; nom_fr: string; nom_en?: string;
-  icone?: string; categorie?: string;
-  is_default: boolean; is_mandatory: boolean;
+  id: string; slug: string; nom_fr: string; nom_en: string;
+  icone: string; categorie: string; is_default: boolean; is_mandatory: boolean;
+  prix_unitaire?: number;
 }
 
 export interface ActiveFeaturesResponse { features: ActiveFeature[]; count?: number; }

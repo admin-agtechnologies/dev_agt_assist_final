@@ -91,8 +91,10 @@ export const billingActionsRepository = {
     api.get(`/api/v1/billing/transactions/${txnId}/poll-status/`),
   previewUpgrade: (planId: string): Promise<unknown> =>
     api.get(`/api/v1/billing/plans/${planId}/preview-upgrade/`),
-  confirmUpgrade: (planId: string): Promise<unknown> =>
-    api.post(`/api/v1/billing/plans/${planId}/confirm-upgrade/`, {}),
+  confirmUpgrade: (
+  planId: string,
+  payload?: { extra_slugs?: string[]; desired_slugs?: string[] },
+  ) => api.post(`/api/v1/billing/plans/${planId}/confirm-upgrade/`, payload ?? {}),
   applyCode: (code: string): Promise<{
     detail: string; montant: string; devise: string; nouveau_solde: string;
   }> => api.post("/api/v1/billing/codes-recharge/apply-code/", { code }),
