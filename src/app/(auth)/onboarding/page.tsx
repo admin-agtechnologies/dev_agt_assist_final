@@ -1,14 +1,14 @@
 "use client";
 // ============================================================
-// FICHIER : src/app/(auth)/onboarding/page.tsx  — v5
-// Migration : SECTOR_COLORS → SECTOR_THEMES (source unique)
-// BUG-020 : setStoredSector() au choix de secteur (persistance avant auth)
+// FICHIER : src/app/(auth)/onboarding/page.tsx  — v6
+// Fix build : Suspense wrapper pour useSearchParams (Next.js 14)
+// Fix runtime : déclarations router + searchParams manquantes
 // ============================================================
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare global { interface Window { google: any } }
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, Home } from "lucide-react";
 import Link from "next/link";
@@ -40,8 +40,8 @@ interface Draft {
   feature_slugs: string[];
 }
 
-const DRAFT_KEY = "agt_ob_draft";
-const EMPTY: Draft = { sector_slug: "", sector_id: "", company_name: "", feature_slugs: [] };
+const DRAFT_KEY      = "agt_ob_draft";
+const EMPTY: Draft   = { sector_slug: "", sector_id: "", company_name: "", feature_slugs: [] };
 const FALLBACK_ACCENT = "#075E54";
 
 const saveDraft  = (d: Partial<Draft>) => { try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...getDraft(), ...d })); } catch {} };
@@ -53,25 +53,25 @@ const STEP_LABELS = {
   en: ["Sector",  "Business",   "Features",        "Account"],
 };
 
-/** Résout l'accent depuis SECTOR_THEMES (source unique). */
 function resolveAccent(slug: string): string {
   return isValidSector(slug) ? SECTOR_THEMES[slug].accent : FALLBACK_ACCENT;
 }
 
-export default function OnboardingPage() {
+// ── Composant interne — contient tous les hooks client ────────────────────────
+function OnboardingContent() {
+  const router        = useRouter();          // ✅ déclaré ici
+  const searchParams  = useSearchParams();    // ✅ déclaré ici (exige Suspense parent)
   const { user, refreshUser } = useAuth();
   const { locale }            = useLanguage();
-  const router                = useRouter();
-  const searchParams          = useSearchParams();
 
-  const [step,        setStep]       = useState<Step>("sector");
-  const [secteurs,    setSecteurs]   = useState<SecteurActivite[]>([]);
-  const [features,    setFeatures]   = useState<PublicFeature[]>([]);
+  const [step,        setStep]        = useState<Step>("sector");
+  const [secteurs,    setSecteurs]    = useState<SecteurActivite[]>([]);
+  const [features,    setFeatures]    = useState<PublicFeature[]>([]);
   const [allFeatures, setAllFeatures] = useState<PublicFeature[]>([]);
-  const [draft,       setDraftState] = useState<Draft>(EMPTY);
-  const [loading,     setLoading]    = useState(true);
-  const [regError,    setRegError]   = useState("");
-  const [email,       setEmail]      = useState("");
+  const [draft,       setDraftState]  = useState<Draft>(EMPTY);
+  const [loading,     setLoading]     = useState(true);
+  const [regError,    setRegError]    = useState("");
+  const [email,       setEmail]       = useState("");
 
   const accentColor = resolveAccent(draft.sector_slug);
 
@@ -83,7 +83,6 @@ export default function OnboardingPage() {
     const stored     = getDraft();
     const presetSlug = searchParams.get("sector") ?? stored.sector_slug ?? "";
     setDraftState({ ...stored, sector_slug: presetSlug });
-    // Persister le slug si pré-sélectionné via URL ou draft (BUG-020)
     if (presetSlug && isValidSector(presetSlug)) setStoredSector(presetSlug);
     secteursRepository.getList().then(setSecteurs).catch(() => {}).finally(() => setLoading(false));
     if (user && !user.entreprise?.secteur && stored.sector_id) setStep("finalize");
@@ -93,7 +92,6 @@ export default function OnboardingPage() {
     setDraftState(prev => { const next = { ...prev, ...patch }; saveDraft(patch); return next; });
   }, []);
 
-  /** Sélection du secteur dans le SectorPicker — persiste localStorage (BUG-020). */
   const handleSectorSelect = useCallback((slug: string) => {
     patchDraft({ sector_slug: slug });
     if (isValidSector(slug)) setStoredSector(slug);
@@ -104,7 +102,6 @@ export default function OnboardingPage() {
     if (idx > 0) setStep(ORDERED[idx - 1]);
   };
 
-  // ── Étape 1 : secteur — double fetch en parallèle ────────────────────────
   const handleSectorConfirm = async (slug: string) => {
     const found = secteurs.find(s => s.slug === slug);
     patchDraft({ sector_slug: slug, sector_id: found?.id ?? "" });
@@ -215,10 +212,12 @@ export default function OnboardingPage() {
               {labels.map((label, i) => (
                 <div key={label} className="flex items-center gap-1 flex-1">
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold transition-colors"
+                    <div
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold transition-colors"
                       style={i <= stepIndex
                         ? { backgroundColor: accentColor, color: "#fff" }
-                        : { backgroundColor: "var(--border,#e5e7eb)", color: "var(--text-muted,#9ca3af)" }}>
+                        : { backgroundColor: "var(--border,#e5e7eb)", color: "var(--text-muted,#9ca3af)" }}
+                    >
                       {i + 1}
                     </div>
                     <span className={`text-xs hidden sm:block font-medium ${i <= stepIndex ? "text-[var(--text)]" : "text-[var(--text-muted)]"}`}>
@@ -275,6 +274,15 @@ export default function OnboardingPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// ── Export par défaut — Suspense requis par Next.js 14 pour useSearchParams ───
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={<LoadingPage />}>
+      <OnboardingContent />
+    </Suspense>
   );
 }
 
