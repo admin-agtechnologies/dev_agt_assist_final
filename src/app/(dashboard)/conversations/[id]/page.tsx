@@ -111,7 +111,7 @@ export default function ConversationDetailPage() {
       </div>
 
       {/* Actions déclenchées */}
-      {conversation.actions_declenchees.length > 0 && (
+      {(conversation.actions_declenchees ?? []).length > 0 && (
         <div className="card p-4">
           <p
             className="text-xs font-semibold uppercase tracking-wide mb-3"
@@ -120,7 +120,7 @@ export default function ConversationDetailPage() {
             {cv.detail.actions}
           </p>
           <div className="flex flex-col gap-2">
-            {conversation.actions_declenchees.map((action, i) => (
+            {(conversation.actions_declenchees ?? []).map((action, i) => (
               <div key={i} className="flex items-center justify-between text-sm">
                 <span className="text-[var(--text)]">{action.action_slug}</span>
                 <span className={`badge ${
