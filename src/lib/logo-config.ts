@@ -58,14 +58,14 @@ const LOGO_MAP: Record<string, LogoAssets> = {
     darkSvg:  `${BASE}/logo_banque/fond-pale/svg/banque.svg`,
     favicon:  `${BASE}/logo_banque/fond-blanc/favicon/favicon.ico`,
   },
-  clinique: {
+  clinical: {
     light:    `${BASE}/logo_sante/fond-blanc/png/sante_b.png`,
     dark:     `${BASE}/logo_sante/fond-pale/png/sante.png`,
     lightSvg: `${BASE}/logo_sante/fond-blanc/svg/sante_b.svg`,
     darkSvg:  `${BASE}/logo_sante/fond-pale/svg/sante.svg`,
     favicon:  `${BASE}/logo_sante/fond-blanc/favicon/favicon.ico`,
   },
-  ecole: {
+  school: {
     light:    `${BASE}/logo_education/fond-blanc/png/education_b.png`,
     dark:     `${BASE}/logo_education/fond-pale/png/education.png`,
     lightSvg: `${BASE}/logo_education/fond-blanc/svg/education_b.svg`,
@@ -93,7 +93,7 @@ const LOGO_MAP: Record<string, LogoAssets> = {
     darkSvg:  `${BASE}/logo_secteur_public/fond-pale/svg/secteur_public.svg`,
     favicon:  `${BASE}/logo_secteur_public/fond-blanc/favicon/favicon.ico`,
   },
-  voyage: {
+  transport: {
     light:    `${BASE}/logo_transport/fond-blanc/png/transport_b.png`,
     dark:     `${BASE}/logo_transport/fond-pale/png/transport.png`,
     lightSvg: `${BASE}/logo_transport/fond-blanc/svg/transport_b.svg`,

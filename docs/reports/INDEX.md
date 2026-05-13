@@ -144,6 +144,33 @@
 - **Pattern établi :** Logo navbar sectoriel = toujours `logoSvg={logo.darkSvg}` (SVG transparent) — jamais `logoLight`/`logoDark` (PNG opaque). Lire le secteur via `ENV.SECTOR`, pas `process.env.NEXT_PUBLIC_SECTOR` directement.
 - **Dette créée :** SVG `centrale.svg` a un fond coloré en dur (asset à corriger), `SectorCard.tsx` orphelin (à supprimer), chat DemoSection hardcodé restaurant (à rendre sectoriel)
 - **Rapport :** `docs/reports/session_10_donpk.md`
+---
+
+## session_12_donpk
+
+- **Type :** Génération + Correction — Secteur Banking F2 complet
+- **Date :** 2026-05-13
+- **Flux couverts :** F2 Banking ✅ (landing sectorielle), F1 hub partiel ✅ (correction redirect carte banking)
+- **Bugs corrigés :** BUG-SLUG-01 (logo banking fallback central), BUG-SLUG-02 (redirect post-auth banking), BUG-SLUG-03 (email banking mauvais port), BUG-HUB-01 (carte hub banking restait sur 3000), BUG-PORT-01 (dev:banking port 3000 au lieu 3002)
+- **Zones touchées :** `src/app/_components/sector/banking/`, `src/app/_components/landing/`, `src/dictionaries/`, `src/lib/constants.ts`, `src/lib/logo-config.ts`, `apps/auth_bridge/_email_urls.py`, `src/app/page.tsx`, `package.json`
+- **Fichiers créés :** `BankingHero.tsx`, `BankingFeatures.tsx`, `BankingLandingContent.tsx`, `banking.fr.ts`, `banking.en.ts`
+- **Fichiers modifiés :** 10 fichiers
+- **Dette créée :** seed_bank.py incomplet (Agence migrée vers tenants — à corriger avec Gabriel), F3→F10 banking reportés
+- **Rapport :** `docs/reports/session_12_donpk.md`
+
+---
+
+## session_14_donpk
+
+- **Type :** Génération + Refactoring — Frontend Landing School
+- **Date :** 2026-05-13
+- **Flux couverts :** F2 School (landing sectorielle) ✅, F1 hub partiel (correction slugs) ✅
+- **Bugs corrigés :** BUG-SLUG-04 (désalignement clé "ecole" vs "school" dans front/back)
+- **Zones touchées :** `src/app/_components/sector/school/`, `src/app/_components/landing/`, `src/dictionaries/`, `src/lib/constants.ts`, `src/lib/logo-config.ts`, `apps/auth_bridge/_email_urls.py`, `src/app/page.tsx`
+- **Fichiers créés :** `SchoolHero.tsx`, `SchoolFeatures.tsx`, `SchoolLandingContent.tsx`, `school.fr.ts`, `school.en.ts`
+- **Fichiers modifiés :** 8 fichiers
+- **Dette créée :** F3→F10 (Onboarding, Dashboard, Backend métier) pour le secteur School mis en pause volontairement pour prioriser l'alignement frontend du secteur E-commerce.
+- **Rapport :** `docs/reports/session_14_donpk.md`
 
 # 📚 NOTE PERMANENTE — Façon de travailler de Gabriel
 
