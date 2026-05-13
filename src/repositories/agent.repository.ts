@@ -1,31 +1,62 @@
 // src/repositories/agent.repository.ts
-import { api } from "@/lib/api-client";
-import type { PaginatedResponse } from "@/types/api";
-import type {
-  AIConversation,
-  AIConversationFilters,
-  SendMessagePayload,
-  SendMessageResponse,
-} from "@/types/api/conversation.types";
+// Repository pour l'agent IA — /api/v1/agent/conversations/
+// Pattern : même convention que les autres repositories du projet.
 
-const p = (f?: object): Record<string, string> =>
-  Object.fromEntries(
-    Object.entries(f ?? {})
-      .filter(([, v]) => v !== undefined && v !== "" && v !== null)
-      .map(([k, v]) => [k, String(v)]),
-  );
+import { api } from "@/lib/api-client";
+import type {
+  HandleMessagePayload,
+  AgentMessageResponse,
+  AIConversation,
+} from "@/types/api/agent.types";
+import type { PaginatedResponse } from "@/types/api/shared.types";
+
+const BASE = "/api/v1/agent/conversations";
+
+/**
+ * Envoie un message à l'agent.
+ * Retourne la réponse immédiatement (engine synchrone).
+ * Penser à appeler getConversation() ensuite pour les messages status.
+ */
+async function sendMessage(
+  payload: HandleMessagePayload,
+): Promise<AgentMessageResponse> {
+  return api.post(`${BASE}/message/`, {
+    canal: "whatsapp",
+    mode:  "test",
+    ...payload,
+  }) as Promise<AgentMessageResponse>;
+}
+
+/**
+ * Récupère la conversation complète avec tous ses messages.
+ * Inclut les messages role="status" (feedbacks d'action) créés pendant
+ * l'exécution de l'engine.
+ */
+async function getConversation(id: string): Promise<AIConversation> {
+  return api.get(`${BASE}/${id}/`) as Promise<AIConversation>;
+}
+
+interface ConversationFilters {
+  statut?: string;
+  canal?: string;
+  agence_id?: string;
+  mode?: "live" | "test";
+}
+
+async function listConversations(
+  filters?: ConversationFilters,
+):Promise<PaginatedResponse<AIConversation>> {
+  const params = new URLSearchParams();
+  if (filters?.statut)    params.set("statut",    filters.statut);
+  if (filters?.canal)     params.set("canal",     filters.canal);
+  if (filters?.agence_id) params.set("agence_id", filters.agence_id);
+  if (filters?.mode)      params.set("mode",      filters.mode);
+  const qs = params.toString();
+  return api.get(`${BASE}/${qs ? `?${qs}` : ""}`) as Promise<PaginatedResponse<AIConversation>>;
+}
 
 export const agentRepository = {
-  sendMessage: (payload: SendMessagePayload): Promise<SendMessageResponse> =>
-    api.post("/api/v1/agent/message/", payload),
-
-  getConversation: (id: string): Promise<AIConversation> =>
-    api.get(`/api/v1/agent/conversations/${id}/`),
-
-  listConversations: (f?: AIConversationFilters): Promise<PaginatedResponse<AIConversation>> =>
-    api.get("/api/v1/agent/conversations/", { params: p(f) }).then((data: unknown) =>
-      Array.isArray(data)
-        ? { results: data as AIConversation[], count: (data as AIConversation[]).length, next: null, previous: null }
-        : (data as PaginatedResponse<AIConversation>),
-    ),
+  sendMessage,
+  getConversation,
+  listConversations,
 };

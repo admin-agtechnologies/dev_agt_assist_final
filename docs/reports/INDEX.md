@@ -240,3 +240,15 @@
 - **Session suivante (S12) :** Bloc C — migrer interface test frontend vers nouveaux endpoints agent (`/api/v1/agent/conversations/message/` + polling)
 
 ---
+## session_14_gabriel
+
+- **Type :** Backend (Bootstrap sectoriel) + Frontend (Bloc C — migration agent IA)
+- **Date :** 2026-05-13
+- **Flux couverts :** Bootstrap inscription ✅, Bloc C (interface test agent) ✅ généré
+- **Bugs corrigés :** BUG-S14-01 (timing bootstrap — secteur NULL), BUG-S14-02 (agent.types barrel conflict), BUG-S14-03 (en_cours non supporté), BUG-S14-04 (contact type mismatch)
+- **Zones touchées :** `apps/agent/services/` (5 fichiers), `apps/auth_bridge/_onboarding.py`, `apps/tenants/setup.py`, `src/types/api/agent.types.ts`, `src/repositories/agent.repository.ts`, `src/app/(dashboard)/bots/[id]/test/` (3 fichiers)
+- **Fichiers créés :** 10 (5 backend + 5 frontend)
+- **Fichiers modifiés :** 2 (backend)
+- **Résultat clé :** Bootstrap restaurant validé shell (catalogue ✅ items ✅ ressource ✅ 7j/7 ✅ contact ✅ profil sectoriel ✅). Interface test agent générée — 2 erreurs TS résiduelles à corriger en S15
+- **Rapport :** `docs/reports/session_14_gabriel.md`
+---
