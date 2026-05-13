@@ -11,21 +11,21 @@ import {
 } from "lucide-react";
 import { SECTOR_URLS, ROUTES } from "@/lib/constants";
 
-// ── Icônes secteurs ───────────────────────────────────────────────────────────
+// ── Icônes secteurs ──────────────────────────────────────────────────────────
 export const SECTOR_ICON_MAP: Record<string, React.ElementType> = {
   pme:          Briefcase,
   banking:      Building2,
-  clinique:     Heart,
-  ecole:        GraduationCap,
+  clinical:     Heart,
+  school:       GraduationCap,
   ecommerce:    ShoppingCart,
   hotel:        Hotel,
   public:       Landmark,
   restaurant:   Utensils,
-  voyage:       Plane,
+  transport:    Plane,
   personnalise: Sparkles,
 };
 
-// ── Icônes features ───────────────────────────────────────────────────────────
+// ── Icônes features ──────────────────────────────────────────────────────────
 export const FEATURE_ICONS: Record<string, React.ElementType> = {
   feature1: MessageSquare,
   feature2: Phone,
@@ -35,7 +35,7 @@ export const FEATURE_ICONS: Record<string, React.ElementType> = {
   feature6: Globe,
 };
 
-// ── Type Secteur ──────────────────────────────────────────────────────────────
+// ── Type Secteur ─────────────────────────────────────────────────────────────
 export interface Sector {
   id: string;
   nameFr: string;
@@ -52,8 +52,8 @@ export interface Sector {
   image: string;
 }
 
-// ── 10 Secteurs ───────────────────────────────────────────────────────────────
-export const SECTORS: Sector[] = [
+// ── 10 Secteurs ──────────────────────────────────────────────────────────────
+export const SECTORS: Sector[] =[
   {
     id: "pme",
     nameFr: "PME", nameEn: "SME",
@@ -79,7 +79,7 @@ export const SECTORS: Sector[] = [
     image: "https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?w=1400&q=80",
   },
   {
-    id: "clinique",
+    id: "clinical",
     nameFr: "Clinique", nameEn: "Clinic",
     descFr: "Prise de RDV médicaux et suivi patient automatisé.",
     descEn: "Automated medical appointment booking and patient follow-up.",
@@ -91,7 +91,7 @@ export const SECTORS: Sector[] = [
     image: "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=1400&q=80",
   },
   {
-    id: "ecole",
+    id: "school",
     nameFr: "École", nameEn: "School",
     descFr: "Communication parents-élèves simplifiée et automatisée.",
     descEn: "Simplified parent-student communication.",
@@ -151,7 +151,7 @@ export const SECTORS: Sector[] = [
     image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1400&q=80",
   },
   {
-    id: "voyage",
+    id: "transport",
     nameFr: "Voyage", nameEn: "Travel",
     descFr: "Devis, réservations et assistance voyage IA.",
     descEn: "Quotes, bookings and AI travel assistance.",
@@ -176,12 +176,12 @@ export const SECTORS: Sector[] = [
   },
 ];
 
-// ── Helper URL secteur → SectorCard uniquement ────────────────────────────────
+// ── Helper URL secteur → SectorCard uniquement ───────────────────────────────
 export function getSectorUrl(id: string): string {
   return SECTOR_URLS[id] ?? ROUTES.onboarding;
 }
 
-// ── Types HeroSlide ───────────────────────────────────────────────────────────
+// ── Types HeroSlide ──────────────────────────────────────────────────────────
 export type SlideType = "general" | "feature" | "sector";
 
 export interface HeroSlide {
@@ -204,8 +204,8 @@ export interface HeroSlide {
   featuresEn?: string[];
 }
 
-// ── 13 slides ─────────────────────────────────────────────────────────────────
-export const HERO_SLIDES: HeroSlide[] = [
+// ── 13 slides ────────────────────────────────────────────────────────────────
+export const HERO_SLIDES: HeroSlide[] =[
   // 1 — Général
   {
     type: "general",
@@ -384,14 +384,14 @@ export const HERO_SLIDES: HeroSlide[] = [
   },
 ];
 
-// ── Témoignages ───────────────────────────────────────────────────────────────
+// ── Témoignages ──────────────────────────────────────────────────────────────
 export interface Testimonial {
   name: string; role: string; company: string;
   city: string; avatar: string; rating: number;
   textFr: string; textEn: string;
 }
 
-export const TESTIMONIALS: Testimonial[] = [
+export const TESTIMONIALS: Testimonial[] =[
   { name: "Jean-Paul Mbarga",   role: "Directeur",          company: "Albatros Hôtel",      city: "Yaoundé",   avatar: "JM", rating: 5, textFr: "Depuis AGT-BOT, notre réception virtuelle répond aux clients 24h/24. Les réservations ont augmenté de 35% en 2 mois.", textEn: "Since AGT-BOT, our virtual reception answers clients 24/7. Bookings increased by 35% in 2 months." },
   { name: "Christelle Nkomo",   role: "Responsable Digital", company: "Orange Cameroun",     city: "Douala",    avatar: "CN", rating: 5, textFr: "L'assistant WhatsApp gère des centaines de demandes simultanément. Le temps de réponse est passé de 4h à moins de 30 secondes.", textEn: "The WhatsApp assistant handles hundreds of requests. Response time dropped from 4h to under 30 seconds." },
   { name: "Patrick Essama",     role: "Gérant",             company: "Finex Voyage",        city: "Yaoundé",   avatar: "PE", rating: 5, textFr: "Nos clients reçoivent leurs devis et confirmations instantanément via WhatsApp. AGT-BOT a transformé notre service.", textEn: "Our clients receive quotes and travel confirmations instantly via WhatsApp. AGT-BOT transformed our service." },
@@ -399,9 +399,6 @@ export const TESTIMONIALS: Testimonial[] = [
   { name: "Samuel Tchatchou",   role: "CEO",                company: "TechBuild Cameroun",  city: "Douala",    avatar: "ST", rating: 5, textFr: "En 5 minutes, notre assistant était opérationnel. L'agent vocal IA impressionne nos clients. Rentabilisé dès la première semaine.", textEn: "In 5 minutes, our assistant was operational. The AI voice agent impresses our clients. Paid off in the first week." },
 ];
 
-// ── URL vidéo démo ────────────────────────────────────────────────────────────
+// ── URL vidéo démo ───────────────────────────────────────────────────────────
 export const DEMO_VIDEO_URL =
   "https://api.salma.agtgroupholding.com/media/seed/bourses/demo.mp4";
-
-
-  

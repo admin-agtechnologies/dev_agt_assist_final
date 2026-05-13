@@ -158,6 +158,20 @@
 - **Dette créée :** seed_bank.py incomplet (Agence migrée vers tenants — à corriger avec Gabriel), F3→F10 banking reportés
 - **Rapport :** `docs/reports/session_12_donpk.md`
 
+---
+
+## session_14_donpk
+
+- **Type :** Génération + Refactoring — Frontend Landing School
+- **Date :** 2026-05-13
+- **Flux couverts :** F2 School (landing sectorielle) ✅, F1 hub partiel (correction slugs) ✅
+- **Bugs corrigés :** BUG-SLUG-04 (désalignement clé "ecole" vs "school" dans front/back)
+- **Zones touchées :** `src/app/_components/sector/school/`, `src/app/_components/landing/`, `src/dictionaries/`, `src/lib/constants.ts`, `src/lib/logo-config.ts`, `apps/auth_bridge/_email_urls.py`, `src/app/page.tsx`
+- **Fichiers créés :** `SchoolHero.tsx`, `SchoolFeatures.tsx`, `SchoolLandingContent.tsx`, `school.fr.ts`, `school.en.ts`
+- **Fichiers modifiés :** 8 fichiers
+- **Dette créée :** F3→F10 (Onboarding, Dashboard, Backend métier) pour le secteur School mis en pause volontairement pour prioriser l'alignement frontend du secteur E-commerce.
+- **Rapport :** `docs/reports/session_14_donpk.md`
+
 # 📚 NOTE PERMANENTE — Façon de travailler de Gabriel
 
 > **À LIRE EN PREMIER à chaque nouvelle session.** Cette section documente les

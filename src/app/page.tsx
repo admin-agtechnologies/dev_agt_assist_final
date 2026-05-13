@@ -3,11 +3,13 @@
 //   hub         → Landing centrale (hub)
 //   restaurant  → Landing sectorielle Restaurant
 //   banking     → Landing sectorielle Banking
+//   school      → Landing sectorielle École
 //   (autres)    → Landing centrale par défaut
 import type { Metadata } from "next";
 import LandingPageContent       from "./_components/LandingPageContent";
 import RestaurantLandingContent from "./_components/sector/restaurant/RestaurantLandingContent";
 import BankingLandingContent    from "./_components/sector/banking/BankingLandingContent";
+import SchoolLandingContent     from "./_components/sector/school/SchoolLandingContent";
 
 const SECTOR = process.env.NEXT_PUBLIC_SECTOR ?? "hub";
 const BASE_URL = "https://www.agt-bot.com";
@@ -50,11 +52,23 @@ const METADATA: Record<string, Metadata> = {
       images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "AGT-BOT Banking" }],
     },
   },
+  school: {
+    title: "AGT-BOT École — Admissions & Communication IA",
+    description:
+      "Automatisez vos admissions, prises de RDV et la communication avec les parents. Sans code, prêt en 5 minutes.",
+    alternates: { canonical: "https://school.agt-bot.com" },
+    openGraph: {
+      url: "https://school.agt-bot.com",
+      title: "AGT-BOT École — Admissions & Communication IA",
+      description: "Automatisez vos admissions, prises de RDV et la communication avec les parents.",
+      images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "AGT-BOT École" }],
+    },
+  },
 };
 
 export const metadata: Metadata = METADATA[SECTOR] ?? METADATA.hub;
 
-// ── JSON-LD Organisation (commun) ─────────────────────────────────────────────
+// ── JSON-LD Organisation (commun) ────────────────────────────────────────────
 const jsonLdOrganization = {
   "@context": "https://schema.org",
   "@type": "Organization",
@@ -66,11 +80,12 @@ const jsonLdOrganization = {
   contactPoint: { "@type": "ContactPoint", contactType: "customer support", availableLanguage: ["French", "English"] },
 };
 
-// ── Composant par secteur ─────────────────────────────────────────────────────
+// ── Composant par secteur ────────────────────────────────────────────────────
 function SectorPage() {
   switch (SECTOR) {
     case "restaurant": return <RestaurantLandingContent />;
     case "banking":    return <BankingLandingContent />;
+    case "school":     return <SchoolLandingContent />;
     case "hub":
     default:           return <LandingPageContent />;
   }

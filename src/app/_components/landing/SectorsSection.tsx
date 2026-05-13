@@ -16,9 +16,9 @@ import { SECTORS }     from "./LandingData";
 import { SECTOR_URLS } from "@/lib/constants";
 
 const SECTOR_ICONS: Record<string, React.ElementType> = {
-  pme: Briefcase, banking: Building2, clinique: Heart,
-  ecole: GraduationCap, ecommerce: ShoppingCart, hotel: Hotel,
-  public: Landmark, restaurant: Utensils, voyage: Plane, personnalise: Sparkles,
+  pme: Briefcase, banking: Building2, clinical: Heart,
+  school: GraduationCap, ecommerce: ShoppingCart, hotel: Hotel,
+  public: Landmark, restaurant: Utensils, transport: Plane, personnalise: Sparkles,
 };
 
 function getSectorHref(id: string) {
@@ -71,7 +71,7 @@ export function SectorsSection() {
         {/* Layout principal */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
 
-          {/* ── Liste secteurs (2/5) ─────────────────────────────────── */}
+          {/* ── Liste secteurs (2/5) ────────────────────────────────────────── */}
           <div className="lg:col-span-2 flex flex-col gap-1.5">
             {SECTORS.map((s) => {
               const SIcon    = SECTOR_ICONS[s.id];
@@ -123,7 +123,7 @@ export function SectorsSection() {
             })}
           </div>
 
-          {/* ── Panneau détail (3/5) ─────────────────────────────────── */}
+          {/* ── Panneau détail (3/5) ────────────────────────────────────────── */}
           <div
             key={activeId}
             className="lg:col-span-3 rounded-3xl overflow-hidden border border-[var(--border)] bg-[var(--bg-card)]"
@@ -205,5 +205,3 @@ export function SectorsSection() {
     </section>
   );
 }
-
-// END OF FILE: src/app/_components/landing/SectorsSection.tsx
