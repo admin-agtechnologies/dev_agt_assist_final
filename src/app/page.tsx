@@ -5,6 +5,8 @@
 //   banking     → Landing sectorielle Banking
 //   school      → Landing sectorielle École
 //   ecommerce   → Landing sectorielle E-commerce
+//   hotel       → Landing sectorielle Hôtel
+//   transport   → Landing sectorielle Transport
 //   (autres)    → Landing centrale par défaut
 import type { Metadata } from "next";
 import LandingPageContent           from "./_components/LandingPageContent";
@@ -12,6 +14,8 @@ import RestaurantLandingContent     from "./_components/sector/restaurant/Restau
 import BankingLandingContent        from "./_components/sector/banking/BankingLandingContent";
 import SchoolLandingContent         from "./_components/sector/school/SchoolLandingContent";
 import EcommerceLandingContent      from "./_components/sector/ecommerce/EcommerceLandingContent";
+import HotelLandingContent          from "./_components/sector/hotel/HotelLandingContent";
+import TransportLandingContent      from "./_components/sector/transport/TransportLandingContent";
 
 const SECTOR = process.env.NEXT_PUBLIC_SECTOR ?? "hub";
 const BASE_URL = "https://www.agt-bot.com";
@@ -78,6 +82,30 @@ const METADATA: Record<string, Metadata> = {
       images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "AGT-BOT E-commerce" }],
     },
   },
+  hotel: {
+    title: "AGT-BOT Hôtel — Réservations & Concierge IA",
+    description:
+      "Automatisez vos réservations chambre, disponibilités et services concierge. Sans code, prêt en 5 minutes.",
+    alternates: { canonical: "https://hotel.agt-bot.com" },
+    openGraph: {
+      url: "https://hotel.agt-bot.com",
+      title: "AGT-BOT Hôtel — Réservations & Concierge IA",
+      description: "Réservations chambre, disponibilités en temps réel et concierge virtuel automatisés.",
+      images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "AGT-BOT Hôtel" }],
+    },
+  },
+  transport: {
+    title: "AGT-BOT Transport — Billets & Départs IA par WhatsApp",
+    description:
+      "Vendez vos billets sur WhatsApp, gérez vos départs et notifiez vos voyageurs. Sans code, prêt en 5 minutes.",
+    alternates: { canonical: "https://transport.agt-bot.com" },
+    openGraph: {
+      url: "https://transport.agt-bot.com",
+      title: "AGT-BOT Transport — Billets & Départs IA",
+      description: "Vente de billets WhatsApp, gestion des départs et notifications voyageurs automatisées.",
+      images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "AGT-BOT Transport" }],
+    },
+  },
 };
 
 export const metadata: Metadata = METADATA[SECTOR] ?? METADATA.hub;
@@ -101,6 +129,8 @@ function SectorPage() {
     case "banking":    return <BankingLandingContent />;
     case "school":     return <SchoolLandingContent />;
     case "ecommerce":  return <EcommerceLandingContent />;
+    case "hotel":      return <HotelLandingContent />;
+    case "transport":  return <TransportLandingContent />;
     case "hub":
     default:           return <LandingPageContent />;
   }
@@ -117,5 +147,3 @@ export default function HomePage() {
     </>
   );
 }
-
-// END OF FILE: src/app/page.tsx

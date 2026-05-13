@@ -35,6 +35,8 @@ import { restaurant } from "./restaurant.fr";
 import { banking } from "./banking.fr"
 import {school} from "./school.fr"
 import { ecommerce } from './ecommerce.fr';
+import { hotel }     from './hotel.fr';
+import { transport } from './transport.fr';
 
 export const fr = {
   common,
@@ -72,7 +74,9 @@ export const fr = {
   restaurant,
   banking,
   school,
-  ecommerce
+  ecommerce,
+  hotel,
+  transport,
 } as const;
 
 export type FrDict = typeof fr;
