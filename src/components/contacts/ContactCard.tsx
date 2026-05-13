@@ -58,9 +58,9 @@ export function ContactCard({ contact, locale, onClick }: Props) {
           )}
         </div>
 
-        {contact.crm_signals.length > 0 && (
+        {(contact.crm_signals?.length ?? 0) > 0 && (
           <p className="text-xs text-[var(--primary)] mt-1.5 font-medium">
-            {contact.crm_signals.length} signal{contact.crm_signals.length > 1 ? "s" : ""}
+            {contact.crm_signals!.length} signal{contact.crm_signals!.length > 1 ? "s" : ""}
           </p>
         )}
       </div>

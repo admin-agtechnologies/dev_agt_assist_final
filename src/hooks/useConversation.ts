@@ -1,7 +1,7 @@
 // src/hooks/useConversation.ts
 "use client";
 import { useState, useEffect, useRef } from "react";
-import type { AIConversation } from "@/types/api";
+import type { AIConversation } from "@/types/api/agent.types";
 import { agentRepository } from "@/repositories/agent.repository";
 
 interface UseConversationReturn {

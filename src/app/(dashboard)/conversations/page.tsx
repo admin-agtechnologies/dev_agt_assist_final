@@ -10,7 +10,9 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { DataTable } from "@/components/ui/DataTable";
 import { FilterBar } from "@/components/ui/FilterBar";
 import { ConversationStatus } from "@/components/conversations/ConversationStatus";
-import type { AIConversation, AIConversationFilters, PaginatedResponse } from "@/types/api";
+import type { AIConversation } from "@/types/api/agent.types";
+import type { AIConversationFilters} from "@/types/api";
+import type { PaginatedResponse } from "@/types/api";
 import type { DataTableColumn } from "@/components/ui/DataTable";
 import type { FilterOption } from "@/components/ui/FilterBar";
 
