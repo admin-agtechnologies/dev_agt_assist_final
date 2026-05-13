@@ -270,29 +270,20 @@
 - Toast : `useToast()` retourne `{success, error, info, warning}` (méthodes), PAS une fonction `toast({type, message})`.
 - PageHeader props : `title` + `subtitle` (PAS `description`).
 ---
-## session_11_gabriel
+## session_17_gabriel
 
-- **Type :** Backend — Validation agent IA live + Tests E2E
+- **Type :** Conception + Génération — Modèle facturation-features + Refactor seed system
 - **Date :** 2026-05-13
-- **Flux couverts :** Agent IA complet (19 actions validées E2E)
-- **Bugs corrigés :** BUG-S11-01 (seed_features description fields), BUG-S11-02 (contact absent), BUG-S11-03 (DeepSeek 401), BUG-S11-04 (crm.py statut_crm), BUG-S11-05 (system_extra TacheRelance), BUG-S11-06 (client_phone FK), BUG-S11-07 (prix_unitaire), BUG-S11-08 (ProtectedError cleanup)
-- **Zones touchées :** `apps/agent/actions/crm.py`, `apps/agent/actions/system_extra.py`, `apps/features/management/commands/seed_features.py`, `apps/agent/management/commands/test_agent.py`, `apps/agent/tests_e2e/` (7 fichiers)
-- **Fichiers créés :** 11 (test_agent + tests_e2e/* + SETUP_DEV.md)
-- **Fichiers modifiés :** 3 (crm.py, system_extra.py, seed_features.py)
-- **Résultat clé :** `python manage.py test_agent` → 19/19 reproductible sur env vierge
-- **Rapport :** `docs/reports/session_11_gabriel.md`
-- **Session suivante (S12) :** Bloc C — migrer interface test frontend vers nouveaux endpoints agent (`/api/v1/agent/conversations/message/` + polling)
-
----
-## session_14_gabriel
-
-- **Type :** Backend (Bootstrap sectoriel) + Frontend (Bloc C — migration agent IA)
-- **Date :** 2026-05-13
-- **Flux couverts :** Bootstrap inscription ✅, Bloc C (interface test agent) ✅ généré
-- **Bugs corrigés :** BUG-S14-01 (timing bootstrap — secteur NULL), BUG-S14-02 (agent.types barrel conflict), BUG-S14-03 (en_cours non supporté), BUG-S14-04 (contact type mismatch)
-- **Zones touchées :** `apps/agent/services/` (5 fichiers), `apps/auth_bridge/_onboarding.py`, `apps/tenants/setup.py`, `src/types/api/agent.types.ts`, `src/repositories/agent.repository.ts`, `src/app/(dashboard)/bots/[id]/test/` (3 fichiers)
-- **Fichiers créés :** 10 (5 backend + 5 frontend)
-- **Fichiers modifiés :** 2 (backend)
-- **Résultat clé :** Bootstrap restaurant validé shell (catalogue ✅ items ✅ ressource ✅ 7j/7 ✅ contact ✅ profil sectoriel ✅). Interface test agent générée — 2 erreurs TS résiduelles à corriger en S15
-- **Rapport :** `docs/reports/session_14_gabriel.md`
----
+- **Flux couverts :** Facturation data-driven (PlanSecteur, PlanFeature sectoriel, FeatureOrder, quotas TenantFeature)
+- **Bugs corrigés :** BUG-S16-01 ContactCard.tsx (session précédente, déjà livré)
+- **Bugs introduits :** BUG-S18-01 (tenants_seeder.py : nom → label_fr/label_en), BUG-S18-02 (ordre seeders : secteurs créés après features)
+- **Zones touchées :**
+  - `apps/features/models/` (split en 4 fichiers : __init__, feature, plan, tenant)
+  - `apps/features/migrations/0005_billing_features_enrichment.py`
+  - `apps/features/services.py`, `serializers.py`, `admin.py`
+  - `apps/tenants/seeders/` (nouveau dossier : base, features, billing, payments, tenants, agent)
+  - `apps/tenants/management/commands/seed.py` (commande centrale — remplace l'ancien)
+- **Fichiers créés :** 16
+- **Résultat :** Modèle migré ✅, 23 features + 5 plans + PlanFeature base seedés ✅, SectorFeature = 0 ❌ (bug ordre seeders)
+- **Sidebar toujours vide** — objectif non atteint, 2 bugs à corriger en S18
+- **Rapport :** `docs/reports/session_17_gabriel.md`

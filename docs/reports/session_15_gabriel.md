@@ -195,7 +195,7 @@ Ces 2 diffs font < 5 lignes au total. À corriger au début de S15 avant de test
 ## Prompt de début de session S15
 
 ```
-Session 16 — Gabriel — Fin debug TypeScript + Test agent frontend + Design modules
+Session 15 — Gabriel — Fin debug TypeScript + Test agent frontend + Design modules
 
 Contexte S14 :
 - Bootstrap sectoriel ✅ validé (restaurant : catalogue, ressource, FAQ, contact démo)
