@@ -5,15 +5,16 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "dev:next": "next dev -p 3000",
-    "dev:hotel": "cross-env NEXT_PUBLIC_SECTOR=hotel next dev -p 3000",
-    "dev:restaurant": "cross-env NEXT_PUBLIC_SECTOR=restaurant next dev -p 3000",
-    "dev:clinical": "cross-env NEXT_PUBLIC_SECTOR=clinical next dev -p 3000",
-    "dev:banking": "cross-env NEXT_PUBLIC_SECTOR=banking next dev -p 3000",
-    "dev:school": "cross-env NEXT_PUBLIC_SECTOR=school next dev -p 3000",
-    "dev:ecommerce": "cross-env NEXT_PUBLIC_SECTOR=ecommerce next dev -p 3000",
-    "dev:transport": "cross-env NEXT_PUBLIC_SECTOR=transport next dev -p 3000",
-    "dev:pme": "cross-env NEXT_PUBLIC_SECTOR=pme next dev -p 3000",
-    "dev:public": "cross-env NEXT_PUBLIC_SECTOR=public next dev -p 3000",
+    "dev:hub": "cross-env NEXT_PUBLIC_SECTOR=hub next dev -p 3000",
+    "dev:restaurant": "cross-env NEXT_PUBLIC_SECTOR=restaurant next dev -p 3001",
+    "dev:banking": "cross-env NEXT_PUBLIC_SECTOR=banking next dev -p 3002",
+    "dev:clinical": "cross-env NEXT_PUBLIC_SECTOR=clinical next dev -p 3003",
+    "dev:school": "cross-env NEXT_PUBLIC_SECTOR=school next dev -p 3004",
+    "dev:ecommerce": "cross-env NEXT_PUBLIC_SECTOR=ecommerce next dev -p 3005",
+    "dev:hotel": "cross-env NEXT_PUBLIC_SECTOR=hotel next dev -p 3006",
+    "dev:public": "cross-env NEXT_PUBLIC_SECTOR=public next dev -p 3007",
+    "dev:pme": "cross-env NEXT_PUBLIC_SECTOR=pme next dev -p 3008",
+    "dev:transport": "cross-env NEXT_PUBLIC_SECTOR=transport next dev -p 3009",
     "dev:custom": "cross-env NEXT_PUBLIC_SECTOR=custom next dev -p 3000",
     "dev:api": "json-server --watch db/db.json --port 4000 --routes db/routes.json",
     "dev:mock": "concurrently \"next dev -p 3000\" \"json-server --watch db/db.json --port 4000 --routes db/routes.json\"",
@@ -49,5 +50,5 @@
     "tailwindcss": "^3.4.6",
     "typescript": "^5"
   },
-  "description": "AGT Platform — Interface PME"
+  "description": "AGT-BOT – Interface PME"
 }

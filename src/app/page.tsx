@@ -2,10 +2,12 @@
 // Routing conditionnel selon NEXT_PUBLIC_SECTOR :
 //   hub         → Landing centrale (hub)
 //   restaurant  → Landing sectorielle Restaurant
+//   banking     → Landing sectorielle Banking
 //   (autres)    → Landing centrale par défaut
 import type { Metadata } from "next";
-import LandingPageContent        from "./_components/LandingPageContent";
-import RestaurantLandingContent  from "./_components/sector/restaurant/RestaurantLandingContent";
+import LandingPageContent       from "./_components/LandingPageContent";
+import RestaurantLandingContent from "./_components/sector/restaurant/RestaurantLandingContent";
+import BankingLandingContent    from "./_components/sector/banking/BankingLandingContent";
 
 const SECTOR = process.env.NEXT_PUBLIC_SECTOR ?? "hub";
 const BASE_URL = "https://www.agt-bot.com";
@@ -28,12 +30,24 @@ const METADATA: Record<string, Metadata> = {
     title: "AGT-BOT Restaurant — Commandes & Réservations IA par WhatsApp",
     description:
       "Automatisez vos commandes WhatsApp, réservations de table et menu digital. Sans code, prêt en 5 minutes.",
-    alternates: { canonical: `https://restaurant.agt-bot.com` },
+    alternates: { canonical: "https://restaurant.agt-bot.com" },
     openGraph: {
       url: "https://restaurant.agt-bot.com",
       title: "AGT-BOT Restaurant — Commandes & Réservations IA",
       description: "Commandes WhatsApp, réservations de table et menu digital automatisés.",
       images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "AGT-BOT Restaurant" }],
+    },
+  },
+  banking: {
+    title: "AGT-BOT Banking — RDV Conseiller & Produits Financiers par WhatsApp",
+    description:
+      "Automatisez la prise de RDV, présentez vos produits financiers et gérez toutes vos agences. Sans code, prêt en 5 minutes.",
+    alternates: { canonical: "https://banking.agt-bot.com" },
+    openGraph: {
+      url: "https://banking.agt-bot.com",
+      title: "AGT-BOT Banking — RDV Conseiller & Produits Financiers",
+      description: "Prise de RDV conseiller, catalogue financier et multi-agences automatisés.",
+      images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "AGT-BOT Banking" }],
     },
   },
 };
@@ -56,6 +70,7 @@ const jsonLdOrganization = {
 function SectorPage() {
   switch (SECTOR) {
     case "restaurant": return <RestaurantLandingContent />;
+    case "banking":    return <BankingLandingContent />;
     case "hub":
     default:           return <LandingPageContent />;
   }

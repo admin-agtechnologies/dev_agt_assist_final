@@ -51,7 +51,7 @@ const LOGO_MAP: Record<string, LogoAssets> = {
     darkSvg:  `${BASE}/logo_pme_et_entreprises/fond-pale/svg/pme_entreprises.svg`,
     favicon:  `${BASE}/logo_pme_et_entreprises/fond-blanc/favicon/favicon.ico`,
   },
-  bancaire: {
+  banking: {
     light:    `${BASE}/logo_banque/fond-blanc/png/banque_b.png`,
     dark:     `${BASE}/logo_banque/fond-pale/png/banque.png`,
     lightSvg: `${BASE}/logo_banque/fond-blanc/svg/banque_b.svg`,
