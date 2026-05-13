@@ -18,7 +18,7 @@ import { SECTOR_URLS } from "@/lib/constants";
 const SECTOR_ICONS: Record<string, React.ElementType> = {
   pme: Briefcase, banking: Building2, clinical: Heart,
   school: GraduationCap, ecommerce: ShoppingCart, hotel: Hotel,
-  public: Landmark, restaurant: Utensils, transport: Plane, personnalise: Sparkles,
+  public: Landmark, restaurant: Utensils, transport: Plane, custom: Sparkles,
 };
 
 function getSectorHref(id: string) {

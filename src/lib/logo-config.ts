@@ -100,7 +100,7 @@ const LOGO_MAP: Record<string, LogoAssets> = {
     darkSvg:  `${BASE}/logo_transport/fond-pale/svg/transport.svg`,
     favicon:  `${BASE}/logo_transport/fond-blanc/favicon/favicon.ico`,
   },
-  personnalise: {
+  custom: {
     light:    `${BASE}/logo_personnalise/fond-blanc/png/personnalise_b.png`,
     dark:     `${BASE}/logo_personnalise/fond-pale/png/personnalise.png`,
     lightSvg: `${BASE}/logo_personnalise/fond-blanc/svg/personnalise_b.svg`,

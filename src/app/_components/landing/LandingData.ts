@@ -22,7 +22,7 @@ export const SECTOR_ICON_MAP: Record<string, React.ElementType> = {
   public:       Landmark,
   restaurant:   Utensils,
   transport:    Plane,
-  personnalise: Sparkles,
+  custom: Sparkles,
 };
 
 // ── Icônes features ──────────────────────────────────────────────────────────
@@ -163,7 +163,7 @@ export const SECTORS: Sector[] =[
     image: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1400&q=80",
   },
   {
-    id: "personnalise",
+    id: "custom",
     nameFr: "Personnalisé", nameEn: "Custom",
     descFr: "Une solution sur mesure pour votre métier unique.",
     descEn: "A tailor-made solution for your unique business.",

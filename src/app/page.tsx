@@ -4,12 +4,14 @@
 //   restaurant  → Landing sectorielle Restaurant
 //   banking     → Landing sectorielle Banking
 //   school      → Landing sectorielle École
+//   ecommerce   → Landing sectorielle E-commerce
 //   (autres)    → Landing centrale par défaut
 import type { Metadata } from "next";
-import LandingPageContent       from "./_components/LandingPageContent";
-import RestaurantLandingContent from "./_components/sector/restaurant/RestaurantLandingContent";
-import BankingLandingContent    from "./_components/sector/banking/BankingLandingContent";
-import SchoolLandingContent     from "./_components/sector/school/SchoolLandingContent";
+import LandingPageContent           from "./_components/LandingPageContent";
+import RestaurantLandingContent     from "./_components/sector/restaurant/RestaurantLandingContent";
+import BankingLandingContent        from "./_components/sector/banking/BankingLandingContent";
+import SchoolLandingContent         from "./_components/sector/school/SchoolLandingContent";
+import EcommerceLandingContent      from "./_components/sector/ecommerce/EcommerceLandingContent";
 
 const SECTOR = process.env.NEXT_PUBLIC_SECTOR ?? "hub";
 const BASE_URL = "https://www.agt-bot.com";
@@ -64,11 +66,23 @@ const METADATA: Record<string, Metadata> = {
       images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "AGT-BOT École" }],
     },
   },
+  ecommerce: {
+    title: "AGT-BOT E-commerce — Catalogue, Commandes & Suivi IA",
+    description:
+      "Automatisez votre boutique : catalogue interactif, suivi commandes et relance panier. Sans code, prêt en 5 minutes.",
+    alternates: { canonical: "https://e-commerce.agt-bot.com" },
+    openGraph: {
+      url: "https://e-commerce.agt-bot.com",
+      title: "AGT-BOT E-commerce — Catalogue, Commandes & Suivi IA",
+      description: "Catalogue interactif, suivi commandes et relance panier automatisés.",
+      images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "AGT-BOT E-commerce" }],
+    },
+  },
 };
 
 export const metadata: Metadata = METADATA[SECTOR] ?? METADATA.hub;
 
-// ── JSON-LD Organisation (commun) ────────────────────────────────────────────
+// ── JSON-LD Organisation (commun) ─────────────────────────────────────────────
 const jsonLdOrganization = {
   "@context": "https://schema.org",
   "@type": "Organization",
@@ -80,12 +94,13 @@ const jsonLdOrganization = {
   contactPoint: { "@type": "ContactPoint", contactType: "customer support", availableLanguage: ["French", "English"] },
 };
 
-// ── Composant par secteur ────────────────────────────────────────────────────
+// ── Composant par secteur ─────────────────────────────────────────────────────
 function SectorPage() {
   switch (SECTOR) {
     case "restaurant": return <RestaurantLandingContent />;
     case "banking":    return <BankingLandingContent />;
     case "school":     return <SchoolLandingContent />;
+    case "ecommerce":  return <EcommerceLandingContent />;
     case "hub":
     default:           return <LandingPageContent />;
   }
@@ -102,3 +117,5 @@ export default function HomePage() {
     </>
   );
 }
+
+// END OF FILE: src/app/page.tsx
