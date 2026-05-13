@@ -171,6 +171,23 @@
 - **Fichiers modifiés :** 8 fichiers
 - **Dette créée :** F3→F10 (Onboarding, Dashboard, Backend métier) pour le secteur School mis en pause volontairement pour prioriser l'alignement frontend du secteur E-commerce.
 - **Rapport :** `docs/reports/session_14_donpk.md`
+ 
+ ---
+ ## session_16_donpk
+
+- **Type :** Génération + Debug
+- **Date :** 2026-05-13
+- **Flux couverts :** F2 E-commerce ✅, correction slugs `custom`/`personnalise` ✅, audit school S14 ✅
+- **Bugs corrigés :** BUG-SLUG-CUSTOM, BUG-NAVBAR-EC, BUG-TS-CONV (résolu par donpk)
+- **Zones touchées :**
+  - `src/lib/` (constants.ts, logo-config.ts)
+  - `src/app/_components/landing/` (LandingData.ts, SectorsSection.tsx)
+  - `src/app/_components/sector/ecommerce/` (3 fichiers NOUVEAUX)
+  - `src/dictionaries/fr/` + `src/dictionaries/en/` (index + ecommerce.fr/en)
+  - `src/app/page.tsx`
+- **Fichiers créés :** 5 (ecommerce.fr.ts, ecommerce.en.ts, EcommerceHero.tsx, EcommerceFeatures.tsx, EcommerceLandingContent.tsx)
+- **Fichiers modifiés :** 7 (constants.ts, logo-config.ts, LandingData.ts, SectorsSection.tsx, fr/index.ts, en/index.ts, page.tsx)
+- **Rapport :** docs/reports/session_15_donpk.md
 
 # 📚 NOTE PERMANENTE — Façon de travailler de Gabriel
 
