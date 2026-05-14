@@ -1,8 +1,9 @@
-// src/app/pme/bug/page.tsx
+// src/app/(dashboard)/bug/page.tsx
 "use client";
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/components/ui/Toast";
+import { useSector } from "@/hooks/useSector";
 import { AlertTriangle, Send, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { feedbackRepository } from "@/repositories";
@@ -22,19 +23,20 @@ const SEVERITIES = [
   { value: "critical", label: "Critique", color: "#EF4444", desc: "Je ne peux plus utiliser la plateforme" },
 ] as const;
 
-type CategoryValue  = typeof CATEGORIES[number]["value"];
-type SeverityValue  = typeof SEVERITIES[number]["value"];
+type CategoryValue = typeof CATEGORIES[number]["value"];
+type SeverityValue = typeof SEVERITIES[number]["value"];
 
 export default function BugPage() {
   const { dictionary: d } = useLanguage();
   const toast = useToast();
+  const { theme } = useSector();
 
-  const [category, setCategory]     = useState<CategoryValue | "">("");
-  const [severity, setSeverity]     = useState<SeverityValue | "">("");
-  const [title, setTitle]           = useState("");
+  const [category, setCategory]       = useState<CategoryValue | "">("");
+  const [severity, setSeverity]       = useState<SeverityValue | "">("");
+  const [title, setTitle]             = useState("");
   const [description, setDescription] = useState("");
-  const [saving, setSaving]         = useState(false);
-  const [submitted, setSubmitted]   = useState(false);
+  const [saving, setSaving]           = useState(false);
+  const [submitted, setSubmitted]     = useState(false);
 
   const canSubmit =
     category !== "" &&
@@ -72,8 +74,11 @@ export default function BugPage() {
   if (submitted) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 animate-fade-in">
-        <div className="w-16 h-16 rounded-full bg-[#25D366]/10 flex items-center justify-center mb-6">
-          <CheckCircle className="w-8 h-8 text-[#25D366]" />
+        <div
+          className="w-16 h-16 rounded-full flex items-center justify-center mb-6"
+          style={{ backgroundColor: `${theme.primary}18` }}
+        >
+          <CheckCircle className="w-8 h-8" style={{ color: theme.primary }} />
         </div>
         <h2 className="text-xl font-black text-[var(--text)] mb-2">
           {d.bug?.successTitle ?? "Signalement reçu !"}
@@ -81,7 +86,11 @@ export default function BugPage() {
         <p className="text-sm text-[var(--text-muted)] max-w-sm">
           {d.bug?.successBody ?? "Notre équipe technique a été notifiée. Nous reviendrons vers vous dès que possible."}
         </p>
-        <button onClick={reset} className="mt-6 text-sm text-[#075E54] font-semibold hover:underline">
+        <button
+          onClick={reset}
+          className="mt-6 text-sm font-semibold hover:underline"
+          style={{ color: theme.primary }}
+        >
           {d.bug?.another ?? "Signaler un autre problème"}
         </button>
       </div>
@@ -112,9 +121,18 @@ export default function BugPage() {
                 className={cn(
                   "p-3 rounded-xl border text-sm text-left transition-all",
                   category === cat.value
-                    ? "border-[#075E54] bg-[#075E54]/5 text-[#075E54] font-semibold"
-                    : "border-[var(--border)] text-[var(--text-muted)] hover:border-[#075E54]/40"
+                    ? "font-semibold"
+                    : "border-[var(--border)] text-[var(--text-muted)]"
                 )}
+                style={
+                  category === cat.value
+                    ? {
+                        borderColor: theme.primary,
+                        backgroundColor: `${theme.primary}10`,
+                        color: theme.primary,
+                      }
+                    : {}
+                }
               >
                 {cat.label}
               </button>
@@ -122,7 +140,7 @@ export default function BugPage() {
           </div>
         </div>
 
-        {/* Sévérité */}
+        {/* Sévérité — couleurs sémantiques conservées (vert=mineur, jaune=modéré, rouge=critique) */}
         <div className="space-y-2">
           <label className="text-sm font-bold text-[var(--text)]">
             {d.bug?.severityLabel ?? "Quel est l'impact sur votre activité ?"}
@@ -137,7 +155,7 @@ export default function BugPage() {
                   "flex-1 p-3 rounded-xl border text-sm text-center transition-all",
                   severity === sev.value
                     ? "font-semibold"
-                    : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--text-muted)]/40"
+                    : "border-[var(--border)] text-[var(--text-muted)]"
                 )}
                 style={
                   severity === sev.value

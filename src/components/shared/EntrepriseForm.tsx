@@ -21,6 +21,7 @@ interface EntrepriseFormProps {
     onSave: (e: React.FormEvent) => void;
     d: ReturnType<typeof useLanguage>["dictionary"];
     locale: string;
+    disableSecteur?: boolean;
 }
 
 export function EntrepriseForm({
@@ -35,6 +36,7 @@ export function EntrepriseForm({
     onSave,
     d,
     locale,
+    disableSecteur = false,
 }: EntrepriseFormProps) {
     const t = d.profile;
 
@@ -65,11 +67,11 @@ export function EntrepriseForm({
                     <div className="relative">
                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)] pointer-events-none" />
                         <select
-                            className="input-base appearance-none pr-10"
+                            className="input-base appearance-none pr-10 disabled:opacity-60 disabled:cursor-not-allowed"
                             value={selectedSecteurId}
                             onChange={e => setSelectedSecteurId(e.target.value)}
-                            disabled={loadingSecteurs}
-                        >
+                            disabled={loadingSecteurs || disableSecteur}
+                            >
                             <option value="">
                                 {loadingSecteurs ? "Chargement..." : "— Sélectionner un secteur —"}
                             </option>

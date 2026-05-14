@@ -1,4 +1,4 @@
-// src/app/pme/billing/components/TopUpModal.tsx
+// src/app/(dashboard)/billing/components/TopUpModal.tsx
 "use client";
 import { useState } from "react";
 import { createPortal } from "react-dom";
@@ -9,6 +9,7 @@ import {
 import { cn, formatCurrency } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/components/ui/Toast";
+import { useSector } from "@/hooks/useSector";
 import { billingRepository } from "@/repositories";
 import type { Wallet as WalletType } from "@/types/api";
 
@@ -16,7 +17,7 @@ interface TopUpModalProps {
   wallet: WalletType;
   onClose: () => void;
   onSuccess: () => void;
-  setPollingTxnId: (id: string) => void;
+  setPollingTxnId?: (id: string) => void;
 }
 
 type Tab = "code" | "mobile";
@@ -34,6 +35,7 @@ export function TopUpModal({ wallet, onClose, onSuccess }: TopUpModalProps) {
   const { dictionary: d } = useLanguage();
   const t = d.billing;
   const toast = useToast();
+  const { theme } = useSector();
 
   const [tab, setTab]         = useState<Tab>("code");
   const [code, setCode]       = useState("");
@@ -69,7 +71,7 @@ export function TopUpModal({ wallet, onClose, onSuccess }: TopUpModalProps) {
             <h2 className="text-lg font-black text-[var(--text)]">{t.topUpModalTitle}</h2>
             <p className="text-xs text-[var(--text-muted)] mt-0.5">
               {t.topUpCurrentBalance}{" "}
-              <span className="font-bold text-[#075E54]">
+              <span className="font-bold" style={{ color: theme.primary }}>
                 {formatCurrency(wallet.solde)} {wallet.devise}
               </span>
             </p>
@@ -88,9 +90,10 @@ export function TopUpModal({ wallet, onClose, onSuccess }: TopUpModalProps) {
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition-colors",
                 tab === tabKey
-                  ? "border-b-2 border-[#075E54] text-[#075E54]"
+                  ? "border-b-2 text-[var(--text)]"
                   : "text-[var(--text-muted)] hover:text-[var(--text)]"
               )}
+              style={tab === tabKey ? { borderColor: theme.primary, color: theme.primary } : {}}
             >
               {tabKey === "code"
                 ? <><QrCode className="w-4 h-4" />{t.tabCode}</>
@@ -108,11 +111,14 @@ export function TopUpModal({ wallet, onClose, onSuccess }: TopUpModalProps) {
             <div className="space-y-5">
               {success ? (
                 <div className="flex flex-col items-center text-center py-4 space-y-4">
-                  <div className="w-14 h-14 rounded-full bg-[#25D366]/10 flex items-center justify-center">
-                    <CheckCircle2 className="w-7 h-7 text-[#25D366]" />
+                  <div
+                    className="w-14 h-14 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: `${theme.primary}18` }}
+                  >
+                    <CheckCircle2 className="w-7 h-7" style={{ color: theme.primary }} />
                   </div>
                   <div>
-                    <p className="text-xl font-black text-[#075E54]">
+                    <p className="text-xl font-black" style={{ color: theme.primary }}>
                       +{formatCurrency(Number(success.montant))} {success.devise}
                     </p>
                     <p className="text-sm text-[var(--text-muted)] mt-1">
@@ -128,13 +134,23 @@ export function TopUpModal({ wallet, onClose, onSuccess }: TopUpModalProps) {
                 <form onSubmit={handleApplyCode} className="space-y-5">
 
                   {/* Explication */}
-                  <div className="flex items-start gap-3 p-4 rounded-xl bg-[#075E54]/5 border border-[#075E54]/20">
-                    <Info className="w-4 h-4 text-[#075E54] mt-0.5 flex-shrink-0" />
+                  <div
+                    className="flex items-start gap-3 p-4 rounded-xl border"
+                    style={{ backgroundColor: `${theme.primary}08`, borderColor: `${theme.primary}30` }}
+                  >
+                    <Info className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: theme.primary }} />
                     <div className="text-xs text-[var(--text-muted)] leading-relaxed space-y-1">
                       <p className="font-semibold text-[var(--text)]">{t.codeHowToTitle}</p>
                       <p>{t.codeHowToDesc}</p>
-                      {/* Lien externe — <a> correct ici car URL externe (WhatsApp) */}
-                      <a href={AGT_WHATSAPP} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[#075E54] font-semibold hover:underline mt-1">{t.codeContactBtn} <ArrowRight className="w-3 h-3" /></a>
+                      <a
+                        href={AGT_WHATSAPP}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 font-semibold hover:underline mt-1"
+                        style={{ color: theme.primary }}
+                      >
+                        {t.codeContactBtn} <ArrowRight className="w-3 h-3" />
+                      </a>
                     </div>
                   </div>
 
@@ -154,9 +170,9 @@ export function TopUpModal({ wallet, onClose, onSuccess }: TopUpModalProps) {
                     <p className="text-[11px] text-[var(--text-muted)] text-center">{t.codeHint}</p>
                   </div>
 
-                  {/* Sécurité */}
+                  {/* Sécurité — ShieldCheck garde un vert sémantique (validation/sécurité) */}
                   <div className="flex items-start gap-3 p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)]">
-                    <ShieldCheck className="w-4 h-4 text-[#25D366] mt-0.5 flex-shrink-0" />
+                    <ShieldCheck className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
                     <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">{t.codeSecurityMsg}</p>
                   </div>
 
@@ -180,7 +196,7 @@ export function TopUpModal({ wallet, onClose, onSuccess }: TopUpModalProps) {
             </div>
           )}
 
-          {/* ── Onglet Mobile Money ── */}
+          {/* ── Onglet Mobile Money — couleurs brand opérateurs conservées ── */}
           {tab === "mobile" && (
             <div className="space-y-5">
               <div className="flex flex-col items-center text-center py-6 space-y-4">
@@ -206,7 +222,11 @@ export function TopUpModal({ wallet, onClose, onSuccess }: TopUpModalProps) {
 
                 <p className="text-xs text-[var(--text-muted)]">
                   {t.mobileSoonRedirect}{" "}
-                  <button onClick={() => setTab("code")} className="text-[#075E54] font-semibold hover:underline">
+                  <button
+                    onClick={() => setTab("code")}
+                    className="font-semibold hover:underline"
+                    style={{ color: theme.primary }}
+                  >
                     {t.mobileSoonRedirectLink}
                   </button>
                 </p>

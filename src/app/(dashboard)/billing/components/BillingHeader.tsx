@@ -5,6 +5,7 @@ import { Badge, UsageBar } from "@/components/ui";
 import { formatCurrency } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { Subscription, Wallet as WalletType } from "@/types/api";
+import { useSector } from "@/hooks/useSector"
 
 interface BillingHeaderProps {
   wallet: WalletType | null;
@@ -35,6 +36,7 @@ function isIncluded(limite: number | null | undefined): boolean {
 }
 
 export function BillingHeader({ wallet, sub, onTopUp }: BillingHeaderProps) {
+  const { theme } = useSector();
   const { dictionary: d } = useLanguage();
   const t = d.billing;
 
@@ -52,15 +54,16 @@ export function BillingHeader({ wallet, sub, onTopUp }: BillingHeaderProps) {
       {/* Wallet */}
       <div className="card p-6 flex flex-col gap-4">
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-xl bg-[#075E54]/10 flex items-center justify-center">
-            <Wallet className="w-4 h-4 text-[#075E54]" />
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+            style={{ backgroundColor: `${theme.primary}18` }}>
+            <Wallet className="w-4 h-4" style={{ color: theme.primary }} />
           </div>
           <p className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)]">
             {t.walletBalance}
           </p>
         </div>
         <div>
-          <p className="text-4xl font-black text-[#075E54]">
+          <p className="text-4xl font-black" style={{ color: theme.primary }}>
             {wallet ? formatCurrency(wallet.solde) : "—"}
           </p>
           <p className="text-xs text-[var(--text-muted)] mt-1">

@@ -46,20 +46,22 @@
     @apply rounded-2xl border bg-[var(--bg-card)] border-[var(--border)];
     box-shadow: var(--shadow);
   }
-  .input-base {
-    @apply w-full px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]
-           text-sm outline-none transition-all placeholder:text-[var(--text-muted)]
-           focus:border-[#25D366] focus:ring-2 focus:ring-[#25D366]/10;
-  }
-  .label-base {
-    @apply block text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1.5;
-  }
-  .btn-primary {
-    @apply px-6 py-2.5 bg-[#075E54] text-white rounded-xl text-sm font-semibold
-           hover:bg-[#128C7E] transition-all shadow-sm
-           disabled:opacity-60 disabled:cursor-not-allowed
-           flex items-center gap-2;
-  }
+.btn-primary {
+  @apply px-6 py-2.5 text-white rounded-xl text-sm font-semibold
+         hover:brightness-90 transition-all shadow-sm
+         disabled:opacity-60 disabled:cursor-not-allowed
+         flex items-center gap-2;
+  background-color: var(--color-primary);
+}
+
+.input-base {
+  @apply w-full px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]
+         text-sm outline-none transition-all placeholder:text-[var(--text-muted)];
+}
+.input-base:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
   .btn-ghost {
     @apply px-4 py-2 rounded-xl text-sm font-medium text-[var(--text-muted)]
            hover:bg-[var(--bg)] transition-colors;
