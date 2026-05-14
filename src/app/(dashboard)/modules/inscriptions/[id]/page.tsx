@@ -93,8 +93,8 @@ export default function InscriptionDetailPage() {
     return (
         <div className="space-y-6 max-w-2xl mx-auto">
             <PageHeader
-                title={inscription.contact_nom}
-                subtitle={inscription.contact_phone}
+                title={inscription.contact_nom ?? inscription.filiere}
+                subtitle={inscription.contact_phone ?? ""}
                 onBack={() => router.back()}
             />
 

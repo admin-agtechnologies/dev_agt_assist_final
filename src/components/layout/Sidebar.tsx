@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, MessageSquare, Users,
+  LayoutDashboard, Users,
   CreditCard, BookOpen, Bot,
   Sun, Moon, Globe, LogOut,
   HelpCircle, MessageCircle, Star, AlertTriangle,
@@ -41,8 +41,8 @@ export function Sidebar({ onClose }: Props) {
 
   const STATIC_ITEMS = [
     { href: DASHBOARD_ROUTES.home,          icon: LayoutDashboard, label: d.nav.dashboard },
-    { href: DASHBOARD_ROUTES.conversations, icon: MessageSquare,   label: d.nav.conversations },
-    { href: DASHBOARD_ROUTES.contacts,      icon: Users,           label: d.nav.contacts },
+    // { href: DASHBOARD_ROUTES.conversations, icon: MessageSquare,   label: d.nav.conversations },
+    { href: DASHBOARD_ROUTES.contacts, icon: Users, label: locale === "fr" ? "Mes Clients" : "My Clients" },
     { href: DASHBOARD_ROUTES.bots,          icon: Bot,             label: d.nav.bots },
     { href: DASHBOARD_ROUTES.knowledge,     icon: BookOpen,        label: d.nav.knowledge },
     { href: DASHBOARD_ROUTES.billing,       icon: CreditCard,      label: d.nav.billing },
