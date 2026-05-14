@@ -17,35 +17,35 @@
 
 ## 0.1 Audit Git & repo
 
-- [ ] Repo `dev_agt_assist_final` à jour sur GitHub
-- [ ] Branche `main` existe et stable
-- [ ] Branche `develop` existe (créer si absente : `git checkout -b develop main && git push -u origin develop`)
-- [ ] `.gitignore` exclut `.env`, `.env.local`, `.env.*.local`, `node_modules`, `.next`
-- [ ] **Vérification secrets fuités** : `git log --all -p | grep -iE "GOCSPX|client_secret|sk_live"` → aucun résultat sensible
-- [ ] Si secrets commités historiquement : rotation immédiate côté Google + nouvelle paire de clés
+- [x] Repo `dev_agt_assist_final` à jour sur GitHub
+- [x] Branche `main` existe et stable
+- [x] Branche `develop` existe (créer si absente : `git checkout -b develop main && git push -u origin develop`)
+- [x] `.gitignore` exclut `.env`, `.env.local`, `.env.*.local`, `node_modules`, `.next`
+- [x] **Vérification secrets fuités** : `git log --all -p | grep -iE "GOCSPX|client_secret|sk_live"` → aucun résultat sensible
+- [x] Si secrets commités historiquement : rotation immédiate côté Google + nouvelle paire de clés
 
 ## 0.2 Nettoyage des fichiers `.env.{secteur}` obsolètes
 
 > **Constat S18 :** ton `package.json` injecte `NEXT_PUBLIC_SECTOR` via `cross-env` directement dans chaque script `dev:{secteur}`. Les 8 fichiers `.env.{secteur}` à la racine ne sont **jamais lus** par Next.js (qui ne lit que `.env.local`). Ils créent de la confusion et risquent de leaker des credentials.
 
-- [ ] Lister les `.env.*` actuels : `.env.banking`, `.env.clinical`, `.env.custom`, `.env.ecommerce`, `.env.hotel`, `.env.pme`, `.env.public`, `.env.restaurant`, `.env.school`, `.env.transport`
-- [ ] Vérifier que chacun ne contient **rien d'unique** par rapport à `.env.local` (juste `NEXT_PUBLIC_SECTOR=xxx` qui est déjà géré par `cross-env`)
-- [ ] **Supprimer** ces 8 fichiers du repo :
+- [x] Lister les `.env.*` actuels : `.env.banking`, `.env.clinical`, `.env.custom`, `.env.ecommerce`, `.env.hotel`, `.env.pme`, `.env.public`, `.env.restaurant`, `.env.school`, `.env.transport`
+- [x] Vérifier que chacun ne contient **rien d'unique** par rapport à `.env.local` (juste `NEXT_PUBLIC_SECTOR=xxx` qui est déjà géré par `cross-env`)
+- [x] **Supprimer** ces 8 fichiers du repo :
   ```bash
   git rm .env.banking .env.clinical .env.custom .env.ecommerce \
          .env.hotel .env.pme .env.public .env.restaurant \
          .env.school .env.transport
   git commit -m "chore: remove obsolete per-sector .env files (sector injected via cross-env)"
   ```
-- [ ] ⚠️ **Avant suppression**, vérifier qu'aucun script ou code ne lit ces fichiers (grep `.env.pme` etc. dans le code)
-- [ ] Si certains fichiers contiennent des secrets uniques : extraire d'abord, puis supprimer
+- [x] ⚠️ **Avant suppression**, vérifier qu'aucun script ou code ne lit ces fichiers (grep `.env.pme` etc. dans le code)
+- [x] Si certains fichiers contiennent des secrets uniques : extraire d'abord, puis supprimer
 
 ## 0.3 Nettoyage `.env.local`
 
-- [ ] Retirer la double-déclaration `NEXT_PUBLIC_API_URL` (tu as dit que tu allais commenter celle en `:8011`)
-- [ ] Vérifier qu'il n'y a **aucun trailing slash** sur les URLs : `https://dev-api.agt-bot.com` (pas `/`)
-- [ ] Vérifier que `.env.local` est bien dans `.gitignore` (jamais commité)
-- [ ] Créer un `.env.example` (ce, lui, commité) avec les clés sans valeurs sensibles :
+- [x] Retirer la double-déclaration `NEXT_PUBLIC_API_URL` (tu as dit que tu allais commenter celle en `:8011`)
+- [x] Vérifier qu'il n'y a **aucun trailing slash** sur les URLs : `https://dev-api.agt-bot.com` (pas `/`)
+- [x] Vérifier que `.env.local` est bien dans `.gitignore` (jamais commité)
+- [x] Créer un `.env.example` (ce, lui, commité) avec les clés sans valeurs sensibles :
   ```
   NEXT_PUBLIC_API_URL=
   NEXT_PUBLIC_GOOGLE_CLIENT_ID=
@@ -55,8 +55,8 @@
 
 > ⚠️ **Ne pas déployer sans ça.** Aujourd'hui `src/lib/constants.ts → SECTOR_URLS` contient des `http://localhost:300x` hard-codés. Le hub déployé sur Vercel enverra donc les users sur `localhost`. 100% cassé.
 
-- [ ] Lire `src/lib/constants.ts` (section `SECTOR_URLS`) et `src/lib/sector-redirect.ts`
-- [ ] **Proposition technique** (à valider avant codage) :
+- [x] Lire `src/lib/constants.ts` (section `SECTOR_URLS`) et `src/lib/sector-redirect.ts`
+- [x] **Proposition technique** (à valider avant codage) :
   - Introduire 2 vars d'env :
     - `NEXT_PUBLIC_DOMAIN_BASE` (ex: `agt-bot.com` en prod, vide en dev)
     - `NEXT_PUBLIC_USE_SUBDOMAINS` (`true` en prod, `false` en dev)
@@ -64,10 +64,10 @@
     - Si `USE_SUBDOMAINS=false` → lookup table localhost (conservée en dev uniquement)
     - Si `USE_SUBDOMAINS=true` → `https://{slug-mapping}.{DOMAIN_BASE}` (avec mapping `ecommerce → e-commerce`, `transport → travell` etc.)
   - Backward compat : `SECTOR_URLS` reste exporté pour le dev mais marqué `@deprecated`, ou remplacé totalement par la fonction
-- [ ] Aligner `src/lib/sector-redirect.ts` sur la nouvelle logique
-- [ ] Tester local : `npm run dev:restaurant` → la card "Restaurant" sur le hub redirige bien vers `localhost:3001`
-- [ ] Tester local : forcer `NEXT_PUBLIC_USE_SUBDOMAINS=true` + `NEXT_PUBLIC_DOMAIN_BASE=agt-bot.com` → la fonction génère bien `https://restaurant.agt-bot.com`
-- [ ] Commit sur `develop`, jamais directement sur `main`
+- [x] Aligner `src/lib/sector-redirect.ts` sur la nouvelle logique
+- [x] Tester local : `npm run dev:restaurant` → la card "Restaurant" sur le hub redirige bien vers `localhost:3001`
+- [x] Tester local : forcer `NEXT_PUBLIC_USE_SUBDOMAINS=true` + `NEXT_PUBLIC_DOMAIN_BASE=agt-bot.com` → la fonction génère bien `https://restaurant.agt-bot.com`
+- [x] Commit sur `develop`, jamais directement sur `main`
 
 ## 0.5 Builds locaux — la vérité avant Vercel
 
