@@ -12,8 +12,8 @@ import {
   Hotel, Landmark, Utensils, Plane, Sparkles, ArrowRight, CheckCircle2,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { SECTORS }     from "./LandingData";
-import { SECTOR_URLS } from "@/lib/constants";
+import { SECTORS } from "./LandingData";
+import { getSectorUrl } from "@/lib/sector-urls";
 
 const SECTOR_ICONS: Record<string, React.ElementType> = {
   pme: Briefcase, banking: Building2, clinical: Heart,
@@ -21,15 +21,15 @@ const SECTOR_ICONS: Record<string, React.ElementType> = {
   public: Landmark, restaurant: Utensils, transport: Plane, custom: Sparkles,
 };
 
-function getSectorHref(id: string) {
-  return SECTOR_URLS[id] ?? "/onboarding";
-}
+// `getSectorHref` est juste un alias de `getSectorUrl` — on garde le nom local
+// pour ne pas casser les appels existants dans le JSX.
+const getSectorHref = getSectorUrl;
 
 export function SectorsSection() {
-  const { locale }          = useLanguage();
+  const { locale } = useLanguage();
   const [activeId, setActive] = useState(SECTORS[0].id);
-  const active              = SECTORS.find(s => s.id === activeId) ?? SECTORS[0];
-  const Icon                = SECTOR_ICONS[activeId];
+  const active = SECTORS.find(s => s.id === activeId) ?? SECTORS[0];
+  const Icon = SECTOR_ICONS[activeId];
 
   return (
     <section id="secteurs" className="relative overflow-hidden py-24 px-4">
@@ -74,7 +74,7 @@ export function SectorsSection() {
           {/* ── Liste secteurs (2/5) ────────────────────────────────────────── */}
           <div className="lg:col-span-2 flex flex-col gap-1.5">
             {SECTORS.map((s) => {
-              const SIcon    = SECTOR_ICONS[s.id];
+              const SIcon = SECTOR_ICONS[s.id];
               const isActive = s.id === activeId;
               return (
                 <button
@@ -82,9 +82,9 @@ export function SectorsSection() {
                   onClick={() => setActive(s.id)}
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left transition-all duration-300 group"
                   style={{
-                    background:   isActive ? `${s.primary}18`    : "transparent",
-                    border:       `1px solid ${isActive ? s.primary + "40" : "var(--border)"}`,
-                    transform:    isActive ? "translateX(4px)"   : "none",
+                    background: isActive ? `${s.primary}18` : "transparent",
+                    border: `1px solid ${isActive ? s.primary + "40" : "var(--border)"}`,
+                    transform: isActive ? "translateX(4px)" : "none",
                   }}
                 >
                   {/* Icône */}
@@ -114,7 +114,7 @@ export function SectorsSection() {
                   <ArrowRight
                     className="w-4 h-4 flex-shrink-0 transition-all duration-300"
                     style={{
-                      color:   isActive ? s.primary : "transparent",
+                      color: isActive ? s.primary : "transparent",
                       opacity: isActive ? 1 : 0,
                     }}
                   />
@@ -183,7 +183,7 @@ export function SectorsSection() {
                 className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl text-white font-black text-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
                 style={{
                   background: `linear-gradient(135deg, ${active.primary}, ${active.accent}CC)`,
-                  boxShadow:  `0 8px 24px ${active.primary}40`,
+                  boxShadow: `0 8px 24px ${active.primary}40`,
                 }}
               >
                 {locale === "fr"

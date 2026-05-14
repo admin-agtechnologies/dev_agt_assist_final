@@ -11,10 +11,15 @@
 //   sinon → /dashboard (comportement S5).
 //   La page /auth-handoff écrit le token dans le localStorage de la NOUVELLE
 //   origine puis route vers le dashboard. Filet de sécurité B06 résiduel.
+//
+// Session déploiement Vercel — refactor :
+//   La logique dev/prod est maintenant centralisée dans `getSectorUrl()`
+//   (`@/lib/sector-urls`). Ce fichier ne lit plus `SECTOR_URLS` ni
+//   `NEXT_PUBLIC_FRONTEND_BASE` directement.
 // ============================================================
 
-import { SECTOR_URLS } from "@/lib/constants";
 import { isValidSector } from "@/lib/sector-config";
+import { getSectorUrl } from "@/lib/sector-urls";
 
 export interface AuthTokens {
   access: string;
@@ -45,9 +50,12 @@ export function redirectAfterAuth(
   // Déjà sur le bon secteur → pas de redirect cross-domain
   if (currentSector === sectorSlug) return false;
 
-  // Construire l'URL cible
-  const sectorBaseUrl = getSectorBaseUrl(sectorSlug);
-  if (!sectorBaseUrl) return false;
+  // Construire l'URL cible via la source de vérité unique
+  const sectorBaseUrl = getSectorUrl(sectorSlug);
+
+  // Si getSectorUrl retourne un chemin relatif (slug inconnu, custom),
+  // ce n'est pas une URL cross-domain → on n'effectue pas de redirect
+  if (!sectorBaseUrl.startsWith("http")) return false;
 
   // Éviter redirect infinie (déjà sur la cible)
   if (typeof window !== "undefined" && window.location.origin === sectorBaseUrl) {
@@ -74,26 +82,4 @@ export function redirectAfterAuth(
   }
 
   return false;
-}
-
-/**
- * Retourne l'URL de base du frontend pour un secteur donné.
- * Prod  : https://restaurant.agt-bot.com (depuis NEXT_PUBLIC_FRONTEND_BASE)
- * Dev   : http://localhost:3001 (depuis SECTOR_URLS dans constants.ts)
- */
-function getSectorBaseUrl(sectorSlug: string): string | null {
-  // Prod : variable d'env baked par déploiement
-  const prodBase = process.env.NEXT_PUBLIC_FRONTEND_BASE;
-  if (prodBase) {
-    try {
-      const url = new URL(prodBase);
-      return `${url.protocol}//${sectorSlug}.${url.host}`;
-    } catch { /* ignore */ }
-  }
-
-  // Dev : SECTOR_URLS depuis constants.ts
-  const devUrl = (SECTOR_URLS as Record<string, string>)[sectorSlug];
-  if (devUrl) return devUrl;
-
-  return null;
 }

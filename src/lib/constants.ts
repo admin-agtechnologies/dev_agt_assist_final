@@ -51,7 +51,7 @@ export const WELCOME_BONUS_XAF = 10_000;
 // ── Plans tarifaires ─────────────────────────────────────────────────────────
 // IMPORTANT : Le plan Starter est à 10 000 XAF (non gratuit).
 // Le bonus wallet de bienvenue (10 000 XAF) couvre exactement ce premier mois.
-export const PLANS_CONFIG =[
+export const PLANS_CONFIG = [
   {
     slug: "starter",
     name: "Starter",
@@ -104,7 +104,7 @@ export const PLANS_CONFIG =[
     appointments_limit: 500,
     emails_limit: 2_000,
     highlight: false,
-    features_keys:[
+    features_keys: [
       "plans.features.whatsapp",
       "plans.features.voiceBot",
       "plans.features.appointments500",
@@ -126,7 +126,7 @@ export const PLANS_CONFIG =[
     appointments_limit: -1,
     emails_limit: -1,
     highlight: false,
-    features_keys:[
+    features_keys: [
       "plans.features.unlimited",
       "plans.features.whatsapp",
       "plans.features.voiceBot",
@@ -141,22 +141,14 @@ export const PLANS_CONFIG =[
 export type PlanSlug = (typeof PLANS_CONFIG)[number]["slug"];
 
 // ── Sous-domaines sectoriels ─────────────────────────────────────────────────
-// ⚠️  EN LOCAL  : remplace les valeurs par tes ports localhost
-// ⚠️  EN PROD   : remplace par les vrais sous-domaines agt-bot.com
-// Un seul endroit à modifier pour toute l'app.
-// ⚠️  Doit rester synchronisé avec apps/auth_bridge/_email_urls.py SECTOR_DEV_BASES
-//     côté backend (pour les liens d'email).
-export const SECTOR_URLS: Record<string, string> = {
-  pme:          "http://localhost:3008", // → https://pme.agt-bot.com
-  banking:      "http://localhost:3002", // → https://banking.agt-bot.com
-  clinical:     "http://localhost:3003", // → https://clinical.agt-bot.com
-  school:       "http://localhost:3004", // → https://school.agt-bot.com
-  ecommerce:    "http://localhost:3005", // → https://e-commerce.agt-bot.com
-  hotel:        "http://localhost:3006", // → https://hotel.agt-bot.com
-  public:       "http://localhost:3007", // → https://public.agt-bot.com
-  restaurant:   "http://localhost:3001", // → https://restaurant.agt-bot.com
-  transport:    "http://localhost:3009", // → https://transport.agt-bot.com
-  personnalise: "/onboarding",           // → pas de sous-domaine, onboarding direct
-} as const;
-
-export type SectorKey = keyof typeof SECTOR_URLS;
+// ⚠️ DEPRECATED : `SECTOR_URLS` a été remplacé par `getSectorUrl(slug)` dans
+//    `@/lib/sector-urls` (refactor pré-déploiement Vercel).
+//
+// Pour obtenir l'URL d'un secteur :
+//   ❌ AVANT : SECTOR_URLS[slug]
+//   ✅ APRÈS : getSectorUrl(slug)
+//
+// La nouvelle fonction lit `NEXT_PUBLIC_FRONTEND_BASE` :
+//   - Dev local → fallback `http://localhost:{port}`
+//   - Prod Vercel → construit `https://{slug}.agt-bot.com` dynamiquement
+// ─────────────────────────────────────────────────────────────────────────────
