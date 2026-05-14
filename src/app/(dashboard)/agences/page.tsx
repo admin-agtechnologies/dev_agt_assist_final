@@ -9,7 +9,7 @@ import { agencesRepository } from "@/repositories/agences.repository";
 import { AgenceForm } from "@/components/agences/AgenceForm";
 import { QuotaWarning } from "@/components/agences/QuotaWarning";
 import { LoadingPage } from "@/components/data/LoadingSpinner";
-import type { Agence, CreateAgencePayload } from "@/types/api/agence.types";
+import type { AgenceKnowledge, CreateAgencePayload } from "@/types/api/agence.types";
 
 const LABELS = {
   fr: {
@@ -37,7 +37,7 @@ export default function AgencesPage() {
   const { user } = useAuth();
   const t = LABELS[locale];
 
-  const [agences, setAgences] = useState<Agence[]>([]);
+const [agences, setAgences] = useState<AgenceKnowledge[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
 
@@ -47,7 +47,7 @@ export default function AgencesPage() {
   const load = useCallback(async () => {
     try {
       const res = await agencesRepository.getList();
-      setAgences(res.results);
+       setAgences(res);
     } catch {
       setAgences([]);
     } finally {
@@ -101,7 +101,7 @@ export default function AgencesPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <p className="text-sm font-semibold text-[var(--text)] truncate">{agence.nom}</p>
-                  {agence.is_siege && (
+                  {agence.est_siege && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] font-medium flex-shrink-0">
                       {t.siege}
                     </span>
@@ -111,17 +111,17 @@ export default function AgencesPage() {
                   <p className="text-xs text-[var(--text-muted)]">{agence.ville}</p>
                 )}
                 <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                  {t.services(agence.services_count)}
+                  {agence.est_siege ? "Siège" : ""}
                 </p>
               </div>
               <span
                 className={`text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${
-                  agence.is_active
+                 agence.est_active
                     ? "bg-green-100 text-green-700"
                     : "bg-gray-100 text-gray-500"
                 }`}
               >
-                {agence.is_active ? t.active : t.inactive}
+                {agence.est_active ? t.active : t.inactive}
               </span>
             </div>
           ))}

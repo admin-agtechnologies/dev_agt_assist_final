@@ -93,8 +93,8 @@ export default function DossierDetailPage() {
     return (
         <div className="space-y-6 max-w-2xl mx-auto">
             <PageHeader
-                title={dossier.contact_nom}
-                subtitle={dossier.type_procedure}
+                title={dossier.contact_nom ?? dossier.titre}
+                subtitle={dossier.type_procedure ?? ""}
                 onBack={() => router.back()}
             />
 

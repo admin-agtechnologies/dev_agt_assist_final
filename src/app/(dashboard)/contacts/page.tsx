@@ -1,113 +1,86 @@
-"use client";
 // src/app/(dashboard)/contacts/page.tsx
-import { useState, useEffect, useCallback } from "react";
+"use client";
+import { useState, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useActiveFeatures } from "@/hooks/useFeatures";
-import { getFeatureLabel } from "@/lib/sector-labels";
-import { ContactCard } from "@/components/contacts/ContactCard";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { Spinner } from "@/components/ui";
-import type { Contact, ContactStatut, ContactFilters } from "@/types/api/crm.types";
-import { api } from "@/lib/api-client";
-import type { PaginatedResponse } from "@/types/api";
-
-const STATUTS: { value: ContactStatut | ""; label: { fr: string; en: string } }[] = [
-  { value: "",         label: { fr: "Tous",      en: "All" } },
-  { value: "prospect", label: { fr: "Prospects", en: "Prospects" } },
-  { value: "contact",  label: { fr: "Contacts",  en: "Contacts" } },
-  { value: "client",   label: { fr: "Clients",   en: "Clients" } },
-  { value: "inactif",  label: { fr: "Inactifs",  en: "Inactive" } },
-];
-
-// Convertit un objet filtres en Record<string, string> pour api.get
-const p = (f?: object): Record<string, string> =>
-  Object.fromEntries(
-    Object.entries(f ?? {})
-      .filter(([, v]) => v !== undefined && v !== "" && v !== null)
-      .map(([k, v]) => [k, String(v)]),
-  );
+import { useSector } from "@/hooks/useSector";
+import { Users } from "lucide-react";
+import type { Contact } from "@/types/api/crm.types";
+import { ContactList }  from "./_components/ContactList";
+import { ClientFiche }  from "./_components/fiche/ClientFiche";
 
 export default function ContactsPage() {
-  const { locale } = useLanguage();
-  const { features } = useActiveFeatures();
+  const { locale }     = useLanguage();
+  const { theme }      = useSector();
+  const [selected, setSelected] = useState<Contact | null>(null);
 
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [statut, setStatut] = useState<ContactStatut | "">("");
-  const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  const activeFeature = features.find(
-    (f) => ["conversion_prospects", "orientation_patient"].includes(f.slug) && f.is_active,
-  );
-  const pageTitle = activeFeature
-    ? getFeatureLabel(activeFeature.slug, locale).pageTitle
-    : locale === "fr" ? "Contacts" : "Contacts";
-
-  const load = useCallback(() => {
-    setLoading(true);
-    const filters: ContactFilters = {};
-    if (statut) filters.statut = statut;
-    if (search) filters.search = search;
-
-    api
-      .get("/api/v1/contacts/", { params: p(filters) })
-      .then((data: unknown) => {
-        const res = data as PaginatedResponse<Contact>;
-        setContacts(Array.isArray(data) ? (data as Contact[]) : res.results ?? []);
-      })
-      .catch(() => setContacts([]))
-      .finally(() => setLoading(false));
-  }, [statut, search]);
-
-  useEffect(() => {
-    const t = setTimeout(load, search ? 300 : 0);
-    return () => clearTimeout(t);
-  }, [load, search]);
+  const handleSelect = useCallback((c: Contact) => setSelected(c), []);
+  const handleClose  = useCallback(() => setSelected(null), []);
 
   return (
-    <div className="space-y-4 max-w-2xl mx-auto">
-      <PageHeader title={pageTitle} />
+    <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
+      {/* ── Colonne gauche — liste ─────────────────────────────────── */}
+      <div className={`
+        flex flex-col border-r border-[var(--border)] bg-[var(--bg-sidebar)]
+        transition-all duration-300 shrink-0
+        ${selected ? "hidden lg:flex lg:w-[380px]" : "w-full lg:w-[380px] flex"}
+      `}>
+        {/* Header liste */}
+        <div className="px-5 pt-5 pb-4 border-b border-[var(--border)]">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+                 style={{ background: `${theme.primary}15` }}>
+              <Users className="w-4 h-4" style={{ color: theme.primary }} />
+            </div>
+            <div>
+              <h1 className="text-base font-bold text-[var(--text)]">
+                {locale === "fr" ? "CRM Clients" : "Client CRM"}
+              </h1>
+              <p className="text-[11px] text-[var(--text-muted)]">
+                {locale === "fr" ? "Fiches · Conversations · Analyses" : "Profiles · Conversations · Analytics"}
+              </p>
+            </div>
+          </div>
+        </div>
 
-      <input
-        type="text"
-        placeholder={locale === "fr" ? "Rechercher un contact…" : "Search a contact…"}
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="input-base w-full"
-      />
-
-      <div className="flex gap-2 flex-wrap">
-        {STATUTS.map((s) => (
-          <button
-            key={s.value}
-            type="button"
-            onClick={() => setStatut(s.value)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-              statut === s.value
-                ? "bg-[var(--primary)] text-white border-[var(--primary)]"
-                : "bg-transparent text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)]"
-            }`}
-          >
-            {s.label[locale]}
-          </button>
-        ))}
+        <ContactList
+          locale={locale as "fr" | "en"}
+          theme={theme}
+          selectedId={selected?.id ?? null}
+          onSelectContact={handleSelect}
+        />
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center h-32"><Spinner /></div>
-      ) : contacts.length === 0 ? (
-        <div className="card p-12 text-center">
-          <p className="text-[var(--text-muted)] text-sm">
-            {locale === "fr" ? "Aucun contact trouvé" : "No contacts found"}
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {contacts.map((c) => (
-            <ContactCard key={c.id} contact={c} locale={locale} />
-          ))}
-        </div>
-      )}
+      {/* ── Colonne droite — fiche ─────────────────────────────────── */}
+      <div className={`
+        flex-1 overflow-hidden bg-[var(--bg)]
+        ${selected ? "flex flex-col" : "hidden lg:flex lg:flex-col"}
+      `}>
+        {selected ? (
+          <ClientFiche
+            contactId={selected.id}
+            locale={locale as "fr" | "en"}
+            theme={theme}
+            onClose={handleClose}
+          />
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-center px-8 gap-4">
+            <div className="w-20 h-20 rounded-3xl flex items-center justify-center"
+                 style={{ background: `${theme.primary}10` }}>
+              <Users className="w-9 h-9" style={{ color: theme.primary, opacity: 0.5 }} />
+            </div>
+            <div>
+              <p className="text-base font-semibold text-[var(--text)]">
+                {locale === "fr" ? "Sélectionnez un client" : "Select a client"}
+              </p>
+              <p className="text-xs text-[var(--text-muted)] mt-1">
+                {locale === "fr"
+                  ? "Cliquez sur un contact pour voir sa fiche complète"
+                  : "Click a contact to see the full profile"}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

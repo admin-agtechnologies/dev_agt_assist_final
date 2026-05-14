@@ -1,8 +1,8 @@
 ﻿// src/components/layout/Sidebar.config.ts
-// Mapping feature slug → route du module sectoriel
-// Utilisé par SidebarDynamicNav pour construire la navigation dynamique.
-// Règle : plusieurs features peuvent pointer vers la même route (ex: tous les
-// catalogues pointent vers /modules/catalogue). On dédoublonne côté composant.
+// DIFF — 1 ligne à changer :
+//   knowledge: "/faq"  →  knowledge: "/knowledge"
+//
+// Fichier complet ci-dessous (remplacer l'existant) :
 
 export const FEATURE_TO_ROUTE: Record<string, string> = {
   // Réservations
@@ -30,14 +30,13 @@ export const FEATURE_TO_ROUTE: Record<string, string> = {
   inscription_membre:   "/modules/inscriptions",
 
   // Dossiers
-  suivi_dossier:        "/modules/dossiers",
+  suivi_dossier: "/modules/dossiers",
 
   // Bots
-  chatbot_whatsapp:    "/bots",
-  agent_vocal:         "/bots",
+  chatbot_whatsapp: "/bots",
+  agent_vocal:      "/bots",
 };
 
-// Routes statiques du dashboard — toujours visibles, indépendantes des features
 export const DASHBOARD_ROUTES = {
   tutorial:      "/tutorial",
   help:          "/help",
@@ -47,9 +46,8 @@ export const DASHBOARD_ROUTES = {
   conversations: "/conversations",
   contacts:      "/contacts",
   bots:          "/bots",
-  knowledge:     "/faq",
+  knowledge:     "/knowledge",   // ← MODIFIÉ (était /faq)
   billing:       "/billing",
-  settings:      "/settings",
   profile:       "/profile",
   modules:       "/modules",
   welcome:       "/welcome",

@@ -14,6 +14,9 @@ export * from "./commandes.repository";
 export * from "./knowledge.repository";
 export * from "./public-features.repository";
 export * from "./agent.repository";
+export * from "./appointments.repository"; // horairesRepository + agendasRepository — S21
+export * from "./services.repository";     // servicesRepository — S21
+export * from "./rendezVous.repository";
 
 // Alias de compatibilité — billingRepository → billingActionsRepository
 export { billingActionsRepository as billingRepository } from "./commandes.repository";

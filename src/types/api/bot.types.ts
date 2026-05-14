@@ -1,36 +1,5 @@
-// src/types/api/bot.types.ts
-// Types Bot, Tenant, NumeroTelephone — anciens types conservés pour pages existantes
-
-export interface Tenant {
-  id: string;
-  auth_user_id: string;
-  name: string;
-  slug: string;
-  sector: string;
-  description: string;
-  whatsapp_number: string;
-  phone_number: string;
-  subscription_id: string | null;
-  wallet_id: string | null;
-  is_active: boolean;
-  created_at: string;
-}
-
-export type CreateTenantPayload = Omit<
-  Tenant,
-  'id' | 'created_at' | 'subscription_id' | 'wallet_id'
->;
-
-export interface TenantFilters {
-  search?: string;
-  is_active?: boolean;
-  sector?: string;
-  page?: number;
-  page_size?: number;
-}
-
-export type BotStatut = 'actif' | 'en_pause' | 'archive';
-export type BotType = 'whatsapp' | 'vocal';
+export type BotType   = "whatsapp" | "vocal";
+export type BotStatut = "actif" | "en_pause" | "archive";
 
 export interface Bot {
   id: string;
@@ -42,7 +11,12 @@ export interface Bot {
   nom: string;
   message_accueil: string;
   personnalite: string;
+  ton: string;
+  signature: string;
   langues: string[];
+  sections_actives: string[];
+  agences_ids: string[];
+  features_autorisees_slugs: string[];
   config_whatsapp: string | null;
   config_voice_ai: string | null;
   bot_paire: string | null;
@@ -50,6 +24,20 @@ export interface Bot {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface BotConfigPayload {
+  nom?: string;
+  ton?: string;
+  signature?: string;
+  personnalite?: string;
+  message_accueil?: string;
+  langues?: string[];
+  sections_actives?: string[];
+  agences_set?: string[];
+  features_set?: string[];
+  statut?: BotStatut;
+  is_active?: boolean;
 }
 
 export interface CreateBotPayload {
