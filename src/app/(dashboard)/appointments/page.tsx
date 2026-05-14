@@ -96,7 +96,7 @@ export default function AppointmentsPage() {
             >
               <Building2 className="w-4 h-4" />
               {ag.nom}
-              {ag.is_siege && (
+              {ag.est_siege && (
                 <span className="text-[9px] font-black bg-[#075E54]/15 text-[#075E54] px-1.5 py-0.5 rounded-full">
                   SIÈGE
                 </span>

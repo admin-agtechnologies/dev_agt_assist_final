@@ -351,3 +351,43 @@
   - `docs/cdc/cdc_crm_fiches_clients.md`
 - **Rapport :** `docs/reports/session_19_gabriel.md`
 ---
+## session_20_gabriel
+
+- **Type :** Génération + Debug — Knowledge Base V2 full-stack
+- **Date :** 2026-05-14
+- **Flux couverts :** F7 (Configuration métier — Knowledge Base V2 — backend validé ✅, frontend livré ⏳)
+- **Bugs corrigés :** Aucun pré-existant — session feature uniquement
+- **Bugs introduits :** BUG-S20-01 à BUG-S20-10 (voir rapport — majorité pré-existants révélés par tsc)
+- **Zones touchées :**
+  - `apps/knowledge/` (models, serializers, migrations/0003)
+  - `apps/tenants/` (models, serializers, migrations/0003)
+  - `apps/bots/` (models, serializers, migrations/0004)
+  - `src/types/api/agence.types.ts`
+  - `src/repositories/agences.repository.ts`
+  - `src/dictionaries/fr/knowledge.fr.ts`, `src/dictionaries/en/knowledge.en.ts`
+  - `src/app/(dashboard)/knowledge/` (nouveau — 7 fichiers)
+  - `src/app/(dashboard)/faq/page.tsx`
+  - `src/components/layout/Sidebar.config.ts`
+- **Fichiers créés :** 14 (3 migrations + 11 frontend)
+- **Fichiers modifiés :** 8
+- **Décisions majeures :** ProfilEntreprise = identité commune only ; Bot décentralisé (ton/signature/agences M2M/features M2M) ; AgenceKnowledge distinct de Agence existant
+- **Rapport :** `docs/reports/session_20_gabriel.md`
+---
+## session_22_gabriel
+
+- **Type :** Debug — Stabilisation build TypeScript (0 erreur tsc → build prod ✅)
+- **Date :** 2026-05-14
+- **Flux couverts :** Aucun flux nouveau — session stabilisation uniquement
+- **Bugs corrigés :** BUG-S20-01, BUG-S20-02, BUG-S20-03, BUG-S20-04, BUG-S20-05, BUG-S20-06, BUG-S20-07, BUG-S20-08, BUG-S20-10, BUG-S22-01 (noms champs AgenceKnowledge)
+- **Zones touchées :**
+  - `src/types/api/agent.types.ts` (restauré)
+  - `src/types/api/agence.types.ts` (types Knowledge V2 corrects)
+  - `src/repositories/` (2 nouveaux : appointments.repository.ts, services.repository.ts, index.ts mis à jour)
+  - `src/app/(dashboard)/agences/page.tsx`
+  - `src/app/(dashboard)/appointments/` (page.tsx, useAppointments.ts, RdvModal.tsx)
+  - `src/app/(dashboard)/knowledge/page.tsx`
+- **Fichiers créés :** `src/repositories/appointments.repository.ts`, `src/repositories/services.repository.ts`
+- **Fichiers modifiés :** 8
+- **Commit :** `3b77a6a`
+- **Rapport :** `docs/reports/session_22_gabriel.md`
+---
