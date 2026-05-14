@@ -8,14 +8,14 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/components/ui/Toast";
 import { Spinner } from "@/components/ui";
 import { cn } from "@/lib/utils";
-import type { Agence, Agenda, RendezVous, CreateRendezVousPayload } from "@/types/api";
+import type { Agence, Agenda, RendezVous, CreateRendezVousPayload, AgenceKnowledge } from "@/types/api";
 import { type AppointmentStatus } from "../types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface RdvModalProps {
   /** Toutes les agences de l'entreprise */
-  agences: Agence[];
+  agences: AgenceKnowledge[];
   /** Tous les agendas de l'entreprise — filtrés dynamiquement selon l'agence choisie */
   agendas: Agenda[];
   /** Agence pré-sélectionnée (celle active en haut de la page, ou "" si aucune) */
@@ -171,7 +171,7 @@ export function RdvModal({
               >
                 {agences.map((ag) => (
                   <option key={ag.id} value={ag.id}>
-                    {ag.nom}{ag.is_siege ? " (Siège)" : ""}
+                    {ag.nom}{ag.est_siege ? " (Siège)" : ""}
                   </option>
                 ))}
               </select>

@@ -1,10 +1,13 @@
 // src/types/api/agent.types.ts
 // Types pour l'app agent IA — endpoint /api/v1/agent/conversations/
 // Aligné sur apps/agent/serializers.py + views.py (session 14)
+// ⚠️ NE PAS exporter via le barrel types/api/index.ts
+//    (conversation.types.ts a déjà AIConversation — conflit barrel)
+//    → importer directement depuis "@/types/api/agent.types"
 
 export type AIMessageRole = "user" | "assistant" | "status";
 
-export type AIConversationStatut = "active" | "terminee" | "transferee"
+export type AIConversationStatut = "active" | "terminee" | "transferee";
 
 export interface AIMessage {
   id: string;
@@ -18,7 +21,7 @@ export interface AIConversation {
   id: string;
   agent: string;
   agence: string;
- contact: { id: string; nom: string; phone: string } | null;
+  contact: { id: string; nom: string; phone: string } | null;
   canal: "whatsapp" | "vocal" | "web";
   mode: "live" | "test";
   statut: AIConversationStatut;
@@ -26,10 +29,10 @@ export interface AIConversation {
   contexte: Record<string, unknown>;
   messages: AIMessage[];
   actions_declenchees?: Array<{
-  action_slug: string;
-  statut: "succes" | "echec";
-  created_at: string;
-}>;
+    action_slug: string;
+    statut: "succes" | "echec";
+    created_at: string;
+  }>;
   created_at: string;
   updated_at: string;
 }

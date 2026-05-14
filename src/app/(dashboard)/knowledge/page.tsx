@@ -1,66 +1,81 @@
-// src/app/pme/knowledge/page.tsx
+// src/app/(dashboard)/knowledge/page.tsx
 "use client";
-import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { SectionHeader } from "@/components/ui";
-import { cn } from "@/lib/utils";
-import { Building2, MapPin, BookOpen, Wrench } from "lucide-react";
-import { TabGeneral }   from "./components/TabGeneral";
-import { TabLocations } from "./components/TabLocations";
-import { TabFaq }       from "./components/TabFaq";
-import { TabServices }  from "./components/TabServices";
 
-type Tab = "general" | "locations" | "faq" | "services";
+import { useMemo, useState, useCallback } from "react";
+import { PageHeader }        from "@/components/ui/PageHeader";
+import { useLanguage }       from "@/contexts/LanguageContext";
+import { useActiveFeatures } from "@/hooks/useFeatures";
+import { KnowledgeTabs, type KnowledgeTab } from "./_components/KnowledgeTabs";
+import { EntrepriseTab } from "./_components/tabs/EntrepriseTab";
+import { AgencesTab }    from "./_components/tabs/AgencesTab";
+import { FaqTab }        from "./_components/tabs/FaqTab";
 
-export default function PmeKnowledgePage() {
-    const { user } = useAuth();
-    const { dictionary: d, locale } = useLanguage();
-    const t = d.knowledge;
-    const [activeTab, setActiveTab] = useState<Tab>("general");
+const ALL_TABS = [
+  { id: "entreprise",   always: true },
+  { id: "agences",      always: true },
+  { id: "faq",          feature: "faq" },
+  { id: "menu",         feature: "menu_digital" },
+  { id: "chambres",     feature: "reservation_chambre" },
+  { id: "catalogue",    features: ["catalogue_produits","catalogue_services","catalogue_trajets","catalogue_produits_financiers"] },
+  { id: "inscriptions", feature: "inscription_admission" },
+  { id: "medical",      feature: "orientation_patient" },
+  { id: "citoyens",     feature: "orientation_citoyens" },
+] as const;
 
-    const entrepriseId = user?.entreprise?.id ?? "";
+type TabId = (typeof ALL_TABS)[number]["id"];
 
-    const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
-        { id: "general",   label: t.tabGeneral,  icon: Building2 },
-        { id: "locations", label: t.tabLocations, icon: MapPin    },
-        { id: "faq",       label: t.tabFaq,       icon: BookOpen  },
-        { id: "services",  label: t.tabServices,  icon: Wrench    },
-    ];
+const TAB_LABELS: Record<TabId, { fr: string; en: string }> = {
+  entreprise:   { fr: "Entreprise",         en: "Company" },
+  agences:      { fr: "Agences & Horaires", en: "Agencies & Hours" },
+  faq:          { fr: "FAQ",                en: "FAQ" },
+  menu:         { fr: "Menu",               en: "Menu" },
+  chambres:     { fr: "Chambres",           en: "Rooms" },
+  catalogue:    { fr: "Catalogue",          en: "Catalogue" },
+  inscriptions: { fr: "Inscriptions",       en: "Admissions" },
+  medical:      { fr: "Services médicaux",  en: "Medical services" },
+  citoyens:     { fr: "Services publics",   en: "Public services" },
+};
 
-    if (!user || !entrepriseId) return null;
+export default function KnowledgePage() {
+  const { dictionary: d, locale } = useLanguage();
+  const { features }              = useActiveFeatures();
+  const [activeTab, setActiveTab] = useState<TabId>("entreprise");
 
-    return (
-        <div className="space-y-6 animate-fade-in">
-            <SectionHeader title={t.title} subtitle={t.subtitle} />
+  const isFeatureActive = useCallback(
+    (slug: string) => features.some((f) => f.slug === slug && f.is_active),
+    [features],
+  );
 
-            {/* Onglets */}
-            <div className="flex gap-1 p-1 bg-[var(--bg)] rounded-xl border border-[var(--border)] w-fit overflow-x-auto">
-                {tabs.map(tab => {
-                    const Icon = tab.icon;
-                    return (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={cn(
-                                "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap",
-                                activeTab === tab.id
-                                    ? "bg-[var(--bg-card)] text-[var(--text)] shadow-sm"
-                                    : "text-[var(--text-muted)] hover:text-[var(--text)]"
-                            )}
-                        >
-                            <Icon className="w-4 h-4" />
-                            <span className="hidden sm:inline">{tab.label}</span>
-                        </button>
-                    );
-                })}
-            </div>
+  const visibleTabs = useMemo<KnowledgeTab[]>(() => {
+    return ALL_TABS.filter((tab) => {
+      if ("always" in tab && tab.always) return true;
+      if ("feature" in tab) return isFeatureActive(tab.feature);
+      if ("features" in tab) return tab.features.some((f) => isFeatureActive(f));
+      return false;
+    }).map(({ id }) => ({ id, label: TAB_LABELS[id][locale] }));
+  }, [isFeatureActive, locale]);
 
-            {/* Contenu onglet actif */}
-            {activeTab === "general"   && <TabGeneral   entrepriseId={entrepriseId} d={d} locale={locale} />}
-            {activeTab === "locations" && <TabLocations entrepriseId={entrepriseId} d={d} />}
-            {activeTab === "faq"       && <TabFaq       entrepriseId={entrepriseId} d={d} />}
-            {activeTab === "services"  && <TabServices  entrepriseId={entrepriseId} d={d} />}
-        </div>
-    );
+ const safeTab = (visibleTabs.find((t) => t.id === activeTab)
+    ? activeTab
+    : (visibleTabs[0]?.id ?? "entreprise")) as TabId;
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title={d.common.nav.knowledge}
+        subtitle={d.knowledge.pageSubtitle}
+      />
+      <KnowledgeTabs
+        tabs={visibleTabs}
+        activeTab={safeTab}
+        onChange={(id) => setActiveTab(id as TabId)}
+      />
+      <div>
+        {safeTab === "entreprise" && <EntrepriseTab />}
+        {safeTab === "agences"    && <AgencesTab />}
+        {safeTab === "faq"        && <FaqTab />}
+        {/* Autres tabs — session suivante après audit backend catalogue */}
+      </div>
+    </div>
+  );
 }

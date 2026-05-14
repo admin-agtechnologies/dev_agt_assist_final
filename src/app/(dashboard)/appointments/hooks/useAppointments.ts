@@ -9,7 +9,8 @@ import {
 } from "@/repositories";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/components/ui/Toast";
-import type { Agence, Agenda, RendezVous, HorairesOuverture } from "@/types/api";
+import type { AgenceKnowledge, Agenda, RendezVous, HorairesOuverture } from "@/types/api";
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -18,7 +19,7 @@ type ActionType = "confirmer" | "annuler" | "terminer";
 export interface UseAppointmentsReturn {
   // Données
   loading: boolean;
-  agences: Agence[];
+  agences: AgenceKnowledge[];
   agendas: Agenda[];
   rdvs: RendezVous[];
   horOuv: HorairesOuverture | null;
@@ -38,7 +39,7 @@ export interface UseAppointmentsReturn {
   filtered: RendezVous[];
   dayRdvs: RendezVous[];
   rdvsByDay: Map<string, RendezVous[]>;
-  agenceActive: Agence | undefined;
+  agenceActive: AgenceKnowledge | undefined;
   // Actions
   fetchAll: () => Promise<void>;
   fetchHor: (id: string) => Promise<void>;
@@ -52,7 +53,7 @@ export function useAppointments(): UseAppointmentsReturn {
   const toast = useToast();
 
   const [loading, setLoading]         = useState(true);
-  const [agences, setAgences]         = useState<Agence[]>([]);
+  const [agences, setAgences] = useState<AgenceKnowledge[]>([]);
   const [agendas, setAgendas]         = useState<Agenda[]>([]);
   const [rdvs, setRdvs]               = useState<RendezVous[]>([]);
   const [horOuv, setHorOuv]           = useState<HorairesOuverture | null>(null);
@@ -72,7 +73,7 @@ export function useAppointments(): UseAppointmentsReturn {
 
       const agList = Array.isArray(ag)
         ? ag
-        : (ag as { results?: Agence[] }).results ?? [];
+        : (ag as { results?: AgenceKnowledge[] }).results ?? [];
       const agdList = Array.isArray(agd)
         ? agd
         : (agd as { results?: Agenda[] }).results ?? [];
