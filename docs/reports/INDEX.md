@@ -18,6 +18,7 @@
 - **Rapport :** `docs/reports/session_1_gabriel.md`
 
 ---
+
 ## session_2_gabriel
 
 - **Type :** Génération — Frontend Landing Hub + Landing Restaurant
@@ -29,7 +30,9 @@
 - **Fichiers modifiés :** `constants.ts`, `page.tsx`, `dictionaries/*/index.ts`
 - **Fichiers supprimés :** `src/app/onboarding/page.tsx` (doublon routing)
 - **Rapport :** `docs/reports/session_2_gabriel.md`
+
 ---
+
 ## session_3_gabriel
 
 - **Type :** Génération — Onboarding Phase 1 complet (F3+F4 fusionnés)
@@ -40,7 +43,9 @@
 - **Fichiers créés :** 7 (IdentityStep, AccountStep, EmailCheckStep, public-features.repository, feature-descriptions, feature-icon-map, sector-redirect)
 - **Fichiers modifiés :** 13
 - **Rapport :** `docs/reports/session_3_gabriel.md`
+
 ---
+
 ## session_4_gabriel
 
 - **Type :** Debug + Modularisation — Flows auth onboarding E2E
@@ -52,7 +57,9 @@
 - **Fichiers créés :** 4 backend (`_tokens.py`, `_email.py`, `_onboarding.py`, `local.py` refactorisé), 1 frontend (`not-found.tsx` sectoriel)
 - **Fichiers modifiés :** 6
 - **Rapport :** `docs/reports/session_4_gabriel.md`
+
 ---
+
 ## session_5_gabriel
 
 - **Type :** Refactoring architectural + Migration sectorielle
@@ -66,7 +73,9 @@
 - **Commit Git :** `cca13af` sur `main` + commit complémentaire pour `(auth)/onboarding/page.tsx`
 - **Rapport :** `docs/reports/session_5_gabriel.md`
 - **Dette créée :** DETTE-S5-01 (logo central vert), DETTE-S5-02 (backend SECTOR_EMAIL_CONFIG), DETTE-S5-03 (landing S2), DETTE-S5-04 (bots.types.ts SECTOR_COLORS hérité), DETTE-S5-05 (theme.label rétrocompat à migrer)
+
 ---
+
 ## session_6_gabriel
 
 - **Type :** Conception + Génération + Debug — Backend features/onboarding
@@ -78,7 +87,9 @@
 - **Fichiers modifiés :** 8 fichiers backend
 - **Commit :** `353211f`
 - **Rapport :** `docs/reports/session_6_gabriel.md`
+
 ---
+
 ## session_7_gabriel
 
 - **Type :** Génération full-stack — Convergence onboarding + Mes Modules + Welcome page + Vague 1 fixes
@@ -86,7 +97,7 @@
 - **Flux couverts :** F6 Dashboard first contact (backend complet ✅, frontend produit ⏳, Vague 1 fixes proposés ⏳)
 - **Bugs corrigés (testés) :** Aucun (S7 = features). Backend tests : 25 OK (11 nouveaux).
 - **Bugs identifiés (à corriger) :** B01 à B13 — 13 bugs classés en 4 vagues par gravité × facilité (voir rapport)
-- **Fixes Vague 1 proposés mais NON TESTÉS :** B01 (has_seen_welcome non exposé), B02 (popup intrusif), B03 (hrefs /pme/* → 404)
+- **Fixes Vague 1 proposés mais NON TESTÉS :** B01 (has_seen_welcome non exposé), B02 (popup intrusif), B03 (hrefs /pme/\* → 404)
 - **Fix Vague 1 en attente diagnostic :** B04 (claim-bonus échoue silencieusement)
 - **Zones touchées :**
   - **Backend :** `apps/onboarding/` (models, migrations 0004, signals, engine, serializers, tests), `apps/knowledge/apps.py`, `apps/chatbot_bridge/apps.py`, `apps/users/serializers.py`
@@ -108,7 +119,6 @@
 
 ---
 
-
 ## session_9_gabriel
 
 - **Type :** Debug + Génération — Test Vague 1, Redesign Onboarding, Hub Modules
@@ -117,7 +127,7 @@
 - **Bugs corrigés :** B01 (has_seen_welcome ✅), B02 (popup non-intrusif ✅), B03 (hrefs 404 ✅), B04 (claim-bonus ✅), B05 (mail → :3001 ✅), B06 (auth cross-origin ✅), P3 (boucle /welcome → refreshUser fix ✅), KeyError is_desired (services.py ✅), Régression PERSONNALISATION onboarding (custom sector ✅)
 - **Zones touchées :**
   - `apps/features/` (models, migrations, serializers, services, views, urls)
-  - `apps/auth_bridge/` (_onboarding.py)
+  - `apps/auth_bridge/` (\_onboarding.py)
   - `src/app/(dashboard)/welcome/` (page.tsx — 4 écrans)
   - `src/app/(dashboard)/modules/` (layout.tsx, page.tsx + 11 pages Hub)
   - `src/app/(dashboard)/layout.tsx`
@@ -127,11 +137,13 @@
   - `src/repositories/features.repository.ts`
   - `src/hooks/useFeatures.ts`
 - **Fichiers créés :** 16 (migration 0003, WelcomeScreen3, WelcomeScreen4, ModuleHubTemplate, hub-modules.ts, modules/layout.tsx, modules/page.tsx, 11 pages modules Hub)
-- **Fichiers modifiés :** 13 (models.py, serializers.py, services.py, views.py, urls.py, _onboarding.py, welcome/page.tsx, WelcomeScreen2.tsx, layout.tsx, features.repository.ts, useFeatures.ts, welcome/page.tsx fix refreshUser)
+- **Fichiers modifiés :** 13 (models.py, serializers.py, services.py, views.py, urls.py, \_onboarding.py, welcome/page.tsx, WelcomeScreen2.tsx, layout.tsx, features.repository.ts, useFeatures.ts, welcome/page.tsx fix refreshUser)
 - **Bugs résiduels connus :** Slug uniqueness IntegrityError (register 500), /modules/manage 404, popup UPGRADE_PLAN même abonné (à investiguer engine.py), Sidebar sans lien Mes modules, mark_desired non testé proprement (bloqué par slug bug)
 - **Décisions architecture :** is_desired sur TenantFeature (Option B, analytics admin), popup central unique (plus de bannière), localStorage AGT_WELCOME_MODULES, Hub Modules = pages Next.js indépendantes /modules/[path]
 - **Rapport :** `docs/reports/session_9_gabriel.md`
+
 ---
+
 ## session_10_donpk
 
 - **Type :** Génération + Debug + Redesign — Landing page centrale
@@ -144,6 +156,7 @@
 - **Pattern établi :** Logo navbar sectoriel = toujours `logoSvg={logo.darkSvg}` (SVG transparent) — jamais `logoLight`/`logoDark` (PNG opaque). Lire le secteur via `ENV.SECTOR`, pas `process.env.NEXT_PUBLIC_SECTOR` directement.
 - **Dette créée :** SVG `centrale.svg` a un fond coloré en dur (asset à corriger), `SectorCard.tsx` orphelin (à supprimer), chat DemoSection hardcodé restaurant (à rendre sectoriel)
 - **Rapport :** `docs/reports/session_10_donpk.md`
+
 ---
 
 ## session_12_donpk
@@ -171,9 +184,10 @@
 - **Fichiers modifiés :** 8 fichiers
 - **Dette créée :** F3→F10 (Onboarding, Dashboard, Backend métier) pour le secteur School mis en pause volontairement pour prioriser l'alignement frontend du secteur E-commerce.
 - **Rapport :** `docs/reports/session_14_donpk.md`
- 
- ---
- ## session_16_donpk
+
+  ***
+
+## session_16_donpk
 
 - **Type :** Génération + Debug
 - **Date :** 2026-05-13
@@ -196,17 +210,20 @@
 > à Gabriel de reconfigurer Claude à chaque démarrage.
 
 ## Autorité et décisions
+
 - **Gabriel décide, Claude propose.** Aucune initiative sans validation explicite.
 - En cas d'ambiguïté : poser une question avant d'agir, ne jamais supposer.
 - Multi-tour OK : Gabriel préfère plusieurs allers-retours rapides plutôt qu'une grosse génération à l'aveugle.
 
 ## Façon de poser les questions
+
 - Préférer `ask_user_input_v0` aux questions en prose (UI plus rapide sur mobile).
 - **Maximum 3 questions par tour**, options claires (2-4 par question).
 - Pour les questions de **logique métier**, ne PAS poser de questions techniques. Gabriel valide la logique, Claude trouve la solution technique.
 - Reformuler la logique métier dans les mots de Gabriel pour vérifier la compréhension AVANT de coder.
 
 ## Génération de code
+
 - **Fichiers complets, pas de diffs** (sauf modifs < 5 lignes).
 - Limite **200 lignes par fichier (+50 tolérance)**. Signaler tout dépassement et demander accord.
 - **Backend first si simple**, frontend après.
@@ -219,6 +236,7 @@
 - **Pas de localStorage/sessionStorage dans les artifacts Claude** (mais OK dans le projet réel Next.js).
 
 ## Tests et environnement
+
 - **Backend Django via Docker Compose.** Commandes type :
   `docker-compose -f docker-compose.dev.yml exec api python manage.py [...]`
 - **README backend documente Docker Compose** — toujours s'y référer pour les commandes.
@@ -227,6 +245,7 @@
 - Lancer la base de données / faire `migrate` / `test` toujours via `docker-compose exec api`
 
 ## Contextes code source — IMPORTANT
+
 - Le **scanner.ps1 N'EST PAS redemandé à chaque session.**
 - Les contextes complets sont **dans la mémoire du projet** :
   - `contexte_frontend_PME.txt` — code source frontend complet
@@ -235,6 +254,7 @@
 - Utiliser `project_knowledge_search` pour chercher dedans, ou `view`/`grep` directement sur `/mnt/project/*.txt`.
 
 ## Tests utilisateurs réels
+
 - **Gabriel teste lui-même** avec :
   - Comptes existants (resto@demo.cm, hotel@demo.cm) pour les régressions
   - Mail jetable pour simuler un nouveau user (le scénario qui couvre vraiment le code S7)
@@ -242,12 +262,14 @@
 - **NE PAS demander 4 scénarios d'un coup** — un scénario à la fois.
 
 ## Style de réponse Claude
+
 - **Toujours classer les bugs par gravité × facilité** avant de proposer un ordre de traitement.
 - Donner un **plan d'attaque par vague**, jamais "voici les 13 fixes en vrac".
 - **Honnêteté > complaisance** : "je ne peux pas fixer à l'aveugle, j'ai besoin de captures Network" plutôt qu'inventer.
 - **Pas de flatterie** — Gabriel est direct, il préfère des réponses techniques claires.
 
 ## Rapports de fin de session
+
 - **Long mais exploitable** > court mais incomplet.
 - Doivent contenir :
   - **Décisions prises** avec rationale
@@ -257,11 +279,13 @@
   - **Prompt de début de session S+1** prêt à copier-coller
 
 ## INDEX.md
+
 - **APPEND ONLY.** Ne jamais réécrire ni reformuler les blocs existants.
 - Nom des rapports : `session_{N}_{membre}.md` dans `docs/reports/`.
 - Si Gabriel renomme un rapport pour corriger une faute, ne pas y toucher après.
 
 ## Particularités projet
+
 - Sectorialisation : 11 secteurs (restaurant, hotel, etc.) avec build séparé (`NEXT_PUBLIC_SECTOR`).
 - Multi-instances frontend : un port par secteur (3001 restaurant, 3006 hôtel, etc.).
 - Source de vérité sectorielle : trio `sector-config.ts` / `sector-theme.ts` / `sector-content.ts` (refactor S5).
@@ -269,7 +293,9 @@
 - Logos sectoriels : `getLogoAssets(slug)` dans `@/lib/logo-config` (NON `@/lib/sector-config`).
 - Toast : `useToast()` retourne `{success, error, info, warning}` (méthodes), PAS une fonction `toast({type, message})`.
 - PageHeader props : `title` + `subtitle` (PAS `description`).
+
 ---
+
 ## session_17_gabriel
 
 - **Type :** Conception + Génération — Modèle facturation-features + Refactor seed system
@@ -278,7 +304,7 @@
 - **Bugs corrigés :** BUG-S16-01 ContactCard.tsx (session précédente, déjà livré)
 - **Bugs introduits :** BUG-S18-01 (tenants_seeder.py : nom → label_fr/label_en), BUG-S18-02 (ordre seeders : secteurs créés après features)
 - **Zones touchées :**
-  - `apps/features/models/` (split en 4 fichiers : __init__, feature, plan, tenant)
+  - `apps/features/models/` (split en 4 fichiers : **init**, feature, plan, tenant)
   - `apps/features/migrations/0005_billing_features_enrichment.py`
   - `apps/features/services.py`, `serializers.py`, `admin.py`
   - `apps/tenants/seeders/` (nouveau dossier : base, features, billing, payments, tenants, agent)
@@ -287,7 +313,9 @@
 - **Résultat :** Modèle migré ✅, 23 features + 5 plans + PlanFeature base seedés ✅, SectorFeature = 0 ❌ (bug ordre seeders)
 - **Sidebar toujours vide** — objectif non atteint, 2 bugs à corriger en S18
 - **Rapport :** `docs/reports/session_17_gabriel.md`
+
 ---
+
 ## session_18_gabriel
 
 - **Type :** Débogage + Intégration — Correction seeders + Flow E2E nouveau user
@@ -350,7 +378,9 @@
   - `docs/cdc/cdc_knowledge_base.md`
   - `docs/cdc/cdc_crm_fiches_clients.md`
 - **Rapport :** `docs/reports/session_19_gabriel.md`
+
 ---
+
 ## session_20_gabriel
 
 - **Type :** Génération + Debug — Knowledge Base V2 full-stack
@@ -372,7 +402,9 @@
 - **Fichiers modifiés :** 8
 - **Décisions majeures :** ProfilEntreprise = identité commune only ; Bot décentralisé (ton/signature/agences M2M/features M2M) ; AgenceKnowledge distinct de Agence existant
 - **Rapport :** `docs/reports/session_20_gabriel.md`
+
 ---
+
 ## session_21_gabriel
 
 - **Type :** Debug — Stabilisation build TypeScript (0 erreur tsc → build prod ✅)
@@ -390,4 +422,40 @@
 - **Fichiers modifiés :** 8
 - **Commit :** `3b77a6a`
 - **Rapport :** `docs/reports/session_21_gabriel.md`
+
+---
+
+## session_23_gabriel
+
+- **Type :** Conception + Génération full-stack — Module Bots V2 (Config bot + Prompt filtré + Tabs dynamiques)
+- **Date :** 2026-05-14
+- **Flux couverts :** Module Bots — configuration riche, périmètre de données, page bot enrichie
+- **Bugs corrigés :**
+  - BUG-S23-01 : `rendezVousRepository` BASE URL incorrecte (`/api/v1/services/rendez-vous` → `/api/v1/appointments`)
+  - BUG-S23-02 : Erreurs toast en boucle sur `BotPairDetailPanel` (Promise.all non isolé)
+  - BUG-S23-03 : Type `Agence[]` → `AgenceKnowledge[]` dans `BotConfigTab`
+- **Zones touchées :**
+  - `apps/bots/models.py` (+ `sections_actives` JSONField + 3 méthodes utilitaires)
+  - `apps/bots/migrations/0006_bot_sections_actives.py` (appliquée ✅)
+  - `apps/bots/serializers.py` (`BotConfigSerializer` — M2M writables)
+  - `apps/bots/views.py` (action `config` GET/PATCH)
+  - `apps/chatbot_bridge/prompt_builder.py` (refactorisé — filtrage sections + agences)
+  - `src/types/api/bot.types.ts` (nouveaux champs + `BotConfigPayload`)
+  - `src/app/(dashboard)/bots/_components/bots.types.ts` (`DetailTab` mise à jour)
+  - `src/app/(dashboard)/bots/_components/tabs/BotConfigTab.tsx` (nouveau — accordéon config)
+  - `src/app/(dashboard)/bots/_components/BotPairDetailPanel.tsx` (KPIs dynamiques + scroll interne)
+  - `src/repositories/bots.repository.ts` (`getConfig` + `updateConfig`)
+  - `src/repositories/rendezVous.repository.ts` (fix BASE URL)
+- **Fichiers créés :** `BotConfigTab.tsx`, `0006_bot_sections_actives.py`
+- **Fichiers modifiés :** 10
+- **Migration :** `0006_bot_sections_actives` ✅
+- **Build TypeScript :** 0 erreur nouvelle (4 pré-existantes `Tenant` non liées)
+- **Décisions majeures :**
+  - `Bot.agences` et `Bot.features_autorisees` M2M existaient déjà — réutilisés sans nouvelle table
+  - KB = socle commun entreprise (inchangé) · Bot config = filtre par-dessus la KB
+  - Scroll interne au panel bot (`overflow-y-auto`) → sidebar fixe
+  - Stats filtrées par `features_autorisees_slugs` du bot
+- **Reste à faire S24 :** Vague 3 tabs dynamiques · `_section_function_calling` dynamique · test E2E config endpoint
+- **Rapport :** `docs/reports/session_23_gabriel.md`
+
 ---
