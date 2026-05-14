@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, MessageSquare, Users,
-  CreditCard, BookOpen, Bot, Settings,
+  CreditCard, BookOpen, Bot,
   Sun, Moon, Globe, LogOut,
   HelpCircle, MessageCircle, Star, AlertTriangle,
   UserCircle,
@@ -46,7 +46,6 @@ export function Sidebar({ onClose }: Props) {
     { href: DASHBOARD_ROUTES.bots,          icon: Bot,             label: d.nav.bots },
     { href: DASHBOARD_ROUTES.knowledge,     icon: BookOpen,        label: d.nav.knowledge },
     { href: DASHBOARD_ROUTES.billing,       icon: CreditCard,      label: d.nav.billing },
-    { href: DASHBOARD_ROUTES.settings,      icon: Settings,        label: d.common.settings },
     { href: DASHBOARD_ROUTES.profile, icon: UserCircle, label: d.nav.profile },
   ];
 

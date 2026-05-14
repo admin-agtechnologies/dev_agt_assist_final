@@ -1,8 +1,9 @@
-// src/app/pme/feedback/page.tsx
+// src/app/(dashboard)/feedback/page.tsx
 "use client";
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/components/ui/Toast";
+import { useSector } from "@/hooks/useSector";
 import { Star, Send, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { feedbackRepository } from "@/repositories";
@@ -10,11 +11,12 @@ import { feedbackRepository } from "@/repositories";
 export default function FeedbackPage() {
   const { dictionary: d } = useLanguage();
   const toast = useToast();
+  const { theme } = useSector();
 
-  const [rating, setRating] = useState(0);
-  const [hovered, setHovered] = useState(0);
-  const [comment, setComment] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [rating, setRating]     = useState(0);
+  const [hovered, setHovered]   = useState(0);
+  const [comment, setComment]   = useState("");
+  const [saving, setSaving]     = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   const LABELS = ["", "Mauvais", "Passable", "Bien", "Très bien", "Excellent !"] as const;
@@ -43,8 +45,11 @@ export default function FeedbackPage() {
   if (submitted) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 animate-fade-in">
-        <div className="w-16 h-16 rounded-full bg-[#25D366]/10 flex items-center justify-center mb-6">
-          <CheckCircle className="w-8 h-8 text-[#25D366]" />
+        <div
+          className="w-16 h-16 rounded-full flex items-center justify-center mb-6"
+          style={{ backgroundColor: `${theme.primary}18` }}
+        >
+          <CheckCircle className="w-8 h-8" style={{ color: theme.primary }} />
         </div>
         <h2 className="text-xl font-black text-[var(--text)] mb-2">
           {d.feedback?.successTitle ?? "Témoignage envoyé !"}
@@ -54,7 +59,8 @@ export default function FeedbackPage() {
         </p>
         <button
           onClick={() => { setSubmitted(false); setRating(0); setComment(""); }}
-          className="mt-6 text-sm text-[#075E54] font-semibold hover:underline"
+          className="mt-6 text-sm font-semibold hover:underline"
+          style={{ color: theme.primary }}
         >
           {d.feedback?.another ?? "Laisser un autre témoignage"}
         </button>
@@ -65,9 +71,7 @@ export default function FeedbackPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--text)]">
-          {d.nav.feedback}
-        </h1>
+        <h1 className="text-2xl font-bold text-[var(--text)]">{d.nav.feedback}</h1>
         <p className="text-sm text-[var(--text-muted)] mt-0.5">
           {d.feedback?.subtitle ?? "Partagez votre expérience avec AGT Platform."}
         </p>
@@ -131,10 +135,10 @@ export default function FeedbackPage() {
         <button
           onClick={handleSubmit}
           disabled={saving || rating === 0 || comment.trim().length < 10}
-          className="btn-primary w-full flex items-center justify-center gap-2"
+          className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
         >
           <Send className="w-4 h-4" />
-          {saving ? (d.common.loading) : (d.feedback?.submitBtn ?? "Envoyer mon témoignage")}
+          {saving ? d.common.loading : (d.feedback?.submitBtn ?? "Envoyer mon témoignage")}
         </button>
       </div>
     </div>

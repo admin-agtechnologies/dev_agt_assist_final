@@ -1,12 +1,15 @@
 // src/components/SupportWidgets.tsx
-// Deux widgets fixes en bas à droite :
-//   1. Chatbot de support (UI simulée) — ouverture via CustomEvent "agt:open-chat"
+// Widget support AGT Platform :
+//   1. Chatbot plateforme (DeepSeek) — ouverture via CustomEvent "agt:open-chat"
 //   2. Bouton AGT-BOT WhatsApp (lien vers le bot WhatsApp AGT)
 "use client";
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSector } from "@/hooks/useSector";
 import { MessageCircle, X, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api-client";
 
 interface Message {
   id: string;
@@ -14,19 +17,59 @@ interface Message {
   text: string;
 }
 
-// ── Widget Chatbot ─────────────────────────────────────────────────────────────
+interface HistoryEntry {
+  role: "user" | "assistant";
+  content: string;
+}
+
+// ── Rendu d'un message avec liens navigables ──────────────────────────────────
+// Format attendu depuis le backend : [[/path|Label]]
+function MessageBubble({ text, isBot, primary }: { text: string; isBot: boolean; primary: string }) {
+  if (!isBot) {
+    return <span>{text}</span>;
+  }
+
+  // Découpe le texte sur le pattern [[/path|Label]]
+  const parts = text.split(/(\[\[\/[^\]|]+\|[^\]]+\]\])/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        const match = part.match(/^\[\[(\/.+?)\|(.+?)\]\]$/);
+        if (match) {
+          return (
+            <Link
+              key={i}
+              href={match[1]}
+              className="underline font-semibold hover:opacity-80 transition-opacity"
+              style={{ color: primary }}
+            >
+              {match[2]}
+            </Link>
+          );
+        }
+        return <span key={i}>{part}</span>;
+      })}
+    </>
+  );
+}
+
+// ── Widget Chatbot plateforme ─────────────────────────────────────────────────
 function ChatbotWidget() {
-  const { dictionary: d } = useLanguage();
+  const { dictionary: d, locale } = useLanguage();
+  const { theme } = useSector();
   const t = d.support;
-  const [open, setOpen] = useState(false);
-  const [input, setInput] = useState("");
+
+  const [open, setOpen]         = useState(false);
+  const [input, setInput]       = useState("");
   const [messages, setMessages] = useState<Message[]>([
     { id: "0", role: "bot", text: t.chatWelcome },
   ]);
+  const [history, setHistory]   = useState<HistoryEntry[]>([]);
   const [isTyping, setIsTyping] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const bottomRef               = useRef<HTMLDivElement>(null);
+  const inputRef                = useRef<HTMLInputElement>(null);
 
-  // Écoute l'event global pour ouvrir le chat programmatiquement
+  // Ouvrir via CustomEvent global
   useEffect(() => {
     const handler = () => setOpen(true);
     window.addEventListener("agt:open-chat", handler);
@@ -37,73 +80,89 @@ function ChatbotWidget() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
+  useEffect(() => {
+    if (open) setTimeout(() => inputRef.current?.focus(), 150);
+  }, [open]);
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     const text = input.trim();
-    if (!text) return;
+    if (!text || isTyping) return;
     setInput("");
 
     const userMsg: Message = { id: Date.now().toString(), role: "user", text };
     setMessages(prev => [...prev, userMsg]);
     setIsTyping(true);
 
-    await new Promise(r => setTimeout(r, 800));
-    const botMsg: Message = {
-      id: (Date.now() + 1).toString(),
-      role: "bot",
-      text: "Merci pour votre message ! Notre équipe de support vous répondra dans les plus brefs délais. En attendant, consultez notre documentation ou envoyez-nous un message sur WhatsApp.",
-    };
-    setMessages(prev => [...prev, botMsg]);
-    setIsTyping(false);
+    const newHistory: HistoryEntry[] = [...history, { role: "user", content: text }];
+
+    try {
+      const data = await api.post<{ reply: string }>("/api/v1/platform/chat/", { message: text, history: newHistory.slice(-10), locale });
+
+      const reply = data.reply || (locale === "fr" ? "Une erreur s'est produite. Réessayez." : "An error occurred. Please try again.");
+      const botMsg: Message = { id: (Date.now() + 1).toString(), role: "bot", text: reply };
+      setMessages(prev => [...prev, botMsg]);
+      setHistory([...newHistory, { role: "assistant", content: reply }]);
+    } catch {
+      const botMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "bot",
+        text: locale === "fr" ? "Une erreur s'est produite. Réessayez." : "An error occurred. Please try again.",
+      };
+      setMessages(prev => [...prev, botMsg]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   return (
-    <div className="relative">
-      {/* Fenêtre chat */}
+    <div className="flex flex-col items-end gap-2">
+      {/* Panel chat */}
       {open && (
-        <div
-          className="absolute bottom-14 right-0 w-80 bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-zoom-in"
-          style={{ height: 400 }}
-        >
+        <div className="w-80 rounded-2xl shadow-2xl border border-[var(--border)] bg-[var(--bg-card)] flex flex-col overflow-hidden animate-fade-in">
           {/* Header */}
-          <div className="px-4 py-3 bg-[#075E54] flex items-center justify-between">
+          <div
+            className="flex items-center justify-between px-4 py-3 text-white"
+            style={{ backgroundColor: theme.primary }}
+          >
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-                <MessageCircle className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                <MessageCircle className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-sm font-bold text-white">{t.chatTitle}</p>
-                <p className="text-[10px] text-white/70">AGT Platform</p>
+                <p className="text-sm font-bold leading-tight">{t.chatTitle ?? "Support AGT"}</p>
+               <p className="text-[10px] opacity-80">{locale === "fr" ? "En ligne" : "Online"}</p>
               </div>
             </div>
-            <button onClick={() => setOpen(false)} className="text-white/70 hover:text-white transition-colors">
+            <button onClick={() => setOpen(false)} className="p-1 rounded-lg hover:bg-white/10">
               <X className="w-4 h-4" />
             </button>
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 max-h-80">
             {messages.map(msg => (
               <div key={msg.id} className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
-                <div className={cn(
-                  "max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-relaxed",
-                  msg.role === "user"
-                    ? "bg-[#25D366] text-white rounded-br-sm"
+                <div
+                  className={cn("max-w-[85%] px-3 py-2 rounded-2xl text-sm leading-relaxed", msg.role === "user"
+                    ? "text-white rounded-br-sm"
                     : "bg-[var(--bg)] text-[var(--text)] rounded-bl-sm border border-[var(--border)]"
-                )}>
-                  {msg.text}
+                  )}
+                  style={msg.role === "user" ? { backgroundColor: theme.primary } : {}}
+                >
+                  <MessageBubble text={msg.text} isBot={msg.role === "bot"} primary={theme.primary} />
                 </div>
               </div>
             ))}
             {isTyping && (
               <div className="flex justify-start">
-                <div className="bg-[var(--bg)] border border-[var(--border)] px-4 py-2 rounded-2xl rounded-bl-sm">
-                  <span className="flex gap-1">
+                <div className="bg-[var(--bg)] border border-[var(--border)] rounded-2xl rounded-bl-sm px-4 py-2.5">
+                  <div className="flex gap-1">
                     {[0, 1, 2].map(i => (
-                      <span key={i} className="w-1.5 h-1.5 rounded-full bg-[var(--text-muted)] animate-bounce"
-                        style={{ animationDelay: `${i * 0.15}s` }} />
+                      <span key={i} className="w-1.5 h-1.5 rounded-full animate-bounce"
+                        style={{ backgroundColor: theme.primary, animationDelay: `${i * 0.15}s` }} />
                     ))}
-                  </span>
+                  </div>
                 </div>
               </div>
             )}
@@ -113,34 +172,41 @@ function ChatbotWidget() {
           {/* Input */}
           <form onSubmit={handleSend} className="p-3 border-t border-[var(--border)] flex gap-2">
             <input
-              className="flex-1 input-base text-sm py-2"
-              placeholder={t.chatPlaceholder}
+              ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
+              placeholder={t.chatPlaceholder ?? "Votre question…"}
+              className="flex-1 px-3 py-2 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-muted)]"
+              disabled={isTyping}
             />
-            <button type="submit" disabled={!input.trim()}
-              className="w-9 h-9 rounded-xl bg-[#075E54] text-white flex items-center justify-center hover:bg-[#128C7E] transition-colors disabled:opacity-40">
+            <button
+              type="submit"
+              disabled={!input.trim() || isTyping}
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-white transition-all disabled:opacity-40 hover:brightness-90"
+              style={{ backgroundColor: theme.primary }}
+            >
               <Send className="w-4 h-4" />
             </button>
           </form>
         </div>
       )}
 
-      {/* Bouton toggle */}
+      {/* Bouton flottant */}
       <button
-        onClick={() => setOpen(!open)}
-        className="w-12 h-12 rounded-full bg-[#075E54] text-white shadow-lg flex items-center justify-center hover:bg-[#128C7E] transition-all hover:scale-105 active:scale-95"
-        aria-label={t.chatTitle}
+        onClick={() => setOpen(o => !o)}
+        className="w-14 h-14 rounded-full text-white shadow-xl flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+        style={{ backgroundColor: theme.primary }}
+        aria-label={t.chatTitle ?? "Support AGT"}
       >
-        {open ? <X className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}
+        {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
       </button>
     </div>
   );
 }
 
-// ── Widget AGT-BOT WhatsApp ────────────────────────────────────────────────────
+// ── Widget AGT-BOT WhatsApp ───────────────────────────────────────────────────
 function AgtBotWidget() {
-  const { dictionary: d } = useLanguage();
+  const { dictionary: d, locale } = useLanguage();
   const t = d.support;
   const whatsappUrl = "https://wa.me/237600000000?text=Bonjour%20AGT%20Technologies%20!";
 
@@ -160,7 +226,7 @@ function AgtBotWidget() {
   );
 }
 
-// ── Composant global ───────────────────────────────────────────────────────────
+// ── Composant global ──────────────────────────────────────────────────────────
 export function SupportWidgets() {
   return (
     <div className="fixed bottom-6 right-6 z-[9998] flex flex-col items-center gap-3">

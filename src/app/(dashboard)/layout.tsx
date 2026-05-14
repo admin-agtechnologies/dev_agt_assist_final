@@ -9,7 +9,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { OnboardingPopup } from "@/components/OnboardingPopup";
 import { onboardingRepository } from "@/repositories";
-
+import { SupportWidgets } from "@/components/SupportWidgets";
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { theme }    = useSector();
   const { user }     = useAuth();
@@ -81,6 +81,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           onCtaClick={handlePopupCta}
         />
       )}
+      <SupportWidgets />
     </div>
   );
 }

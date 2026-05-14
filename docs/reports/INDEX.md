@@ -287,3 +287,67 @@
 - **Résultat :** Modèle migré ✅, 23 features + 5 plans + PlanFeature base seedés ✅, SectorFeature = 0 ❌ (bug ordre seeders)
 - **Sidebar toujours vide** — objectif non atteint, 2 bugs à corriger en S18
 - **Rapport :** `docs/reports/session_17_gabriel.md`
+---
+## session_18_gabriel
+
+- **Type :** Débogage + Intégration — Correction seeders + Flow E2E nouveau user
+- **Date :** 2026-05-13
+- **Flux couverts :** Onboarding nouveau user, bootstrap features, welcome flow, facturation
+- **Bugs corrigés :**
+  - BUG-S18-01 : `tenants_seeder.py` — `nom` → `label_fr`/`label_en` (SecteurActivite)
+  - BUG-S18-02 : Ordre seeders — `SecteurSeeder` doit passer en étape 1 (avant FeaturesSeeder)
+- **Zones touchées :**
+  - `apps/tenants/seeders/tenants_seeder.py`
+  - `apps/tenants/seeders/__init__.py` (ordre SEEDERS_REGISTRY)
+  - `apps/auth_bridge/_onboarding.py` (bootstrap_tenant_features)
+  - `apps/features/views.py` (mark_desired endpoint)
+  - `apps/billing/views.py` (confirm_upgrade)
+  - `src/components/welcome/WelcomeScreen3.tsx` (fix Number() coercion + dynamique)
+- **Résultats :**
+  - SectorFeature : 69 ✅, PlanFeature : 71 ✅
+  - Sidebar fonctionnelle pour nouveau user ✅
+  - confirm_upgrade bootstrappe plan + extras ✅
+  - mark_desired endpoint opérationnel ✅
+  - WelcomeScreen3 dynamique avec extras + total ✅
+  - Flow E2E nouveau user validé de bout en bout ✅
+- **Rapport :** `docs/reports/session_18_gabriel.md`
+
+---
+
+## session_19_gabriel
+
+- **Type :** UX Dashboard + Architecture + Couleurs sectorielles
+- **Date :** 2026-05-14
+- **Flux couverts :** Dashboard bottom→top (socle commun), chatbot plateforme, architecture KB + CRM
+- **Réalisations majeures :**
+  - `globals.css` : `btn-primary` + `input-base` → sectoriels (fix global `#075E54`/`#25D366`)
+  - `/bug` : couleurs sectorielles + persistance vérifiée ✅
+  - `/feedback` : couleurs sectorielles + persistance vérifiée ✅
+  - `/help` : redesign complet + FAQ backend (`PublicHelpListView` + `HelpSeeder`) + chatbot DeepSeek plateforme avec liens navigables (`PlatformChatView`)
+  - `SupportWidgets` : bulle chat DeepSeek fonctionnelle + branché au layout dashboard
+  - `/profile` : couleurs sectorielles + secteur non-modifiable (`disableSecteur`)
+  - `/settings` : supprimé (redondant)
+  - `billing/` : couleurs sectorielles dans `BillingHeader`, `ChangePlanModal`, `TopUpModal`
+- **Décisions architecturales :**
+  - Hub (ex-Modules) : espace centralisé features avec toggle/stats/pin
+  - Knowledge Base V2 : tabs dynamiques sectorielles, agences par tenant, horaires par agence
+  - Conversations : décision à prendre (vue cross-bots vs fusion CRM)
+  - Catalogue = selon features actives (pas secteur)
+- **Zones touchées :**
+  - `apps/admin_api/views/help.py`, `apps/admin_api/views/platform_chat.py` (nouveau)
+  - `apps/tenants/seeders/help_seeder.py` (nouveau), `__init__.py`
+  - `config/urls.py`
+  - `src/app/globals.css`
+  - `src/app/(dashboard)/layout.tsx`
+  - `src/app/(dashboard)/bug/page.tsx`, `feedback/page.tsx`, `help/page.tsx`
+  - `src/app/(dashboard)/profile/page.tsx`
+  - `src/app/(dashboard)/settings/` (supprimé)
+  - `src/app/(dashboard)/billing/components/` (3 fichiers)
+  - `src/components/SupportWidgets.tsx`
+  - `src/components/shared/EntrepriseForm.tsx`
+  - `src/components/layout/Sidebar.tsx`
+- **CDC générés :**
+  - `docs/cdc/cdc_knowledge_base.md`
+  - `docs/cdc/cdc_crm_fiches_clients.md`
+- **Rapport :** `docs/reports/session_19_gabriel.md`
+---

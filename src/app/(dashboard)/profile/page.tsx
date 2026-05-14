@@ -9,6 +9,7 @@ import { usersRepository, tenantsRepository, secteursRepository } from "@/reposi
 import { initials, cn } from "@/lib/utils";
 import type { EntrepriseInUser, SecteurActivite } from "@/types/api";
 import { EntrepriseForm } from "@/components/shared/EntrepriseForm";
+import { useSector } from "@/hooks/useSector";
 import {
     User, Mail, Lock,
     Save, Eye, EyeOff,
@@ -25,6 +26,7 @@ export default function PmeProfilePage() {
     const { dictionary: d, locale } = useLanguage();
     const t = d.profile;
     const toast = useToast();
+    const { theme } = useSector();
 
     // ── Profil utilisateur ────────────────────────────────────────────────────
     const [profileName, setProfileName]       = useState(user?.name ?? "");
@@ -99,7 +101,6 @@ export default function PmeProfilePage() {
                         phone_number: entreprise.phone_number,
                         email: entreprise.email,
                         site_web: entreprise.site_web,
-                        ...(selectedSecteurId ? { secteur_id: selectedSecteurId } : {}),
                     });
                     setEntreprise(updated);
                 } else {
@@ -132,13 +133,19 @@ export default function PmeProfilePage() {
                         {t.editProfile}
                     </h2>
                     <div className="flex items-center gap-4 mb-6">
-                        <div className="w-16 h-16 rounded-2xl bg-[#075E54]/10 flex items-center justify-center text-[#075E54] text-xl font-black flex-shrink-0">
+                        <div
+                            className="w-16 h-16 rounded-2xl flex items-center justify-center text-xl font-black flex-shrink-0"
+                            style={{ backgroundColor: `${theme.primary}18`, color: theme.primary }}
+                            >
                             {initials(user.name)}
                         </div>
                         <div>
                             <p className="font-bold text-[var(--text)]">{user.name}</p>
                             <p className="text-sm text-[var(--text-muted)]">{user.email}</p>
-                            <span className="inline-block mt-1 px-2.5 py-0.5 bg-[#25D366]/10 text-[#075E54] rounded-full text-xs font-bold">
+                            <span
+                                className="inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-bold"
+                                style={{ backgroundColor: `${theme.primary}18`, color: theme.primary }}
+                                >
                                 {t.roles.pme}
                             </span>
                         </div>
@@ -192,6 +199,7 @@ export default function PmeProfilePage() {
                     onSave={handleSaveTenant}
                     d={d}
                     locale={locale}
+                    disableSecteur={true}
                 />
             </div>
 

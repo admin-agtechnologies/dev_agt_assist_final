@@ -8,7 +8,7 @@ import { useToast } from "@/components/ui/Toast";
 import { billingRepository } from "@/repositories";
 import type { Subscription, Wallet as WalletType, Plan } from "@/types/api";
 import { Spinner } from "@/components/ui";
-
+import { useSector } from "@/hooks/useSector";
 interface ChangePlanModalProps {
   plan: Plan;
   currentSub: Subscription;
@@ -27,6 +27,7 @@ export function ChangePlanModal({
   onSuccess,
 }: ChangePlanModalProps) {
   const { dictionary: d } = useLanguage();
+  const { theme } = useSector();
   const t = d.billing;
   const toast = useToast();
   const [saving, setSaving] = useState(false);
@@ -83,15 +84,16 @@ export function ChangePlanModal({
                 {formatCurrency(currentSub.plan?.prix ?? 0)}
               </p>
             </div>
-            <ChevronRight className="w-5 h-5 text-[var(--text-muted)]" />
-            <div className="flex-1 bg-[#25D366]/10 border-2 border-[#25D366] rounded-2xl p-4 text-center">
-              <p className="text-xs text-[#25D366] mb-1">{t.changePlanNew}</p>
-              <p className="text-lg font-black text-[var(--text)]">
-                {plan.nom}
-              </p>
-              <p className="text-sm font-bold text-[#075E54]">
-                {formatCurrency(plan.prix)}
-              </p>
+              <ChevronRight className="w-5 h-5 text-[var(--text-muted)]" />
+             <div className="flex-1 rounded-2xl p-4 text-center border-2"
+                style={{ backgroundColor: `${theme.primary}10`, borderColor: theme.primary }}>
+                <p className="text-xs mb-1" style={{ color: theme.primary }}>{t.changePlanNew}</p>
+                <p className="text-lg font-black text-[var(--text)]">
+                  {plan.nom}
+                </p>
+                <p className="text-sm font-bold" style={{ color: theme.primary }}>
+                  {formatCurrency(plan.prix)}
+                </p>
             </div>
           </div>
 
@@ -117,10 +119,8 @@ export function ChangePlanModal({
                 {t.changePlanAfter}
               </span>
               <span
-                className={cn(
-                  "font-black",
-                  canAfford ? "text-[#075E54]" : "text-red-500",
-                )}
+                className={cn("font-black", canAfford ? "" : "text-red-500")}
+                style={canAfford ? { color: theme.primary } : {}}
               >
                 {formatCurrency(balanceAfter)}
               </span>
