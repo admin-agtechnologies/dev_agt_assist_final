@@ -459,3 +459,36 @@
 - **Rapport :** `docs/reports/session_23_gabriel.md`
 
 ---
+## session_24_gabriel
+
+- **Type :** Conception produit + Génération full-stack — Refonte Plans & Features
+- **Date :** 2026-05-14
+- **Flux couverts :** Modèle économique complet (features, plans, quotas, gating, secteurs)
+- **Bugs corrigés :** BUG-S24-01 (features fantômes), BUG-S24-02 (FK PROTECTED Plan delete), BUG-S24-03 (slugs sector-theme)
+- **Zones touchées :**
+  - `apps/billing/models.py` (+frais_installation)
+  - `apps/billing/migrations/0004_plan_frais_installation.py` (NEW)
+  - `apps/billing/serializers.py`
+  - `apps/admin_api/serializers/plans.py`
+  - `apps/tenants/seeders/features_seeder.py` (réécrit)
+  - `apps/tenants/seeders/billing_seeder.py` (réécrit)
+  - `src/types/api/billing.types.ts`
+  - `src/lib/constants.ts`
+  - `src/lib/sector-theme.ts`
+- **Fichiers créés :** `0004_plan_frais_installation.py`
+- **Fichiers modifiés :** 8
+- **Migrations :** `billing.0004` ✅
+- **Seed validé :** flush + seed complet ✅ (24 features, 4 plans, 124 SectorFeatures)
+- **Build TypeScript :** 0 erreur nouvelle (4 pré-existantes Tenant — non liées)
+- **Décisions majeures :**
+  - Option B pricing (quotas comme levier commercial)
+  - 4 plans : Découverte 10k/gratuit · Starter 50k/100k · Business 150k/250k · Pro 300k/500k
+  - 2 familles features : A (gratuit/illimité) · B (quota rechargeable)
+  - Gating : commande/paiement/inscription dès Starter · prospection dès Business
+  - gestion_crm is_mandatory=True dans tous les secteurs
+  - Agent vocal = minutes (pas appels)
+  - Recharge toujours plus chère que plan équivalent
+- **Dettes créées :** BUG-S24-04 (setup.py plan gratuit), BUG-S24-05 (conciergerie bootstrap), DETTE-S24-01 à 04
+- **Rapport :** `docs/reports/session_24_gabriel.md`
+- **Session suivante (S25) :** Stabiliser build + corriger onboarding + Page Modules + Billing
+--
