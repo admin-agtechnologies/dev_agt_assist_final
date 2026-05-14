@@ -373,3 +373,21 @@
 - **Décisions majeures :** ProfilEntreprise = identité commune only ; Bot décentralisé (ton/signature/agences M2M/features M2M) ; AgenceKnowledge distinct de Agence existant
 - **Rapport :** `docs/reports/session_20_gabriel.md`
 ---
+## session_22_gabriel
+
+- **Type :** Debug — Stabilisation build TypeScript (0 erreur tsc → build prod ✅)
+- **Date :** 2026-05-14
+- **Flux couverts :** Aucun flux nouveau — session stabilisation uniquement
+- **Bugs corrigés :** BUG-S20-01, BUG-S20-02, BUG-S20-03, BUG-S20-04, BUG-S20-05, BUG-S20-06, BUG-S20-07, BUG-S20-08, BUG-S20-10, BUG-S22-01 (noms champs AgenceKnowledge)
+- **Zones touchées :**
+  - `src/types/api/agent.types.ts` (restauré)
+  - `src/types/api/agence.types.ts` (types Knowledge V2 corrects)
+  - `src/repositories/` (2 nouveaux : appointments.repository.ts, services.repository.ts, index.ts mis à jour)
+  - `src/app/(dashboard)/agences/page.tsx`
+  - `src/app/(dashboard)/appointments/` (page.tsx, useAppointments.ts, RdvModal.tsx)
+  - `src/app/(dashboard)/knowledge/page.tsx`
+- **Fichiers créés :** `src/repositories/appointments.repository.ts`, `src/repositories/services.repository.ts`
+- **Fichiers modifiés :** 8
+- **Commit :** `3b77a6a`
+- **Rapport :** `docs/reports/session_22_gabriel.md`
+---
