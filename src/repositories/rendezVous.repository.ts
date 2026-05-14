@@ -8,7 +8,7 @@ import type { RendezVous, CreateRendezVousPayload } from "@/types/api/contact.ty
 // Ré-exporter les types pour les consumers qui importent depuis ce module
 export type { RendezVous, CreateRendezVousPayload };
 
-const BASE = "/api/v1/services/rendez-vous";
+const BASE = "/api/v1/appointments";
 
 export const rendezVousRepository = {
   getList: (filters?: Record<string, string>): Promise<PaginatedResponse<RendezVous>> =>

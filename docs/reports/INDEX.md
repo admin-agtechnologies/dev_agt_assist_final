@@ -373,7 +373,7 @@
 - **Décisions majeures :** ProfilEntreprise = identité commune only ; Bot décentralisé (ton/signature/agences M2M/features M2M) ; AgenceKnowledge distinct de Agence existant
 - **Rapport :** `docs/reports/session_20_gabriel.md`
 ---
-## session_22_gabriel
+## session_21_gabriel
 
 - **Type :** Debug — Stabilisation build TypeScript (0 erreur tsc → build prod ✅)
 - **Date :** 2026-05-14
@@ -389,5 +389,5 @@
 - **Fichiers créés :** `src/repositories/appointments.repository.ts`, `src/repositories/services.repository.ts`
 - **Fichiers modifiés :** 8
 - **Commit :** `3b77a6a`
-- **Rapport :** `docs/reports/session_22_gabriel.md`
+- **Rapport :** `docs/reports/session_21_gabriel.md`
 ---

@@ -1,11 +1,11 @@
-# Rapport de session — session_22_gabriel
+# Rapport de session — session_21_gabriel
 
 ## Métadonnées
 
 | Champ | Valeur |
 |-------|--------|
 | Membre | Gabriel |
-| Session N° | 22 |
+| Session N° | 21 |
 | Date | 2026-05-14 |
 | Type | Debug — Stabilisation build TypeScript + Knowledge Base |
 | Durée estimée | ~3h |
@@ -145,7 +145,7 @@ npm run build   → ✅ 46/46 pages
 
 ---
 
-## Plan S23
+## Plan S22
 
 1. **Tester `/knowledge` en navigateur** (tab Entreprise → tab Agences → tab FAQ)
 2. **Corriger les bugs visuels** révélés par le test navigateur
@@ -154,13 +154,13 @@ npm run build   → ✅ 46/46 pages
 
 ---
 
-## Prompt de début de session S23
+## Prompt de début de session S22
 
 ```
 Bonjour, nous démarrons la session 23 de développement sur AGT Platform.
 
 Membre : Gabriel
-Session N° : 23
+Session N° : 22
 Date : {date}
 
 Contexte de départ :

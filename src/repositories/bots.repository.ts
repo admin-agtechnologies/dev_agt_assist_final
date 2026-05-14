@@ -4,8 +4,9 @@ import type {
     Bot, CreateBotPayload, BotFilters, NumeroTelephone,
     PaginatedResponse, WahaStatusResponse, WahaConnectResponse, WahaDisconnectResponse,
     ChatbotConfig, UpdateChatbotConfigPayload, ChatbotTestPayload, ChatbotTestResponse,
-    TestSessionSummary, TestSessionDetail,
+    TestSessionSummary, TestSessionDetail, BotConfigPayload,
 } from "@/types/api";
+import getConfig from "next/config";
 
 const p = (f?: object): Record<string, string> =>
     Object.fromEntries(
@@ -29,6 +30,10 @@ export const botsRepository = {
         api.patch(`/api/v1/bots/${id}/`, payload),
     delete: (id: string): Promise<void> =>
         api.delete(`/api/v1/bots/${id}/`),
+    getConfig: (id: string): Promise<Bot> =>
+        api.get(`/api/v1/bots/${id}/config/`),
+    updateConfig: (id: string, payload: BotConfigPayload): Promise<Bot> =>
+        api.patch(`/api/v1/bots/${id}/config/`, payload),
 };
 
 export const phoneNumbersRepository = {
