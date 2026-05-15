@@ -27,8 +27,8 @@ async function getBySector(sectorSlug: string): Promise<PublicFeature[]> {
     throw new Error(`[publicFeatures] ${res.status} pour secteur "${sectorSlug}"`);
   }
 
-  const data: { features: PublicFeature[]; count: number } = await res.json();
-  return data.features ?? [];
+ const data: { features: Array<PublicFeature & { is_default: boolean }>; count: number } = await res.json();
+ return (data.features ?? []).map(f => ({ ...f, recommended: f.is_default }));
 }
 
 export const publicFeaturesRepository = { getBySector };

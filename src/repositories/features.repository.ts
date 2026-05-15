@@ -24,7 +24,7 @@ export interface ActiveFeature {
 
 export interface SectorFeature {
   id: string; slug: string; nom_fr: string; nom_en: string;
-  icone: string; categorie: string; is_default: boolean; is_mandatory: boolean;
+  icone: string; categorie: string; is_default: boolean; is_mandatory: boolean; quota_unitaire?: number;
   prix_unitaire?: number;
 }
 

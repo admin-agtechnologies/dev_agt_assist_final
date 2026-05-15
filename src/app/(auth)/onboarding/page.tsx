@@ -259,6 +259,7 @@ function OnboardingContent() {
               allFeatures={allFeatures}
               locale={locale}
               accentColor={accentColor}
+              sectorSlug={draft.sector_slug} 
               onConfirm={handleFeaturesConfirm}
             />
           )}

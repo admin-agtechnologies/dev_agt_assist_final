@@ -491,4 +491,29 @@
 - **Dettes créées :** BUG-S24-04 (setup.py plan gratuit), BUG-S24-05 (conciergerie bootstrap), DETTE-S24-01 à 04
 - **Rapport :** `docs/reports/session_24_gabriel.md`
 - **Session suivante (S25) :** Stabiliser build + corriger onboarding + Page Modules + Billing
---
+---
+## session_25_gabriel
+
+- **Type :** Debug + Génération — Stabilisation build + Onboarding pré-register
+- **Date :** 2026-05-15
+- **Flux couverts :** Build TypeScript ✅, BUG backend onboarding ✅, FeaturePicker v3 ✅
+- **Bugs corrigés :** DETTE-S24-01 (Tenant types), BUG-S24-04 (setup.py gratuit→decouverte), BUG-S24-05 (bootstrap hotel conciergerie→paiement_en_ligne)
+- **Bugs identifiés :** BUG-S25-01 (is_default seeder incorrect — CRITIQUE S26)
+- **Zones touchées :** `src/types/api/`, `apps/tenants/setup.py`, `apps/agent/services/bootstrap_catalogue.py`, `src/components/onboarding/`
+- **Fichiers créés :** `tenant.types.ts`
+- **Fichiers modifiés :** 5
+- **Build TypeScript :** 0 erreur ✅
+- **Seed :** flush + seed validé ✅
+- **Rapport :** `docs/reports/session_25_gabriel.md`
+- **Session suivante (S26) :** BUG-S25-01 is_default seeder → onboarding pré-register E2E → page.tsx sectorSlug prop
+---
+## session_26_gabriel
+- **Type :** Debug + Génération — Onboarding E2E complet
+- **Date :** 2026-05-15
+- **Flux couverts :** Onboarding pré-register (FeaturePicker v3 ✅), onboarding post-register (WelcomeScreen2/3/4 ✅), flux paiement welcome ✅, gardiens /welcome ✅
+- **Bugs corrigés :** BUG-S25-01 (recommended mapping), BUG-S26-01 (custom view), BUG-S26-02 (mandatory lock), BUG-S26-03 (pre-select desired), BUG-S26-04 (extras affichage), BUG-S26-05 (spinner WS4), BUG-S26-06 (boucle welcome), BUG-S26-07 (gardien plan actif)
+- **Zones touchées :** `apps/features/views.py`, `apps/tenants/seeders/`, `apps/users/serializers.py`, `src/repositories/`, `src/lib/`, `src/types/`, `src/components/onboarding/`, `src/components/welcome/`, `src/app/(dashboard)/welcome/`
+- **Point PO ouvert :** `frais_installation` — règle de facturation à clarifier avant S27
+- **Rapport :** `docs/reports/session_26_gabriel.md`
+
+---
