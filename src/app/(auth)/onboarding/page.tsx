@@ -16,6 +16,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { secteursRepository } from "@/repositories";
 import { publicFeaturesRepository, type PublicFeature } from "@/repositories/public-features.repository";
 import { authRepository } from "@/repositories/auth.repository";
+import { tokenStorage } from "@/lib/api-client";
 import { tenantsRepository } from "@/repositories/tenants.repository";
 import { featuresRepository } from "@/repositories/features.repository";
 import { SectorPicker } from "@/components/onboarding/SectorPicker";
@@ -164,8 +165,7 @@ function OnboardingContent() {
           google_id: googleUser.sub ?? "",
         });
         if (result?.access) {
-          localStorage.setItem("agt_access_token", result.access);
-          localStorage.setItem("agt_refresh_token", result.refresh ?? "");
+          tokenStorage.set(result.access, result.refresh ?? "");
         }
         await refreshUser?.();
         setStep("finalize");
@@ -264,7 +264,7 @@ function OnboardingContent() {
               allFeatures={allFeatures}
               locale={locale}
               accentColor={accentColor}
-              sectorSlug={draft.sector_slug} 
+              sectorSlug={draft.sector_slug}
               onConfirm={handleFeaturesConfirm}
             />
           )}
