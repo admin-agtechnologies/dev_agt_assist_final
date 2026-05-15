@@ -100,6 +100,40 @@ export function getSectorUrl(slug: string): string {
 }
 
 /**
+ * Retourne l'URL d'onboarding pour un secteur donné — point d'entrée direct
+ * « Démarrer pour {secteur} » depuis le hub central.
+ *
+ * Compose `getSectorUrl(slug)` + `/onboarding?sector={slug}` en gérant
+ * proprement les 3 cas :
+ *   - URL absolue (prod ou dev sectoriel)  → `{base}/onboarding?sector={slug}`
+ *   - Chemin relatif `/onboarding` (custom) → `/onboarding?sector={slug}`
+ *   - Slug inconnu                          → `/onboarding?sector={slug}`
+ *
+ * @param slug Slug du secteur (ex: "pme", "restaurant", "custom")
+ * @returns URL prête à être utilisée dans un `<Link href={...}>`
+ *
+ * @example
+ *   getSectorOnboardingUrl('pme')
+ *     // prod  → "https://pme.agt-bot.com/onboarding?sector=pme"
+ *     // dev   → "http://localhost:3008/onboarding?sector=pme"
+ *
+ *   getSectorOnboardingUrl('custom')
+ *     // toujours → "/onboarding?sector=custom"
+ */
+export function getSectorOnboardingUrl(slug: string): string {
+    const base = getSectorUrl(slug);
+    const query = `?sector=${encodeURIComponent(slug)}`;
+
+    // Cas relatif : `/onboarding` → ajouter uniquement la query string
+    if (base === '/onboarding') {
+        return `/onboarding${query}`;
+    }
+
+    // Cas URL absolue : concaténer /onboarding + query
+    return `${base}/onboarding${query}`;
+}
+
+/**
  * Type des slugs gérés (pour l'autocomplétion).
  * Note : on n'exporte plus `SectorKey` depuis constants.ts —
  * la source de vérité des slugs est `sector-config.ts → SECTOR_SLUGS`.

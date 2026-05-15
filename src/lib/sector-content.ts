@@ -31,6 +31,9 @@ export interface SectorContent {
   /** Badge bonus en bas du panneau */
   badgeFr: string;
   badgeEn: string;
+  /** Exemple de nom d'entreprise (placeholder onboarding IdentityStep) */
+  businessExampleFr: string;
+  businessExampleEn: string;
 }
 
 export const SECTOR_CONTENT: Record<SectorSlug, SectorContent> = {
@@ -52,6 +55,8 @@ export const SECTOR_CONTENT: Record<SectorSlug, SectorContent> = {
     ],
     badgeFr: "10 000 FCFA offerts à l'inscription",
     badgeEn: "10,000 XAF offered at sign-up",
+    businessExampleFr: "Ex : Restaurant La Terrasse",
+    businessExampleEn: "e.g. La Terrasse Restaurant",
   },
 
   hotel: {
@@ -72,6 +77,8 @@ export const SECTOR_CONTENT: Record<SectorSlug, SectorContent> = {
     ],
     badgeFr: "10 000 FCFA offerts à l'inscription",
     badgeEn: "10,000 XAF offered at sign-up",
+    businessExampleFr: "Ex : Lodge Kribi Beach",
+    businessExampleEn: "e.g. Kribi Beach Lodge",
   },
 
   clinical: {
@@ -92,6 +99,8 @@ export const SECTOR_CONTENT: Record<SectorSlug, SectorContent> = {
     ],
     badgeFr: "10 000 FCFA offerts à l'inscription",
     badgeEn: "10,000 XAF offered at sign-up",
+    businessExampleFr: "Ex : Clinique de la Cathédrale",
+    businessExampleEn: "e.g. Cathedral Clinic",
   },
 
   banking: {
@@ -112,6 +121,8 @@ export const SECTOR_CONTENT: Record<SectorSlug, SectorContent> = {
     ],
     badgeFr: "10 000 FCFA offerts à l'inscription",
     badgeEn: "10,000 XAF offered at sign-up",
+    businessExampleFr: "Ex : Clinique de la Cathédrale",
+    businessExampleEn: "e.g. Cathedral Clinic",
   },
 
   school: {
@@ -132,6 +143,8 @@ export const SECTOR_CONTENT: Record<SectorSlug, SectorContent> = {
     ],
     badgeFr: "10 000 FCFA offerts à l'inscription",
     badgeEn: "10,000 XAF offered at sign-up",
+    businessExampleFr: "Ex : École Bilingue Étoile",
+    businessExampleEn: "e.g. Étoile Bilingual School",
   },
 
   ecommerce: {
@@ -152,6 +165,8 @@ export const SECTOR_CONTENT: Record<SectorSlug, SectorContent> = {
     ],
     badgeFr: "10 000 FCFA offerts à l'inscription",
     badgeEn: "10,000 XAF offered at sign-up",
+    businessExampleFr: "Ex : Boutique Mvog-Mbi",
+    businessExampleEn: "e.g. Mvog-Mbi Boutique",
   },
 
   transport: {
@@ -172,6 +187,8 @@ export const SECTOR_CONTENT: Record<SectorSlug, SectorContent> = {
     ],
     badgeFr: "10 000 FCFA offerts à l'inscription",
     badgeEn: "10,000 XAF offered at sign-up",
+    businessExampleFr: "Ex : Trans Express Douala",
+    businessExampleEn: "e.g. Trans Express Douala",
   },
 
   pme: {
@@ -192,6 +209,8 @@ export const SECTOR_CONTENT: Record<SectorSlug, SectorContent> = {
     ],
     badgeFr: "10 000 FCFA offerts à l'inscription",
     badgeEn: "10,000 XAF offered at sign-up",
+    businessExampleFr: "Ex : MC Consulting",
+    businessExampleEn: "e.g. MC Consulting",
   },
 
   public: {
@@ -212,6 +231,8 @@ export const SECTOR_CONTENT: Record<SectorSlug, SectorContent> = {
     ],
     badgeFr: "10 000 FCFA offerts à l'inscription",
     badgeEn: "10,000 XAF offered at sign-up",
+    businessExampleFr: "Ex : Mairie de Yaoundé III",
+    businessExampleEn: "e.g. Yaoundé District 3 City Hall",
   },
 
   custom: {
@@ -232,6 +253,8 @@ export const SECTOR_CONTENT: Record<SectorSlug, SectorContent> = {
     ],
     badgeFr: "10 000 FCFA offerts à l'inscription",
     badgeEn: "10,000 XAF offered at sign-up",
+    businessExampleFr: "Ex : Ma société",
+    businessExampleEn: "e.g. My business",
   },
 
   // Hub central — contenu marketing cross-secteur (vitrine globale)
@@ -253,6 +276,8 @@ export const SECTOR_CONTENT: Record<SectorSlug, SectorContent> = {
     ],
     badgeFr: "10 000 FCFA offerts à l'inscription",
     badgeEn: "10,000 XAF offered at sign-up",
+    businessExampleFr: "Ex : Ma société",
+    businessExampleEn: "e.g. My business",
   },
 };
 

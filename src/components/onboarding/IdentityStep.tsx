@@ -2,41 +2,66 @@
 // ============================================================
 // FICHIER : src/components/onboarding/IdentityStep.tsx
 // Étape 2 : Nom de l'entreprise (seul champ obligatoire)
+// MODIF S21 (B-S21-02) : placeholder dynamique selon sectorSlug
+// Note: `sectorSlug` typé `SectorSlug | string` car `Draft.sector_slug`
+// (parent) peut être chaîne vide tant que l'utilisateur n'a pas confirmé.
+// Le composant retombe sur le contenu `central` (générique) si invalide.
 // ============================================================
 
 import { useState } from "react";
 import { Building2 } from "lucide-react";
 import type { Locale } from "@/contexts/LanguageContext";
+import { isValidSector, type SectorSlug } from "@/lib/sector-config";
+import { getSectorContent } from "@/lib/sector-content";
 
 const LABELS = {
   fr: {
-    title:       "Votre entreprise",
-    subtitle:    "Comment s'appelle votre entreprise ? Vous pourrez compléter votre profil plus tard.",
-    label:       "Nom de l'entreprise",
-    placeholder: "Ex : Restaurant La Terrasse",
-    confirm:     "Continuer",
-    required:    "Le nom est requis.",
+    title: "Votre entreprise",
+    subtitle: "Comment s'appelle votre entreprise ? Vous pourrez compléter votre profil plus tard.",
+    label: "Nom de l'entreprise",
+    confirm: "Continuer",
+    required: "Le nom est requis.",
   },
   en: {
-    title:       "Your business",
-    subtitle:    "What is your business name? You can complete your profile later.",
-    label:       "Business name",
-    placeholder: "e.g. La Terrasse Restaurant",
-    confirm:     "Continue",
-    required:    "Name is required.",
+    title: "Your business",
+    subtitle: "What is your business name? You can complete your profile later.",
+    label: "Business name",
+    confirm: "Continue",
+    required: "Name is required.",
   },
 } as const;
 
 interface IdentityStepProps {
-  initialName:  string;
-  locale:       Locale;
-  accentColor:  string;
-  onConfirm:    (companyName: string) => void;
+  initialName: string;
+  locale: Locale;
+  accentColor: string;
+  /**
+   * Slug du secteur choisi à l'étape précédente — pilote le placeholder.
+   * Accepte une string vide/invalide (cas edge `?sector=` absent en URL) :
+   * dans ce cas on retombe sur le contenu générique `central`.
+   */
+  sectorSlug: SectorSlug | string;
+  onConfirm: (companyName: string) => void;
 }
 
-export function IdentityStep({ initialName, locale, accentColor, onConfirm }: IdentityStepProps) {
+export function IdentityStep({
+  initialName,
+  locale,
+  accentColor,
+  sectorSlug,
+  onConfirm,
+}: IdentityStepProps) {
   const t = LABELS[locale];
-  const [name,  setName]  = useState(initialName);
+
+  // Resserre le typage via le type guard `isValidSector` :
+  // si slug vide ou inconnu → fallback sur `central` (contenu générique).
+  const safeSlug: SectorSlug = isValidSector(sectorSlug) ? sectorSlug : "central";
+  const sectorContent = getSectorContent(safeSlug);
+  const placeholder = locale === "fr"
+    ? sectorContent.businessExampleFr
+    : sectorContent.businessExampleEn;
+
+  const [name, setName] = useState(initialName);
   const [error, setError] = useState("");
 
   const handleSubmit = () => {
@@ -70,7 +95,7 @@ export function IdentityStep({ initialName, locale, accentColor, onConfirm }: Id
             value={name}
             onChange={(e) => { setName(e.target.value); setError(""); }}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            placeholder={t.placeholder}
+            placeholder={placeholder}
             className={[
               "w-full pl-9 pr-4 py-3 rounded-xl border-2 bg-[var(--bg)] text-[var(--text)]",
               "text-sm placeholder:text-[var(--text-muted)] outline-none transition-colors",

@@ -34,23 +34,23 @@ type Step = "sector" | "identity" | "features" | "account" | "email_check" | "fi
 const ORDERED: Step[] = ["sector", "identity", "features", "account"];
 
 interface Draft {
-  sector_slug:   string;
-  sector_id:     string;
-  company_name:  string;
+  sector_slug: string;
+  sector_id: string;
+  company_name: string;
   feature_slugs: string[];
 }
 
-const DRAFT_KEY      = "agt_ob_draft";
-const EMPTY: Draft   = { sector_slug: "", sector_id: "", company_name: "", feature_slugs: [] };
+const DRAFT_KEY = "agt_ob_draft";
+const EMPTY: Draft = { sector_slug: "", sector_id: "", company_name: "", feature_slugs: [] };
 const FALLBACK_ACCENT = "#075E54";
 
-const saveDraft  = (d: Partial<Draft>) => { try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...getDraft(), ...d })); } catch {} };
-const getDraft   = (): Draft => { try { return { ...EMPTY, ...JSON.parse(localStorage.getItem(DRAFT_KEY) ?? "{}") }; } catch { return EMPTY; } };
-const clearDraft = () => { try { localStorage.removeItem(DRAFT_KEY); } catch {} };
+const saveDraft = (d: Partial<Draft>) => { try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...getDraft(), ...d })); } catch { } };
+const getDraft = (): Draft => { try { return { ...EMPTY, ...JSON.parse(localStorage.getItem(DRAFT_KEY) ?? "{}") }; } catch { return EMPTY; } };
+const clearDraft = () => { try { localStorage.removeItem(DRAFT_KEY); } catch { } };
 
 const STEP_LABELS = {
   fr: ["Secteur", "Entreprise", "Fonctionnalités", "Compte"],
-  en: ["Sector",  "Business",   "Features",        "Account"],
+  en: ["Sector", "Business", "Features", "Account"],
 };
 
 function resolveAccent(slug: string): string {
@@ -59,19 +59,19 @@ function resolveAccent(slug: string): string {
 
 // ── Composant interne — contient tous les hooks client ────────────────────────
 function OnboardingContent() {
-  const router        = useRouter();          // ✅ déclaré ici
-  const searchParams  = useSearchParams();    // ✅ déclaré ici (exige Suspense parent)
+  const router = useRouter();          // ✅ déclaré ici
+  const searchParams = useSearchParams();    // ✅ déclaré ici (exige Suspense parent)
   const { user, refreshUser } = useAuth();
-  const { locale }            = useLanguage();
+  const { locale } = useLanguage();
 
-  const [step,        setStep]        = useState<Step>("sector");
-  const [secteurs,    setSecteurs]    = useState<SecteurActivite[]>([]);
-  const [features,    setFeatures]    = useState<PublicFeature[]>([]);
+  const [step, setStep] = useState<Step>("sector");
+  const [secteurs, setSecteurs] = useState<SecteurActivite[]>([]);
+  const [features, setFeatures] = useState<PublicFeature[]>([]);
   const [allFeatures, setAllFeatures] = useState<PublicFeature[]>([]);
-  const [draft,       setDraftState]  = useState<Draft>(EMPTY);
-  const [loading,     setLoading]     = useState(true);
-  const [regError,    setRegError]    = useState("");
-  const [email,       setEmail]       = useState("");
+  const [draft, setDraftState] = useState<Draft>(EMPTY);
+  const [loading, setLoading] = useState(true);
+  const [regError, setRegError] = useState("");
+  const [email, setEmail] = useState("");
 
   const accentColor = resolveAccent(draft.sector_slug);
 
@@ -80,11 +80,11 @@ function OnboardingContent() {
   }, [user, router]);
 
   useEffect(() => {
-    const stored     = getDraft();
+    const stored = getDraft();
     const presetSlug = searchParams.get("sector") ?? stored.sector_slug ?? "";
     setDraftState({ ...stored, sector_slug: presetSlug });
     if (presetSlug && isValidSector(presetSlug)) setStoredSector(presetSlug);
-    secteursRepository.getList().then(setSecteurs).catch(() => {}).finally(() => setLoading(false));
+    secteursRepository.getList().then(setSecteurs).catch(() => { }).finally(() => setLoading(false));
     if (user && !user.entreprise?.secteur && stored.sector_id) setStep("finalize");
   }, [searchParams, user]);
 
@@ -139,8 +139,8 @@ function OnboardingContent() {
     try {
       await authRepository.register({
         name, email: emailVal, password,
-        company_name:  draft.company_name  || undefined,
-        sector_slug:   draft.sector_slug   || undefined,
+        company_name: draft.company_name || undefined,
+        sector_slug: draft.sector_slug || undefined,
         feature_slugs: draft.feature_slugs.length ? draft.feature_slugs : undefined,
       });
       setEmail(emailVal);
@@ -162,9 +162,9 @@ function OnboardingContent() {
       callback: async (response: { credential: string }) => {
         try {
           const payload = JSON.parse(atob(response.credential.split(".")[1]));
-          const result  = await authRepository.google({ email: payload.email, name: payload.name ?? "", google_id: payload.sub ?? "" });
+          const result = await authRepository.google({ email: payload.email, name: payload.name ?? "", google_id: payload.sub ?? "" });
           if (result?.access) {
-            localStorage.setItem("agt_access_token",  result.access);
+            localStorage.setItem("agt_access_token", result.access);
             localStorage.setItem("agt_refresh_token", result.refresh ?? "");
           }
           await refreshUser?.();
@@ -185,14 +185,14 @@ function OnboardingContent() {
       await Promise.allSettled(feature_slugs.map(s => featuresRepository.toggle(s, true)));
       clearDraft();
       await refreshUser?.();
-    } catch {}
+    } catch { }
     router.replace(ROUTES.dashboard);
   }, [router, refreshUser]);
 
   useEffect(() => { if (step === "finalize") handleFinalize(); }, [step, handleFinalize]);
 
   const stepIndex = ORDERED.indexOf(step as Step);
-  const labels    = STEP_LABELS[locale];
+  const labels = STEP_LABELS[locale];
 
   if (loading && step !== "features") return <LoadingPage />;
 
@@ -251,7 +251,8 @@ function OnboardingContent() {
           )}
           {step === "identity" && (
             <IdentityStep initialName={draft.company_name} locale={locale}
-              accentColor={accentColor} onConfirm={handleIdentityConfirm} />
+              accentColor={accentColor} sectorSlug={draft.sector_slug}
+              onConfirm={handleIdentityConfirm} />
           )}
           {step === "features" && (
             <FeaturePicker

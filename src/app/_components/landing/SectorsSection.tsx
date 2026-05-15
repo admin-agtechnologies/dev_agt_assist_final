@@ -13,17 +13,13 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SECTORS } from "./LandingData";
-import { getSectorUrl } from "@/lib/sector-urls";
+import { getSectorOnboardingUrl } from "@/lib/sector-urls";
 
 const SECTOR_ICONS: Record<string, React.ElementType> = {
   pme: Briefcase, banking: Building2, clinical: Heart,
   school: GraduationCap, ecommerce: ShoppingCart, hotel: Hotel,
   public: Landmark, restaurant: Utensils, transport: Plane, custom: Sparkles,
 };
-
-// `getSectorHref` est juste un alias de `getSectorUrl` — on garde le nom local
-// pour ne pas casser les appels existants dans le JSX.
-const getSectorHref = getSectorUrl;
 
 export function SectorsSection() {
   const { locale } = useLanguage();
@@ -177,9 +173,9 @@ export function SectorsSection() {
                 ))}
               </div>
 
-              {/* CTA */}
+              {/* CTA — redirige directement vers /onboarding?sector={slug} */}
               <Link
-                href={getSectorHref(active.id)}
+                href={getSectorOnboardingUrl(active.id)}
                 className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl text-white font-black text-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
                 style={{
                   background: `linear-gradient(135deg, ${active.primary}, ${active.accent}CC)`,
