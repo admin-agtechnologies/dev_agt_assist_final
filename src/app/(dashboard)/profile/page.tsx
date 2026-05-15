@@ -29,25 +29,25 @@ export default function PmeProfilePage() {
     const { theme } = useSector();
 
     // ── Profil utilisateur ────────────────────────────────────────────────────
-    const [profileName, setProfileName]       = useState(user?.name ?? "");
+    const [profileName, setProfileName] = useState(user?.name ?? "");
     const [isSavingProfile, startSaveProfile] = useTransition();
 
     // ── Mot de passe ──────────────────────────────────────────────────────────
-    const [currentPwd, setCurrentPwd]         = useState("");
-    const [newPwd, setNewPwd]                 = useState("");
-    const [confirmPwd, setConfirmPwd]         = useState("");
-    const [pwdError, setPwdError]             = useState("");
+    const [currentPwd, setCurrentPwd] = useState("");
+    const [newPwd, setNewPwd] = useState("");
+    const [confirmPwd, setConfirmPwd] = useState("");
+    const [pwdError, setPwdError] = useState("");
     const [showCurrentPwd, setShowCurrentPwd] = useState(false);
-    const [showNewPwd, setShowNewPwd]         = useState(false);
+    const [showNewPwd, setShowNewPwd] = useState(false);
     const [showConfirmPwd, setShowConfirmPwd] = useState(false);
-    const [isSavingPwd, startSavePwd]         = useTransition();
+    const [isSavingPwd, startSavePwd] = useTransition();
 
     // ── Entreprise ────────────────────────────────────────────────────────────
-    const [entreprise, setEntreprise]               = useState<EntrepriseInUser>(user?.entreprise ?? EMPTY_ENTREPRISE);
+    const [entreprise, setEntreprise] = useState<EntrepriseInUser>(user?.entreprise ?? EMPTY_ENTREPRISE);
     const [selectedSecteurId, setSelectedSecteurId] = useState<string>(user?.entreprise?.secteur?.id ?? "");
-    const [secteurs, setSecteurs]                   = useState<SecteurActivite[]>([]);
-    const [loadingSecteurs, setLoadingSecteurs]     = useState(true);
-    const [isSavingTenant, startSaveTenant]         = useTransition();
+    const [secteurs, setSecteurs] = useState<SecteurActivite[]>([]);
+    const [loadingSecteurs, setLoadingSecteurs] = useState(true);
+    const [isSavingTenant, startSaveTenant] = useTransition();
 
     useEffect(() => {
         setProfileName(user?.name ?? "");
@@ -59,7 +59,7 @@ export default function PmeProfilePage() {
     useEffect(() => {
         secteursRepository.getList()
             .then(setSecteurs)
-            .catch(() => {})
+            .catch(() => { })
             .finally(() => setLoadingSecteurs(false));
     }, []);
 
@@ -105,11 +105,12 @@ export default function PmeProfilePage() {
                     setEntreprise(updated);
                 } else {
                     await tenantsRepository.create({
-                        name: entreprise.name, slug: "", sector: selectedSecteurId,
+                        name: entreprise.name,
+                        secteur_id: selectedSecteurId,
                         description: entreprise.description,
                         whatsapp_number: entreprise.whatsapp_number,
                         phone_number: entreprise.phone_number,
-                        auth_user_id: user?.id ?? "", is_active: true,
+                        is_active: true,
                     });
                 }
                 await refreshUser();
@@ -136,7 +137,7 @@ export default function PmeProfilePage() {
                         <div
                             className="w-16 h-16 rounded-2xl flex items-center justify-center text-xl font-black flex-shrink-0"
                             style={{ backgroundColor: `${theme.primary}18`, color: theme.primary }}
-                            >
+                        >
                             {initials(user.name)}
                         </div>
                         <div>
@@ -145,7 +146,7 @@ export default function PmeProfilePage() {
                             <span
                                 className="inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-bold"
                                 style={{ backgroundColor: `${theme.primary}18`, color: theme.primary }}
-                                >
+                            >
                                 {t.roles.pme}
                             </span>
                         </div>
@@ -211,9 +212,9 @@ export default function PmeProfilePage() {
                     </h2>
                     <form onSubmit={handleSavePassword} className="space-y-4">
                         {([
-                            { label: t.currentPassword, value: currentPwd,  set: setCurrentPwd,  show: showCurrentPwd, toggle: () => setShowCurrentPwd(v => !v) },
-                            { label: t.newPassword,     value: newPwd,      set: setNewPwd,      show: showNewPwd,     toggle: () => setShowNewPwd(v => !v) },
-                            { label: t.confirmPassword, value: confirmPwd,  set: setConfirmPwd,  show: showConfirmPwd, toggle: () => setShowConfirmPwd(v => !v) },
+                            { label: t.currentPassword, value: currentPwd, set: setCurrentPwd, show: showCurrentPwd, toggle: () => setShowCurrentPwd(v => !v) },
+                            { label: t.newPassword, value: newPwd, set: setNewPwd, show: showNewPwd, toggle: () => setShowNewPwd(v => !v) },
+                            { label: t.confirmPassword, value: confirmPwd, set: setConfirmPwd, show: showConfirmPwd, toggle: () => setShowConfirmPwd(v => !v) },
                         ] as const).map(({ label, value, set, show, toggle }, i) => (
                             <div key={i}>
                                 <label className="label-base">{label}</label>

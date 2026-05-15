@@ -121,8 +121,8 @@ export const SECTOR_CONTENT: Record<SectorSlug, SectorContent> = {
     ],
     badgeFr: "10 000 FCFA offerts à l'inscription",
     badgeEn: "10,000 XAF offered at sign-up",
-    businessExampleFr: "Ex : Clinique de la Cathédrale",
-    businessExampleEn: "e.g. Cathedral Clinic",
+    businessExampleFr: "Ex : MicroFinance Express",
+    businessExampleEn: "e.g. MicroFinance Express",
   },
 
   school: {

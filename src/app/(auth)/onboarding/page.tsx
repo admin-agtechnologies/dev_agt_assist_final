@@ -5,10 +5,9 @@
 // Fix runtime : déclarations router + searchParams manquantes
 // ============================================================
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-declare global { interface Window { google: any } }
-
 import { useState, useEffect, useCallback, Suspense } from "react";
+import { useGoogleLogin } from "@react-oauth/google";
+import { WithGoogleOAuth } from "@/components/auth/AuthShell";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, Home } from "lucide-react";
 import Link from "next/link";
@@ -151,29 +150,34 @@ function OnboardingContent() {
     } finally { setLoading(false); }
   };
 
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        saveDraft(draft);
+        const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        });
+        const googleUser = await res.json() as { email: string; name: string; sub: string };
+        const result = await authRepository.google({
+          email: googleUser.email,
+          name: googleUser.name ?? "",
+          google_id: googleUser.sub ?? "",
+        });
+        if (result?.access) {
+          localStorage.setItem("agt_access_token", result.access);
+          localStorage.setItem("agt_refresh_token", result.refresh ?? "");
+        }
+        await refreshUser?.();
+        setStep("finalize");
+      } catch { setRegError("Connexion Google échouée. Réessayez."); }
+    },
+    onError: () => setRegError("Connexion Google échouée. Réessayez."),
+  });
+
   const handleGoogleClick = useCallback(() => {
     saveDraft(draft);
-    if (typeof window === "undefined" || !window.google?.accounts?.id) {
-      console.warn("[onboarding] Google Identity Services non chargé.");
-      return;
-    }
-    window.google.accounts.id.initialize({
-      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "",
-      callback: async (response: { credential: string }) => {
-        try {
-          const payload = JSON.parse(atob(response.credential.split(".")[1]));
-          const result = await authRepository.google({ email: payload.email, name: payload.name ?? "", google_id: payload.sub ?? "" });
-          if (result?.access) {
-            localStorage.setItem("agt_access_token", result.access);
-            localStorage.setItem("agt_refresh_token", result.refresh ?? "");
-          }
-          await refreshUser?.();
-          setStep("finalize");
-        } catch { setRegError("Connexion Google échouée. Réessayez."); }
-      },
-    });
-    window.google.accounts.id.prompt();
-  }, [draft, refreshUser]);
+    handleGoogleLogin();
+  }, [draft, handleGoogleLogin]);
 
   const handleResend = async () => { await authRepository.resendVerification(email); };
 
@@ -282,9 +286,11 @@ function OnboardingContent() {
 // ── Export par défaut — Suspense requis par Next.js 14 pour useSearchParams ───
 export default function OnboardingPage() {
   return (
-    <Suspense fallback={<LoadingPage />}>
-      <OnboardingContent />
-    </Suspense>
+    <WithGoogleOAuth>
+      <Suspense fallback={<LoadingPage />}>
+        <OnboardingContent />
+      </Suspense>
+    </WithGoogleOAuth>
   );
 }
 

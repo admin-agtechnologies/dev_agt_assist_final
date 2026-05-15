@@ -15,6 +15,7 @@ export * from './reservation.types';
 export * from './crm.types';
 export * from './bot.types';
 export * from './knowledge.types';
+export * from './tenant.types';
 
 // ⚠️ agent.types.ts n'est PAS exporté ici —
 //    conversation.types.ts déclare déjà AIConversation (conflit barrel).
