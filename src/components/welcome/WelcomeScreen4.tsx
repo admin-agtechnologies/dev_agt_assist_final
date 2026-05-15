@@ -1,5 +1,6 @@
 // src/components/welcome/WelcomeScreen4.tsx
 "use client";
+import { useState } from "react";
 import { Bot, Settings, BookOpen, Loader2 } from "lucide-react";
 
 interface Props {
@@ -28,13 +29,21 @@ const T = {
   },
 };
 
+
+
+
 export function WelcomeScreen4({ locale, onBack, onChoice, submitting }: Props) {
   const t = T[locale as keyof typeof T] ?? T.fr;
+  const [activeHref, setActiveHref] = useState<string | null>(null);
   const choices = [
     { icon: Bot,      color: "var(--color-primary)", href: "/bots",     ...t.testBot   },
     { icon: Settings, color: "var(--color-accent)",  href: "/faq",      ...t.configure },
     { icon: BookOpen, color: "#6366f1",              href: "/tutorial", ...t.tutorial  },
   ];
+  const handleClick = async (href: string) => {
+  setActiveHref(href);
+  await onChoice(href);
+  };
 
   return (
     <div className="bg-[var(--bg-card)] rounded-2xl shadow-lg p-8 space-y-6">
@@ -47,11 +56,11 @@ export function WelcomeScreen4({ locale, onBack, onChoice, submitting }: Props) 
         {choices.map(c => {
           const Icon = c.icon;
           return (
-            <button key={c.href} onClick={() => onChoice(c.href)} disabled={submitting}
+            <button key={c.href} onClick={() => handleClick(c.href)} disabled={submitting || activeHref !== null}
               className="flex items-center gap-4 p-4 rounded-xl border border-[var(--border)] hover:border-[var(--color-primary)]/40 bg-[var(--bg)] hover:bg-[var(--bg-card)] transition text-left disabled:opacity-60 group">
               <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
                 style={{ backgroundColor: `${c.color}22`, color: c.color }}>
-                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Icon className="w-5 h-5" />}
+                {activeHref === c.href ? <Loader2 className="w-5 h-5 animate-spin" /> : <Icon className="w-5 h-5" />}
               </div>
               <div>
                 <p className="font-bold text-[var(--text)]">{c.label}</p>

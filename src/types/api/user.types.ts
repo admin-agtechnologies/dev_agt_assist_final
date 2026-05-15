@@ -68,6 +68,8 @@ export interface UserOnboarding {
   has_configured_bot: boolean;
   has_tested_bot: boolean;
   has_visited_tutorial: boolean;
+  has_active_plan?: boolean;
+  abonnement_statut?: 'actif' | 'suspendu' | 'resilie' | null;
 }
 
 export interface User {

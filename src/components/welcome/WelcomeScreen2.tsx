@@ -1,6 +1,6 @@
 // src/components/welcome/WelcomeScreen2.tsx
 "use client";
-import { useCallback } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { Check, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDesiredFeatures, useSectorFeatures } from "@/hooks/useFeatures";
@@ -27,7 +27,25 @@ export function WelcomeScreen2({ selectedSlugs, onSlugsChange, locale, onBack, o
   const { features: desired, isLoading: loadingD } = useDesiredFeatures();
   const { features: sector, isLoading: loadingS }  = useSectorFeatures(sectorSlug);
   const { features: allSector, isLoading: loadingAll } = useSectorFeatures("custom");
-  const t = T[locale as keyof typeof T] ?? T.fr;
+ const t = T[locale as keyof typeof T] ?? T.fr;
+
+  // Slugs obligatoires — source fiable : SectorFeature (is_mandatory garanti boolean)
+  const mandatorySet = useMemo(
+    () => new Set([
+      ...sector.filter(f => f.is_mandatory).map(f => f.slug),
+      ...allSector.filter(f => f.is_mandatory).map(f => f.slug),
+    ]),
+    [sector, allSector],
+  );
+
+  // Initialisation depuis les features désirées (choisies à l'inscription)
+  useEffect(() => {
+    if (!loadingD && desired.length > 0 && selectedSlugs.length === 0) {
+      onSlugsChange(desired.map(f => f.slug));
+    }
+  }, [loadingD]); // eslint-disable-line
+
+  // Fusion desired + sector sans doublons
 
   // Fusion desired + sector sans doublons — desired en premier
   const allFeatures = [
@@ -66,7 +84,7 @@ export function WelcomeScreen2({ selectedSlugs, onSlugsChange, locale, onBack, o
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1">
         {allFeatures.map(f => {
           const selected  = selectedSet.has(f.slug);
-          const mandatory = f.is_mandatory;
+          const mandatory = mandatorySet.has(f.slug);
           return (
             <button key={f.slug} onClick={() => toggle(f.slug, !!mandatory)} disabled={!!mandatory}
               className={["flex items-center gap-3 p-3 rounded-xl border text-left transition-all",

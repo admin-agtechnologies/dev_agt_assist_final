@@ -459,3 +459,74 @@
 - **Rapport :** `docs/reports/session_23_gabriel.md`
 
 ---
+
+
+## session_24_gabriel
+
+- **Type :** Conception produit + Génération full-stack — Refonte Plans & Features
+- **Date :** 2026-05-14
+- **Flux couverts :** Modèle économique complet (features, plans, quotas, gating, secteurs)
+- **Bugs corrigés :** BUG-S24-01 (features fantômes), BUG-S24-02 (FK PROTECTED Plan delete), BUG-S24-03 (slugs sector-theme)
+- **Zones touchées :**
+  - `apps/billing/models.py` (+frais_installation)
+  - `apps/billing/migrations/0004_plan_frais_installation.py` (NEW)
+  - `apps/billing/serializers.py`
+  - `apps/admin_api/serializers/plans.py`
+  - `apps/tenants/seeders/features_seeder.py` (réécrit)
+  - `apps/tenants/seeders/billing_seeder.py` (réécrit)
+  - `src/types/api/billing.types.ts`
+  - `src/lib/constants.ts`
+  - `src/lib/sector-theme.ts`
+- **Fichiers créés :** `0004_plan_frais_installation.py`
+- **Fichiers modifiés :** 8
+- **Migrations :** `billing.0004` ✅
+- **Seed validé :** flush + seed complet ✅ (24 features, 4 plans, 124 SectorFeatures)
+- **Build TypeScript :** 0 erreur nouvelle (4 pré-existantes Tenant — non liées)
+- **Décisions majeures :**
+  - Option B pricing (quotas comme levier commercial)
+  - 4 plans : Découverte 10k/gratuit · Starter 50k/100k · Business 150k/250k · Pro 300k/500k
+  - 2 familles features : A (gratuit/illimité) · B (quota rechargeable)
+  - Gating : commande/paiement/inscription dès Starter · prospection dès Business
+  - gestion_crm is_mandatory=True dans tous les secteurs
+  - Agent vocal = minutes (pas appels)
+  - Recharge toujours plus chère que plan équivalent
+- **Dettes créées :** BUG-S24-04 (setup.py plan gratuit), BUG-S24-05 (conciergerie bootstrap), DETTE-S24-01 à 04
+- **Rapport :** `docs/reports/session_24_gabriel.md`
+- **Session suivante (S25) :** Stabiliser build + corriger onboarding + Page Modules + Billing
+---
+## session_25_gabriel
+
+- **Type :** Debug + Génération — Stabilisation build + Onboarding pré-register
+- **Date :** 2026-05-15
+- **Flux couverts :** Build TypeScript ✅, BUG backend onboarding ✅, FeaturePicker v3 ✅
+- **Bugs corrigés :** DETTE-S24-01 (Tenant types), BUG-S24-04 (setup.py gratuit→decouverte), BUG-S24-05 (bootstrap hotel conciergerie→paiement_en_ligne)
+- **Bugs identifiés :** BUG-S25-01 (is_default seeder incorrect — CRITIQUE S26)
+- **Zones touchées :** `src/types/api/`, `apps/tenants/setup.py`, `apps/agent/services/bootstrap_catalogue.py`, `src/components/onboarding/`
+- **Fichiers créés :** `tenant.types.ts`
+- **Fichiers modifiés :** 5
+- **Build TypeScript :** 0 erreur ✅
+- **Seed :** flush + seed validé ✅
+- **Rapport :** `docs/reports/session_25_gabriel.md`
+- **Session suivante (S26) :** BUG-S25-01 is_default seeder → onboarding pré-register E2E → page.tsx sectorSlug prop
+---
+## session_26_gabriel
+- **Type :** Debug + Génération — Onboarding E2E complet
+- **Date :** 2026-05-15
+- **Flux couverts :** Onboarding pré-register (FeaturePicker v3 ✅), onboarding post-register (WelcomeScreen2/3/4 ✅), flux paiement welcome ✅, gardiens /welcome ✅
+- **Bugs corrigés :** BUG-S25-01 (recommended mapping), BUG-S26-01 (custom view), BUG-S26-02 (mandatory lock), BUG-S26-03 (pre-select desired), BUG-S26-04 (extras affichage), BUG-S26-05 (spinner WS4), BUG-S26-06 (boucle welcome), BUG-S26-07 (gardien plan actif)
+- **Zones touchées :** `apps/features/views.py`, `apps/tenants/seeders/`, `apps/users/serializers.py`, `src/repositories/`, `src/lib/`, `src/types/`, `src/components/onboarding/`, `src/components/welcome/`, `src/app/(dashboard)/welcome/`
+- **Point PO ouvert :** `frais_installation` — règle de facturation à clarifier avant S27
+- **Rapport :** `docs/reports/session_26_gabriel.md`
+
+---
+
+## session_27_gabriel
+
+- **Type :** Génération + Debug — Page Modules Marketplace
+- **Date :** 2026-05-15
+- **Flux couverts :** Page Modules dashboard (marketplace complète) ✅ — Page Billing reportée S28
+- **Bugs corrigés :** BUG-S27-01 (useSector slug), BUG-S27-02 (icônes Lucide dynamiques), BUG-S27-03 (filtre M'intéressent), BUG-S27-04 (toggle absent TenantFeatureViewSet), BUG-S27-05 (tf.feature.is_mandatory)
+- **Zones touchées :** `src/repositories/features.repository.ts`, `src/hooks/useModuleMarket.ts`, `src/components/modules/` (7 créés, 3 supprimés), `src/app/(dashboard)/modules/`, `src/components/layout/Sidebar.tsx`, `apps/features/views.py`
+- **Décisions clés :** Marketplace approche 1 (page unique), panier accumulation + validation groupée, recommandation plan enrichie, checkout inline avec TopUpModal, icônes dynamiques depuis backend
+- **Dette technique ouverte :** endpoint `POST /features/{slug}/purchase/` manquant (toggle sans débit wallet), `included_in_plan` absent de `by-sector/`
+- **Rapport :** `docs/reports/session_27_gabriel.md`

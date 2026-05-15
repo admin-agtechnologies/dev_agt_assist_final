@@ -1,23 +1,21 @@
-// src/app/pme/billing/components/BillingHeader.tsx
+// src/app/(dashboard)/billing/components/BillingHeader.tsx
 "use client";
 import { Wallet, ArrowDownLeft, CalendarDays, Clock } from "lucide-react";
 import { Badge, UsageBar } from "@/components/ui";
 import { formatCurrency } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { Subscription, Wallet as WalletType } from "@/types/api";
-import { useSector } from "@/hooks/useSector"
+import { useSector } from "@/hooks/useSector";
 
 interface BillingHeaderProps {
   wallet: WalletType | null;
-  sub: Subscription | null;
+  sub:    Subscription | null;
   onTopUp: () => void;
 }
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("fr-FR", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
+    day: "2-digit", month: "long", year: "numeric",
   });
 }
 
@@ -29,16 +27,26 @@ function calcPct(used: number, limite: number | null | undefined): number {
 
 // Retourne true si la fonctionnalité est incluse dans le plan
 function isIncluded(limite: number | null | undefined): boolean {
-  if (limite === null || limite === undefined) return true; // illimité
-  if (limite === -1) return true; // illimité
-  if (limite === 0) return false; // absent du plan
+  if (limite === null || limite === undefined) return true;
+  if (limite === -1) return true;
+  if (limite === 0) return false;
   return true;
 }
 
+// Mapping statut → badge
+// "green" et "red" sont les variants confirmés du composant Badge.
+// Si Badge supporte "yellow", remplacer la variante "suspendu" par "yellow".
+type BadgeVariant = "green" | "red";
+const STATUT_BADGE: Record<string, { variant: BadgeVariant; labelKey: "statusActive" | "statusSuspended" | "statusCancelled" | "statusNoSubscription" }> = {
+  actif:    { variant: "green", labelKey: "statusActive" },
+  suspendu: { variant: "red",   labelKey: "statusSuspended" },
+  resilie:  { variant: "red",   labelKey: "statusCancelled" },
+};
+
 export function BillingHeader({ wallet, sub, onTopUp }: BillingHeaderProps) {
-  const { theme } = useSector();
+  const { theme }         = useSector();
   const { dictionary: d } = useLanguage();
-  const t = d.billing;
+  const t                 = d.billing;
 
   const msgPct   = calcPct(sub?.usage_messages ?? 0, sub?.plan?.limite_messages);
   const callPct  = calcPct(sub?.usage_appels   ?? 0, sub?.plan?.limite_appels);
@@ -48,14 +56,20 @@ export function BillingHeader({ wallet, sub, onTopUp }: BillingHeaderProps) {
   const joursRestants  = sub?.days_remaining ?? null;
   const isExpiringSoon = joursRestants !== null && joursRestants <= 7;
 
+  const badgeCfg = sub?.statut
+    ? (STATUT_BADGE[sub.statut] ?? { variant: "red" as BadgeVariant, labelKey: "statusSuspended" as const })
+    : null;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
       {/* Wallet */}
       <div className="card p-6 flex flex-col gap-4">
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{ backgroundColor: `${theme.primary}18` }}>
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center"
+            style={{ backgroundColor: `${theme.primary}18` }}
+          >
             <Wallet className="w-4 h-4" style={{ color: theme.primary }} />
           </div>
           <p className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)]">
@@ -86,10 +100,13 @@ export function BillingHeader({ wallet, sub, onTopUp }: BillingHeaderProps) {
               {sub?.plan?.nom ?? "—"}
             </p>
           </div>
-          {sub && (
-            <Badge variant={sub.statut === "actif" ? "green" : "red"}>
-              {sub.statut === "actif" ? t.statusActive : t.statusSuspended}
+          {badgeCfg && (
+            <Badge variant={badgeCfg.variant}>
+              {t[badgeCfg.labelKey]}
             </Badge>
+          )}
+          {!sub && (
+            <Badge variant="red">{t.statusNoSubscription}</Badge>
           )}
         </div>
 
@@ -142,7 +159,6 @@ export function BillingHeader({ wallet, sub, onTopUp }: BillingHeaderProps) {
         {/* Barres d'usage */}
         {sub && (
           <div className="space-y-3">
-            {/* Messages */}
             {isIncluded(sub.plan?.limite_messages) && (
               <UsageBar
                 label={t.messagesUsage}
@@ -153,8 +169,6 @@ export function BillingHeader({ wallet, sub, onTopUp }: BillingHeaderProps) {
                 unlimited={sub.plan?.limite_messages === null || sub.plan?.limite_messages === -1}
               />
             )}
-
-            {/* Appels */}
             {isIncluded(sub.plan?.limite_appels) && (
               <UsageBar
                 label={t.callsUsage}
@@ -165,8 +179,6 @@ export function BillingHeader({ wallet, sub, onTopUp }: BillingHeaderProps) {
                 unlimited={sub.plan?.limite_appels === null || sub.plan?.limite_appels === -1}
               />
             )}
-
-            {/* RDV */}
             {isIncluded(sub.plan?.limite_rdv) && (
               <UsageBar
                 label="RDV utilisés"
@@ -177,8 +189,6 @@ export function BillingHeader({ wallet, sub, onTopUp }: BillingHeaderProps) {
                 unlimited={sub.plan?.limite_rdv === null || sub.plan?.limite_rdv === -1}
               />
             )}
-
-            {/* Emails */}
             {isIncluded(sub.plan?.limite_emails) && (
               <UsageBar
                 label="Emails utilisés"

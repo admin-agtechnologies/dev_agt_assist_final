@@ -1,6 +1,6 @@
 // src/app/(dashboard)/welcome/page.tsx
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -33,9 +33,11 @@ export default function WelcomePage() {
 
   // Screen 3 → 4 : paiement OK
   const handlePaymentSuccess = useCallback(() => {
+    onboardingRepository.markWelcomeSeen().catch(() => {});
+    refreshUser?.().catch(() => {});
     try { localStorage.removeItem(MODULES_KEY); } catch { /* noop */ }
     setScreen(4);
-  }, []);
+ }, [refreshUser]);
 
   // Screen 4 : choix final → marquer welcome vu + naviguer
   const handleFinalChoice = useCallback(async (href: string) => {
@@ -49,6 +51,9 @@ export default function WelcomePage() {
   }, [router, submitting, refreshUser]);
 
   const entrepriseName = user?.entreprise?.name ?? "";
+   useEffect(() => {
+     if (user?.onboarding?.abonnement_statut === "actif") setScreen(4);
+   }, [user]);
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-8">

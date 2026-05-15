@@ -11,6 +11,7 @@ export const billing = {
   statusActive: "Actif",
   statusSuspended: "Suspendu",
   statusCancelled: "Résilié",
+  statusNoSubscription: "Aucun abonnement",
   changePlan: "Changer de plan",
   availablePlans: "Plans disponibles",
   monthly: "/ mois",
@@ -67,4 +68,14 @@ export const billing = {
     "Le paiement direct via Orange Money et MTN MoMo sera disponible très prochainement.",
   mobileSoonRedirect: "En attendant, utilisez l'onglet",
   mobileSoonRedirectLink: "Code de recharge",
+  // ── Bannière abonnement inactif ───────────────────────────────────────────
+  bannerSuspendedTitle: "Abonnement suspendu",
+  bannerSuspendedDesc:
+    "Votre accès a été limité. Rechargez votre portefeuille et réactivez votre plan pour retrouver toutes vos fonctionnalités.",
+  bannerSuspendedCta: "Réactiver mon abonnement",
+  bannerCancelledTitle: "Abonnement résilié",
+  bannerCancelledDesc:
+    "Votre abonnement a pris fin. Choisissez un nouveau plan pour retrouver l'accès complet à la plateforme.",
+  bannerCancelledCta: "Choisir un plan",
+  accessRestricted: "Cette page est réservée aux abonnés actifs.",
 } as const;

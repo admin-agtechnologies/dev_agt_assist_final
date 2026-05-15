@@ -7,26 +7,45 @@ import {
   CreditCard, BookOpen, Bot,
   Sun, Moon, Globe, LogOut,
   HelpCircle, MessageCircle, Star, AlertTriangle,
-  UserCircle,
+  UserCircle, LayoutGrid, Lock,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { useSector } from "@/hooks/useSector";
-import { SidebarDynamicNav } from "./SidebarDynamicNav";
 import { DASHBOARD_ROUTES } from "./Sidebar.config";
 import { cn, initials } from "@/lib/utils";
+
+// Routes inaccessibles sans abonnement actif.
+// Aligné sur FREE_PLAN_ALLOWED_PAGES dans apps/onboarding/engine.py :
+//   autorisées : billing, tutorial, profile, help
+//   tout le reste est verrouillé.
+const ACTIVE_ONLY_ROUTES = new Set([
+  "/",
+  "/contacts",
+  "/bots",
+  "/knowledge",
+  "/modules",
+  "/feedback",
+  "/report",
+]);
 
 interface Props {
   onClose?: () => void;
 }
 
 export function Sidebar({ onClose }: Props) {
-  const { user, logout } = useAuth();
+  const { user, logout }                   = useAuth();
   const { dictionary: d, locale, setLocale } = useLanguage();
-  const { theme: uiTheme, toggle } = useTheme();
-  const { theme: sectorTheme } = useSector();
-  const pathname = usePathname();
+  const { theme: uiTheme, toggle }         = useTheme();
+  const { theme: sectorTheme }             = useSector();
+  const pathname                           = usePathname();
+
+  const isSubscriptionActive =
+    user?.onboarding?.abonnement_statut === "actif";
+
+  const isLocked = (href: string): boolean =>
+    !isSubscriptionActive && ACTIVE_ONLY_ROUTES.has(href);
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
@@ -39,25 +58,52 @@ export function Sidebar({ onClose }: Props) {
         : "text-[var(--text-sidebar)] hover:bg-[var(--bg)] hover:text-[var(--text)]",
     );
 
+  const lockedClass = cn(
+    "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium",
+    "text-[var(--text-muted)] opacity-40 cursor-not-allowed select-none",
+  );
+
   const STATIC_ITEMS = [
-    { href: DASHBOARD_ROUTES.home,          icon: LayoutDashboard, label: d.nav.dashboard },
-    // { href: DASHBOARD_ROUTES.conversations, icon: MessageSquare,   label: d.nav.conversations },
-    { href: DASHBOARD_ROUTES.contacts, icon: Users, label: locale === "fr" ? "Mes Clients" : "My Clients" },
-    { href: DASHBOARD_ROUTES.bots,          icon: Bot,             label: d.nav.bots },
-    { href: DASHBOARD_ROUTES.knowledge,     icon: BookOpen,        label: d.nav.knowledge },
-    { href: DASHBOARD_ROUTES.billing,       icon: CreditCard,      label: d.nav.billing },
-    { href: DASHBOARD_ROUTES.profile, icon: UserCircle, label: d.nav.profile },
+    { href: DASHBOARD_ROUTES.home,      icon: LayoutDashboard, label: d.nav.dashboard },
+    { href: DASHBOARD_ROUTES.contacts,  icon: Users,           label: locale === "fr" ? "Mes Clients" : "My Clients" },
+    { href: DASHBOARD_ROUTES.bots,      icon: Bot,             label: d.nav.bots },
+    { href: DASHBOARD_ROUTES.knowledge, icon: BookOpen,        label: d.nav.knowledge },
+    { href: DASHBOARD_ROUTES.billing,   icon: CreditCard,      label: d.nav.billing },
+    { href: DASHBOARD_ROUTES.profile,   icon: UserCircle,      label: d.nav.profile },
   ];
 
   const SUPPORT_ITEMS = [
-    { href: DASHBOARD_ROUTES.tutorial,  icon: HelpCircle,     label: locale === "fr" ? "Tutoriel interface" : "Interface tutorial" },
-    { href: DASHBOARD_ROUTES.help,      icon: MessageCircle,  label: locale === "fr" ? "Demander de l'aide" : "Get help" },
-    { href: DASHBOARD_ROUTES.feedback,  icon: Star,           label: locale === "fr" ? "Laisser un témoignage" : "Leave a review" },
-    { href: DASHBOARD_ROUTES.report,    icon: AlertTriangle,  label: locale === "fr" ? "Signaler un problème" : "Report an issue" },
+    { href: DASHBOARD_ROUTES.tutorial, icon: HelpCircle,    label: locale === "fr" ? "Tutoriel interface" : "Interface tutorial" },
+    { href: DASHBOARD_ROUTES.help,     icon: MessageCircle, label: locale === "fr" ? "Demander de l'aide" : "Get help" },
+    { href: DASHBOARD_ROUTES.feedback, icon: Star,          label: locale === "fr" ? "Laisser un témoignage" : "Leave a review" },
+    { href: DASHBOARD_ROUTES.report,   icon: AlertTriangle, label: locale === "fr" ? "Signaler un problème" : "Report an issue" },
   ];
+
+  const renderNavItem = (href: string, Icon: React.ElementType, label: string) => {
+    if (isLocked(href)) {
+      return (
+        <span
+          key={href}
+          className={lockedClass}
+          title={locale === "fr" ? "Abonnement actif requis" : "Active subscription required"}
+        >
+          <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={2} />
+          <span className="flex-1 truncate">{label}</span>
+          <Lock className="w-3 h-3 flex-shrink-0" />
+        </span>
+      );
+    }
+    return (
+      <Link key={href} href={href} onClick={onClose} className={linkClass(href)}>
+        <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={isActive(href) ? 2.5 : 2} />
+        {label}
+      </Link>
+    );
+  };
 
   return (
     <aside className="flex flex-col h-screen w-64 shrink-0 bg-[var(--bg-sidebar)] border-r border-[var(--border)] overflow-hidden">
+
       {/* Logo + Secteur */}
       <div className="p-6 border-b border-[var(--border)]">
         <div className="flex items-center gap-2.5">
@@ -85,27 +131,21 @@ export function Sidebar({ onClose }: Props) {
         )}
       </div>
 
-      {/* Nav principale + modules dynamiques */}
+      {/* Nav principale */}
       <nav className="flex-1 p-4 space-y-0.5 overflow-y-auto">
-        {STATIC_ITEMS.map(({ href, icon: Icon, label }) => (
-          <Link key={href} href={href} onClick={onClose} className={linkClass(href)}>
-            <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={isActive(href) ? 2.5 : 2} />
-            {label}
-          </Link>
-        ))}
+        {STATIC_ITEMS.map(({ href, icon: Icon, label }) =>
+          renderNavItem(href, Icon, label),
+        )}
 
         {/* Séparateur + modules sectoriels */}
         <div className="border-t border-[var(--border)] my-2" />
-        <SidebarDynamicNav locale={locale} onClose={onClose} />
+        {renderNavItem("/modules", LayoutGrid, locale === "fr" ? "Mes modules" : "My modules")}
 
         {/* Séparateur + support */}
         <div className="border-t border-[var(--border)] my-2" />
-        {SUPPORT_ITEMS.map(({ href, icon: Icon, label }) => (
-          <Link key={href} href={href} onClick={onClose} className={linkClass(href)}>
-            <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={isActive(href) ? 2.5 : 2} />
-            {label}
-          </Link>
-        ))}
+        {SUPPORT_ITEMS.map(({ href, icon: Icon, label }) =>
+          renderNavItem(href, Icon, label),
+        )}
       </nav>
 
       {/* Footer */}
