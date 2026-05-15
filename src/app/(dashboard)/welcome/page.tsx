@@ -52,8 +52,8 @@ export default function WelcomePage() {
 
   const entrepriseName = user?.entreprise?.name ?? "";
    useEffect(() => {
-    if (user?.onboarding?.has_active_plan) setScreen(4);
-  }, [user]);
+     if (user?.onboarding?.abonnement_statut === "actif") setScreen(4);
+   }, [user]);
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-8">

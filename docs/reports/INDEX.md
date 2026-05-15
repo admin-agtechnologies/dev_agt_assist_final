@@ -459,6 +459,8 @@
 - **Rapport :** `docs/reports/session_23_gabriel.md`
 
 ---
+
+
 ## session_24_gabriel
 
 - **Type :** Conception produit + Génération full-stack — Refonte Plans & Features
@@ -517,3 +519,14 @@
 - **Rapport :** `docs/reports/session_26_gabriel.md`
 
 ---
+
+## session_27_gabriel
+
+- **Type :** Génération + Debug — Page Modules Marketplace
+- **Date :** 2026-05-15
+- **Flux couverts :** Page Modules dashboard (marketplace complète) ✅ — Page Billing reportée S28
+- **Bugs corrigés :** BUG-S27-01 (useSector slug), BUG-S27-02 (icônes Lucide dynamiques), BUG-S27-03 (filtre M'intéressent), BUG-S27-04 (toggle absent TenantFeatureViewSet), BUG-S27-05 (tf.feature.is_mandatory)
+- **Zones touchées :** `src/repositories/features.repository.ts`, `src/hooks/useModuleMarket.ts`, `src/components/modules/` (7 créés, 3 supprimés), `src/app/(dashboard)/modules/`, `src/components/layout/Sidebar.tsx`, `apps/features/views.py`
+- **Décisions clés :** Marketplace approche 1 (page unique), panier accumulation + validation groupée, recommandation plan enrichie, checkout inline avec TopUpModal, icônes dynamiques depuis backend
+- **Dette technique ouverte :** endpoint `POST /features/{slug}/purchase/` manquant (toggle sans débit wallet), `included_in_plan` absent de `by-sector/`
+- **Rapport :** `docs/reports/session_27_gabriel.md`

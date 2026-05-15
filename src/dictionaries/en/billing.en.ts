@@ -11,6 +11,7 @@ export const billing = {
   statusActive: "Active",
   statusSuspended: "Suspended",
   statusCancelled: "Cancelled",
+  statusNoSubscription: "No subscription",
   changePlan: "Change plan",
   availablePlans: "Available plans",
   monthly: "/ month",
@@ -67,4 +68,14 @@ export const billing = {
     "Direct payment via Orange Money and MTN MoMo will be available very soon.",
   mobileSoonRedirect: "In the meantime, use the",
   mobileSoonRedirectLink: "Top-up code",
+  // ── Inactive subscription banner ─────────────────────────────────────────
+  bannerSuspendedTitle: "Subscription suspended",
+  bannerSuspendedDesc:
+    "Your access has been restricted. Top up your wallet and reactivate your plan to restore all features.",
+  bannerSuspendedCta: "Reactivate my subscription",
+  bannerCancelledTitle: "Subscription cancelled",
+  bannerCancelledDesc:
+    "Your subscription has ended. Choose a new plan to regain full access to the platform.",
+  bannerCancelledCta: "Choose a plan",
+  accessRestricted: "This page is reserved for active subscribers.",
 } as const;
