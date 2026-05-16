@@ -1,19 +1,16 @@
 // src/hooks/useModuleMarket.ts
-// S28 (donpk) :
-//   - Catalogue global : charge by-sector/ (toutes features) + active/ + desired/
-//   - desired/ chargé séparément pour corriger l'onglet "En attente"
-//   - CartItem enrichi avec quantite (choix de quota)
-//   - Suppression du pin
+// S30 (gabriel) :
+//   - Remplacement getSectorFeatures → getCatalogue (endpoint privé authentifié)
+//   - included_in_plan fiable depuis le backend (plus de proxy prix_unitaire === 0)
+//   - Fix can_deactivate : quota consommé ne bloque plus la désactivation
 "use client";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useSector } from "@/hooks/useSector";
 import { api } from "@/lib/api-client";
 import {
   featuresRepository,
   mergeToMarketModules,
   type MarketModule,
   type PurchasePayload,
-  type PurchaseResponse,
 } from "@/repositories/features.repository";
 import type { Plan } from "@/types/api";
 
@@ -24,9 +21,9 @@ export type FilterTab = "all" | "active" | "desired" | "available" | "upgrade";
 export interface CartItem {
   slug: string;
   nom_fr: string;
-  prix_unitaire: number;   // prix par unité de quota
-  quota_unitaire: number;  // quota par unité achetée
-  quantite: number;        // nombre d'unités choisies par l'utilisateur
+  prix_unitaire: number;
+  quota_unitaire: number;
+  quantite: number;
 }
 
 export interface PlanRecommendation {
@@ -41,13 +38,12 @@ const PAGE_SIZE = 9;
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useModuleMarket() {
-  const { sector } = useSector();
 
   // ── Data ──────────────────────────────────────────────────────────────────
-  const [modules, setModules] = useState<MarketModule[]>([]);
-  const [plans, setPlans]     = useState<Plan[]>([]);
+  const [modules, setModules]   = useState<MarketModule[]>([]);
+  const [plans, setPlans]       = useState<Plan[]>([]);
   const [isLoading, setLoading] = useState(true);
-  const [error, setError]     = useState<string | null>(null);
+  const [error, setError]       = useState<string | null>(null);
 
   // ── Filtres ───────────────────────────────────────────────────────────────
   const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
@@ -62,13 +58,12 @@ export function useModuleMarket() {
   // ── Chargement ────────────────────────────────────────────────────────────
 
   const load = useCallback(async () => {
-    if (!sector) return;
     setLoading(true);
     setError(null);
     try {
-      // Catalogue global + état tenant (active + desired) en parallèle
-      const [sectorRes, activeRes, desiredRes, plansRaw] = await Promise.all([
-        featuresRepository.getSectorFeatures(sector),
+      // catalogue/ remplace by-sector/ + calcul included_in_plan côté backend
+      const [catalogueRes, activeRes, desiredRes, plansRaw] = await Promise.all([
+        featuresRepository.getCatalogue(),
         featuresRepository.getActive(),
         featuresRepository.getDesired(),
         api.get<Plan[] | { results: Plan[] }>("/api/v1/billing/plans/").catch(() => []),
@@ -79,7 +74,7 @@ export function useModuleMarket() {
         : ((plansRaw as { results?: Plan[] }).results ?? []);
 
       setModules(
-        mergeToMarketModules(sectorRes, activeRes.features, desiredRes.features),
+        mergeToMarketModules(catalogueRes, activeRes.features, desiredRes.features),
       );
       setPlans(planList.filter((p) => p.is_active));
     } catch {
@@ -87,7 +82,7 @@ export function useModuleMarket() {
     } finally {
       setLoading(false);
     }
-  }, [sector]);
+  }, []);
 
   useEffect(() => { load(); }, [load]);
 
@@ -100,15 +95,12 @@ export function useModuleMarket() {
         result = result.filter((m) => m.is_active);
         break;
       case "desired":
-        // "En attente" = voulu à l'inscription mais pas encore actif
         result = result.filter((m) => m.is_desired && !m.is_active);
         break;
       case "available":
-        // "À activer" = inclus dans le plan mais pas encore activé
         result = result.filter((m) => m.status === "available");
         break;
       case "upgrade":
-        // "Booster" = hors plan (non activé) OU actif avec quota consommable
         result = result.filter(
           (m) => m.status === "upgrade_required" ||
                  (m.is_active && !m.is_unlimited && m.quota != null),
@@ -158,16 +150,13 @@ export function useModuleMarket() {
     setCart((prev) =>
       prev.some((c) => c.slug === m.slug)
         ? prev
-        : [
-            ...prev,
-            {
-              slug:          m.slug,
-              nom_fr:        m.nom_fr,
-              prix_unitaire: m.prix_unitaire,
-              quota_unitaire: m.quota_unitaire,
-              quantite:      1,
-            },
-          ],
+        : [...prev, {
+            slug:           m.slug,
+            nom_fr:         m.nom_fr,
+            prix_unitaire:  m.prix_unitaire,
+            quota_unitaire: m.quota_unitaire,
+            quantite:       1,
+          }],
     );
     setShowRecommendation(true);
   }, []);
@@ -224,19 +213,16 @@ export function useModuleMarket() {
   );
 
   return {
-    // Data
     modules: paginated,
     allModules: modules,
     isLoading,
     error,
     reload: load,
-    // Filtres
     activeFilter, setActiveFilter,
     search, setSearch,
     page, setPage,
     totalPages,
     counts,
-    // Panier
     cart,
     cartTotal,
     isInCart,
@@ -247,7 +233,6 @@ export function useModuleMarket() {
     isCheckingOut,
     setCheckingOut,
     buildPurchasePayload,
-    // Recommandation
     recommendation,
     dismissRecommendation: () => setShowRecommendation(false),
     plans,

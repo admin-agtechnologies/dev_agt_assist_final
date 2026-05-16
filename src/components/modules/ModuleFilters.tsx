@@ -33,7 +33,7 @@ interface Props {
 const TABS: TabDef[] = [
   { key: "all",       labelFr: "Catalogue",   labelEn: "Catalogue",   emojiFr: "📦" },
   { key: "active",    labelFr: "Mes modules", labelEn: "My modules",  emojiFr: "✅" },
-  { key: "desired",   labelFr: "En attente",  labelEn: "Wishlist",    emojiFr: "⏳" },
+  { key: "desired",   labelFr: "Mes favoris", labelEn: "My favorites", emojiFr: "⭐" },
   { key: "available", labelFr: "À activer",   labelEn: "To activate", emojiFr: "🔓" },
   { key: "upgrade",   labelFr: "Booster",     labelEn: "Boost",       emojiFr: "⚡" },
 ];

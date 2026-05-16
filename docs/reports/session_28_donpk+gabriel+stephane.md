@@ -1,4 +1,4 @@
-## Rapport de session — session_1_stephane
+## Rapport de session — session_28_donpk+stephane+gabriel
 
 ### Métadonnées
 - Membre : Stéphane (donpk)
@@ -33,7 +33,7 @@
 
 ---
 
-### Problèmes identifiés à résoudre en session 2
+### Problèmes identifiés à résoudre en session 29
 
 **BUG-S1-01 — Checkout : plan toujours demandé même si déjà abonné**
 Le modal `ModuleCartCheckout` affiche toujours la sélection de plan. Or si l'utilisateur a déjà un plan actif, il ne doit pas avoir à en choisir un nouveau. Le plan actif doit être détecté automatiquement et pré-sélectionné. La sélection de plan ne doit apparaître que si l'utilisateur n'a pas encore de plan.
@@ -59,7 +59,7 @@ Les modules désirés sont bien chargés via `desired/` mais l'affichage doit ê
 
 ---
 
-### Décisions architecturales pour session 2
+### Décisions architecturales pour session 29
 
 **Sur `purchase/`** — le backend doit recevoir un flag `upgrade_plan: bool`. Si `false`, le plan n'est pas refacturé même si `plan_slug` est fourni (sert juste de référence pour calculer les modules inclus). Si `true`, le plan est facturé normalement.
 
@@ -76,7 +76,7 @@ Payload modifié :
 
 ---
 
-### Fichiers à modifier en session 2
+### Fichiers à modifier en session 29
 
 | Fichier | Modification |
 |---------|-------------|
@@ -87,13 +87,13 @@ Payload modifié :
 
 ---
 
-### Prompt session 2
+### Prompt session 29
 
 ```
-Bonjour, session 2 de Stéphane (donpk) sur AGT Platform.
+Bonjour, session 29 de Stéphane (donpk) sur AGT Platform.
 Date : {date}
 
-Contexte de la session 1 :
+Contexte de la session 28 :
 - Backend purchase/ validé et fonctionnel
 - 0 erreur TypeScript
 - Catalogue global opérationnel
@@ -134,7 +134,7 @@ maximum 5 fichiers par itération de debug.
 ### Entrée INDEX.md
 
 ```
-## session_1_stephane
+## session_28_session_28_donpk+stephane+gabriel
 
 - **Type :** Audit + Debug + Génération — Page Modules
 - **Date :** 2026-05-15
@@ -143,5 +143,5 @@ maximum 5 fichiers par itération de debug.
 - **Zones touchées :** `apps/features/views.py`, `apps/features/urls.py`, `src/repositories/features.repository.ts`, `src/hooks/useModuleMarket.ts`, `src/components/modules/ModuleCartCheckout.tsx`, `src/components/modules/ModuleCard.tsx`, `src/components/modules/ModuleFilters.tsx`, `src/components/modules/ModuleMarketplace.tsx`, `src/components/layout/Sidebar.tsx`
 - **Décisions clés :** Catalogue ouvert (tous secteurs), endpoint purchase/ atomique, choix quota par module, flag upgrade_plan à implémenter S2
 - **Dette technique ouverte :** BUG-S1-01 à BUG-S1-06 (voir rapport)
-- **Rapport :** docs/reports/session_1_stephane.md
+- **Rapport :** docs/reports/session_28_stephane.md
 ```

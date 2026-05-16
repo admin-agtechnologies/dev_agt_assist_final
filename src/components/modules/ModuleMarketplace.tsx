@@ -216,6 +216,7 @@ export function ModuleMarketplace() {
         plans={plans}
         onSuccess={() => { clearCart(); reload(); }}
         onUpdateQuantite={updateQuantite}
+        onRemoveFromCart={removeFromCart}
         locale={locale}
         primaryColor={primary}
       />

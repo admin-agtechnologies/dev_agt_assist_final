@@ -1,19 +1,38 @@
 // src/repositories/features.repository.ts
-// S28 (donpk) :
-//   - Catalogue global : getSectorFeatures retourne toutes les features avec is_native_sector
-//   - Ajout purchase() → POST /features/purchase/
-//   - Suppression pin() → fonctionnalité retirée
-//   - MarketModule enrichi : is_native_sector, suppression is_pinned
 import { api } from "@/lib/api-client";
-import type { PaginatedResponse } from "@/types/api";
+import type { PaginatedResponse } from "@/types/api/shared.types";
 
-// ── Types de base ─────────────────────────────────────────────────────────────
+// ── Types catalogue public (by-sector/) ──────────────────────────────────────
 
-export interface ActiveFeature {
+export interface SectorFeature {
   id: string;
   slug: string;
   nom_fr: string;
+  nom_en: string;
+  icone: string;
+  categorie: string;
+  description: string;
+  is_native_sector: boolean;
+  is_default: boolean;
+  is_mandatory: boolean;
+  quota_unitaire: number;
+  prix_unitaire: number;
+}
+
+// ── Type catalogue privé (catalogue/) — enrichi avec included_in_plan ─────────
+
+export interface CatalogueFeature extends SectorFeature {
+  included_in_plan: boolean;
+  min_plan_nom: string | null;
+}
+
+// ── Types état tenant ─────────────────────────────────────────────────────────
+
+export interface ActiveFeature {
+   id: string;
+  nom_fr?: string;
   nom_en?: string;
+  slug: string;
   description?: string;
   categorie?: string;
   icone?: string;
@@ -26,22 +45,9 @@ export interface ActiveFeature {
   is_unlimited?: boolean;
   included_in_plan?: boolean;
   config?: Record<string, unknown>;
-}
-
-// SectorFeature = ce que retourne by-sector/ (catalogue global enrichi)
-export interface SectorFeature {
-  id: string;
-  slug: string;
-  nom_fr: string;
-  nom_en: string;
-  icone: string;
-  categorie: string;
-  description: string;
-  is_native_sector: boolean;  // true = natif au secteur du tenant
-  is_default: boolean;
-  is_mandatory: boolean;
-  quota_unitaire: number;
-  prix_unitaire: number;
+  quota_total?: number | null;
+  quota_consomme?: number | null;
+  quota_restant?: number | null;
 }
 
 // ── MarketModule — type enrichi pour la marketplace ───────────────────────────
@@ -58,17 +64,16 @@ export interface MarketModule {
   prix_unitaire: number;
   quota_unitaire: number;
   is_mandatory: boolean;
-  is_native_sector: boolean;  // badge "Recommandé pour votre secteur"
-  // État tenant
+  is_native_sector: boolean;
   is_active: boolean;
   is_desired: boolean;
   is_unlimited: boolean;
   included_in_plan: boolean;
   used: number;
   quota: number | null;
-  // Computed
   status: ModuleStatus;
   can_deactivate: boolean;
+  min_plan_nom: string | null;
 }
 
 // ── Payload purchase ──────────────────────────────────────────────────────────
@@ -79,8 +84,9 @@ export interface PurchaseModuleItem {
 }
 
 export interface PurchasePayload {
-  plan_slug: string;        // obligatoire
+  plan_slug: string;
   modules: PurchaseModuleItem[];
+  upgrade_plan?: boolean; 
 }
 
 export interface PurchaseLineResult {
@@ -104,29 +110,28 @@ export interface PurchaseResponse {
   included: PurchaseLineResult[];
 }
 
-// ── Merge helper (catalogue global + état tenant) ─────────────────────────────
+// ── Merge helper ──────────────────────────────────────────────────────────────
 
 export function mergeToMarketModules(
-  sectorFeatures: SectorFeature[],
+  catalogueFeatures: CatalogueFeature[],
   activeFeatures: ActiveFeature[],
   desiredFeatures: ActiveFeature[],
 ): MarketModule[] {
   const activeMap  = new Map(activeFeatures.map((f) => [f.slug, f]));
   const desiredMap = new Map(desiredFeatures.map((f) => [f.slug, f]));
 
-  return sectorFeatures.map((sf): MarketModule => {
+  return catalogueFeatures.map((sf): MarketModule => {
     const af = activeMap.get(sf.slug);
     const df = desiredMap.get(sf.slug);
 
     const is_active        = af?.is_active ?? false;
-    const included_in_plan = af?.included_in_plan ?? (sf.prix_unitaire === 0);
-    const used             = af?.used ?? 0;
-    const quota            = af?.quota ?? null;
+    // included_in_plan vient directement du catalogue/ (fiable), plus de proxy prix_unitaire
+    const included_in_plan = sf.included_in_plan;
+    const used  = af?.used ?? af?.quota_consomme ?? 0;
+    const quota = af?.quota ?? af?.quota_total ?? null;
     const is_unlimited     = af?.is_unlimited ?? false;
     const is_mandatory     = sf.is_mandatory || (af?.is_mandatory ?? false);
-    // is_desired : priorité à active/, sinon desired/
     const is_desired       = af?.is_desired ?? df?.is_desired ?? false;
-    const hasActiveUsage   = !is_unlimited && quota != null && quota > 0 && used > 0;
 
     let status: ModuleStatus;
     if (is_active) status = "active";
@@ -151,7 +156,10 @@ export function mergeToMarketModules(
       used,
       quota,
       status,
-      can_deactivate: !is_mandatory && !hasActiveUsage,
+      // Désactivation possible tant que le module n'est pas obligatoire
+      // Le quota consommé est conservé et peut être repris à la réactivation
+      can_deactivate: !is_mandatory,
+      min_plan_nom: sf.min_plan_nom ?? null,
     };
   });
 }
@@ -168,6 +176,11 @@ const normalize = (data: unknown): ActiveFeaturesResponse => {
   return { features: (d as PaginatedResponse<ActiveFeature>).results ?? [] };
 };
 
+const normalizeCatalogue = (data: unknown): CatalogueFeature[] => {
+  const d = data as { features?: CatalogueFeature[] };
+  return d.features ?? [];
+};
+
 // ── Repository ────────────────────────────────────────────────────────────────
 
 export const featuresRepository = {
@@ -178,7 +191,13 @@ export const featuresRepository = {
   getDesired: (): Promise<ActiveFeaturesResponse> =>
     api.get("/api/v1/features/desired/").then(normalize).catch(() => ({ features: [] })),
 
-  // Catalogue global enrichi — retourne TOUTES les features actives
+  // Catalogue sectoriel privé — enrichi avec included_in_plan selon plan actif
+  getCatalogue: (): Promise<CatalogueFeature[]> =>
+    api.get("/api/v1/features/catalogue/")
+      .then(normalizeCatalogue)
+      .catch(() => []),
+
+  // Catalogue public — gardé pour l'onboarding pré-register (sans token)
   getSectorFeatures: (sectorSlug: string): Promise<SectorFeature[]> =>
     api
       .get(`/api/v1/features/by-sector/?sector=${sectorSlug}`)
@@ -188,12 +207,12 @@ export const featuresRepository = {
   toggle: (slug: string, is_active: boolean): Promise<ToggleFeatureResponse> =>
     api.post(`/api/v1/features/${slug}/toggle/`, { is_active }),
 
-  // Achat sécurisé — plan obligatoire + modules optionnels avec quantités
   purchase: (payload: PurchasePayload): Promise<PurchaseResponse> =>
     api.post("/api/v1/features/purchase/", payload),
 
   markDesired: (slugs: string[]): Promise<{ marked: number }> =>
     api.post("/api/v1/features/mark-desired/", { feature_slugs: slugs }),
 
-  // pin() supprimé — S28
+  toggleDesired: (slug: string): Promise<{ slug: string; is_desired: boolean }> =>
+    api.post("/api/v1/features/toggle-desired/", { slug }),
 };

@@ -533,7 +533,7 @@
 
 ---
 
-## session_1_stephane
+## session_28_donpk+stephane+gabriel
 
 - **Type :** Audit + Debug + Génération — Page Modules
 - **Date :** 2026-05-15
@@ -542,4 +542,4 @@
 - **Zones touchées :** `apps/features/views.py`, `apps/features/urls.py`, `src/repositories/features.repository.ts`, `src/hooks/useModuleMarket.ts`, `src/components/modules/ModuleCartCheckout.tsx`, `src/components/modules/ModuleCard.tsx`, `src/components/modules/ModuleFilters.tsx`, `src/components/modules/ModuleMarketplace.tsx`, `src/components/layout/Sidebar.tsx`
 - **Décisions clés :** Catalogue ouvert (tous secteurs), endpoint purchase/ atomique, choix quota par module, flag upgrade_plan à implémenter S2
 - **Dette technique ouverte :** BUG-S1-01 à BUG-S1-06 (voir rapport)
-- **Rapport :** docs/reports/session_1_stephane.md
+- **Rapport :** docs/reports/session_28__donpk+stephane+gabriel.md

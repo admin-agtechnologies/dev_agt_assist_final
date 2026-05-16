@@ -1,8 +1,4 @@
 // src/components/modules/ModuleCard.tsx
-// S28 (donpk) :
-//   - Suppression du bouton pin/unpin
-//   - Ajout badge "Recommandé" pour les modules natifs du secteur (is_native_sector)
-//   - Import is_pinned retiré de MarketModule
 "use client";
 import { useState } from "react";
 import * as LucideIcons from "lucide-react";
@@ -18,7 +14,6 @@ import type { Locale } from "@/contexts/LanguageContext";
 
 function DynamicIcon({ name, className }: { name: string; className?: string }) {
   const icons = LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string }>>;
-  // Convertit snake_case / kebab-case → PascalCase
   const pascal = name
     .split(/[_-]/)
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
@@ -52,6 +47,7 @@ export function ModuleCard({
 }: Props) {
   const toast = useToast();
   const [busy, setBusy] = useState(false);
+  const [isDesired, setIsDesired] = useState(m.is_desired);
 
   const displayName = locale === "fr" ? m.nom_fr : m.nom_en;
 
@@ -75,6 +71,20 @@ export function ModuleCard({
       onChanged();
     });
 
+  const handleToggleDesired = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const res = await featuresRepository.toggleDesired(m.slug);
+      setIsDesired(res.is_desired);
+      if (res.is_desired) {
+        toast.success(locale === "fr" ? "Ajouté à vos favoris." : "Added to favorites.");
+      }
+      onChanged();
+    } catch {
+      toast.error(locale === "fr" ? "Erreur favoris." : "Favorites error.");
+    }
+  };
+
   // ── Badges ────────────────────────────────────────────────────────────────
 
   const statusBadge = {
@@ -86,8 +96,8 @@ export function ModuleCard({
   // ── Quota display ─────────────────────────────────────────────────────────
 
   const quotaDisplay = m.is_active
-    ? m.is_unlimited
-      ? "∞"
+  ? m.is_unlimited
+    ? `∞ · ${m.used ?? 0} consommées`
       : m.quota != null
         ? `${m.used ?? 0} / ${m.quota}`
         : null
@@ -115,15 +125,11 @@ export function ModuleCard({
           className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{ backgroundColor: `${primaryColor}15` }}
         >
-          <DynamicIcon
-            name={m.icone}
-            className="w-4 h-4"
-          />
+          <DynamicIcon name={m.icone} className="w-4 h-4" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
             <p className="text-sm font-bold text-[var(--text)] truncate">{displayName}</p>
-            {/* Badge "Recommandé" pour les modules natifs du secteur */}
             {m.is_native_sector && m.status !== "active" && (
               <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700">
                 <Star className="w-2.5 h-2.5" />
@@ -131,13 +137,53 @@ export function ModuleCard({
               </span>
             )}
           </div>
-          {quotaDisplay && (
-            <p className="text-[11px] text-[var(--text-muted)] mt-0.5">{quotaDisplay}</p>
-          )}
+                    {quotaDisplay && (
+              <p className="text-[11px] text-[var(--text-muted)] mt-0.5">{quotaDisplay}</p>
+            )}
+            {m.is_active && !m.is_unlimited && m.quota != null && m.quota > 0 && (
+              (() => {
+                const ratio = Math.min((m.used ?? 0) / m.quota, 1);
+                const color = ratio < 0.5
+                  ? "#22c55e"   // vert
+                  : ratio < 0.8
+                    ? "#f97316" // orange
+                    : "#ef4444"; // rouge
+                return (
+                  <div className="mt-1.5 h-1.5 w-full rounded-full bg-[var(--border)] overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-300"
+                      style={{ width: `${ratio * 100}%`, backgroundColor: color }}
+                    />
+                  </div>
+                );
+              })()
+            )}
         </div>
-        <span className={cn("text-[9px] font-bold px-2 py-0.5 rounded-full flex-shrink-0", statusBadge.cls)}>
-          {statusBadge.text}
-        </span>
+
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {/* Étoile favoris — visible uniquement si module non actif */}
+          {m.status !== "active" && (
+            <button
+              onClick={handleToggleDesired}
+              title={isDesired
+                ? (locale === "fr" ? "Retirer des favoris" : "Remove from favorites")
+                : (locale === "fr" ? "Ajouter aux favoris" : "Add to favorites")}
+              className="p-1 rounded-lg hover:bg-[var(--bg)] transition-colors"
+            >
+              <Star
+                className={cn(
+                  "w-4 h-4 transition-colors",
+                  isDesired
+                    ? "fill-yellow-400 text-yellow-400"
+                    : "text-[var(--text-muted)] hover:text-yellow-400",
+                )}
+              />
+            </button>
+          )}
+          <span className={cn("text-[9px] font-bold px-2 py-0.5 rounded-full", statusBadge.cls)}>
+            {statusBadge.text}
+          </span>
+        </div>
       </div>
 
       {/* Description */}
@@ -160,25 +206,30 @@ export function ModuleCard({
       <div className="flex items-center gap-2 pt-1 border-t border-[var(--border)] mt-auto">
 
         {m.status === "active" ? (
-          // Module actif → désactiver (si possible)
           <div className="flex items-center justify-between w-full">
             <span className="flex items-center gap-1 text-xs text-green-600 font-medium">
               <CheckCircle2 className="w-3.5 h-3.5" />
               {locale === "fr" ? "Actif" : "Active"}
             </span>
-            {m.can_deactivate && (
+            {!m.is_unlimited && m.quota != null && m.quota > 0 ? (
               <button
-                onClick={handleDeactivate}
-                disabled={busy}
-                className="text-xs font-medium text-red-500 hover:text-red-600 disabled:opacity-50 transition-colors"
+                onClick={() => isInCart ? onRemoveFromCart(m.slug) : onAddToCart(m)}
+                className="text-xs font-semibold transition-colors"
+                style={{ color: primaryColor }}
               >
+                {isInCart
+                  ? (locale === "fr" ? "Retirer" : "Remove")
+                  : (locale === "fr" ? "+ Quota" : "+ Quota")}
+              </button>
+            ) : m.can_deactivate ? (
+              <button onClick={handleDeactivate} disabled={busy}
+                className="text-xs font-medium text-red-500 hover:text-red-600 disabled:opacity-50 transition-colors">
                 {locale === "fr" ? "Désactiver" : "Deactivate"}
               </button>
-            )}
+            ) : null}
           </div>
 
         ) : m.status === "available" ? (
-          // Module disponible (plan) → activation directe
           <button
             onClick={handleActivate}
             disabled={busy}
@@ -186,13 +237,10 @@ export function ModuleCard({
             style={{ backgroundColor: primaryColor }}
           >
             <CheckCircle2 className="w-3.5 h-3.5" />
-            {busy
-              ? "…"
-              : (locale === "fr" ? "Activer gratuitement" : "Activate for free")}
+            {busy ? "…" : (locale === "fr" ? "Activer gratuitement" : "Activate for free")}
           </button>
 
         ) : (
-          // Module hors plan → panier
           <button
             onClick={() => isInCart ? onRemoveFromCart(m.slug) : onAddToCart(m)}
             className={cn(
