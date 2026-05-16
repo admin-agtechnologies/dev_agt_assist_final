@@ -48,6 +48,7 @@ export interface ActiveFeature {
   quota_total?: number | null;
   quota_consomme?: number | null;
   quota_restant?: number | null;
+  quota_est_mensuel?: boolean;
 }
 
 // ── MarketModule — type enrichi pour la marketplace ───────────────────────────
@@ -192,8 +193,8 @@ export const featuresRepository = {
     api.get("/api/v1/features/desired/").then(normalize).catch(() => ({ features: [] })),
 
   // Catalogue sectoriel privé — enrichi avec included_in_plan selon plan actif
-  getCatalogue: (): Promise<CatalogueFeature[]> =>
-    api.get("/api/v1/features/catalogue/")
+  getCatalogue: (planSlug?: string): Promise<CatalogueFeature[]> =>
+    api.get(`/api/v1/features/catalogue/${planSlug ? `?plan_slug=${planSlug}` : ""}`)
       .then(normalizeCatalogue)
       .catch(() => []),
 

@@ -5,6 +5,8 @@
 //   - Plan lecture seule si abonnement actif, planPrix=0, upgrade_plan=false
 //   - Modules upgrade_required bloqués + bouton Retirer
 //   - Validation bloquée si module non disponible
+// S31 (stephane) :
+//   - PlanGatingBadge : message explicite par module bloqué
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
@@ -16,6 +18,7 @@ import { useToast } from "@/components/ui/Toast";
 import { TopUpModal } from "@/app/(dashboard)/billing/components/TopUpModal";
 import { ModuleCartLineItems } from "./ModuleCartLineItems";
 import { ModuleCartSummary } from "./ModuleCartSummary";
+import { PlanGatingBadge } from "@/components/billing/PlanGatingBadge";
 import type { CartItem } from "@/hooks/useModuleMarket";
 import type { MarketModule } from "@/repositories/features.repository";
 import type { Wallet as WalletType, Plan, Subscription } from "@/types/api";
@@ -49,7 +52,7 @@ export function ModuleCartCheckout({
   const [done, setDone]             = useState(false);
   const [selectedPlanSlug, setSelectedPlanSlug] = useState("");
 
-const hasActivePlan = sub !== null && sub.statut === "actif";
+  const hasActivePlan     = sub !== null && sub.statut === "actif";
   const effectivePlanSlug = hasActivePlan ? sub!.plan.slug : selectedPlanSlug;
   const effectivePlan     = hasActivePlan
     ? sub!.plan
@@ -79,6 +82,7 @@ const hasActivePlan = sub !== null && sub.statut === "actif";
     if (open) { setDone(false); loadData(); }
   }, [open, loadData]);
 
+  // ── Modules bloqués (plan insuffisant) ───────────────────────────────────
   const blockedSlugs = new Set(
     cart
       .map((c) => allModules.find((m) => m.slug === c.slug))
@@ -95,18 +99,28 @@ const hasActivePlan = sub !== null && sub.statut === "actif";
   };
 
   const lineItems = cart.map((c) => {
-    const mod       = allModules.find((m) => m.slug === c.slug);
-    const covered   = isPlanCovered(c.slug);
-    const blocked   = blockedSlugs.has(c.slug);
-    const prixLigne = covered || blocked ? 0 : c.prix_unitaire * c.quantite;
+    const mod        = allModules.find((m) => m.slug === c.slug);
+    const covered    = isPlanCovered(c.slug);
+    const blocked    = blockedSlugs.has(c.slug);
+    const prixLigne  = covered || blocked ? 0 : c.prix_unitaire * c.quantite;
     const quotaTotal = (mod?.quota_unitaire ?? c.quota_unitaire) * c.quantite;
-    return { ...c, covered, blocked, prixLigne, quotaTotal, minPlanNom: mod?.min_plan_nom ?? null };
+    return {
+      ...c,
+      covered,
+      blocked,
+      prixLigne,
+      quotaTotal,
+      minPlanNom: mod?.min_plan_nom ?? null,
+      nom_fr:     mod?.nom_fr ?? c.slug,
+    };
   });
 
-  const modulesTotal = lineItems.filter((li) => !li.blocked).reduce((s, li) => s + li.prixLigne, 0);
-  const planPrix     = hasActivePlan ? 0 : (effectivePlan?.prix ?? 0);
-  const grandTotal   = planPrix + modulesTotal;
-  const canAfford    = wallet ? wallet.solde >= grandTotal : false;
+  const modulesTotal = lineItems
+    .filter((li) => !li.blocked)
+    .reduce((s, li) => s + li.prixLigne, 0);
+  const planPrix   = hasActivePlan ? 0 : (effectivePlan?.prix ?? 0);
+  const grandTotal = planPrix + modulesTotal;
+  const canAfford  = wallet ? wallet.solde >= grandTotal : false;
 
   const handlePurchase = async () => {
     if (!effectivePlanSlug) {
@@ -114,9 +128,11 @@ const hasActivePlan = sub !== null && sub.statut === "actif";
       return;
     }
     if (hasBlocked) {
-      toast.error(locale === "fr"
-        ? "Retirez les modules non disponibles avant de continuer."
-        : "Remove unavailable modules before continuing.");
+      toast.error(
+        locale === "fr"
+          ? "Retirez les modules non disponibles avant de continuer."
+          : "Remove unavailable modules before continuing.",
+      );
       return;
     }
     setPurchasing(true);
@@ -129,7 +145,9 @@ const hasActivePlan = sub !== null && sub.statut === "actif";
           .map((c) => ({ slug: c.slug, quantite: c.quantite })),
       });
       setDone(true);
-      toast.success(locale === "fr" ? "Paiement réussi ! Modules activés." : "Payment successful! Modules activated.");
+      toast.success(
+        locale === "fr" ? "Paiement réussi ! Modules activés." : "Payment successful! Modules activated.",
+      );
       setTimeout(() => { onSuccess(); onClose(); }, 1400);
     } catch (err: unknown) {
       const msg = (err as { detail?: string })?.detail;
@@ -156,7 +174,7 @@ const hasActivePlan = sub !== null && sub.statut === "actif";
       <div className="absolute inset-0" onClick={!purchasing ? onClose : undefined} />
       <div className="relative z-10 w-full max-w-lg bg-[var(--bg-card)] rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
 
-        {/* En-tête */}
+        {/* ── En-tête ────────────────────────────────────────────────────── */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] flex-shrink-0">
           <div className="flex items-center gap-2">
             <ShoppingCart className="w-4 h-4" style={{ color: primaryColor }} />
@@ -167,7 +185,10 @@ const hasActivePlan = sub !== null && sub.statut === "actif";
             </h2>
           </div>
           {!purchasing && (
-            <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text)] transition-colors">
+            <button
+              onClick={onClose}
+              className="text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+            >
               <X className="w-4 h-4" />
             </button>
           )}
@@ -178,12 +199,14 @@ const hasActivePlan = sub !== null && sub.statut === "actif";
             <div className="flex flex-col items-center gap-3 py-8">
               <CheckCircle2 className="w-14 h-14 text-green-500" />
               <p className="text-sm text-[var(--text-muted)] text-center">
-                {locale === "fr" ? "Vos modules sont maintenant actifs." : "Your modules are now active."}
+                {locale === "fr"
+                  ? "Vos modules sont maintenant actifs."
+                  : "Your modules are now active."}
               </p>
             </div>
           ) : (
             <>
-              {/* Plan */}
+              {/* ── Plan ───────────────────────────────────────────────── */}
               <div className="space-y-2">
                 <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">
                   {locale === "fr" ? "Plan" : "Plan"}
@@ -213,7 +236,12 @@ const hasActivePlan = sub !== null && sub.statut === "actif";
                         style={selectedPlanSlug === p.slug ? { backgroundColor: primaryColor } : {}}
                       >
                         <span className="text-xs font-bold">{p.nom}</span>
-                        <span className={cn("text-[11px]", selectedPlanSlug === p.slug ? "text-white/80" : "text-[var(--text-muted)]")}>
+                        <span
+                          className={cn(
+                            "text-[11px]",
+                            selectedPlanSlug === p.slug ? "text-white/80" : "text-[var(--text-muted)]",
+                          )}
+                        >
                           {formatCurrency(p.prix ?? 0)} / mois
                         </span>
                       </button>
@@ -222,6 +250,7 @@ const hasActivePlan = sub !== null && sub.statut === "actif";
                 )}
               </div>
 
+              {/* ── Line items ─────────────────────────────────────────── */}
               <ModuleCartLineItems
                 lineItems={lineItems}
                 hasBlocked={hasBlocked}
@@ -231,6 +260,23 @@ const hasActivePlan = sub !== null && sub.statut === "actif";
                 onRemoveFromCart={onRemoveFromCart}
               />
 
+              {/* ── Badges gating — un par module bloqué ───────────────── */}
+              {hasBlocked && (
+                <div className="space-y-2">
+                  {lineItems
+                    .filter((li) => li.blocked && li.minPlanNom)
+                    .map((li) => (
+                      <PlanGatingBadge
+                        key={li.slug}
+                        moduleName={li.nom_fr}
+                        requiredPlan={li.minPlanNom!}
+                        locale={locale}
+                      />
+                    ))}
+                </div>
+              )}
+
+              {/* ── Récapitulatif ──────────────────────────────────────── */}
               <ModuleCartSummary
                 wallet={wallet}
                 isLoading={isLoading}
@@ -245,7 +291,7 @@ const hasActivePlan = sub !== null && sub.statut === "actif";
           )}
         </div>
 
-        {/* Actions */}
+        {/* ── Actions ────────────────────────────────────────────────────── */}
         {!done && (
           <div className="flex gap-3 px-6 py-4 border-t border-[var(--border)] flex-shrink-0">
             <button
@@ -272,11 +318,15 @@ const hasActivePlan = sub !== null && sub.statut === "actif";
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-50"
                 style={{ backgroundColor: primaryColor }}
               >
-                {purchasing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                {purchasing
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : <Zap className="w-4 h-4" />}
                 {purchasing
                   ? (locale === "fr" ? "Paiement…" : "Processing…")
                   : grandTotal > 0
-                    ? (locale === "fr" ? `Payer ${formatCurrency(grandTotal)} et activer` : `Pay ${formatCurrency(grandTotal)} & activate`)
+                    ? (locale === "fr"
+                        ? `Payer ${formatCurrency(grandTotal)} et activer`
+                        : `Pay ${formatCurrency(grandTotal)} & activate`)
                     : (locale === "fr" ? "Activer gratuitement" : "Activate for free")}
               </button>
             )}
