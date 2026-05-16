@@ -530,3 +530,16 @@
 - **Décisions clés :** Marketplace approche 1 (page unique), panier accumulation + validation groupée, recommandation plan enrichie, checkout inline avec TopUpModal, icônes dynamiques depuis backend
 - **Dette technique ouverte :** endpoint `POST /features/{slug}/purchase/` manquant (toggle sans débit wallet), `included_in_plan` absent de `by-sector/`
 - **Rapport :** `docs/reports/session_27_gabriel.md`
+
+---
+
+## session_1_stephane
+
+- **Type :** Audit + Debug + Génération — Page Modules
+- **Date :** 2026-05-15
+- **Flux couverts :** Page Modules dashboard (catalogue, purchase, filtres) — partiellement ✅
+- **Bugs corrigés :** BUG-S28-01 (is_mandatory toggle), BUG-S27-05 (bis — non appliqué)
+- **Zones touchées :** `apps/features/views.py`, `apps/features/urls.py`, `src/repositories/features.repository.ts`, `src/hooks/useModuleMarket.ts`, `src/components/modules/ModuleCartCheckout.tsx`, `src/components/modules/ModuleCard.tsx`, `src/components/modules/ModuleFilters.tsx`, `src/components/modules/ModuleMarketplace.tsx`, `src/components/layout/Sidebar.tsx`
+- **Décisions clés :** Catalogue ouvert (tous secteurs), endpoint purchase/ atomique, choix quota par module, flag upgrade_plan à implémenter S2
+- **Dette technique ouverte :** BUG-S1-01 à BUG-S1-06 (voir rapport)
+- **Rapport :** docs/reports/session_1_stephane.md

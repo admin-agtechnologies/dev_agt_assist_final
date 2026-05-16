@@ -1,9 +1,10 @@
 // src/components/modules/ModuleMarketplace.tsx
-// Orchestrateur de la marketplace modules (S27).
-// Assemble : filtres, grille de cartes, panier flottant, checkout, recommandation plan.
+// S28 (donpk) :
+//   - Passage de plans et updateQuantite à ModuleCartCheckout
+//   - Prop m renommée (alignée avec ModuleCard S28)
 "use client";
 import { useState } from "react";
-import { ShoppingCart, RefreshCw, AlertTriangle, Package } from "lucide-react";
+import { ShoppingCart, RefreshCw, AlertTriangle } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSector } from "@/hooks/useSector";
 import { useModuleMarket } from "@/hooks/useModuleMarket";
@@ -15,7 +16,7 @@ import { ModuleCartCheckout } from "./ModuleCartCheckout";
 import { PlanRecommendationBanner } from "./PlanRecommendationBanner";
 import { cn } from "@/lib/utils";
 
-// ── Composant pagination ──────────────────────────────────────────────────────
+// ── Pagination ────────────────────────────────────────────────────────────────
 
 function Pagination({
   page, total, onChange, primaryColor,
@@ -57,9 +58,9 @@ function Pagination({
 // ── Composant principal ───────────────────────────────────────────────────────
 
 export function ModuleMarketplace() {
-  const { locale } = useLanguage();
-  const { theme }  = useSector();
-  const primary    = theme.primary;
+  const { locale }  = useLanguage();
+  const { theme }   = useSector();
+  const primary     = theme.primary;
 
   const {
     modules, allModules, isLoading, error, reload,
@@ -68,13 +69,15 @@ export function ModuleMarketplace() {
     page, setPage, totalPages,
     counts,
     cart, cartTotal, isInCart, addToCart, removeFromCart, clearCart,
+    updateQuantite,
     isCheckingOut, setCheckingOut,
     recommendation, dismissRecommendation,
+    plans,
   } = useModuleMarket();
 
   const [cartOpen, setCartOpen] = useState(false);
 
-  // ── Rendu states ──────────────────────────────────────────────────────────
+  // ── Loading ───────────────────────────────────────────────────────────────
 
   if (isLoading) {
     return (
@@ -102,7 +105,7 @@ export function ModuleMarketplace() {
   return (
     <div className="space-y-6 animate-fade-in pb-20">
 
-      {/* ── En-tête ── */}
+      {/* En-tête */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <PageHeader
           title={locale === "fr" ? "Mes modules" : "My modules"}
@@ -113,7 +116,7 @@ export function ModuleMarketplace() {
           }
         />
 
-        {/* Bouton panier flottant (si items) */}
+        {/* Bouton panier flottant */}
         {cart.length > 0 && (
           <button
             onClick={() => setCartOpen(true)}
@@ -122,14 +125,15 @@ export function ModuleMarketplace() {
           >
             <ShoppingCart className="w-4 h-4" />
             {locale === "fr" ? "Ma sélection" : "My selection"}
-            <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-white text-[10px] font-black flex items-center justify-center shadow" style={{ color: primary }}>
+            <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-white text-[10px] font-black flex items-center justify-center"
+              style={{ color: primary }}>
               {cart.length}
             </span>
           </button>
         )}
       </div>
 
-      {/* ── Recommandation plan (si panier + économie réelle) ── */}
+      {/* Recommandation plan */}
       {recommendation && (
         <PlanRecommendationBanner
           recommendation={recommendation}
@@ -139,7 +143,7 @@ export function ModuleMarketplace() {
         />
       )}
 
-      {/* ── Filtres + recherche ── */}
+      {/* Filtres */}
       <ModuleFilters
         activeFilter={activeFilter}
         onFilterChange={setActiveFilter}
@@ -151,14 +155,17 @@ export function ModuleMarketplace() {
         total={modules.length}
       />
 
-      {/* ── Grille de cartes ── */}
+      {/* Grille */}
       {modules.length === 0 ? (
-        <div className="card flex flex-col items-center justify-center gap-3 py-16 text-center">
-          <Package className="w-10 h-10 text-[var(--text-muted)]" />
+        <div className="flex flex-col items-center gap-2 py-16 text-center">
           <p className="text-sm text-[var(--text-muted)]">
             {search
-              ? (locale === "fr" ? `Aucun résultat pour « ${search} »` : `No results for "${search}"`)
-              : (locale === "fr" ? "Aucun module dans cette catégorie." : "No modules in this category.")}
+              ? (locale === "fr"
+                  ? `Aucun résultat pour « ${search} »`
+                  : `No results for "${search}"`)
+              : (locale === "fr"
+                  ? "Aucun module dans cette catégorie."
+                  : "No modules in this category.")}
           </p>
           {search && (
             <button onClick={() => setSearch("")} className="text-xs font-semibold" style={{ color: primary }}>
@@ -171,7 +178,7 @@ export function ModuleMarketplace() {
           {modules.map((m) => (
             <ModuleCard
               key={m.slug}
-              module={m}
+              m={m}
               locale={locale}
               primaryColor={primary}
               isInCart={isInCart(m.slug)}
@@ -183,10 +190,10 @@ export function ModuleMarketplace() {
         </div>
       )}
 
-      {/* ── Pagination ── */}
+      {/* Pagination */}
       <Pagination page={page} total={totalPages} onChange={setPage} primaryColor={primary} />
 
-      {/* ── Panier (drawer) ── */}
+      {/* Panier (drawer) */}
       <ModuleCartPanel
         open={cartOpen}
         onClose={() => setCartOpen(false)}
@@ -194,19 +201,21 @@ export function ModuleMarketplace() {
         cartTotal={cartTotal}
         onRemoveItem={removeFromCart}
         onClearCart={clearCart}
-        onCheckout={() => setCheckingOut(true)}
+        onCheckout={() => { setCartOpen(false); setCheckingOut(true); }}
         locale={locale}
         primaryColor={primary}
       />
 
-      {/* ── Checkout (modal) ── */}
+      {/* Checkout (modal) */}
       <ModuleCartCheckout
         open={isCheckingOut}
         onClose={() => setCheckingOut(false)}
         cart={cart}
         allModules={allModules}
         cartTotal={cartTotal}
+        plans={plans}
         onSuccess={() => { clearCart(); reload(); }}
+        onUpdateQuantite={updateQuantite}
         locale={locale}
         primaryColor={primary}
       />

@@ -1,5 +1,7 @@
 // src/components/modules/ModuleFilters.tsx
-// Barre de filtres de la marketplace : tabs par statut + recherche plein texte.
+// S28 (donpk) :
+//   - Renommage des onglets : Tous→Catalogue, Actifs→Mes modules,
+//     M'intéressent→En attente, Disponibles→À activer, Upgrade requis→Booster
 "use client";
 import { Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -29,11 +31,11 @@ interface Props {
 // ── Config des tabs ───────────────────────────────────────────────────────────
 
 const TABS: TabDef[] = [
-  { key: "all",       labelFr: "Tous",            labelEn: "All",            emojiFr: "📦" },
-  { key: "active",    labelFr: "Actifs",           labelEn: "Active",         emojiFr: "✅" },
-  { key: "desired",   labelFr: "M'intéressent",   labelEn: "Interested",     emojiFr: "⭐" },
-  { key: "available", labelFr: "Disponibles",     labelEn: "Available",      emojiFr: "🔓" },
-  { key: "upgrade",   labelFr: "Upgrade requis",  labelEn: "Upgrade needed", emojiFr: "⬆️" },
+  { key: "all",       labelFr: "Catalogue",   labelEn: "Catalogue",   emojiFr: "📦" },
+  { key: "active",    labelFr: "Mes modules", labelEn: "My modules",  emojiFr: "✅" },
+  { key: "desired",   labelFr: "En attente",  labelEn: "Wishlist",    emojiFr: "⏳" },
+  { key: "available", labelFr: "À activer",   labelEn: "To activate", emojiFr: "🔓" },
+  { key: "upgrade",   labelFr: "Booster",     labelEn: "Boost",       emojiFr: "⚡" },
 ];
 
 // ── Composant ─────────────────────────────────────────────────────────────────
@@ -70,61 +72,53 @@ export function ModuleFilters({
                   : "bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border)]",
                 !isActive && "hover:text-[var(--text)] hover:border-[var(--text-muted)]",
               )}
-              style={isActive ? { backgroundColor: primaryColor, borderColor: primaryColor } : {}}
+              style={isActive ? { backgroundColor: primaryColor } : {}}
             >
               <span>{emojiFr}</span>
               <span>{label}</span>
-              <span
-                className={cn(
-                  "text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center",
-                  isActive
-                    ? "bg-white/25 text-white"
-                    : "bg-[var(--border)] text-[var(--text-muted)]",
-                )}
-              >
-                {count}
-              </span>
+              {count > 0 && (
+                <span className={cn(
+                  "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                  isActive ? "bg-white/25 text-white" : "bg-[var(--border)] text-[var(--text-muted)]",
+                )}>
+                  {count}
+                </span>
+              )}
             </button>
           );
         })}
       </div>
 
-      {/* Ligne de recherche + compteur */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)] pointer-events-none" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder={
-              locale === "fr"
-                ? "Rechercher un module par nom ou description…"
-                : "Search by name or description…"
-            }
-            className={cn(
-              "w-full pl-9 pr-9 py-2.5 rounded-xl text-sm",
-              "bg-[var(--bg-card)] border border-[var(--border)]",
-              "text-[var(--text)] placeholder-[var(--text-muted)]",
-              "focus:outline-none focus:border-[var(--color-primary)] transition-colors",
-            )}
-          />
-          {search && (
-            <button
-              onClick={() => onSearchChange("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
-              aria-label="Effacer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-
-        {/* Compteur résultats */}
-        <span className="text-xs text-[var(--text-muted)] whitespace-nowrap flex-shrink-0">
-          {total} {locale === "fr" ? "module" : "module"}{total > 1 ? "s" : ""}
-        </span>
+      {/* Barre de recherche */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-muted)]" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder={
+            locale === "fr"
+              ? "Rechercher un module par nom ou description…"
+              : "Search module by name or description…"
+          }
+          className="w-full pl-9 pr-8 py-2 text-sm rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--text-muted)] transition-colors"
+        />
+        {search && (
+          <button
+            onClick={() => onSearchChange("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
+
+      {/* Compteur résultats */}
+      {search && (
+        <p className="text-xs text-[var(--text-muted)]">
+          {locale === "fr" ? `${total} résultat(s)` : `${total} result(s)`}
+        </p>
+      )}
     </div>
   );
 }
