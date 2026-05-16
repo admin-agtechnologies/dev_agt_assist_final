@@ -267,7 +267,7 @@ export function BotConfigTab({ pair, colors, onRefresh }: BotConfigTabProps) {
               key={f.id}
               checked={featuresSet.length === 0 || featuresSet.includes(f.id)}
               onChange={() => toggle(featuresSet, setFeaturesSet, f.id)}
-              label={f.nom_fr}
+              label={f.nom_fr ?? f.slug}
               sub={f.slug}
               colors={colors}
             />
