@@ -58,7 +58,9 @@ function ResetPasswordForm() {
         const res = await authRepository.resetPassword(token, password);
         tokenStorage.set(res.access, res.refresh);
         setView("success");
-        setTimeout(() => router.push(ROUTES.dashboard), 2000);
+        setTimeout(() => {
+          window.location.href = ROUTES.dashboard;
+        }, 2000);
       } catch (err) {
         const msg =
           err instanceof ApiError && typeof err.message === "string"
@@ -95,7 +97,7 @@ function ResetPasswordForm() {
                     required
                     minLength={8}
                     className="input-base pl-10 pr-10"
-                    placeholder={t.passwordPlaceholder}
+                    placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={isPending}
@@ -118,19 +120,12 @@ function ResetPasswordForm() {
                     type={showPassword ? "text" : "password"}
                     required
                     minLength={8}
-                    className="input-base pl-10 pr-10"
-                    placeholder={t.passwordPlaceholder}
+                    className="input-base pl-10"
+                    placeholder="••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     disabled={isPending}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[#075E54] transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
                 </div>
               </div>
 
@@ -141,32 +136,32 @@ function ResetPasswordForm() {
               <button
                 type="submit"
                 disabled={isPending}
-                className="btn-primary w-full justify-center py-3"
+                className="btn-primary w-full justify-center py-3 mt-2"
               >
                 {isPending ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   t.submitBtn
                 )}
               </button>
+            </form>
 
+            <div className="mt-6 text-center">
               <Link
                 href={ROUTES.login}
-                className="flex items-center justify-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors pt-2"
+                className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] flex items-center justify-center gap-1 transition-colors"
               >
-                <ArrowLeft className="w-4 h-4" /> {t.backToLogin}
+                <ArrowLeft className="w-3 h-3" />
+                {t.backToLogin}
               </Link>
-            </form>
+            </div>
           </>
         )}
 
         {view === "success" && (
           <div className="text-center">
             <div className="w-20 h-20 rounded-3xl bg-[#25D366]/10 flex items-center justify-center mx-auto mb-6">
-              <CheckCircle
-                className="w-10 h-10 text-[#25D366]"
-                strokeWidth={1.5}
-              />
+              <CheckCircle className="w-10 h-10 text-[#25D366]" strokeWidth={1.5} />
             </div>
             <h1 className="text-2xl font-black text-[var(--text)] mb-2">
               {t.successTitle}
