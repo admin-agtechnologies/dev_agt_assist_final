@@ -543,3 +543,46 @@
 - **Décisions clés :** Catalogue ouvert (tous secteurs), endpoint purchase/ atomique, choix quota par module, flag upgrade_plan à implémenter S2
 - **Dette technique ouverte :** BUG-S1-01 à BUG-S1-06 (voir rapport)
 - **Rapport :** docs/reports/session_28__donpk+stephane+gabriel.md
+
+---
+## session_30_gabriel
+
+- **Type :** Debug + Refactor + UX — Finalisation des bugs S1_stephane + modularisation
+- **Date :** 2026-05-16
+- **Contexte :** S29 non clôturée (tokens épuisés) — état reconstitué depuis le HTML de la conversation au début de S30.
+- **Flux couverts :** Module Modules + Billing (BUG-S1-04 final, paiement bout-en-bout testé ✅)
+- **Bugs corrigés :**
+  - BUG-S29-A : Erreur 500 paiement — `NameError _get_abonnement` non importé (cohérence import/appel + restart Django)
+  - BUG-S1-04 (final) : Quota mal cumulé après paiement — 3 causes successives :
+    1. `bootstrap_tenant_features` appelé abusivement dans `purchase/` (gonflait le quota plan à chaque achat)
+    2. Condition cassée `if not tf.is_active else 0` (testée après assignation `True`)
+    3. Branche `if pf:` écrivait `quota_total = pf.quota_inclus` au lieu de `quantite × quota_unitaire`
+- **État des 6 bugs hérités S1_stephane :** TOUS CLOS (BUG-S1-01 à BUG-S1-06 ✅)
+- **Zones touchées :**
+  - **Backend :** `apps/features/views.py` (→ renommé `views.py.bak`) + sous-package `apps/features/views/` créé
+  - **Frontend :** `src/components/modules/ModuleCard*.tsx` (modularisé en 4 fichiers)
+- **Fichiers créés :** 10
+  - Backend (6) : `views/__init__.py`, `views/_helpers.py`, `views/catalogue.py`, `views/tenant.py`, `views/purchase.py`, `views/_purchase_logic.py`
+  - Frontend (4) : `ModuleCard.tsx` (réécrit), `ModuleCardHeader.tsx`, `ModuleCardActions.tsx`, `ModuleCardQuotaBar.tsx`
+- **Fichiers modifiés :** 1 (`ModuleCard.tsx` réécrit complet)
+- **Fichiers renommés :** 1 (`apps/features/views.py` → `views.py.bak`)
+- **Migrations :** Aucune
+- **Tests validés bout-en-bout :**
+  - Backend : `POST /api/v1/features/purchase/` → 200, calcul `quantite × quota_unitaire`, cumul correct (chatbot 100k+3k=103k, agent vocal 2k+300=2.3k), wallet débité de 25 000 FCFA exact
+  - Frontend : Étoile favoris désactivée sur modules actifs ✅, "+ Quota" et "Désactiver" côte à côte ✅, "Désactiver" grisé sur obligatoires ✅, modale `ConfirmDialog` ✅, désactivation préserve le quota ✅
+- **Décisions majeures :**
+  - `bootstrap_tenant_features` retiré de `purchase/` (reste utilisé pour inscription + changement de plan)
+  - Règle métier : 1 achat = `quantite × quota_unitaire`, peu importe le statut du module dans le plan
+  - Modularisation `views.py` en sous-package Django (pattern aligné avec `auth_bridge/`)
+  - Réutilisation `ConfirmDialog` partagé pour la confirmation désactivation
+  - Étoile favoris : visible partout mais désactivée sur modules actifs (cohérence visuelle)
+  - Bouton "Désactiver" grisé (non masqué) sur modules obligatoires
+- **Dette créée :** Aucune
+- **Risques de conflit S31+ :**
+  - Toute modif de la marketplace doit tenir compte des 4 sous-composants ModuleCard
+  - Tout nouvel endpoint feature doit respecter le découpage du sous-package `views/`
+  - **Conflit avec Stéphane (session_1_stephane)** : zones réécrites — concertation obligatoire si reprise de la page Modules en S2+
+- **Reste à faire :** Demandes UX checkout S29 (bouton Upgrade plan + Recharger wallet), tests scénarios paiement supplémentaires, audit comptes anciens (quotas par défaut)
+- **Rapport :** `docs/reports/session_30_gabriel.md`
+
+---
