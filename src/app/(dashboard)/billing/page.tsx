@@ -10,6 +10,7 @@ import {
   plansRepository,
   transactionsRepository,
   billingRepository,
+  featuresRepository,
 } from "@/repositories";
 import { SectionHeader, PageLoader } from "@/components/ui";
 import { Printer } from "lucide-react";
@@ -22,55 +23,62 @@ import type {
   Plan,
   Transaction,
 } from "@/types/api";
+import type { ActiveFeature } from "@/repositories/features.repository";
 
 // Import des composants isolés
-import { BillingHeader } from "./components/BillingHeader";
-import { PlanList } from "./components/PlanList";
-import { TransactionList } from "./components/TransactionList";
-import { TopUpModal } from "./components/TopUpModal";
-import { ChangePlanModal } from "./components/ChangePlanModal";
-import { ROUTES } from "@/lib/constants";
+import { BillingHeader }        from "./components/BillingHeader";
+import { PlanList }             from "./components/PlanList";
+import { TransactionList }      from "./components/TransactionList";
+import { TopUpModal }           from "./components/TopUpModal";
+import { ChangePlanModal }      from "./components/ChangePlanModal";
+import { QuotaProgressSection } from "@/components/billing/QuotaProgressSection";
+import { ROUTES }               from "@/lib/constants";
 
 export default function PmeBillingPage() {
   const { user } = useAuth();
+
   // DONNÉES DE SECOURS (Si le backend ne renvoie rien)
   const FALLBACK_WALLET: WalletType = {
-    id: "temp-wallet-id",
-    entreprise: "unknown",
-    entreprise_name: "Entreprise",
-    solde: 0,
-    frozen_balance: 0,
-    total_balance: 0,
-    devise: "XAF",
-    updated_at: new Date().toISOString()
+    id:               "temp-wallet-id",
+    entreprise:       "unknown",
+    entreprise_name:  "Entreprise",
+    solde:            0,
+    frozen_balance:   0,
+    total_balance:    0,
+    devise:           "XAF",
+    updated_at:       new Date().toISOString(),
   };
-  const { dictionary: d } = useLanguage();
-  const t = d.billing;
-  const toast = useToast();
-  const router = useRouter();
-  const [sub, setSub] = useState<Subscription | null>(null);
-  const [wallet, setWallet] = useState<WalletType | null>(null);
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  const [topUpOpen, setTopUpOpen] = useState(false);
-  const [changePlanId, setChangePlanId] = useState<string | null>(null);
-  const [pollingTxnId, setPollingTxnId] = useState<string | null>(null);
+  const { dictionary: d } = useLanguage();
+  const t                 = d.billing;
+  const toast             = useToast();
+  const router            = useRouter();
+
+  const [sub,          setSub]          = useState<Subscription | null>(null);
+  const [wallet,       setWallet]       = useState<WalletType | null>(null);
+  const [plans,        setPlans]        = useState<Plan[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [features,     setFeatures]     = useState<ActiveFeature[]>([]);
+  const [loading,      setLoading]      = useState(true);
+
+  const [topUpOpen,      setTopUpOpen]      = useState(false);
+  const [changePlanId,   setChangePlanId]   = useState<string | null>(null);
+  const [pollingTxnId,   setPollingTxnId]   = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
-      const [s, w, p, tr] = await Promise.all([
+      const [s, w, p, tr, feat] = await Promise.all([
         subscriptionsRepository.getMine(),
-        walletsRepository.getMine().catch(() => null), // On attrape l'erreur individuellement
+        walletsRepository.getMine().catch(() => null),
         plansRepository.getList(),
-        transactionsRepository.getMine().catch(() => []), // Idem pour les transactions
+        transactionsRepository.getMine().catch(() => []),
+        featuresRepository.getActive().catch(() => ({ features: [] })),
       ]);
 
       setSub(s);
       setPlans(p);
+      setFeatures(feat.features ?? []);
 
-      // LOGIQUE DE SECOURS : Si 'w' est null ou indéfini, on utilise FALLBACK_WALLET
       if (!w) {
         console.warn("Portefeuille non trouvé, chargement des données de secours.");
         setWallet(FALLBACK_WALLET);
@@ -87,14 +95,11 @@ export default function PmeBillingPage() {
     } catch (error) {
       console.error("Erreur critique lors du fetch:", error);
       toast.error(d.common.error);
-
-      // En cas d'erreur totale du serveur, on force quand même le wallet de secours
-      // pour ne pas bloquer l'UI
       if (!wallet) setWallet(FALLBACK_WALLET);
     } finally {
       setLoading(false);
     }
-  }, [user?.tenant_id, d.common.error, toast]);
+  }, [user?.tenant_id, d.common.error, toast]); // eslint-disable-line
 
   // Polling transaction
   useEffect(() => {
@@ -138,10 +143,8 @@ export default function PmeBillingPage() {
     ]);
     autoTable(doc, {
       startY: 40,
-      head: [
-        ["Date", "Description", "Type", "Opérateur", "Référence", "Montant"],
-      ],
-      body: tableRows,
+      head: [["Date", "Description", "Type", "Opérateur", "Référence", "Montant"]],
+      body:  tableRows,
       theme: "grid",
     });
     doc.save(`facturation-agt-${new Date().getTime()}.pdf`);
@@ -151,6 +154,8 @@ export default function PmeBillingPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+
+      {/* ── En-tête page ──────────────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <SectionHeader title={t.title} subtitle={t.subtitle} />
         <button
@@ -161,12 +166,19 @@ export default function PmeBillingPage() {
         </button>
       </div>
 
+      {/* ── Wallet + Abonnement ───────────────────────────────────────────── */}
       <BillingHeader
         wallet={wallet}
         sub={sub}
         onTopUp={() => setTopUpOpen(true)}
       />
 
+      {/* ── Consommation modules — C4 S31 ────────────────────────────────── */}
+      {features.length > 0 && (
+        <QuotaProgressSection features={features} />
+      )}
+
+      {/* ── Plans disponibles ─────────────────────────────────────────────── */}
       <PlanList
         plans={plans}
         sub={sub}
@@ -174,9 +186,10 @@ export default function PmeBillingPage() {
         onSelectPlan={setChangePlanId}
       />
 
+      {/* ── Historique transactions ───────────────────────────────────────── */}
       <TransactionList transactions={transactions} />
 
-      {/* Modales Orchestrées */}
+      {/* ── Modales ───────────────────────────────────────────────────────── */}
       {topUpOpen && wallet && (
         <TopUpModal
           wallet={wallet}
@@ -197,11 +210,12 @@ export default function PmeBillingPage() {
           tenantId={user?.entreprise?.id ?? ""}
           onClose={() => setChangePlanId(null)}
           onSuccess={() => {
-           setChangePlanId(null);
-          router.push(ROUTES.dashboard);
+            setChangePlanId(null);
+            router.push(ROUTES.dashboard);
           }}
         />
       )}
+
     </div>
   );
 }

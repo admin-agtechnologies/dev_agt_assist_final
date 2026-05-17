@@ -1,30 +1,34 @@
 "use client";
 // ============================================================
 // FICHIER : src/components/welcome/WelcomeScreen3.tsx
-// S26 — Refonte complète :
-//   · Bonus animé pleine largeur en tête
-//   · Tous les modules sélectionnés affichés (inclus gratuit + extras)
-//   · Cartes plans avec bullets features
-//   · TopUpModal inline (plus de redirection /billing)
-//   · Facture claire avec solde après paiement
+// S26 — Refonte complète
+// S31 (stephane) :
+//   · getCatalogue(planSlug) remplace getSectorFeatures() → included_in_plan fiable
+//   · Recalcul catalogueMap à chaque changement de plan sélectionné
+//   · Dérivations inclus/extras basées sur included_in_plan + activeSet
+//   · Gating plan : badges + blocage bouton si module incompatible avec plan choisi
+//   · handlePay branché sur purchase/ au lieu de confirmUpgrade
 // ============================================================
 import { useState, useEffect, useCallback } from "react";
 import {
   Gift, CreditCard, AlertCircle, CheckCircle2,
   Loader2, Lock, Sparkles,
 } from "lucide-react";
-import { useAuth }              from "@/contexts/AuthContext";
+import { useAuth }               from "@/contexts/AuthContext";
 import {
   onboardingRepository, walletsRepository,
-  billingRepository,    featuresRepository,
+  featuresRepository,
 } from "@/repositories";
-import { api }                  from "@/lib/api-client";
-import type { Plan }            from "@/types/api/billing.types";
-import type { Wallet }          from "@/types/api/commande.types";
-import type { SectorFeature }   from "@/repositories/features.repository";
-import { formatCurrency }       from "@/lib/utils";
-import { getFeatureLabel }      from "@/lib/sector-labels";
-import { TopUpModal }           from "@/app/(dashboard)/billing/components/TopUpModal";
+import { api }                   from "@/lib/api-client";
+import type { Plan }             from "@/types/api/billing.types";
+import type { Wallet }           from "@/types/api/commande.types";
+import type { CatalogueFeature } from "@/repositories/features.repository";
+import { formatCurrency }        from "@/lib/utils";
+import { getFeatureLabel }       from "@/lib/sector-labels";
+import { isPlanInsufficient }    from "@/lib/plan-priority";
+import { PlanGatingBadge }       from "@/components/billing/PlanGatingBadge";
+import { TopUpModal }            from "@/app/(dashboard)/billing/components/TopUpModal";
+import { useToast } from "@/components/ui/Toast";
 
 // ── Libellés unités quota par slug ────────────────────────────────────────────
 const QUOTA_UNIT: Record<string, string> = {
@@ -46,54 +50,58 @@ const QUOTA_UNIT: Record<string, string> = {
 // ── i18n ──────────────────────────────────────────────────────────────────────
 const T = {
   fr: {
-    bonusLabel:   "🎁 10 000 FCFA offerts — Réclamez votre bonus de bienvenue !",
-    bonusBtn:     "Réclamer",
-    bonusClaimed: "Bonus réclamé ✓",
-    wallet:       "Mon portefeuille",
-    modulesTitle: "Vos modules sélectionnés",
-    free:         "Gratuit",
-    addons:       "Modules additionnels",
-    addonsHint:   "Non inclus dans votre plan — achetés une seule fois, actifs immédiatement.",
-    choosePlan:   "Choisir un plan",
-    planHint:     "Le plan définit vos quotas mensuels. Les modules additionnels sont facturés séparément.",
-    recommended:  "Recommandé",
-    perMonth:     "/ mois",
-    install:      "Frais installation",
-    summary:      "Récapitulatif",
-    planLine:     "Plan",
-    extrasLine:   "Modules additionnels",
-    total:        "Total",
-    balanceAfter: "Solde après paiement",
-    insufficient: "Solde insuffisant — rechargez pour continuer.",
-    pay:          "Payer avec mon portefeuille",
-    paying:       "Paiement en cours…",
-    recharge:     "Recharger mon compte",
-    adjust:       "← Réajuster mes modules",
+    bonusLabel:     "🎁 10 000 FCFA offerts — Réclamez votre bonus de bienvenue !",
+    bonusBtn:       "Réclamer",
+    bonusClaimed:   "Bonus réclamé ✓",
+    wallet:         "Mon portefeuille",
+    modulesTitle:   "Vos modules sélectionnés",
+    free:           "Gratuit",
+    includedInPlan: "Inclus dans votre plan",
+    addons:         "Modules additionnels",
+    addonsHint:     "Non inclus dans votre plan — achetés une seule fois, actifs immédiatement.",
+    choosePlan:     "Choisir un plan",
+    planHint:       "Le plan définit vos quotas mensuels. Les modules additionnels sont facturés séparément.",
+    recommended:    "Recommandé",
+    perMonth:       "/ mois",
+    install:        "Frais installation",
+    summary:        "Récapitulatif",
+    planLine:       "Plan",
+    extrasLine:     "Modules additionnels",
+    total:          "Total",
+    balanceAfter:   "Solde après paiement",
+    insufficient:   "Solde insuffisant — rechargez pour continuer.",
+    pay:            "Payer avec mon portefeuille",
+    paying:         "Paiement en cours…",
+    recharge:       "Recharger mon compte",
+    adjust:         "← Réajuster mes modules",
+    fixConflicts:   "Corrigez les conflits",
   },
   en: {
-    bonusLabel:   "🎁 10,000 FCFA gift — Claim your welcome bonus now!",
-    bonusBtn:     "Claim",
-    bonusClaimed: "Bonus claimed ✓",
-    wallet:       "My wallet",
-    modulesTitle: "Your selected modules",
-    free:         "Free",
-    addons:       "Additional modules",
-    addonsHint:   "Not included in your plan — purchased once, immediately active.",
-    choosePlan:   "Choose a plan",
-    planHint:     "The plan sets your monthly quotas. Add-on modules are billed separately.",
-    recommended:  "Recommended",
-    perMonth:     "/ month",
-    install:      "Setup fee",
-    summary:      "Summary",
-    planLine:     "Plan",
-    extrasLine:   "Add-on modules",
-    total:        "Total",
-    balanceAfter: "Balance after payment",
-    insufficient: "Insufficient balance — recharge to continue.",
-    pay:          "Pay with my wallet",
-    paying:       "Processing…",
-    recharge:     "Recharge wallet",
-    adjust:       "← Adjust modules",
+    bonusLabel:     "🎁 10,000 FCFA gift — Claim your welcome bonus now!",
+    bonusBtn:       "Claim",
+    bonusClaimed:   "Bonus claimed ✓",
+    wallet:         "My wallet",
+    modulesTitle:   "Your selected modules",
+    free:           "Free",
+    includedInPlan: "Included in your plan",
+    addons:         "Additional modules",
+    addonsHint:     "Not included in your plan — purchased once, immediately active.",
+    choosePlan:     "Choose a plan",
+    planHint:       "The plan sets your monthly quotas. Add-on modules are billed separately.",
+    recommended:    "Recommended",
+    perMonth:       "/ month",
+    install:        "Setup fee",
+    summary:        "Summary",
+    planLine:       "Plan",
+    extrasLine:     "Add-on modules",
+    total:          "Total",
+    balanceAfter:   "Balance after payment",
+    insufficient:   "Insufficient balance — recharge to continue.",
+    pay:            "Pay with my wallet",
+    paying:         "Processing…",
+    recharge:       "Recharge wallet",
+    adjust:         "← Adjust modules",
+    fixConflicts:   "Fix conflicts",
   },
 } as const;
 
@@ -108,31 +116,34 @@ interface Props {
 // ── Composant ─────────────────────────────────────────────────────────────────
 export function WelcomeScreen3({ selectedSlugs, locale, onBack, onSuccess }: Props) {
   const { user, refreshUser } = useAuth();
-  const t          = T[locale as keyof typeof T] ?? T.fr;
-  const loc        = (locale === "en" ? "en" : "fr") as "fr" | "en";
-  const sectorSlug = user?.entreprise?.secteur?.slug ?? "custom";
+  const toast = useToast();
+  const t   = T[locale as keyof typeof T] ?? T.fr;
+  const loc = (locale === "en" ? "en" : "fr") as "fr" | "en";
 
-  const [plans,         setPlans]         = useState<Plan[]>([]);
-  const [wallet,        setWallet]        = useState<Wallet | null>(null);
-  const [selectedPlan,  setSelectedPlan]  = useState<Plan | null>(null);
-  const [sectorMap,     setSectorMap]     = useState<Record<string, SectorFeature>>({});
-  const [activeSet,     setActiveSet]     = useState<Set<string>>(new Set());
-  const [checkedExtras, setCheckedExtras] = useState<Set<string>>(new Set());
-  const [loading,       setLoading]       = useState(true);
-  const [claiming,      setClaiming]      = useState(false);
-  const [paying,        setPaying]        = useState(false);
-  const [showTopUp,     setShowTopUp]     = useState(false);
-  const [hasClaimed,    setHasClaimed]    = useState(
+  const [plans,          setPlans]          = useState<Plan[]>([]);
+  const [wallet,         setWallet]         = useState<Wallet | null>(null);
+  const [selectedPlan,   setSelectedPlan]   = useState<Plan | null>(null);
+  const [catalogueMap,   setCatalogueMap]   = useState<Record<string, CatalogueFeature>>({});
+  const [catalogueReady, setCatalogueReady] = useState(false);
+  const [activeSet,      setActiveSet]      = useState<Set<string>>(new Set());
+  const [checkedExtras,  setCheckedExtras]  = useState<Set<string>>(new Set());
+  const [loading,        setLoading]        = useState(true);
+  const [claiming,       setClaiming]       = useState(false);
+  const [paying,         setPaying]         = useState(false);
+  const [showTopUp,      setShowTopUp]      = useState(false);
+  const [hasClaimed,     setHasClaimed]     = useState(
     user?.onboarding?.has_claimed_bonus ?? false,
   );
 
+  // ── Chargement initial : plans + wallet + features actives ────────────────
+  // NB : getCatalogue n'est PAS appelé ici — il sera déclenché par l'effet
+  // sur selectedPlan dès que le premier plan est positionné.
   useEffect(() => {
     Promise.all([
       api.get<unknown>("/api/v1/billing/plans/?is_active=true"),
       walletsRepository.getMine(),
       featuresRepository.getActive(),
-      featuresRepository.getSectorFeatures(sectorSlug),
-    ]).then(([rawPlans, w, { features: active }, sectorFeats]) => {
+    ]).then(([rawPlans, w, { features: active }]) => {
       const list: Plan[] = Array.isArray(rawPlans)
         ? (rawPlans as Plan[])
         : ((rawPlans as { results?: Plan[] }).results ?? []);
@@ -140,24 +151,60 @@ export function WelcomeScreen3({ selectedSlugs, locale, onBack, onSuccess }: Pro
       setPlans(payable);
       setSelectedPlan(payable[0] ?? null);
       setWallet(w);
-
-      const aSet = new Set(active.map(f => f.slug));
-      setActiveSet(aSet);
-
-      const map: Record<string, SectorFeature> = {};
-      sectorFeats.forEach(f => { map[f.slug] = f; });
-      setSectorMap(map);
-
-      // Extras = sélectionnés mais pas encore actifs — tous cochés par défaut
-      setCheckedExtras(new Set(selectedSlugs.filter(s => !aSet.has(s))));
+      setActiveSet(new Set(active.map(f => f.slug)));
     }).finally(() => setLoading(false));
-  }, [sectorSlug]); // eslint-disable-line
+  }, []); // eslint-disable-line
+
+  // ── Recalcul catalogueMap à chaque changement de plan sélectionné ─────────
+  // GET /api/v1/features/catalogue/?plan_slug=X
+  // → included_in_plan calculé pour ce plan hypothétique
+  // → la séparation inclus/extras se met à jour dynamiquement
+  useEffect(() => {
+    if (!selectedPlan) return;
+    setCatalogueReady(false);
+    featuresRepository.getCatalogue(selectedPlan.slug).then(feats => {
+      const map: Record<string, CatalogueFeature> = {};
+      feats.forEach(f => { map[f.slug] = f; });
+      setCatalogueMap(map);
+      setCatalogueReady(true);
+    });
+  }, [selectedPlan?.slug]); // eslint-disable-line
+
+  // ── Init checkedExtras — une seule fois au premier chargement du catalogue ─
+  // On coche par défaut les extras hors plan, pas les modules déjà inclus.
+  // On ne re-coche pas si le user a déjà interagi (prev.size > 0).
+  useEffect(() => {
+    if (!catalogueReady) return;
+    setCheckedExtras(prev => {
+      if (prev.size > 0) return prev;
+      return new Set(
+        selectedSlugs.filter(s =>
+          !activeSet.has(s) &&
+          catalogueMap[s]?.included_in_plan === false,
+        ),
+      );
+    });
+  }, [catalogueReady]); // eslint-disable-line
 
   // ── Dérivations ───────────────────────────────────────────────────────────
-  const inclus: string[]       = selectedSlugs.filter(s => activeSet.has(s));
-  const extras: SectorFeature[] = selectedSlugs
-    .filter(s => !activeSet.has(s) && sectorMap[s])
-    .map(s => sectorMap[s]);
+  //
+  // inclus = déjà actif en base OU inclus dans le plan sélectionné
+  //          → affiché en vert, prix = 0, non modifiable
+  //
+  // extras = pas encore actif ET non inclus dans le plan sélectionné
+  //          → checkboxes, prix unitaire affiché, ajouté au total
+  //
+  const inclus: string[] = selectedSlugs.filter(s =>
+    activeSet.has(s) || catalogueMap[s]?.included_in_plan === true,
+  );
+
+  const extras: CatalogueFeature[] = selectedSlugs
+    .filter(s =>
+      !activeSet.has(s) &&
+      catalogueMap[s] &&
+      catalogueMap[s].included_in_plan === false,
+    )
+    .map(s => catalogueMap[s]);
 
   const extrasTotal  = extras
     .filter(f => checkedExtras.has(f.slug))
@@ -167,6 +214,16 @@ export function WelcomeScreen3({ selectedSlugs, locale, onBack, onSuccess }: Pro
   const balance      = Number(wallet?.solde ?? 0);
   const balanceAfter = balance - total;
   const canAfford    = selectedPlan != null && balance >= total;
+
+  // Modules cochés dont le plan minimum requis est supérieur au plan choisi
+  const conflicts = extras.filter(f =>
+    checkedExtras.has(f.slug) &&
+    isPlanInsufficient(f.min_plan_nom, selectedPlan?.slug ?? ""),
+  );
+  const hasConflicts = conflicts.length > 0;
+
+  // Paiement possible = solde suffisant ET aucun conflit
+  const canPay = canAfford && !hasConflicts;
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const toggleExtra = useCallback((slug: string) => {
@@ -188,15 +245,42 @@ export function WelcomeScreen3({ selectedSlugs, locale, onBack, onSuccess }: Pro
   };
 
   const handlePay = async () => {
-    if (!selectedPlan || !canAfford || paying) return;
+    if (!selectedPlan || !canPay || paying) return;
     setPaying(true);
     try {
-      const extra_slugs   = extras.filter(f => checkedExtras.has(f.slug)).map(f => f.slug);
-      const desired_slugs = extras.filter(f => !checkedExtras.has(f.slug)).map(f => f.slug);
-      await billingRepository.confirmUpgrade(selectedPlan.id, { extra_slugs, desired_slugs });
+      const modulesToBuy = extras
+        .filter(f => checkedExtras.has(f.slug))
+        .map(f => ({ slug: f.slug, quantite: 1 }));
+
+      const desired_slugs = extras
+        .filter(f => !checkedExtras.has(f.slug))
+        .map(f => f.slug);
+
+      await featuresRepository.purchase({
+        plan_slug:    selectedPlan.slug,
+        upgrade_plan: true,
+        modules:      modulesToBuy,
+      });
+
+      if (desired_slugs.length > 0) {
+        await featuresRepository.markDesired(desired_slugs);
+      }
+
       await refreshUser();
+      toast.success(
+        locale === "fr"
+          ? "Paiement réussi ! Votre plan et vos modules sont actifs."
+          : "Payment successful! Your plan and modules are now active.",
+      );
       onSuccess();
-    } catch { /* TODO: toast erreur */ } finally { setPaying(false); }
+    } catch (err: unknown) {
+      const msg = (err as { detail?: string })?.detail;
+      toast.error(
+        msg ?? (locale === "fr" ? "Erreur lors du paiement." : "Payment error."),
+      );
+    } finally {
+      setPaying(false);
+    }
   };
 
   const handleTopUpSuccess = async () => {
@@ -230,18 +314,18 @@ export function WelcomeScreen3({ selectedSlugs, locale, onBack, onSuccess }: Pro
               <Gift className="w-9 h-9 text-white shrink-0" />
               <p className="text-sm font-black text-white leading-snug">{t.bonusLabel}</p>
             </div>
-            <button onClick={handleClaim} disabled={claiming}
+            <button
+              onClick={handleClaim}
+              disabled={claiming}
               className="shrink-0 px-5 py-2.5 rounded-xl bg-white font-black text-sm
                          text-amber-600 hover:bg-amber-50 disabled:opacity-60
-                         transition-all shadow-md">
-              {claiming
-                ? <Loader2 className="w-4 h-4 animate-spin inline" />
-                : t.bonusBtn}
+                         transition-all shadow-md"
+            >
+              {claiming ? <Loader2 className="w-4 h-4 animate-spin inline" /> : t.bonusBtn}
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-2 px-4 py-3 rounded-xl
-                          bg-green-50 border border-green-200">
+          <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-green-50 border border-green-200">
             <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
             <span className="text-sm font-semibold text-green-700">{t.bonusClaimed}</span>
           </div>
@@ -260,30 +344,38 @@ export function WelcomeScreen3({ selectedSlugs, locale, onBack, onSuccess }: Pro
         <div>
           <p className="text-sm font-bold text-[var(--text)] mb-3">{t.modulesTitle}</p>
 
-          {/* Inclus gratuitement */}
+          {/* Inclus dans le plan sélectionné — gratuit */}
           {inclus.length > 0 && (
-            <div className="space-y-1.5 mb-4">
-              {inclus.map(slug => {
-                const label = sectorMap[slug]?.nom_fr ?? getFeatureLabel(slug, loc).nav;
-                return (
-                  <div key={slug}
-                    className="flex items-center justify-between px-4 py-2.5 rounded-xl
-                               bg-green-50/60 border border-green-100">
-                    <div className="flex items-center gap-2.5">
-                      <Lock className="w-3.5 h-3.5 text-green-600 shrink-0" />
-                      <span className="text-sm font-medium text-[var(--text)]">{label}</span>
+            <div className="mb-4">
+              <p className="text-[11px] font-bold uppercase tracking-widest
+                            text-[var(--text-muted)] mb-2">
+                {t.includedInPlan}
+              </p>
+              <div className="space-y-1.5">
+                {inclus.map(slug => {
+                  const label = catalogueMap[slug]?.nom_fr ?? getFeatureLabel(slug, loc).nav;
+                  return (
+                    <div
+                      key={slug}
+                      className="flex items-center justify-between px-4 py-2.5 rounded-xl
+                                 bg-green-50/60 border border-green-100"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Lock className="w-3.5 h-3.5 text-green-600 shrink-0" />
+                        <span className="text-sm font-medium text-[var(--text)]">{label}</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-green-700
+                                       bg-green-100 px-2 py-0.5 rounded-full shrink-0 ml-2">
+                        {t.free}
+                      </span>
                     </div>
-                    <span className="text-[10px] font-bold text-green-700
-                                     bg-green-100 px-2 py-0.5 rounded-full shrink-0 ml-2">
-                      {t.free}
-                    </span>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
 
-          {/* Modules additionnels (hors plan) */}
+          {/* Modules additionnels hors plan */}
           {extras.length > 0 && (
             <>
               <p className="text-[11px] font-bold uppercase tracking-widest
@@ -293,26 +385,35 @@ export function WelcomeScreen3({ selectedSlugs, locale, onBack, onSuccess }: Pro
               <p className="text-xs text-[var(--text-muted)] mb-3">{t.addonsHint}</p>
               <div className="space-y-2">
                 {extras.map(f => {
-                  const checked = checkedExtras.has(f.slug);
-                  const label   = f.nom_fr ?? getFeatureLabel(f.slug, loc).nav;
-                  const unit    = QUOTA_UNIT[f.slug];
-                  const quota   = f.quota_unitaire;
+                  const checked  = checkedExtras.has(f.slug);
+                  const conflict = isPlanInsufficient(f.min_plan_nom, selectedPlan?.slug ?? "");
+                  const label    = f.nom_fr ?? getFeatureLabel(f.slug, loc).nav;
+                  const unit     = QUOTA_UNIT[f.slug];
+                  const quota    = f.quota_unitaire;
                   return (
-                    <button key={f.slug} onClick={() => toggleExtra(f.slug)}
+                    <button
+                      key={f.slug}
+                      onClick={() => toggleExtra(f.slug)}
                       className={[
                         "w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all",
-                        checked
-                          ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5"
-                          : "border-[var(--border)] hover:border-[var(--color-primary)]/40",
-                      ].join(" ")}>
+                        conflict
+                          ? "border-amber-300 bg-amber-50/40 opacity-70"
+                          : checked
+                            ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5"
+                            : "border-[var(--border)] hover:border-[var(--color-primary)]/40",
+                      ].join(" ")}
+                    >
                       <div className="flex items-center gap-3">
                         <div className={[
                           "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0",
-                          checked
-                            ? "border-[var(--color-primary)] bg-[var(--color-primary)]"
-                            : "border-[var(--border)]",
+                          conflict
+                            ? "border-amber-400 bg-amber-100"
+                            : checked
+                              ? "border-[var(--color-primary)] bg-[var(--color-primary)]"
+                              : "border-[var(--border)]",
                         ].join(" ")}>
-                          {checked && <CheckCircle2 className="w-3 h-3 text-white" />}
+                          {checked && !conflict && <CheckCircle2 className="w-3 h-3 text-white" />}
+                          {conflict && <Lock className="w-2.5 h-2.5 text-amber-600" />}
                         </div>
                         <div className="text-left">
                           <p className="text-sm font-semibold text-[var(--text)]">{label}</p>
@@ -330,6 +431,20 @@ export function WelcomeScreen3({ selectedSlugs, locale, onBack, onSuccess }: Pro
                   );
                 })}
               </div>
+
+              {/* Badges gating — un par module en conflit avec le plan */}
+              {hasConflicts && (
+                <div className="space-y-2 mt-3">
+                  {conflicts.map(f => (
+                    <PlanGatingBadge
+                      key={f.slug}
+                      moduleName={f.nom_fr}
+                      requiredPlan={f.min_plan_nom!}
+                      locale={locale}
+                    />
+                  ))}
+                </div>
+              )}
             </>
           )}
         </div>
@@ -343,13 +458,16 @@ export function WelcomeScreen3({ selectedSlugs, locale, onBack, onSuccess }: Pro
               {plans.map(p => {
                 const isSelected = selectedPlan?.id === p.id;
                 return (
-                  <button key={p.id} onClick={() => setSelectedPlan(p)}
+                  <button
+                    key={p.id}
+                    onClick={() => setSelectedPlan(p)}
                     className={[
                       "card p-4 text-left border-2 transition-all",
                       isSelected
                         ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5"
                         : "border-[var(--border)] hover:border-[var(--color-primary)]/40",
-                    ].join(" ")}>
+                    ].join(" ")}
+                  >
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <p className="font-black text-[var(--text)]">{p.nom}</p>
                       {p.highlight && (
@@ -417,8 +535,8 @@ export function WelcomeScreen3({ selectedSlugs, locale, onBack, onSuccess }: Pro
           </div>
         )}
 
-        {/* ── Alerte solde insuffisant ────────────────────────────────────── */}
-        {selectedPlan && !canAfford && (
+        {/* ── Alerte solde insuffisant (seulement si pas de conflit) ──────── */}
+        {selectedPlan && !canAfford && !hasConflicts && (
           <div className="flex items-start gap-2 text-sm text-amber-700
                           bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
             <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
@@ -428,23 +546,43 @@ export function WelcomeScreen3({ selectedSlugs, locale, onBack, onSuccess }: Pro
 
         {/* ── Navigation ──────────────────────────────────────────────────── */}
         <div className="flex items-center justify-between pt-2">
-          <button onClick={onBack}
-            className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition">
+          <button
+            onClick={onBack}
+            className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition"
+          >
             {t.adjust}
           </button>
-          {canAfford ? (
-            <button onClick={handlePay} disabled={paying}
+
+          {canPay ? (
+            // Cas normal — solde ok, aucun conflit
+            <button
+              onClick={handlePay}
+              disabled={paying}
               className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold
                          text-white bg-[var(--color-primary)] hover:opacity-90
-                         disabled:opacity-50 transition-all">
+                         disabled:opacity-50 transition-all"
+            >
               {paying
                 ? <><Loader2 className="w-4 h-4 animate-spin" />{t.paying}</>
                 : <><CreditCard className="w-4 h-4" />{t.pay}</>}
             </button>
-          ) : (
-            <button onClick={() => setShowTopUp(true)}
+          ) : hasConflicts ? (
+            // Conflit plan — bouton bloqué explicitement
+            <button
+              disabled
               className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold
-                         text-white bg-amber-500 hover:bg-amber-600 transition-all">
+                         text-white bg-amber-400 opacity-60 cursor-not-allowed"
+            >
+              <Lock className="w-4 h-4" />
+              {t.fixConflicts}
+            </button>
+          ) : (
+            // Solde insuffisant — proposer la recharge
+            <button
+              onClick={() => setShowTopUp(true)}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold
+                         text-white bg-amber-500 hover:bg-amber-600 transition-all"
+            >
               <Gift className="w-4 h-4" />
               {t.recharge}
             </button>
