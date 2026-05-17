@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Sparkles, XCircle, Loader2 } from "lucide-react";
 import { authRepository } from "@/repositories";
 import { tokenStorage } from "@/lib/api-client";
@@ -45,7 +46,9 @@ function MagicLinkVerifier() {
       .then((res) => {
         tokenStorage.set(res.access, res.refresh);
         setStatus("success");
-        setTimeout(() => router.push(ROUTES.dashboard), 1500);
+        setTimeout(() => {
+          window.location.href = ROUTES.dashboard;
+        }, 1500);
       })
       .catch((err: Error) => {
         setStatus("error");
