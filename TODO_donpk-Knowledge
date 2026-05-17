@@ -1,0 +1,25 @@
+[PHASE 0 — Quick bug fix]
+ P0-01 : Bug secteur EntrepriseTab — diagnostic + fix UI (pas bloquant)
+
+[PHASE 1 — UX Knowledge Base globale]
+   P1-01 : Refonte KnowledgeTabs (meilleure navigation, indicateurs)
+   P1-02 : Skeleton loading states sur tous les tabs
+   P1-03 : Amélioration EntrepriseTab (UX + secteur badge)
+
+[PHASE 2 — Menu digital (restaurant) — cas pilote]
+   P2-01 : Backend — modèles MenuCategorie + MenuPlat + migrations
+   P2-02 : Backend — serializers + viewsets + urls
+   P2-03 : Frontend — repository menu
+   P2-04 : Frontend — MenuTab.tsx (CRUD catégories + plats)
+   P2-05 : Test E2E complet
+
+[PHASE 3 — Chambres (hotel)]
+  □ P3-01 : Backend — ChambreType
+  □ P3-02 : Frontend — ChambresTab.tsx
+
+[PHASE 4 — Catalogue (polymorphe — ecommerce / pme / transport / banque)]
+  □ P4-01 : Backend — modèles catalogue unifiés
+  □ P4-02 : Frontend — CatalogueTab.tsx adaptatif selon secteur
+
+[PHASE 5 — Secteurs restants (education / sante / public)]
+  □ P5-01 à P5-03 : Backend + Frontend pour chaque

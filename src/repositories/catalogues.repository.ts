@@ -1,4 +1,5 @@
 // src/repositories/catalogues.repository.ts
+// ⚠️ Fichier ORIGINAL restauré — ne pas confondre avec catalogue.repository.ts (knowledge base)
 import { api } from "@/lib/api-client";
 import type { PaginatedResponse } from "@/types/api";
 import type {

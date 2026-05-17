@@ -2,6 +2,11 @@
 "use client";
 
 import { useMemo, useState, useCallback } from "react";
+import {
+  Building2, MapPin, HelpCircle, UtensilsCrossed,
+  BedDouble, Package, GraduationCap, Stethoscope, Landmark,
+  type LucideIcon,
+} from "lucide-react";
 import { PageHeader }        from "@/components/ui/PageHeader";
 import { useLanguage }       from "@/contexts/LanguageContext";
 import { useActiveFeatures } from "@/hooks/useFeatures";
@@ -9,20 +14,41 @@ import { KnowledgeTabs, type KnowledgeTab } from "./_components/KnowledgeTabs";
 import { EntrepriseTab } from "./_components/tabs/EntrepriseTab";
 import { AgencesTab }    from "./_components/tabs/AgencesTab";
 import { FaqTab }        from "./_components/tabs/FaqTab";
+import { MenuTab }       from "./_components/tabs/MenuTab";
+import { ChambresTab }   from "./_components/tabs/ChambresTab";
+import { CatalogueTab }  from "./_components/tabs/CatalogueTab";
+import { InscriptionsTab }   from "./_components/tabs/InscriptionsTab";  // ++ P5
+import { MedicalTab }        from "./_components/tabs/MedicalTab";        // ++ P5
+import { CitoyensTab }       from "./_components/tabs/CitoyensTab";       // ++ P5
+ 
 
-const ALL_TABS = [
-  { id: "entreprise",   always: true },
-  { id: "agences",      always: true },
-  { id: "faq",          feature: "faq" },
-  { id: "menu",         feature: "menu_digital" },
-  { id: "chambres",     feature: "reservation_chambre" },
-  { id: "catalogue",    features: ["catalogue_produits","catalogue_services","catalogue_trajets","catalogue_produits_financiers"] },
-  { id: "inscriptions", feature: "inscription_admission" },
-  { id: "medical",      feature: "orientation_patient" },
-  { id: "citoyens",     feature: "orientation_citoyens" },
-] as const;
+type TabId =
+  | "entreprise" | "agences" | "faq"
+  | "menu" | "chambres" | "catalogue"
+  | "inscriptions" | "medical" | "citoyens";
 
-type TabId = (typeof ALL_TABS)[number]["id"];
+interface TabDef {
+  id: TabId;
+  icon: LucideIcon;
+  always?: boolean;
+  feature?: string;
+  features?: string[];
+}
+
+const ALL_TABS: TabDef[] = [
+  { id: "entreprise",   icon: Building2,      always: true },
+  { id: "agences",      icon: MapPin,          always: true },
+  { id: "faq",          icon: HelpCircle,      feature: "faq" },
+  { id: "menu",         icon: UtensilsCrossed, feature: "menu_digital" },
+  { id: "chambres",     icon: BedDouble,       feature: "reservation_chambre" },
+  {
+    id: "catalogue", icon: Package,
+    features: ["catalogue_produits","catalogue_services","catalogue_trajets","catalogue_produits_financiers"],
+  },
+  { id: "inscriptions", icon: GraduationCap,  feature: "inscription_admission" },
+  { id: "medical",      icon: Stethoscope,    feature: "orientation_patient" },
+  { id: "citoyens",     icon: Landmark,       feature: "orientation_citoyens" },
+];
 
 const TAB_LABELS: Record<TabId, { fr: string; en: string }> = {
   entreprise:   { fr: "Entreprise",         en: "Company" },
@@ -48,16 +74,22 @@ export default function KnowledgePage() {
 
   const visibleTabs = useMemo<KnowledgeTab[]>(() => {
     return ALL_TABS.filter((tab) => {
-      if ("always" in tab && tab.always) return true;
-      if ("feature" in tab) return isFeatureActive(tab.feature);
-      if ("features" in tab) return tab.features.some((f) => isFeatureActive(f));
+      if (tab.always)   return true;
+      if (tab.feature)  return isFeatureActive(tab.feature);
+      if (tab.features) return tab.features.some((f) => isFeatureActive(f));
       return false;
-    }).map(({ id }) => ({ id, label: TAB_LABELS[id][locale] }));
+    }).map(({ id, icon }) => ({
+      id,
+      label: TAB_LABELS[id][locale],
+      icon,
+    }));
   }, [isFeatureActive, locale]);
 
- const safeTab = (visibleTabs.find((t) => t.id === activeTab)
-    ? activeTab
-    : (visibleTabs[0]?.id ?? "entreprise")) as TabId;
+  const safeTab = (
+    visibleTabs.find((t) => t.id === activeTab)
+      ? activeTab
+      : (visibleTabs[0]?.id ?? "entreprise")
+  ) as TabId;
 
   return (
     <div className="space-y-6">
@@ -74,7 +106,13 @@ export default function KnowledgePage() {
         {safeTab === "entreprise" && <EntrepriseTab />}
         {safeTab === "agences"    && <AgencesTab />}
         {safeTab === "faq"        && <FaqTab />}
-        {/* Autres tabs — session suivante après audit backend catalogue */}
+        {safeTab === "menu"       && <MenuTab />}
+        {safeTab === "chambres"   && <ChambresTab />}
+        {safeTab === "catalogue"  && <CatalogueTab />}
+        {/* P5 — Inscriptions / Medical / Citoyens */}
+        {safeTab === "inscriptions" && <InscriptionsTab />}
+        {safeTab === "medical"      && <MedicalTab />}
+        {safeTab === "citoyens"     && <CitoyensTab />}
       </div>
     </div>
   );

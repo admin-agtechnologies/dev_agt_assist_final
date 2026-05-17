@@ -2,11 +2,15 @@
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
-import { Globe, Mail, Facebook, Instagram, Linkedin, Link2, Save, Loader2 } from "lucide-react";
+import {
+  Globe, Mail, Facebook, Instagram, Linkedin,
+  Link2, Save, Loader2, CheckCircle2,
+} from "lucide-react";
 import { useAuth }     from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast }    from "@/components/ui/Toast";
 import { tenantKnowledgeRepository } from "@/repositories";
+import { KnowledgeCardSkeleton }     from "../KnowledgeSkeleton";
 import type {
   ProfilEntrepriseKnowledge,
   UpdateProfilKnowledgePayload,
@@ -17,14 +21,14 @@ const SECTION = "text-xs font-semibold uppercase tracking-widest text-[var(--tex
 const CARD    = "bg-[var(--bg-card)] rounded-2xl p-6 border border-[var(--border)] space-y-4";
 
 export function EntrepriseTab() {
-  const { user }               = useAuth();
-  const { dictionary: d, locale } = useLanguage();
-  const t                      = d.knowledge.entreprise;
-  const toast                  = useToast();
+  const { user }                   = useAuth();
+  const { dictionary: d, locale }  = useLanguage();
+  const t                          = d.knowledge.entreprise;
+  const toast                      = useToast();
 
-  const [profil, setProfil]    = useState<ProfilEntrepriseKnowledge | null>(null);
-  const [loading, setLoading]  = useState(true);
-  const [saving, startSaving]  = useTransition();
+  const [profil, setProfil]   = useState<ProfilEntrepriseKnowledge | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, startSaving] = useTransition();
 
   const [form, setForm] = useState({
     slogan: "", site_web: "", email_contact: "", extra_info: "",
@@ -46,8 +50,10 @@ export function EntrepriseTab() {
         });
         const rs = pk.reseaux_sociaux ?? {};
         setReseaux({
-          facebook: rs.facebook ?? "", instagram: rs.instagram ?? "",
-          linkedin: rs.linkedin ?? "", tiktok: rs.tiktok ?? "",
+          facebook:  rs.facebook  ?? "",
+          instagram: rs.instagram ?? "",
+          linkedin:  rs.linkedin  ?? "",
+          tiktok:    rs.tiktok    ?? "",
         });
       }
     }).finally(() => setLoading(false));
@@ -72,23 +78,55 @@ export function EntrepriseTab() {
       } catch { toast.error(t.saveError); }
     });
 
+  // Taux de complétion
+  const hasReseau = !!(reseaux.facebook || reseaux.instagram || reseaux.linkedin || reseaux.tiktok);
+  const filled    = [form.slogan, form.site_web, form.email_contact, form.extra_info, hasReseau].filter(Boolean).length;
+  const pct       = Math.round((filled / 5) * 100);
+
   if (loading) return (
-    <div className="flex justify-center py-20">
-      <Loader2 className="w-6 h-6 animate-spin text-[var(--text-muted)]" />
+    <div className="space-y-4">
+      <KnowledgeCardSkeleton />
+      <KnowledgeCardSkeleton />
+      <KnowledgeCardSkeleton />
     </div>
   );
 
   const companyLabel = locale === "fr" ? "Nom de l'entreprise" : "Company name";
   const sectorLabel  = locale === "fr" ? "Secteur" : "Sector";
   const profileNote  = locale === "fr" ? "Pour modifier ces champs, rendez-vous dans" : "To edit, go to";
+  const sectorValue  = user?.entreprise?.secteur?.label_fr
+    ?? (locale === "fr" ? "Non configuré" : "Not set");
 
   return (
     <div className="space-y-6">
+      {/* Barre de complétion */}
+      <div className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--border)] flex items-center gap-4">
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-sm font-medium text-[var(--text)]">
+              {locale === "fr" ? "Complétion du profil" : "Profile completion"}
+            </span>
+            <span className="text-sm font-semibold text-[var(--text)]">{pct}%</span>
+          </div>
+          <div className="h-1.5 bg-[var(--bg)] rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-700"
+              style={{
+                width: `${pct}%`,
+                backgroundColor: pct === 100 ? "#22c55e" : "var(--color-primary, #6366f1)",
+              }}
+            />
+          </div>
+        </div>
+        {pct === 100 && <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />}
+      </div>
+
+      {/* Identité */}
       <div className={CARD}>
         <p className={SECTION}>{t.sectionIdentity}</p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field label={companyLabel} value={user?.entreprise?.name ?? ""} readOnly />
-          <Field label={sectorLabel}  value={user?.entreprise?.secteur?.label_fr ?? ""} readOnly />
+          <Field label={sectorLabel}  value={sectorValue}                  readOnly />
         </div>
         <p className="text-xs text-[var(--text-muted)]">
           {profileNote}{" "}
@@ -96,6 +134,7 @@ export function EntrepriseTab() {
         </p>
       </div>
 
+      {/* Présence en ligne */}
       <div className={CARD}>
         <p className={SECTION}>{t.sectionOnline}</p>
         <Field label={t.slogan}>
@@ -103,26 +142,29 @@ export function EntrepriseTab() {
             onChange={(e) => setForm((f) => ({ ...f, slogan: e.target.value }))}
             placeholder={t.sloganPlaceholder} />
         </Field>
-        <Field label={t.website} icon={<Globe className="w-4 h-4" />}>
-          <input className="input-base" type="url" value={form.site_web}
-            onChange={(e) => setForm((f) => ({ ...f, site_web: e.target.value }))}
-            placeholder="https://..." />
-        </Field>
-        <Field label={t.emailContact} icon={<Mail className="w-4 h-4" />}>
-          <input className="input-base" type="email" value={form.email_contact}
-            onChange={(e) => setForm((f) => ({ ...f, email_contact: e.target.value }))}
-            placeholder="contact@..." />
-        </Field>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Field label={t.website} icon={<Globe className="w-4 h-4" />}>
+            <input className="input-base" type="url" value={form.site_web}
+              onChange={(e) => setForm((f) => ({ ...f, site_web: e.target.value }))}
+              placeholder="https://..." />
+          </Field>
+          <Field label={t.emailContact} icon={<Mail className="w-4 h-4" />}>
+            <input className="input-base" type="email" value={form.email_contact}
+              onChange={(e) => setForm((f) => ({ ...f, email_contact: e.target.value }))}
+              placeholder="contact@..." />
+          </Field>
+        </div>
       </div>
 
+      {/* Réseaux sociaux */}
       <div className={CARD}>
         <p className={SECTION}>{t.sectionSocial}</p>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {([
-            { icon: <Facebook className="w-4 h-4 text-blue-600" />,  label: "Facebook",  key: "facebook" as const },
-            { icon: <Instagram className="w-4 h-4 text-pink-500" />, label: "Instagram", key: "instagram" as const },
-            { icon: <Linkedin className="w-4 h-4 text-blue-700" />,  label: "LinkedIn",  key: "linkedin" as const },
-            { icon: <Link2 className="w-4 h-4 text-[var(--text-muted)]" />, label: "TikTok", key: "tiktok" as const },
+            { icon: <Facebook  className="w-4 h-4 text-blue-600"  />, label: "Facebook",  key: "facebook"  as const },
+            { icon: <Instagram className="w-4 h-4 text-pink-500"  />, label: "Instagram", key: "instagram" as const },
+            { icon: <Linkedin  className="w-4 h-4 text-blue-700"  />, label: "LinkedIn",  key: "linkedin"  as const },
+            { icon: <Link2     className="w-4 h-4 text-[var(--text-muted)]" />, label: "TikTok", key: "tiktok" as const },
           ] as const).map(({ icon, label, key }) => (
             <div key={key}>
               <label className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-1 flex items-center gap-1.5">
@@ -137,6 +179,7 @@ export function EntrepriseTab() {
         </div>
       </div>
 
+      {/* Infos supplémentaires */}
       <div className={CARD}>
         <p className={SECTION}>{t.sectionExtra}</p>
         <p className="text-xs text-[var(--text-muted)] -mt-2">{t.extraHint}</p>
