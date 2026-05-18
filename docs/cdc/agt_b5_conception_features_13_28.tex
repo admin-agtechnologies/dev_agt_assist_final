@@ -1,0 +1,801 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm]{geometry}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage{palatino}
+\usepackage{titlesec}
+\usepackage{titletoc}
+\usepackage[dvipsnames,svgnames,x11names]{xcolor}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=AGTPrimary, urlcolor=AGTPrimary}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{amssymb}
+\usepackage{pifont}
+
+\definecolor{AGTPrimary}{HTML}{2563EB}
+\definecolor{AGTDark}{HTML}{1E3A5F}
+\definecolor{AGTLight}{HTML}{EFF6FF}
+\definecolor{AGTGray}{HTML}{6B7280}
+\definecolor{AGTBorder}{HTML}{E5E7EB}
+\definecolor{AGTRed}{HTML}{DC2626}
+\definecolor{AGTOrange}{HTML}{D97706}
+\definecolor{AGTGreen}{HTML}{16A34A}
+\definecolor{AGTBanking}{HTML}{1B4332}
+\definecolor{CodeBg}{HTML}{F8FAFC}
+
+\titleformat{\section}
+  {\large\bfseries\color{AGTDark}}
+  {\thesection}{1em}{}
+  [\vspace{-0.3em}\color{AGTPrimary}\rule{\textwidth}{1.5pt}]
+\titleformat{\subsection}
+  {\normalsize\bfseries\color{AGTPrimary}}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}
+  {\normalsize\bfseries\color{AGTDark}}{\thesubsubsection}{1em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{AGTGray}\textbf{AGT Platform}}
+\fancyhead[R]{\small\color{AGTGray}Chantier 1 — Conception B5 : Features 13--28}
+\fancyfoot[C]{\small\color{AGTGray}page \thepage\ sur \pageref{LastPage}}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\newtcolorbox{notebox}{
+  breakable, enhanced,
+  colback=AGTLight, colframe=AGTPrimary,
+  boxrule=0.8pt, arc=4pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+}
+\newtcolorbox{warnbox}{
+  breakable, enhanced,
+  colback=Apricot!15, colframe=AGTOrange,
+  boxrule=0.8pt, arc=4pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+}
+\newtcolorbox{bankingbox}{
+  breakable, enhanced,
+  colback=AGTBanking!8, colframe=AGTBanking,
+  boxrule=0.8pt, arc=4pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+}
+\newtcolorbox{featurebox}[1]{
+  breakable, enhanced,
+  colback=white, colframe=AGTBorder,
+  boxrule=0.8pt, arc=6pt,
+  left=10pt, right=10pt, top=8pt, bottom=8pt,
+  title={\bfseries\color{AGTDark}#1},
+  attach boxed title to top left={yshift=-2mm, xshift=5mm},
+  boxed title style={colback=AGTPrimary, colframe=AGTPrimary, arc=4pt,
+                     left=6pt, right=6pt, top=2pt, bottom=2pt},
+  fonttitle=\bfseries\small\color{white},
+}
+\newtcolorbox{bankingfeaturebox}[1]{
+  breakable, enhanced,
+  colback=AGTBanking!5, colframe=AGTBanking,
+  boxrule=0.8pt, arc=6pt,
+  left=10pt, right=10pt, top=8pt, bottom=8pt,
+  title={\bfseries\color{white}#1},
+  attach boxed title to top left={yshift=-2mm, xshift=5mm},
+  boxed title style={colback=AGTBanking, colframe=AGTBanking, arc=4pt,
+                     left=6pt, right=6pt, top=2pt, bottom=2pt},
+  fonttitle=\bfseries\small\color{white},
+}
+\newtcolorbox{decisionbox}{
+  breakable, enhanced,
+  colback=gray!5, colframe=AGTGray,
+  boxrule=0.5pt, arc=4pt,
+  left=8pt, right=8pt, top=4pt, bottom=4pt,
+}
+\newtcolorbox{hssbox}{
+  breakable, enhanced,
+  colback=red!5, colframe=AGTRed,
+  boxrule=0.8pt, arc=4pt,
+  left=8pt, right=8pt, top=4pt, bottom=4pt,
+}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{CodeBg},
+  frame=single, framesep=4pt,
+  rulecolor=\color{AGTBorder},
+  breaklines=true,
+  xleftmargin=10pt, xrightmargin=10pt,
+}
+
+\newcommand{\slug}[1]{\texttt{\color{AGTDark}#1}}
+\newcommand{\prio}[1]{\textcolor{AGTRed}{\textbf{#1}}}
+\newcommand{\priom}[1]{\textcolor{AGTOrange}{\textbf{#1}}}
+\newcommand{\priob}[1]{\textcolor{AGTGreen}{\textbf{#1}}}
+\newcommand{\banking}[1]{\textcolor{AGTBanking}{\textbf{#1}}}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{document}
+
+% ── Page de garde ────────────────────────────────────────────────────────────
+\begin{titlepage}
+  \pagecolor{AGTDark}
+  \color{white}
+  \vspace*{3cm}
+  \begin{center}
+    {\Huge\bfseries AGT Platform}\\[0.6em]
+    {\LARGE Chantier 1 — Finalisation \& Stabilisation}\\[2em]
+    \color{AGTPrimary}
+    \rule{0.6\textwidth}{2pt}\\[1.5em]
+    \color{white}
+    {\Large\bfseries Conception B5 : Base de connaissance \& Features}\\[0.5em]
+    {\large Phase 0 — Features 13 à 28}\\[0.5em]
+    {\large\color{AGTGray} Suite du document Features 1--12}\\[3em]
+    \color{AGTGray}
+    {\normalsize Document de référence — Session 32}\\[0.3em]
+    {\normalsize Gabriel (Lead) — 18 mai 2026}\\[0.3em]
+    {\normalsize AG Technologies — Confidentiel}
+  \end{center}
+  \vfill
+  \begin{center}
+    \color{AGTBanking!80}{\small \textbf{Inclut les 3 nouvelles features Banking (F26, F27, F28)}}
+  \end{center}
+\end{titlepage}
+\nopagecolor
+
+\tableofcontents
+\newpage
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Préambule}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Ce document est la suite directe du document Features 1--12.
+Il couvre les features 13 à 28, incluant \banking{3 nouvelles features Banking}
+ajoutées en Chantier 1.
+
+\begin{hssbox}
+\textbf{Features hors scope Chantier 1 :}
+\slug{commande\_paiement} · \slug{paiement\_en\_ligne} · \slug{agent\_vocal} ·
+\slug{dashboard} (couvert par B6 — Penka)
+\end{hssbox}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Nouveaux modèles à créer}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{\slug{DetailsFinanciers} — Extension produits financiers}
+
+One-to-one optionnel sur \slug{ItemCatalogue}. Ne pollue pas les items non-banking.
+
+\begin{lstlisting}
+GRAND_TYPE = [compte, credit, epargne, carte, transfert]
+
+class DetailsFinanciers(models.Model):
+    item           = OneToOneField(ItemCatalogue, related_name="details_financiers")
+    grand_type     = CharField(50, choices=GRAND_TYPE, default="autre")
+    sous_type      = CharField(100) blank=True  # libre : "Crédit PME", "Visa Classic"
+    taux_annuel_min = DecimalField(5,2) null=True
+    taux_annuel_max = DecimalField(5,2) null=True
+    taux_type      = CharField choices=[fixe, variable, negocie]  default=fixe
+    montant_min    = DecimalField(15,2) null=True
+    montant_max    = DecimalField(15,2) null=True
+    devise         = CharField(10) default="XAF"
+    duree_min_mois = PositiveIntegerField null=True
+    duree_max_mois = PositiveIntegerField null=True
+    documents_requis = JSONField default=[]
+    delai_traitement = CharField(100) blank=True
+    conditions_specifiques = JSONField default={}
+    mis_a_jour_le  = DateTimeField auto_now=True
+\end{lstlisting}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+\textbf{Grand type} & \textbf{Slug} & \textbf{Exemples} \\
+\midrule
+Comptes & \slug{compte} & Courant, Épargne, Jeunes, Entreprise \\
+Crédits & \slug{credit} & Personnel, PME, Immobilier, Scolaire \\
+Épargne \& Placement & \slug{epargne} & Livret, Plan épargne, Assurance vie \\
+Cartes & \slug{carte} & Visa, Mastercard, Prépayée, Débit \\
+Transferts \& Services & \slug{transfert} & Mobile money, Virement international \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{\slug{ModeleCommunication} — KB Communication établissement}
+
+\begin{lstlisting}
+TYPE = [annonce_generale, resultats_scolaires, absence, evenement,
+        convocation, urgence, rappel_echeance, autre]
+
+class ModeleCommunication(models.Model):
+    entreprise            = FK(Entreprise)
+    type_communication    = CharField choices=TYPE
+    titre_template        = CharField(200)
+    corps_template        = TextField   # avec variables {nom_etudiant}, {date}...
+    variables_disponibles = JSONField list default=[]
+    is_active             = BooleanField default=True
+    secteur               = FK(SecteurActivite, null=True)  # filtre par secteur
+\end{lstlisting}
+
+\subsection{\slug{Annonce} — ResultRecord Communication}
+
+\begin{lstlisting}
+class Annonce(models.Model):
+    STATUT = [brouillon, planifiee, envoyee, echouee]
+    entreprise           = FK(Entreprise)
+    modele               = FK(ModeleCommunication, null=True)
+    sujet                = CharField(300)
+    corps                = TextField
+    statut               = CharField choices=STATUT  default=brouillon
+    date_envoi_planifiee = DateTimeField null=True
+    date_envoi_effectif  = DateTimeField null=True
+    destinataires_count  = PositiveIntegerField default=0
+    destinataires_filtre = JSONField default={}
+    envoye_par           = FK(User, null=True)
+    source               = CharField choices=[admin, bot]  default=admin
+    created_at           = DateTimeField auto_now_add=True
+\end{lstlisting}
+
+\subsection{\slug{ScenarioProspection} — KB capture\_prospect}
+
+\begin{lstlisting}
+class ScenarioProspection(models.Model):
+    DECLENCHEUR = [premier_message, mot_cle, toujours]
+    entreprise  = FK(Entreprise)
+    nom         = CharField(150)
+    questions   = JSONField list
+                  # [{"ordre": 1, "question": "Quel est votre besoin ?",
+                  #   "champ_cible": "interet_principal"}]
+    declencheur = CharField choices=DECLENCHEUR  default=premier_message
+    is_active   = BooleanField default=True
+\end{lstlisting}
+
+\subsection{\slug{DemandeConciergerie} — ResultRecord Conciergerie}
+
+\begin{lstlisting}
+class DemandeConciergerie(models.Model):
+    STATUT = [recue, prise_en_charge, en_cours, effectuee, annulee]
+    contact            = FK(Contact)
+    conversation       = FK(AIConversation)
+    agence             = FK(Agence)
+    service            = FK(ItemCatalogue)
+    chambre            = CharField(20) blank=True
+    heure_souhaitee    = DateTimeField null=True
+    notes_client       = TextField blank=True
+    statut             = CharField choices=STATUT  default=recue
+    pris_en_charge_par = FK(User, null=True)
+    effectuee_le       = DateTimeField null=True
+    source             = "bot"
+    created_at         = DateTimeField auto_now_add=True
+\end{lstlisting}
+
+\subsection{\slug{EmailLog} — Log universel des emails}
+
+Créer dans \slug{apps/notifications/}. Remplace le stub actuel de \slug{send\_email}.
+L'entreprise peut lire chaque email envoyé avec son contenu complet.
+
+\begin{lstlisting}
+SOURCE = [reservation, commande, inscription, dossier,
+          annonce, transfert, conciergerie, rappel, autre]
+
+class EmailLog(models.Model):
+    entreprise   = FK(Entreprise)
+    destinataire = EmailField
+    sujet        = CharField(300)
+    corps        = TextField          # contenu complet lisible par l'entreprise
+    template     = CharField(100) blank=True
+    statut       = CharField choices=[en_attente, envoye, echec]  default=en_attente
+    envoye_le    = DateTimeField null=True
+    erreur       = TextField blank=True
+    source_type  = CharField choices=SOURCE  blank=True
+    source_id    = UUIDField null=True
+    created_at   = DateTimeField auto_now_add=True
+\end{lstlisting}
+
+\subsection{\slug{RapportClient} — Analyse globale d'un contact}
+
+\begin{lstlisting}
+class RapportClient(models.Model):
+    contact          = FK(Contact, related_name="rapports")
+    resume_global    = TextField
+    points_forts     = JSONField list  default=[]
+    points_attention = JSONField list  default=[]
+    recommandations  = JSONField list  default=[]
+    nb_conversations = PositiveIntegerField
+    periode_debut    = DateField
+    periode_fin      = DateField
+    genere_le        = DateTimeField auto_now_add=True
+    genere_par       = CharField choices=[bot, admin]  default=bot
+\end{lstlisting}
+
+\subsection{\slug{ContactNote} — Notes manuelles}
+
+\begin{lstlisting}
+class ContactNote(models.Model):
+    contact    = FK(Contact, related_name="notes")
+    texte      = TextField
+    auteur     = FK(User)
+    created_at = DateTimeField auto_now_add=True
+\end{lstlisting}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Modifications de modèles existants}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{center}
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+\textbf{Modèle} & \textbf{Champ} & \textbf{Description} \\
+\midrule
+\slug{Bot} & \slug{agences M2M} & Remplace \slug{agence FK} — un bot peut servir N agences \\
+\slug{Bot} & \slug{rappel\_avant\_heures} & Délai rappel email (défaut 24h) \\
+\slug{Contact} & \slug{statut\_crm} & Ajouter valeur \texttt{contact} (entre prospect et client) \\
+\slug{Contact} & \slug{tags} & JSONField list — labels personnalisés \\
+\slug{Contact} & \slug{resume\_ia} & Dernier résumé généré par le bot \\
+\slug{AIConversation} & \slug{rapport\_texte} & Résumé généré en fin de conversation \\
+\slug{AIConversation} & \slug{rapport\_genere\_le} & Date de génération du rapport \\
+\slug{AIConversation} & \slug{points\_cles} & JSONField list — points importants détectés \\
+\slug{TacheRelance} & \slug{statut} & en\_attente / executee / echouee \\
+\slug{TacheRelance} & \slug{executee\_le} & DateTimeField null=True \\
+\slug{ProspectCapture} & \slug{score\_qualification} & Score 0-100 calculé sur les réponses \\
+\slug{ProspectCapture} & \slug{notes\_qualification} & Résumé bot des réponses collectées \\
+\slug{ProspectCapture} & \slug{scenario FK} & Lien vers ScenarioProspection utilisé \\
+\slug{Inscription} & \slug{statut} & Ajouter valeur \texttt{documents\_manquants} \\
+\slug{Inscription} & \slug{notes\_dossier} & Notes internes (cohérence avec Dossier) \\
+\slug{ProgrammeAdmission} & \slug{niveau} & Enrichir : primaire, college, lycee, bts\_dut... \\
+\slug{ProgrammeAdmission} & \slug{frais\_scolarite\_annuels} & Frais annuels \\
+\slug{ProgrammeAdmission} & \slug{places\_disponibles} & Nombre de places \\
+\slug{ProgrammeAdmission} & \slug{documents\_requis} & JSONField list \\
+\slug{ProgrammeAdmission} & \slug{etapes\_inscription} & JSONField list — étapes ordonnées \\
+\slug{ServiceCitoyen} & \slug{etapes\_procedure} & JSONField list — étapes démarche \\
+\slug{ServiceCitoyen} & \slug{horaires\_service} & JSONField — quand ce bureau est ouvert \\
+\slug{ServiceCitoyen} & \slug{delai\_relance\_jours} & Après combien de jours re-notifier (défaut 7) \\
+\slug{Dossier} & \slug{service\_citoyen FK} & Lien vers le service demandé \\
+\slug{SpecialiteMedicale} & \slug{mots\_cles\_symptomes} & JSONField list — pour l'orientation \\
+\slug{SpecialiteMedicale} & \slug{contact\_urgence} & Numéro d'urgence du service \\
+\slug{ProfilEntreprise} & \slug{contact\_urgence\_global} & Numéro urgences générales \\
+\slug{Payment} & \slug{reservation FK} & Lien paiement ↔ réservation (null=True) \\
+\slug{ItemCatalogue} & \slug{action\_suivante} & Ajouter valeur \texttt{traiter\_demande} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Règles métier transversales (nouvelles)}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Distinction triptyque CRM}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{lllX}
+\toprule
+\textbf{Feature} & \textbf{Cible} & \textbf{Direction} & \textbf{Canal} \\
+\midrule
+\slug{capture\_prospect} & Inconnus / 1er contact & Entrant & WhatsApp uniquement \\
+\slug{gestion\_crm} & Contacts connus & Consultation & Interface admin \\
+\slug{communication\_etablissement} & Contacts connus & Sortant & Email uniquement \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Bot M2M agences}
+
+\begin{notebox}
+Un bot peut servir 1 à N agences. Si 1 agence : sélection automatique, pas de question.
+Si N agences : le bot demande la ville en début de conversation.
+\slug{AIConversation.agence} est renseigné dès la sélection.
+\end{notebox}
+
+\subsection{Garde-fous banking}
+
+\begin{warnbox}
+\textbf{BUG B-001 BLOQUANT :} Le bot ne donne jamais le solde d'un compte.\\
+\textbf{BUG B-002 BLOQUANT :} Le bot ne fait jamais de recommandation financière personnalisée.\\
+Ces règles sont dans la description système du Bot banking.
+\end{warnbox}
+
+\subsection{Autres garde-fous critiques}
+
+\textbf{Santé :} jamais de diagnostic → oriente vers médecin. Urgence → \slug{contact\_urgence} immédiat.
+
+\textbf{Éducation :} jamais de résultats individuels → redirection officielle. Communications = email uniquement.
+
+\textbf{Public :} le bot représente une seule entité → hors périmètre = TransfertHumain.
+
+\subsection{Renommage slug}
+
+\begin{decisionbox}
+\slug{conversion\_prospects} → \slug{capture\_prospect}\\
+Impact : backend seeder + actions CRM + frontend \slug{SECTOR\_THEMES.defaultFeatures}
+\end{decisionbox}
+
+\subsection{Seeder banking centralisé}
+
+\begin{warnbox}
+\slug{seed\_bank.py} est isolé — non appelé par \texttt{python manage.py seed}.
+Action : intégrer dans \slug{SEEDERS\_REGISTRY} sous clé \texttt{"banking"}.
+\end{warnbox}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Fiches features 13 à 28}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{featurebox}{Feature 13 — \slug{catalogue\_produits\_financiers}}
+
+\textbf{Description :} Une banque publie ses produits. Le bot présente et oriente
+vers un RDV conseiller — sans jamais donner de conseil personnalisé.
+
+\textbf{Booléens :}
+\begin{decisionbox}
+\texttt{entreprise\_configure\_kb=True} | \texttt{bot\_lit\_kb=True} |
+\texttt{bot\_ecrit\_result=False} (AIActionLog) | \texttt{entreprise\_peut\_ecrire\_result=False}
+\end{decisionbox}
+
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item Créer \slug{DetailsFinanciers} (§2.1) — OneToOne sur \slug{ItemCatalogue}
+  \item Migrer \slug{ProduitFinancier} (S2) → \slug{ItemCatalogue} + \slug{DetailsFinanciers}
+  \item \slug{action\_suivante = "proposer\_rdv"} par défaut pour tous les produits
+  \item Intégrer \slug{seed\_bank.py} dans \slug{SEEDERS\_REGISTRY}
+  \item Vérifier garde-fous B-001 et B-002 dans description Bot banking
+\end{enumerate}
+
+\end{featurebox}
+
+\bigskip
+
+\begin{featurebox}{Feature 14 — \slug{inscription\_admission}}
+
+\textbf{Description :} Un étudiant dépose une demande d'admission. Le bot guide,
+collecte les pièces, crée le dossier. L'établissement traite depuis son dashboard.
+\textbf{Tous niveaux :} primaire, collège, lycée, BTS, licence, master, doctorat,
+formation professionnelle.
+
+\textbf{Booléens :}
+\begin{decisionbox}
+\texttt{entreprise\_configure\_kb=True} | \texttt{bot\_lit\_kb=True} |
+\texttt{bot\_ecrit\_result=True} | \texttt{entreprise\_peut\_ecrire\_result=True}
+\end{decisionbox}
+
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item Enrichir \slug{ProgrammeAdmission} : 8 niveaux, `frais\_scolarite\_annuels`,
+        `places\_disponibles`, `documents\_requis`, `etapes\_inscription`
+  \item Ajouter sur \slug{Inscription} : `numero\_dossier`, `programme FK`,
+        `est\_hors\_periode`, `notes\_dossier`, statut \texttt{documents\_manquants}
+  \item Créer action \slug{get\_programmes(niveau?, filiere?)}
+  \item Règle hors période : créer + signaler, jamais refuser (R14 éducation)
+  \item Email uniquement, jamais WhatsApp proactif
+\end{enumerate}
+
+\end{featurebox}
+
+\bigskip
+
+\begin{featurebox}{Feature 15 — \slug{orientation\_patient}}
+
+\textbf{Description :} Le patient décrit ses symptômes. Le bot oriente vers la
+bonne spécialité et prend le RDV — sans jamais faire de diagnostic.
+
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item Ajouter sur \slug{SpecialiteMedicale} : `mots\_cles\_symptomes`,
+        `contact\_urgence`, convention `ressource\_id` dans JSON medecins
+  \item Ajouter `contact\_urgence\_global` sur \slug{ProfilEntreprise}
+  \item Créer actions \slug{get\_specialites()} et \slug{get\_specialite\_par\_symptomes(symptoms)}
+  \item Disponibilités médecins : hors scope C1 (créneaux généraux via Ressource)
+\end{enumerate}
+
+\end{featurebox}
+
+\bigskip
+
+\begin{featurebox}{Feature 16 — \slug{orientation\_citoyens}}
+
+\textbf{Description :} Un citoyen s'informe sur les démarches administratives et
+ouvre son dossier via WhatsApp. L'agent traite depuis son interface.
+
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item Ajouter sur \slug{ServiceCitoyen} : `etapes\_procedure`, `horaires\_service`,
+        `delai\_relance\_jours`
+  \item Ajouter `service\_citoyen FK` sur \slug{Dossier}
+  \item Créer action \slug{get\_services\_publics(categorie?)}
+\end{enumerate}
+
+\end{featurebox}
+
+\bigskip
+
+\begin{featurebox}{Feature 17 — \slug{multi\_agences}}
+
+\textbf{Description :} Un bot peut servir une ou plusieurs agences (configurable).
+Le bot demande au client son agence si nécessaire.
+
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item Migrer \slug{Bot.agence FK} → \slug{Bot.agences M2M}
+        (agence actuelle = premier élément du M2M)
+  \item Ajouter sur \slug{Agence} : `latitude`, `longitude`, `description\_courte`
+  \item Créer action \slug{get\_agences(ville?)}
+  \item Implémenter logique de sélection agence dans \slug{AIConversation}
+\end{enumerate}
+
+\textbf{Hors scope C1 :} routing centralisé (un numéro → N bots)
+
+\end{featurebox}
+
+\bigskip
+
+\begin{featurebox}{Feature 18 — \slug{gestion\_crm}}
+
+\textbf{Description :} Chaque interaction enrichit automatiquement la fiche client.
+L'entreprise dispose d'un CRM vivant alimenté par le bot.
+
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item Enrichir \slug{Contact} : statut \texttt{contact}, `tags`, `resume\_ia`
+  \item Créer modèles \slug{ContactNote} et \slug{RapportClient}
+  \item Enrichir \slug{AIConversation} : `rapport\_texte`, `rapport\_genere\_le`,
+        `points\_cles`
+  \item Page \texttt{/contacts} : statuts CRM, tags, notes, timeline, score
+\end{enumerate}
+
+\end{featurebox}
+
+\bigskip
+
+\begin{featurebox}{Feature 19 — \slug{conciergerie}}
+
+\textbf{Description :} Un client hôtel demande un service (taxi, room service,
+blanchisserie). Le bot enregistre, le staff exécute.
+
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item Créer tab "Conciergerie" dans \texttt{/knowledge} → \slug{ItemCatalogue}
+  \item Créer modèle \slug{DemandeConciergerie} (§2.5)
+  \item Créer action \slug{get\_services\_conciergerie(type?)}
+  \item Ajouter \texttt{traiter\_demande} dans \slug{action\_suivante} choices
+\end{enumerate}
+
+\end{featurebox}
+
+\bigskip
+
+\begin{featurebox}{Feature 20 — \slug{communication\_etablissement}}
+
+\textbf{Description :} L'établissement envoie des communications groupées par email.
+Le bot répond aux questions sur les annonces et peut déclencher des envois.
+\textbf{Étendu à tous les secteurs} (\texttt{is\_default=False}).
+
+\textbf{Règle absolue :} email uniquement, jamais WhatsApp proactif.
+
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item Créer \slug{ModeleCommunication} (§2.2) + \slug{Annonce} (§2.3)
+  \item Créer actions \slug{get\_annonces(type?)} et \slug{create\_annonce(...)}
+  \item Ajouter à \slug{SECTOR\_MATRIX} pour tous les secteurs (\texttt{is\_default=False})
+  \item Route frontend \texttt{/modules/communications}
+\end{enumerate}
+
+\end{featurebox}
+
+\bigskip
+
+\begin{featurebox}{Feature 21 — \slug{capture\_prospect} (ex \slug{conversion\_prospects})}
+
+\textbf{Description :} Quand un inconnu écrit pour la première fois, le bot le qualifie
+et capture ses coordonnées. Point d'entrée : inbound WhatsApp uniquement.
+\textbf{Étendu à tous les secteurs} (\texttt{is\_default=False}).
+
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item \prio{Renommer} \slug{conversion\_prospects} → \slug{capture\_prospect} partout
+  \item Créer \slug{ScenarioProspection} (§2.4)
+  \item Enrichir \slug{ProspectCapture} : `score\_qualification`, `notes\_qualification`,
+        `scenario FK`
+  \item Ajouter à \slug{SECTOR\_MATRIX} pour tous les secteurs
+\end{enumerate}
+
+\end{featurebox}
+
+\bigskip
+
+\begin{hssbox}
+\textbf{Feature 22 — \slug{paiement\_en\_ligne} — HORS SCOPE CHANTIER 1}\\
+Accord commercial providers requis (Orange Money, MTN MoMo).
+Badge "Bientôt disponible". Infrastructure \slug{apps/payments/} conservée sans extension.
+\end{hssbox}
+
+\medskip
+
+\begin{hssbox}
+\textbf{Feature 23 — \slug{dashboard} — Couvert par B6}\\
+V1 fonctionnelle. Refonte 3 niveaux documentée dans AGT\_Chantier1.pdf — assignée à Penka.
+Dépend de B5 terminé.
+\end{hssbox}
+
+\medskip
+
+\begin{hssbox}
+\textbf{Feature 24 — \slug{agent\_vocal} — HORS SCOPE CHANTIER 1}\\
+Architecture : STT → AIAgent existant → TTS. Même agent, nouveau canal.
+\slug{canal="vocal"} déjà dans \slug{AIConversation}. Chantier 2 : pipeline STT/TTS.
+\end{hssbox}
+
+\bigskip
+
+\begin{featurebox}{Feature 25 — \slug{emails\_rappel}}
+
+\textbf{Description :} Le bot programme automatiquement des emails de rappel après
+réservations et commandes. L'entreprise voit chaque email envoyé avec son contenu.
+
+\textbf{12 scénarios couverts :} confirmation réservation · rappel RDV · changement
+statut réservation · confirmation commande · changement statut commande · inscription
+soumise · résultat admission · documents manquants · dossier traité · communication
+établissement · alerte transfert · alerte conciergerie.
+
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item Créer \slug{EmailLog} (§2.6) — log complet, contenu lisible
+  \item Refactoriser \slug{send\_email} → crée \slug{EmailLog} à chaque appel
+  \item Enrichir \slug{TacheRelance} : `statut` + `executee\_le`
+  \item Ajouter `rappel\_avant\_heures` sur \slug{Bot} (défaut 24h)
+  \item Vérifier tâche Celery planifiée
+  \item Page \texttt{/modules/emails} — liste + contenu lisible par l'entreprise
+  \item Configurer SMTP production
+\end{enumerate}
+
+\end{featurebox}
+
+\bigskip
+
+% ── Features Banking ──────────────────────────────────────────────────────────
+
+\begin{bankingbox}
+\banking{Nouvelles features Banking — Chantier 1}\\
+Features 26, 27 et 28 ajoutées pour le secteur Banque \& Microfinance.
+Clients banking = parmi les plus grands clients AGT. Ces features sont prioritaires.
+\end{bankingbox}
+
+\bigskip
+
+\begin{bankingfeaturebox}{Feature 26 — \slug{simulation\_credit} (BANKING — NOUVEAU C1)}
+
+\textbf{Description :} Un client demande une simulation de crédit. Le bot calcule
+mensualités et coût total — sans accéder aux données personnelles.
+
+\textbf{Formule (calcul côté serveur, jamais LLM) :}
+\begin{lstlisting}
+taux_mensuel = taux_annuel / 12 / 100
+mensualite   = (montant * taux_mensuel) / (1 - (1 + taux_mensuel)^(-duree_mois))
+cout_total   = mensualite * duree_mois
+cout_interets = cout_total - montant
+\end{lstlisting}
+
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item Créer action \slug{simulate\_credit(montant, duree\_mois, taux\_annuel?)}
+  \item Si taux non fourni → utilise \slug{DetailsFinanciers.taux\_annuel\_min}
+        du produit mentionné
+  \item Logger dans \slug{AIActionLog} — pas de ResultRecord (calcul informatif)
+  \item Disclaimer obligatoire : "simulation indicative — consultez un conseiller"
+\end{enumerate}
+
+\end{bankingfeaturebox}
+
+\bigskip
+
+\begin{bankingfeaturebox}{Feature 27 — \slug{suivi\_dossier} (BANKING — NOUVEAU C1)}
+
+\textbf{Description :} Un client suit l'état de sa demande (ouverture compte, crédit)
+sans se déplacer. Le conseiller traite depuis le dashboard.
+
+\textbf{Réutilise \slug{Dossier} (apps/dossiers) — types banking :}
+\texttt{ouverture\_compte} · \texttt{demande\_credit} · \texttt{renouvellement\_carte}
+· \texttt{changement\_conseiller} · \texttt{reclamation} · \texttt{autre}
+
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item Créer action \slug{get\_dossier\_statut(numero\_dossier)} avec vérification
+        \slug{Dossier.contact.phone == conversation.contact.phone}
+  \item Créer action \slug{create\_dossier\_banking(type\_demande)} — guide le client
+  \item Format numéro : \texttt{BNK-YYYYMMDD-XXXX}
+  \item Notifications email à chaque changement de statut
+\end{enumerate}
+
+\end{bankingfeaturebox}
+
+\bigskip
+
+\begin{bankingfeaturebox}{Feature 28 — \slug{collecte\_documents} (BANKING — NOUVEAU C1)}
+
+\textbf{Description :} Le bot guide le client étape par étape dans les documents à
+fournir. L'entreprise valide manuellement la réception de chaque pièce.
+
+\textbf{Ce qui existe :} \slug{documents\_requis} et \slug{documents\_fournis} sur
+\slug{Dossier} (JSONB) + \slug{DetailsFinanciers.documents\_requis} (JSONField).
+
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item Créer action \slug{list\_documents\_requis(produit\_ou\_type\_dossier)}
+  \item Créer action \slug{confirmer\_document(dossier\_id, document\_nom)} —
+        ajoute dans \slug{Dossier.documents\_fournis}
+  \item Interface entreprise : cases à cocher par pièce (validation manuelle)
+  \item Si tous les documents fournis → notifie le conseiller
+\end{enumerate}
+
+\textbf{Hors scope C1 :} upload réel de fichiers (C2 — stockage cloud).
+
+\end{bankingfeaturebox}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Tableau récapitulatif des actions}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{center}
+\begin{longtable}{lp{7cm}p{3cm}l}
+\toprule
+\textbf{Priorité} & \textbf{Action} & \textbf{Feature(s)} & \textbf{Type} \\
+\midrule
+\endhead
+\prio{Haute} & Renommer \slug{conversion\_prospects} → \slug{capture\_prospect} & capture\_prospect & Config \\[3pt]
+\prio{Haute} & Intégrer \slug{seed\_bank} dans \slug{SEEDERS\_REGISTRY} & banking & Seeder \\[3pt]
+\prio{Haute} & Créer \slug{DetailsFinanciers} + migrer \slug{ProduitFinancier} & F13 & Migration \\[3pt]
+\prio{Haute} & Créer \slug{EmailLog} + refactoriser \slug{send\_email} & emails\_rappel & Backend \\[3pt]
+\prio{Haute} & Migrer \slug{Bot.agence FK} → \slug{Bot.agences M2M} & multi\_agences & Migration \\[6pt]
+\priom{Moyenne} & Créer \slug{DemandeConciergerie} & conciergerie & Backend \\[3pt]
+\priom{Moyenne} & Créer \slug{ModeleCommunication} + \slug{Annonce} & F20 & Backend \\[3pt]
+\priom{Moyenne} & Créer \slug{ScenarioProspection} + enrichir \slug{ProspectCapture} & F21 & Backend \\[3pt]
+\priom{Moyenne} & Enrichir \slug{ProgrammeAdmission} (7 champs) & F14 & Migration \\[3pt]
+\priom{Moyenne} & Enrichir \slug{SpecialiteMedicale} + \slug{ProfilEntreprise} & F15 & Migration \\[3pt]
+\priom{Moyenne} & Enrichir \slug{ServiceCitoyen} + \slug{Dossier} & F16 & Migration \\[3pt]
+\priom{Moyenne} & Créer \slug{RapportClient} + \slug{ContactNote} & gestion\_crm & Backend \\[3pt]
+\priom{Moyenne} & Enrichir \slug{Contact} (statut, tags, resume\_ia) & gestion\_crm & Migration \\[3pt]
+\priom{Moyenne} & Actions banking (simulate\_credit, dossier) & F26, F27, F28 & Backend \\[6pt]
+\priob{Basse} & \slug{communication\_etablissement} → tous secteurs & F20 & Seeder \\[3pt]
+\priob{Basse} & \slug{capture\_prospect} → tous secteurs & F21 & Seeder \\[3pt]
+\priob{Basse} & Pages \texttt{/modules/emails} et \texttt{/modules/communications} & F25, F20 & Frontend \\[3pt]
+\priob{Basse} & Config SMTP production & emails\_rappel & Infra \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Features hors scope — résumé}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{center}
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+\textbf{Feature} & \textbf{Chantier} & \textbf{Raison} \\
+\midrule
+\slug{commande\_paiement} & C2 & Provider paiement requis \\
+\slug{paiement\_en\_ligne} & C2 & Accord commercial Orange Money / MTN \\
+\slug{agent\_vocal} & C2 & Pipeline STT/TTS — même agent, nouveau canal \\
+\slug{dashboard} & B6 & Couvert par B6 (Penka) — dépend de B5 \\
+Upload documents & C2 & Infrastructure stockage cloud \\
+Livraison (commandes) & C2 & Module à part entière \\
+Routing bot centralisé & C2 & Un numéro → N bots \\
+Agendas médicaux fins & C2 & Gestion individuelle praticiens \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\vfill
+\begin{center}
+\color{AGTGray}
+\rule{0.5\textwidth}{0.4pt}\\[0.5em]
+{\small Document généré en session 32 — Gabriel (Lead) — 18 mai 2026}\\
+{\small AG Technologies — Confidentiel}\\
+{\small Ce document + Features 1--12 couvrent l'intégralité des 28 features du projet}
+\end{center}
+
+\end{document}

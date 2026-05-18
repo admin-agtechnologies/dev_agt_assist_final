@@ -1,0 +1,894 @@
+\documentclass[11pt,a4paper]{article}
+
+% ── Encodage & langue ────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+% \usepackage[francais]{babel}  % desactive - non disponible dans cette installation
+
+% ── Mise en page ─────────────────────────────────────────────────────────────
+\usepackage[top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm]{geometry}
+\usepackage{microtype}
+\usepackage{parskip}
+
+% ── Typographie ──────────────────────────────────────────────────────────────
+\usepackage{palatino}
+\usepackage{titlesec}
+\usepackage{titletoc}
+
+% ── Couleurs & boîtes ────────────────────────────────────────────────────────
+\usepackage[dvipsnames,svgnames,x11names]{xcolor}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+
+% ── Tableaux ─────────────────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+
+% ── Code & verbatim ──────────────────────────────────────────────────────────
+\usepackage{listings}
+\usepackage{fancyvrb}
+
+% ── Liens ────────────────────────────────────────────────────────────────────
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=AGTPrimary, urlcolor=AGTPrimary}
+
+% ── En-têtes / pieds de page ─────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+
+% ── Icônes / symboles ────────────────────────────────────────────────────────
+\usepackage{amssymb}
+\usepackage{pifont}
+
+% ── Palette de couleurs AGT ──────────────────────────────────────────────────
+\definecolor{AGTPrimary}{HTML}{2563EB}
+\definecolor{AGTDark}{HTML}{1E3A5F}
+\definecolor{AGTLight}{HTML}{EFF6FF}
+\definecolor{AGTGray}{HTML}{6B7280}
+\definecolor{AGTBorder}{HTML}{E5E7EB}
+\definecolor{AGTRed}{HTML}{DC2626}
+\definecolor{AGTOrange}{HTML}{D97706}
+\definecolor{AGTGreen}{HTML}{16A34A}
+\definecolor{CodeBg}{HTML}{F8FAFC}
+
+% ── Styles de sections ───────────────────────────────────────────────────────
+\titleformat{\section}
+  {\large\bfseries\color{AGTDark}}
+  {\thesection}{1em}{}
+  [\vspace{-0.3em}\color{AGTPrimary}\rule{\textwidth}{1.5pt}]
+
+\titleformat{\subsection}
+  {\normalsize\bfseries\color{AGTPrimary}}
+  {\thesubsection}{1em}{}
+
+\titleformat{\subsubsection}
+  {\normalsize\bfseries\color{AGTDark}}
+  {\thesubsubsection}{1em}{}
+
+% ── En-têtes / pieds de page ─────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{AGTGray}\textbf{AGT Platform}}
+\fancyhead[R]{\small\color{AGTGray}Chantier 1 — Conception B5 : Features 1--12}
+\fancyfoot[C]{\small\color{AGTGray}page \thepage\ sur \pageref{LastPage}}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% ── Boîtes réutilisables ─────────────────────────────────────────────────────
+\newtcolorbox{notebox}{
+  breakable, enhanced,
+  colback=AGTLight, colframe=AGTPrimary,
+  boxrule=0.8pt, arc=4pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+  fonttitle=\bfseries\small\color{AGTPrimary},
+}
+
+\newtcolorbox{warnbox}{
+  breakable, enhanced,
+  colback=Apricot!15, colframe=AGTOrange,
+  boxrule=0.8pt, arc=4pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+}
+
+\newtcolorbox{featurebox}[1]{
+  breakable, enhanced,
+  colback=white, colframe=AGTBorder,
+  boxrule=0.8pt, arc=6pt,
+  left=10pt, right=10pt, top=8pt, bottom=8pt,
+  title={\bfseries\color{AGTDark}#1},
+  attach boxed title to top left={yshift=-2mm, xshift=5mm},
+  boxed title style={colback=AGTPrimary, colframe=AGTPrimary, arc=4pt,
+                     left=6pt, right=6pt, top=2pt, bottom=2pt},
+  fonttitle=\bfseries\small\color{white},
+}
+
+\newtcolorbox{decisionbox}{
+  breakable, enhanced,
+  colback=gray!5, colframe=AGTGray,
+  boxrule=0.5pt, arc=4pt,
+  left=8pt, right=8pt, top=4pt, bottom=4pt,
+}
+
+% ── Listings code ────────────────────────────────────────────────────────────
+\lstset{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{CodeBg},
+  frame=single, framesep=4pt,
+  rulecolor=\color{AGTBorder},
+  breaklines=true,
+  xleftmargin=10pt, xrightmargin=10pt,
+  lineskip=1pt,
+}
+
+% ── Commandes utiles ─────────────────────────────────────────────────────────
+\newcommand{\chantier}[1]{\textbf{\color{AGTPrimary}#1}}
+\newcommand{\slug}[1]{\texttt{\color{AGTDark}#1}}
+\newcommand{\todo}[1]{\textcolor{AGTRed}{\ding{46}~#1}}
+\newcommand{\done}[1]{\textcolor{AGTGreen}{\ding{52}~#1}}
+\newcommand{\warn}[1]{\textcolor{AGTOrange}{\textbf{⚠}~#1}}
+\newcommand{\prio}[1]{\textcolor{AGTRed}{\textbf{#1}}}
+\newcommand{\priom}[1]{\textcolor{AGTOrange}{\textbf{#1}}}
+\newcommand{\priob}[1]{\textcolor{AGTGreen}{\textbf{#1}}}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{document}
+
+% ── Page de garde ────────────────────────────────────────────────────────────
+\begin{titlepage}
+  \pagecolor{AGTDark}
+  \color{white}
+  \vspace*{3cm}
+  \begin{center}
+    {\Huge\bfseries AGT Platform}\\[0.6em]
+    {\LARGE Chantier 1 — Finalisation \& Stabilisation}\\[2em]
+    \color{AGTPrimary}
+    \rule{0.6\textwidth}{2pt}\\[1.5em]
+    \color{white}
+    {\Large\bfseries Conception B5 : Base de connaissance \& Features}\\[0.5em]
+    {\large Phase 0 — Audit et Conception des Modèles}\\[0.5em]
+    {\large\color{AGTGray} Features 1 à 12 sur 24}\\[3em]
+    \color{AGTGray}
+    {\normalsize Document de référence — Session 32}\\[0.3em]
+    {\normalsize Gabriel (Lead) — 18 mai 2026}\\[0.3em]
+    {\normalsize AG Technologies — Confidentiel}
+  \end{center}
+  \vfill
+  \begin{center}
+    \color{AGTGray}{\small Suite : features 13 à 24 dans le prochain document}
+  \end{center}
+\end{titlepage}
+\nopagecolor
+
+% ── Table des matières ───────────────────────────────────────────────────────
+\tableofcontents
+\newpage
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Préambule}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Ce document est le résultat de l'audit approfondi des 12 premières features du bloc
+\chantier{B5 (Chaîne métier complète)} du Chantier 1. Il sert de \textbf{boussole}
+pour toutes les sessions qui travailleront sur B5.
+
+\begin{notebox}
+\textbf{Comment lire ce document.}
+Chaque fiche feature décrit en français simple ce qui existe déjà, ce qui manque, et
+exactement ce qu'il faut faire. Rien n'est ambigu. Aucune décision n'est laissée à
+l'interprétation.
+\end{notebox}
+
+\begin{warnbox}
+\textbf{Règle absolue :} aucune modification de modèle de données n'est faite sans
+avoir relu la section correspondante dans ce document. Aucune initiative silencieuse.
+Toute évolution non prévue ici est soumise à Gabriel avant action.
+\end{warnbox}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Principes architecturaux validés}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Architecture en 3 couches}
+
+Toute activité du bot laisse une trace dans l'une de ces 3 couches. Elles ne se
+mélangent pas.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{lllX}
+\toprule
+\textbf{Couche} & \textbf{Modèle} & \textbf{Qui écrit} & \textbf{Ce qu'elle capture} \\
+\midrule
+Communication & \slug{AIConversation / AIMessage} & Bot + Client & Le dialogue brut complet \\[4pt]
+Exécution & \slug{AIActionLog} & Bot uniquement & Chaque action : type, payload, résultat, durée \\[4pt]
+Résultat métier & \slug{Reservation, Commande...} & Bot + Entreprise & L'outcome business à valeur opérationnelle \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{notebox}
+\textbf{Règle fondamentale :} toute feature active produit \textbf{au minimum une vue
+stats} pour l'entreprise. Pour les features sans Résultat métier (FAQ, catalogues
+d'orientation), la source des stats est \slug{AIActionLog}. Aucune feature n'est
+laissée sans visibilité.
+\end{notebox}
+
+\subsection{Les 4 booléens sur le modèle Feature}
+
+Ces 4 booléens pilotent le comportement du bot et de l'interface pour chaque feature.
+Ils doivent être positionnés correctement dans le seeder.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+\textbf{Booléen} & \textbf{Signification} \\
+\midrule
+\slug{entreprise\_configure\_kb} & L'entreprise doit/peut configurer quelque chose dans \texttt{/knowledge} pour que cette feature fonctionne \\[4pt]
+\slug{bot\_lit\_kb} & Le bot lit la KB de cette feature pendant la conversation avant d'agir \\[4pt]
+\slug{bot\_ecrit\_result} & Le bot crée un enregistrement dans une table Résultat métier \\[4pt]
+\slug{entreprise\_peut\_ecrire\_result} & L'entreprise peut intervenir sur les résultats (valider, annoter) avec mention de source \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Sur le modèle \slug{ResultRecord} (base abstraite de tous les résultats) :
+\begin{itemize}
+  \item \slug{source} : \texttt{bot} / \texttt{entreprise} / \texttt{systeme}
+  \item \slug{source\_user} : FK User nullable (si source = entreprise)
+\end{itemize}
+
+\subsection{Système de catalogues — Source canonique unique}
+
+Trois systèmes coexistaient. \textbf{Décision définitive :} le Système 3 est la
+source de vérité unique. Les Systèmes 1 et 2 sont dépréciés et leurs données migrées.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+\textbf{Système} & \textbf{Statut} & \textbf{Action} \\
+\midrule
+S1 : \slug{MenuCategorie/MenuPlat} & Déprécié & Migrer vers \slug{ItemCatalogue} + conserver le frontend \\[4pt]
+S2 : \slug{CatalogueProduit}, \slug{CatalogueService}, etc. & Déprécié & Migrer + récupérer les champs spécialisés \\[4pt]
+S3 : \slug{Catalogue/ItemCatalogue} & \textcolor{AGTGreen}{\textbf{Canonique}} & Enrichir avec les champs manquants \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{warnbox}
+\textbf{Règle de migration :} on ne supprime rien tant que la migration n'est pas
+validée par Gabriel sur un compte de test. Les anciens endpoints restent actifs
+pendant la transition.
+\end{warnbox}
+
+\subsection{Règle frontend transversale}
+
+\begin{notebox}
+On n'expose sur le frontend \textbf{que ce qui fonctionne réellement côté backend}.
+Aucun bouton qui mène nulle part. Les fonctionnalités non opérationnelles sont
+masquées ou affichent \textit{"Bientôt disponible"}.
+\end{notebox}
+
+\subsection{Images des items — Plan V1 / V2}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+\textbf{Version} & \textbf{Approche} \\
+\midrule
+V1 — Chantier 1 & Bibliothèque d'images statiques préconfigurées par type d'item. L'entreprise choisit dans une liste. Stockées dans \texttt{public/}. \\[4pt]
+V2 — Chantier 2 & Upload d'images réelles par l'entreprise — stockage cloud (S3/Cloudflare), miniatures automatiques. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Modifications du modèle de données}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Modèle \slug{Feature} — 4 nouveaux booléens}
+
+\begin{lstlisting}
+entreprise_configure_kb       : BooleanField  default=False
+bot_lit_kb                    : BooleanField  default=False
+bot_ecrit_result              : BooleanField  default=True
+entreprise_peut_ecrire_result : BooleanField  default=False
+\end{lstlisting}
+
+Seeder à mettre à jour pour positionner ces booléens sur les 24 features.
+
+\subsection{Modèle \slug{Ressource} — 11 nouveaux champs}
+
+\begin{lstlisting}
+duree_minutes            : PositiveIntegerField  default=30
+delai_min_heures         : PositiveIntegerField  default=0
+buffer_apres_minutes     : PositiveIntegerField  default=15
+zone                     : CharField(50) choices=[terrasse, interieur, salon_vip, autre]
+est_accessible_pmr       : BooleanField  default=False
+tags                     : JSONField list  default=[]
+chambre_type             : ForeignKey(ChambreType, null=True, blank=True)
+trajet                   : ForeignKey(CatalogueTrajet, null=True, blank=True)
+confirmation_automatique : BooleanField  default=False
+politique_annulation     : CharField choices=[libre, avec_frais, non_remboursable]  default=libre
+config_annulation        : JSONField  default={}
+\end{lstlisting}
+
+\begin{decisionbox}
+\texttt{buffer\_slot\_min} sur \slug{ProfilEntreprise} est \textbf{déprécié}.
+Conservé en base pour compatibilité descendante, non utilisé dans les nouveaux calculs.
+\end{decisionbox}
+
+\subsection{Modèle \slug{Reservation} — 6 nouveaux champs + statut}
+
+\begin{lstlisting}
+notif_client_envoyee     : BooleanField  default=False
+notif_entreprise_envoyee : BooleanField  default=False
+montant_rembourse        : DecimalField(10,2)  null=True, blank=True
+date_remboursement       : DateTimeField  null=True, blank=True
+motif_annulation         : TextField  blank=True
+annule_par               : CharField choices=[client, entreprise, systeme]  blank=True
+\end{lstlisting}
+
+Ajouter le statut \texttt{en\_cours} (check-in effectué) pour les features
+avec durée (chambre, billet).
+
+\subsection{Modèle \slug{ChambreType} — 2 nouveaux champs}
+
+\begin{lstlisting}
+prix_nuit   : DecimalField(10,2)  null=True, blank=True
+equipements : JSONField list  default=[]
+\end{lstlisting}
+
+\subsection{Modèle \slug{Commande} — 2 nouveaux champs}
+
+\begin{lstlisting}
+numero_commande : CharField(30)  unique=True  NOT NULL
+                  Format : CMD-YYYYMMDD-XXXX  (genere a la creation)
+notes_client    : TextField  blank=True
+                  Visible par le bot au client. Distinct de notes (interne uniquement).
+\end{lstlisting}
+
+\subsection{Modèle \slug{ItemCatalogue} — 10 nouveaux champs}
+
+\begin{lstlisting}
+image_url                : URLField  blank=True
+temps_preparation_min    : PositiveIntegerField  null=True, blank=True
+allergenes               : JSONField list  default=[]
+est_disponible_aujourd_hui : BooleanField  default=True
+stock                    : PositiveIntegerField  null=True, blank=True
+                           null = pas de gestion de stock (gere manuellement)
+reference                : CharField(100)  blank=True
+duree_min                : PositiveIntegerField  null=True, blank=True
+type_service             : CharField(50)  blank=True
+action_suivante          : CharField choices=[proposer_rdv, proposer_inscription,
+                           proposer_devis, contact_direct, proposer_billet, aucune]
+                           default=aucune
+classes                  : JSONField  default=[]
+                           Format : [{"nom": "Standard", "prix": 5000}, {"nom": "VIP", "prix": 8000}]
+ville_depart             : CharField(100)  blank=True
+ville_arrivee            : CharField(100)  blank=True
+\end{lstlisting}
+
+\subsection{Modèle \slug{QuestionFrequente} — 1 nouveau champ}
+
+\begin{lstlisting}
+ordre : PositiveIntegerField  default=0
+\end{lstlisting}
+
+\subsection{Nouveaux modèles à créer}
+
+\subsubsection{\slug{ConsultationFAQ}}
+
+\begin{lstlisting}
+class ConsultationFAQ(models.Model):
+    conversation      = FK(AIConversation)
+    question_posee    = TextField()
+    question_matchee  = FK(QuestionFrequente, null=True)  # null si aucune trouvee
+    score_similarite  = FloatField(default=0)
+    reponse_donnee    = TextField()
+    source            = "bot"  # toujours bot
+    created_at        = DateTimeField(auto_now_add=True)
+\end{lstlisting}
+
+\subsubsection{\slug{TransfertHumain}}
+
+\begin{lstlisting}
+class TransfertHumain(models.Model):
+    STATUT = [en_attente, pris_en_charge, resolu]
+    conversation      = FK(AIConversation)
+    agence            = FK(Agence)
+    motif             = TextField()
+    statut            = CharField choices=STATUT  default=en_attente
+    assigne_a         = FK(User, null=True)
+    pris_en_charge_le = DateTimeField(null=True)
+    resolu_le         = DateTimeField(null=True)
+    source            = "bot"
+    source_user       = FK(User, null=True)
+    created_at        = DateTimeField(auto_now_add=True)
+\end{lstlisting}
+
+\subsection{Actions bot à créer}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+\textbf{Action} & \textbf{Paramètres} & \textbf{Description} \\
+\midrule
+\slug{search\_faq} & \texttt{query: str} & Recherche dans \slug{QuestionFrequente} par mots-clés. Remplace l'injection statique. Retourne top 3--5 résultats. \\[4pt]
+\slug{get\_menu} & \texttt{categorie?} & Items actifs de \texttt{feature=menu\_digital}. \\[4pt]
+\slug{get\_catalogue} & \texttt{query?, categorie?} & Items actifs filtrés. \\[4pt]
+\slug{get\_services} & \texttt{query?} & Items services avec \texttt{type\_service} et \texttt{action\_suivante}. \\[4pt]
+\slug{get\_trajets} & \texttt{depart?, arrivee?} & Filtre sur \texttt{ville\_depart}/\texttt{ville\_arrivee}. \\[4pt]
+\slug{get\_room\_types} & aucun & \slug{ChambreType} actifs avec prix et équipements. \\[4pt]
+\slug{get\_order\_status} & \texttt{numero\_commande} & Vérifie phone WhatsApp == contact.phone avant de retourner le statut. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Règles métier transversales}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Notifications après réservation ou commande}
+
+S'applique à : \slug{prise\_rdv}, \slug{reservation\_table}, \slug{reservation\_chambre},
+\slug{reservation\_billet}, \slug{orientation\_patient}, \slug{menu\_digital},
+\slug{catalogue\_produits}.
+
+\textbf{Déclencheur 1 — Création par le bot :} notifier l'entreprise + envoyer
+un accusé de réception au client.
+
+\textbf{Déclencheur 2 — Changement de statut par l'entreprise :} notifier le client
+(confirmé / annulé).
+
+Implémentation : signaux Django \texttt{post\_save}. Réutilise l'action
+\slug{send\_email} existante. Champs \slug{notif\_client\_envoyee} et
+\slug{notif\_entreprise\_envoyee} sur \slug{Reservation} pour éviter les doublons.
+
+\subsection{Politique d'annulation par feature}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{lll}
+\toprule
+\textbf{Feature} & \textbf{Politique par défaut} & \textbf{Configurable} \\
+\midrule
+\slug{prise\_rdv} & libre & Oui \\
+\slug{reservation\_table} & libre & Oui \\
+\slug{reservation\_chambre} & avec\_frais & Oui \\
+\slug{reservation\_billet} & non\_remboursable & Oui \\
+\slug{orientation\_patient} & libre & Oui \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Remboursement = Transaction de type \texttt{credit} référençant la Reservation annulée.
+
+\subsection{Livraison — Hors scope Chantier 1}
+
+Statut \texttt{livree} existe en base mais masqué côté frontend.
+Statuts visibles pour \slug{menu\_digital} et \slug{catalogue\_produits} :
+\texttt{en\_attente / confirmee / en\_preparation / prete / annulee}.
+
+\subsection{\slug{commande\_paiement} — Hors scope Chantier 1}
+
+Requiert un provider externe opérationnel. Badge \textit{"Bientôt disponible"}
+en Chantier 1. Implémentation en Chantier 2.
+
+\subsection{FAQ — Injection statique à remplacer}
+
+\begin{warnbox}
+\textbf{Priorité haute.} Le \slug{ContextBuilder} injecte actuellement toute la FAQ
+dans le system prompt (Bloc 2). Cela ruinera les tokens si une entreprise a 1 000
+questions. \textbf{Action :} supprimer la FAQ du Bloc 2, créer l'action
+\slug{search\_faq(query)} dynamique.
+\end{warnbox}
+
+\subsection{Sécurité suivi de commande}
+
+Avant de partager tout statut de commande, le bot vérifie :
+\texttt{Commande.contact.phone == conversation.contact.phone}.
+En cas d'échec : TransfertHumain automatique.
+\slug{numero\_commande} obligatoire, non nullable, généré à la création.
+
+\subsection{Gestion du stock}
+
+Le bot \textbf{lit} le stock pour vérifier la disponibilité.
+Il ne le \textbf{modifie jamais}. Gestion exclusivement manuelle par l'entreprise.
+
+\subsection{Confirmation automatique conditionnelle}
+
+\slug{Ressource.confirmation\_automatique = True} ne confirme automatiquement
+\textbf{que si le paiement est effectué}. Sans paiement : statut reste \texttt{en\_attente}.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Fiches features 1 à 12}
+% ─────────────────────────────────────────────────────────────────────────────
+
+% ─── Feature 1 ───────────────────────────────────────────────────────────────
+\begin{featurebox}{Feature 1 — \slug{chatbot\_whatsapp}}
+
+\textbf{Description métier :} Canal d'entrée WhatsApp. Le client envoie ses
+messages, le bot répond. C'est la plomberie de tout le système.
+
+\textbf{Ce qui existe :} \slug{WahaSession} (connexion QR, statut, numéro),
+\slug{AIConversation}, \slug{AIMessage}, \slug{send\_text} via WAHA.
+
+\medskip
+\textbf{Booléens Feature :}
+\begin{decisionbox}
+\texttt{entreprise\_configure\_kb=False} | \texttt{bot\_lit\_kb=False} |
+\texttt{bot\_ecrit\_result=True} (AIActionLog) | \texttt{entreprise\_peut\_ecrire\_result=False}
+\end{decisionbox}
+
+\medskip
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item Vérifier que \slug{check\_quota("chatbot\_whatsapp")} est le \textbf{premier appel}
+        du pipeline de traitement de tout message entrant.
+  \item Créer le modèle \slug{TransfertHumain} (voir §2.8).
+  \item Vérifier que chaque transfert humain crée un \slug{TransfertHumain} avec agence,
+        motif, statut \texttt{en\_attente}.
+\end{enumerate}
+
+\end{featurebox}
+
+\bigskip
+
+% ─── Feature 2 ───────────────────────────────────────────────────────────────
+\begin{featurebox}{Feature 2 — \slug{faq}}
+
+\textbf{Description métier :} L'entreprise rédige ses questions/réponses
+fréquentes. Le bot les consulte à la demande pour répondre aux clients.
+
+\textbf{Ce qui existe :} \slug{FAQ} (conteneur), \slug{QuestionFrequente}
+(questions avec catégorie), tab FAQ dans \texttt{/knowledge} — une seule FAQ
+affichée (sous-exploité).
+
+\medskip
+\textbf{Booléens Feature :}
+\begin{decisionbox}
+\texttt{entreprise\_configure\_kb=True} | \texttt{bot\_lit\_kb=True} |
+\texttt{bot\_ecrit\_result=True} (ConsultationFAQ) | \texttt{entreprise\_peut\_ecrire\_result=False}
+\end{decisionbox}
+
+\medskip
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item Ajouter champ \slug{ordre} sur \slug{QuestionFrequente} (migration).
+  \item Corriger l'interface \texttt{/knowledge} pour afficher plusieurs FAQ
+        thématiques distinctes.
+  \item \prio{Priorité haute :} supprimer l'injection statique de la FAQ dans le
+        \slug{ContextBuilder} (Bloc 2). Créer action \slug{search\_faq(query)}.
+  \item Créer modèle \slug{ConsultationFAQ} (voir §2.8). Logger chaque appel.
+\end{enumerate}
+
+\end{featurebox}
+
+\bigskip
+
+% ─── Feature 3 ───────────────────────────────────────────────────────────────
+\begin{featurebox}{Feature 3 — \slug{prise\_rdv}}
+
+\textbf{Description métier :} Un client prend rendez-vous via WhatsApp. Le bot
+vérifie les disponibilités et crée le RDV automatiquement.
+
+\textbf{Ce qui existe :} \slug{Ressource} (type=praticien/salle),
+\slug{DisponibiliteRessource}, \slug{Reservation}, actions
+\slug{check\_disponibilite} et \slug{create\_reservation}. Règle R14 active.
+
+\medskip
+\textbf{Booléens Feature :}
+\begin{decisionbox}
+\texttt{entreprise\_configure\_kb=True} | \texttt{bot\_lit\_kb=True} |
+\texttt{bot\_ecrit\_result=True} | \texttt{entreprise\_peut\_ecrire\_result=True}
+\end{decisionbox}
+
+\medskip
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item Ajouter sur \slug{Ressource} : \slug{duree\_minutes} (défaut 30),
+        \slug{delai\_min\_heures} (défaut 0), \slug{buffer\_apres\_minutes} (défaut 15).
+        Ces 3 champs profitent à toutes les features de réservation.
+  \item Créer tab \textbf{"Disponibilités"} dans \texttt{/knowledge},
+        visible si \slug{prise\_rdv} active.
+  \item Mettre à jour \slug{check\_disponibilite} pour intégrer
+        \slug{buffer\_apres\_minutes}.
+  \item Page Résultats : filtrer par \texttt{feature.slug = "prise\_rdv"}.
+  \item Boutons de changement de statut sur la page Résultats.
+\end{enumerate}
+
+\end{featurebox}
+
+\bigskip
+
+% ─── Feature 4 ───────────────────────────────────────────────────────────────
+\begin{featurebox}{Feature 4 — \slug{reservation\_table}}
+
+\textbf{Description métier :} Un client réserve une table au restaurant via
+WhatsApp. Le bot vérifie et crée la réservation.
+
+\textbf{Ce qui existe :} Même infrastructure que \slug{prise\_rdv}
+(\slug{Ressource} type=table). Aucun tab frontend dédié.
+
+\medskip
+\textbf{Booléens Feature :}
+\begin{decisionbox}
+\texttt{entreprise\_configure\_kb=True} | \texttt{bot\_lit\_kb=True} |
+\texttt{bot\_ecrit\_result=True} | \texttt{entreprise\_peut\_ecrire\_result=True}
+\end{decisionbox}
+
+\medskip
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item Créer tab \textbf{"Tables"} dans \texttt{/knowledge},
+        visible si \slug{reservation\_table} active.
+  \item Ajouter sur \slug{Ressource} : \slug{zone}, \slug{est\_accessible\_pmr},
+        \slug{tags}.
+  \item Mêmes actions que \slug{prise\_rdv} pour buffer, Résultats, boutons.
+\end{enumerate}
+
+\end{featurebox}
+
+\bigskip
+
+% ─── Feature 5 ───────────────────────────────────────────────────────────────
+\begin{featurebox}{Feature 5 — \slug{reservation\_chambre}}
+
+\textbf{Description métier :} Un client réserve une chambre d'hôtel via WhatsApp.
+Le bot présente les types disponibles et crée la réservation.
+
+\textbf{Ce qui existe :} \slug{ChambreType} (catégories), \slug{Ressource}
+(type=chambre), tab "Chambres" dans \texttt{/knowledge}. Pas d'interface pour
+les chambres individuelles.
+
+\medskip
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item Ajouter sur \slug{ChambreType} : \slug{prix\_nuit}, \slug{equipements}.
+  \item Ajouter sur \slug{Ressource} : \slug{chambre\_type FK}.
+  \item Créer action bot \slug{get\_room\_types}.
+  \item Créer interface pour les chambres individuelles dans \texttt{/knowledge}.
+  \item Ajouter statut \texttt{en\_cours} sur \slug{Reservation}.
+  \item Politique annulation : \texttt{avec\_frais} par défaut.
+\end{enumerate}
+
+\end{featurebox}
+
+\bigskip
+
+% ─── Feature 6 ───────────────────────────────────────────────────────────────
+\begin{featurebox}{Feature 6 — \slug{reservation\_billet}}
+
+\textbf{Description métier :} Un client réserve une place dans un transport via
+WhatsApp. Le bot présente les trajets et émet le billet.
+
+\textbf{Ce qui existe :} \slug{CatalogueTrajet} (lignes), \slug{Ressource}
+(type=trajet), \slug{Reservation}.
+
+\medskip
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item Ajouter sur \slug{Ressource} : \slug{trajet FK}, \slug{confirmation\_automatique}
+        (True pour transport — confirme si paiement reçu).
+  \item Ajouter sur \slug{Reservation} : \slug{numero\_billet}, \slug{siege}.
+  \item Politique annulation : \texttt{non\_remboursable} par défaut.
+  \item Ajouter statut \texttt{en\_cours} (voyage en cours).
+  \item Créer interface pour les véhicules dans \texttt{/knowledge}.
+\end{enumerate}
+
+\end{featurebox}
+
+\bigskip
+
+% ─── Feature 7 ───────────────────────────────────────────────────────────────
+\begin{featurebox}{Feature 7 — \slug{menu\_digital}}
+
+\textbf{Description métier :} Le restaurant publie son menu. Un client consulte
+et commande directement via WhatsApp.
+
+\textbf{Ce qui existe :} S1 (déprécié : \slug{MenuCategorie/MenuPlat}), S3
+(canonique : \slug{ItemCatalogue}), \slug{Commande} + \slug{LigneCommande}.
+Tab "Menu" branché sur S1.
+
+\medskip
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item \priom{Migration S1 → S3 :} rebrancher tab "Menu" sur \slug{ItemCatalogue}.
+        Migrer les données \slug{MenuPlat} → \slug{ItemCatalogue}.
+        Valider avec Gabriel sur un compte de test.
+  \item Ajouter sur \slug{ItemCatalogue} : \slug{image\_url},
+        \slug{temps\_preparation\_min}, \slug{allergenes},
+        \slug{est\_disponible\_aujourd\_hui}.
+  \item Images V1 : bibliothèque statique (§1.5).
+  \item Créer action bot \slug{get\_menu(categorie?)}.
+  \item Masquer statut \texttt{livree} côté frontend (§3.3).
+\end{enumerate}
+
+\end{featurebox}
+
+\bigskip
+
+% ─── Feature 8 ───────────────────────────────────────────────────────────────
+\begin{featurebox}{Feature 8 — \slug{commande\_paiement} \textcolor{AGTRed}{— HORS SCOPE C1}}
+
+\textbf{Description métier :} Passer et payer une commande directement via
+WhatsApp avec un provider de paiement intégré.
+
+\textbf{Décision :} Différée au Chantier 2. Requiert un provider externe
+opérationnel (Orange Money, MTN MoMo).
+
+\textbf{En Chantier 1 :} feature visible dans la marketplace, badge
+\textit{"Bientôt disponible"}, non activable.
+
+\end{featurebox}
+
+\bigskip
+
+% ─── Feature 9 ───────────────────────────────────────────────────────────────
+\begin{featurebox}{Feature 9 — \slug{catalogue\_produits}}
+
+\textbf{Description métier :} Une boutique publie son catalogue. Un client
+consulte et commande via WhatsApp. Pas de paiement immédiat en C1.
+
+\textbf{Ce qui existe :} S2 (déprécié : \slug{CatalogueProduit} avec \slug{stock},
+\slug{reference}), S3 canonique sans ces champs.
+
+\medskip
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item \priom{Migration S2 → S3 :} récupérer \slug{stock} et \slug{reference}.
+  \item Ajouter sur \slug{ItemCatalogue} : \slug{stock} (nullable), \slug{reference}.
+  \item Le bot lit \slug{stock} uniquement. Ne le modifie \textbf{jamais} (§3.7).
+  \item Créer action bot \slug{get\_catalogue(query?, categorie?)}.
+\end{enumerate}
+
+\end{featurebox}
+
+\bigskip
+
+% ─── Feature 10 ──────────────────────────────────────────────────────────────
+\begin{featurebox}{Feature 10 — \slug{suivi\_commande}}
+
+\textbf{Description métier :} Un client demande l'état de sa commande. Le bot
+la retrouve et donne le statut en temps réel, sans intervention humaine.
+
+\textbf{Ce qui existe :} \slug{Commande} avec statuts, \slug{LigneCommande},
+\slug{Contact} (phone connu depuis WhatsApp).
+
+\medskip
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item Ajouter \slug{numero\_commande} : obligatoire, unique, format
+        \texttt{CMD-YYYYMMDD-XXXX}, généré automatiquement.
+  \item Ajouter \slug{notes\_client} : texte visible par le bot, distinct
+        de \slug{notes} (interne).
+  \item Créer action \slug{get\_order\_status(numero\_commande)} avec
+        vérification : \texttt{Commande.contact.phone == conversation.contact.phone}.
+        Échec → \slug{TransfertHumain} automatique.
+\end{enumerate}
+
+\end{featurebox}
+
+\bigskip
+
+% ─── Feature 11 ──────────────────────────────────────────────────────────────
+\begin{featurebox}{Feature 11 — \slug{catalogue\_services}}
+
+\textbf{Description métier :} Une entreprise de services liste ses prestations.
+Le bot les présente et oriente vers la prochaine action selon la configuration.
+
+\textbf{Ce qui existe :} S2 (déprécié : \slug{CatalogueService} avec
+\slug{duree\_min}). Usage multi-secteurs : PME, Santé, Custom.
+
+\medskip
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item \priom{Migration S2 → S3 :} récupérer \slug{duree\_min}.
+  \item Ajouter sur \slug{ItemCatalogue} : \slug{duree\_min},
+        \slug{type\_service} (libre), \slug{action\_suivante} (choices).
+  \item Créer action \slug{get\_services(query?)}. Le bot enchaîne selon
+        \slug{action\_suivante} (ex : si \texttt{proposer\_rdv}, appelle
+        \slug{check\_disponibilite}).
+  \item Interface pour configurer \slug{type\_service} et \slug{action\_suivante}
+        par prestation.
+\end{enumerate}
+
+\end{featurebox}
+
+\bigskip
+
+% ─── Feature 12 ──────────────────────────────────────────────────────────────
+\begin{featurebox}{Feature 12 — \slug{catalogue\_trajets}}
+
+\textbf{Description métier :} Une compagnie publie ses lignes, horaires et tarifs.
+Le bot présente les trajets et oriente vers la réservation de billet.
+
+\textbf{Ce qui existe :} S2 (déprécié : \slug{CatalogueTrajet} avec
+\slug{horaires\_depart} JSONField). Feature complémentaire à
+\slug{reservation\_billet}.
+
+\textbf{Relation avec \slug{reservation\_billet} :}
+\slug{CatalogueTrajet} = la ligne (horaires, tarifs).
+\slug{Ressource} type=trajet = le véhicule physique.
+Le FK \slug{Ressource.trajet → CatalogueTrajet} assure le lien.
+
+\medskip
+\textbf{Actions à mener :}
+\begin{enumerate}
+  \item \priom{Migration S2 → S3 :} récupérer les champs \slug{CatalogueTrajet}.
+  \item Ajouter sur \slug{ItemCatalogue} : \slug{classes} (JSONField),
+        \slug{ville\_depart}, \slug{ville\_arrivee}.
+  \item \slug{action\_suivante = "proposer\_billet"} — fixe pour cette feature.
+  \item Créer action \slug{get\_trajets(depart?, arrivee?)}.
+\end{enumerate}
+
+\end{featurebox}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Tableau récapitulatif des actions prioritaires}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{center}
+\begin{longtable}{lp{7cm}p{3.5cm}l}
+\toprule
+\textbf{Priorité} & \textbf{Action} & \textbf{Feature(s)} & \textbf{Type} \\
+\midrule
+\endhead
+\prio{Haute} & Corriger \slug{ContextBuilder} : supprimer FAQ Bloc 2, créer \slug{search\_faq} & FAQ & Backend \\[3pt]
+\prio{Haute} & Ajouter \slug{numero\_commande} (non nullable, unique) & suivi\_commande & Migration \\[3pt]
+\prio{Haute} & Ajouter les 4 booléens sur \slug{Feature} + seeder & Toutes & Migration \\[3pt]
+\prio{Haute} & Ajouter les 11 champs sur \slug{Ressource} & rdv, table, chambre, billet & Migration \\[6pt]
+\priom{Moyenne} & Migration S1/S2 → S3 (\slug{ItemCatalogue}) & menu, produits, services, trajets & Migration \\[3pt]
+\priom{Moyenne} & Créer tab "Disponibilités" dans \texttt{/knowledge} & prise\_rdv & Frontend \\[3pt]
+\priom{Moyenne} & Créer tab "Tables" dans \texttt{/knowledge} & reservation\_table & Frontend \\[3pt]
+\priom{Moyenne} & Corriger tab FAQ multi-FAQ & faq & Frontend \\[3pt]
+\priom{Moyenne} & Créer modèle \slug{TransfertHumain} & chatbot\_whatsapp & Backend \\[3pt]
+\priom{Moyenne} & Créer modèle \slug{ConsultationFAQ} & faq & Backend \\[6pt]
+\priob{Basse} & Ajouter 10 champs sur \slug{ItemCatalogue} & menu, produits, services, trajets & Migration \\[3pt]
+\priob{Basse} & Créer les 7 actions bot & Multiples & Backend \\[3pt]
+\priob{Basse} & Bibliothèque images statiques V1 & menu, produits & Frontend \\[3pt]
+\priob{Basse} & Badge "Bientôt disponible" sur \slug{commande\_paiement} & commande\_paiement & Frontend \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Ordre d'exécution recommandé}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{notebox}
+\textbf{Étape 1 — Migrations (faire en un seul lot).}
+Feature (4 booléens + seeder) · Ressource (11 champs) · Reservation (6 champs +
+statut en\_cours) · ChambreType (2 champs) · Commande (numero\_commande + notes\_client)
+· ItemCatalogue (10 champs) · QuestionFrequente (ordre) · Créer TransfertHumain ·
+Créer ConsultationFAQ.
+\end{notebox}
+
+\begin{notebox}
+\textbf{Étape 2 — Backend actions.}
+search\_faq (débloquer tests FAQ) · get\_menu · get\_catalogue · get\_services ·
+get\_trajets · get\_room\_types · get\_order\_status (avec vérification sécurité).
+\end{notebox}
+
+\begin{notebox}
+\textbf{Étape 3 — Migration données S1/S2 → S3.}
+Valider sur compte de test avec Gabriel · Supprimer S1/S2 après validation.
+\end{notebox}
+
+\begin{notebox}
+\textbf{Étape 4 — Frontend.}
+Rebrancher tab Menu/Catalogue sur ItemCatalogue · Créer tabs Disponibilités + Tables ·
+Corriger tab FAQ multi-FAQ · Badge Bientôt disponible sur commande\_paiement.
+\end{notebox}
+
+\vfill
+\begin{center}
+\color{AGTGray}
+\rule{0.5\textwidth}{0.4pt}\\[0.5em]
+{\small Document généré en session 32 — Gabriel (Lead) — 18 mai 2026}\\
+{\small AG Technologies — Confidentiel}\\
+{\small Suite : features 13 à 24 dans le prochain document de session}
+\end{center}
+
+\end{document}

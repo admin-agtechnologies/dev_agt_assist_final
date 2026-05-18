@@ -586,3 +586,57 @@
 - **Rapport :** `docs/reports/session_30_gabriel.md`
 
 ---
+---
+
+## Session 32 — Gabriel — 18/05/2026
+
+**Bloc :** B5 — Chaîne métier complète (Phase 0)
+**Type :** Conception / Audit
+
+### Fichiers produits
+
+| Fichier | Description |
+|---|---|
+| `docs/reports/sessions/session_32_gabriel.md` | Ce rapport |
+| `docs/notes/b5_phase0_01_audit_kb.md` | Note de référence Phase 0 — À LIRE avant toute session B5 |
+| `agt_b5_conception_features_1_12.pdf` | Conception features 1-12 (dans outputs S32) |
+| `agt_b5_conception_features_13_28.pdf` | Conception features 13-28 + banking (dans outputs S32) |
+
+### Zones modifiées / décisions prises
+
+- **Aucun code modifié** — session de conception pure
+- Audit complet des 28 features du projet
+- Architecture 3 couches de traçabilité validée
+- 4 booléens Feature validés (`entreprise_configure_kb`, `bot_lit_kb`, `bot_ecrit_result`, `entreprise_peut_ecrire_result`)
+- Système de catalogues : S3 (`ItemCatalogue`) devient canonique, S1 et S2 dépréciés
+- `Bot.agences ManyToManyField` (remplace FK) validé
+- `DetailsFinanciers` : extension banking OneToOne sur `ItemCatalogue`
+- 10 nouveaux modèles à créer (voir note)
+- 20+ modèles existants à modifier (voir PDFs)
+- 3 nouvelles features banking : `simulation_credit`, `suivi_dossier`, `collecte_documents`
+- Renommages : `conversion_prospects` → `capture_prospect` · `communication_etablissement` → `communication`
+- `communication` et `capture_prospect` et `prise_rdv` ajoutés à tous les secteurs
+- `agent_vocal` : page "Bientôt disponible" tous secteurs
+- Matrice sectorielle complète enrichie (9 secteurs + custom)
+- Plan Phase 0 suite : S33 migrations · S34 KB · S35 Results · S36 Skills
+
+### Bugs identifiés (non corrigés — à traiter en S33)
+
+- ⚠️ FAQ injectée statiquement dans ContextBuilder Bloc 2 → remplacer par `search_faq(query)`
+- ⚠️ `seed_bank.py` isolé du seed central → intégrer dans `SEEDERS_REGISTRY`
+
+### Pour la prochaine session (S33)
+
+Lire : `docs/notes/b5_phase0_01_audit_kb.md` + PDFs features 1-12 et 13-28
+Tâche : Migrations (0.2) + Seeders mis à jour
+Démarrer avec : `apps/agent/engine/context.py` (correction FAQ) + `apps/features/models/` (4 booléens)
+
+---
+## Session 33 — Gabriel — 18/05/2026
+**Statut :** ✅ Complétée
+**Branche :** main
+**Tâche :** B5 Phase 0.2 — Migrations schéma complet
+**Fichiers touchés :** apps/features/models/feature.py, apps/reservations/models.py, apps/catalogue/models.py, apps/knowledge/models.py, apps/contacts/models.py, apps/inscriptions/models.py, apps/bots/models.py, apps/payments/models.py, apps/dossiers/models.py, apps/notifications/models.py
+**Migrations :** bots.0007, features.0008, contacts.0004, catalogue.0002, dossiers.0002, inscriptions.0002, knowledge.0009, notifications.0003, payments.0002, reservations.0002
+**Prochaine session (S34) :** Discussion + génération seeders (seed_banking + seed_demo) + test non-régression frontend
+---
