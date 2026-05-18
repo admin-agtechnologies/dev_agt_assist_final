@@ -640,3 +640,17 @@ Démarrer avec : `apps/agent/engine/context.py` (correction FAQ) + `apps/feature
 **Migrations :** bots.0007, features.0008, contacts.0004, catalogue.0002, dossiers.0002, inscriptions.0002, knowledge.0009, notifications.0003, payments.0002, reservations.0002
 **Prochaine session (S34) :** Discussion + génération seeders (seed_banking + seed_demo) + test non-régression frontend
 ---
+
+---
+**Session 34** — Gabriel — 18/05/2026 — ✅ Terminée
+**Tâche :** B5 Phase 0.3 — Refactoring seeders (Groupe 1/2) + Interface admin features-matrix
+**Fichiers touchés :**
+apps/tenants/seeders/features_seeder.py, billing_seeder.py, agent_seeder.py,
+apps/tenants/management/commands/seed.py,
+apps/tenants/seeders/demo/ (13 fichiers),
+apps/features/views/admin_views.py, apps/features/urls.py,
+src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
+**Supprimés :** seed_bank.py, seed_agent.py
+**Tests :** seed --demo ✅ · non-régression frontend ✅
+**Prochaine session (S35) :** Socle KB + fix context.py FAQ
+---
