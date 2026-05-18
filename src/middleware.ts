@@ -1,51 +1,38 @@
 // src/middleware.ts
-// Session 8 — ajout de /auth-handoff aux routes publiques.
-// La page /auth-handoff arrive avec les tokens dans l'URL mais sans cookie
-// agt_auth encore posé (puisque le cookie sera posé par tokenStorage.set()
-// EN page React). Si le middleware bloque, on n'atteint jamais le code qui
-// pose le cookie → deadlock. Donc /auth-handoff doit être public.
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_ROUTES = [
-  "/",
-  "/login",
-  "/pending",
-  "/verify-email",
-  "/reset-password",
-  "/magic-link",
-  "/auth-handoff",
-];
-const DASHBOARD = "/dashboard";
+const DASHBOARD  = "/dashboard";
 const ONBOARDING = "/onboarding";
+
+// Lit le cookie sectoriel : agt_auth_hub, agt_auth_restaurant, etc.
+// Le secteur est injecté via NEXT_PUBLIC_SECTOR au build.
+const SECTOR      = process.env.NEXT_PUBLIC_SECTOR ?? "hub";
+const COOKIE_NAME = `agt_auth_${SECTOR}`;
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const auth = request.cookies.get("agt_auth")?.value;
+  const auth = request.cookies.get(COOKIE_NAME)?.value;
 
-  // ── Bloquer tout accès /admin depuis cette app ───────────────────────────
+  // ── Bloquer tout accès /admin ─────────────────────────────────────────────
   if (pathname.startsWith("/admin")) {
     return NextResponse.redirect(new URL(DASHBOARD, request.url));
   }
 
-  // ── Route publique : landing "/" ─────────────────────────────────────────
+  // ── Landing "/" ───────────────────────────────────────────────────────────
   if (pathname === "/") {
     if (auth) return NextResponse.redirect(new URL(DASHBOARD, request.url));
     return NextResponse.next();
   }
 
-  // ── Page login ───────────────────────────────────────────────────────────
+  // ── Login ─────────────────────────────────────────────────────────────────
   if (pathname.startsWith("/login")) {
     if (auth) return NextResponse.redirect(new URL(DASHBOARD, request.url));
     return NextResponse.next();
   }
 
-  // ── Page pending ─────────────────────────────────────────────────────────
-  if (pathname.startsWith("/pending")) {
-    return NextResponse.next();
-  }
-
-  // ── Pages auth flow (token dans URL, pas dans cookie) ────────────────────
+  // ── Pages publiques auth flow ─────────────────────────────────────────────
   if (
+    pathname.startsWith("/pending") ||
     pathname.startsWith("/verify-email") ||
     pathname.startsWith("/reset-password") ||
     pathname.startsWith("/magic-link") ||
@@ -54,12 +41,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // ── Onboarding ───────────────────────────────────────────────────────────
+  // ── Onboarding ────────────────────────────────────────────────────────────
   if (pathname.startsWith(ONBOARDING)) {
     return NextResponse.next();
   }
 
-  // ── Dashboard & routes PME : protégées ───────────────────────────────────
+  // ── Dashboard & routes protégées ──────────────────────────────────────────
   if (pathname.startsWith(DASHBOARD)) {
     if (!auth) {
       return NextResponse.redirect(new URL(`/login?redirect=${pathname}`, request.url));

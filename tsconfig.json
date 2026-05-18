@@ -22,6 +22,21 @@
       "@/dictionaries": ["./src/dictionaries/index.ts"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next-hub/types/**/*.ts",
+    ".next-restaurant/types/**/*.ts",
+    ".next-banking/types/**/*.ts",
+    ".next-clinical/types/**/*.ts",
+    ".next-school/types/**/*.ts",
+    ".next-ecommerce/types/**/*.ts",
+    ".next-hotel/types/**/*.ts",
+    ".next-public/types/**/*.ts",
+    ".next-pme/types/**/*.ts",
+    ".next-transport/types/**/*.ts"
+  ],
   "exclude": ["node_modules"]
 }

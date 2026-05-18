@@ -2,36 +2,36 @@
 import { ENV } from "./env";
 import { TOKEN_KEY, REFRESH_KEY } from "./constants";
 
+const SECTOR             = process.env.NEXT_PUBLIC_SECTOR ?? "hub";
+const SECTOR_TOKEN_KEY   = `${SECTOR}:${TOKEN_KEY}`;
+const SECTOR_REFRESH_KEY = `${SECTOR}:${REFRESH_KEY}`;
+const COOKIE_NAME        = `agt_auth_${SECTOR}`;
+
 // ══════════════════════════════════════════════════════════════════════════════
 // TOKEN STORAGE
 // ══════════════════════════════════════════════════════════════════════════════
 export const tokenStorage = {
   getAccess: (): string | null =>
-    typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null,
+    typeof window !== "undefined" ? localStorage.getItem(SECTOR_TOKEN_KEY) : null,
   getRefresh: (): string | null =>
-    typeof window !== "undefined" ? localStorage.getItem(REFRESH_KEY) : null,
+    typeof window !== "undefined" ? localStorage.getItem(SECTOR_REFRESH_KEY) : null,
   set: (access: string, refresh: string): void => {
     if (typeof window === "undefined") return;
-    localStorage.setItem(TOKEN_KEY, access);
-    localStorage.setItem(REFRESH_KEY, refresh);
-    document.cookie = `agt_auth=${access}; path=/; max-age=86400; SameSite=Lax`;
+    localStorage.setItem(SECTOR_TOKEN_KEY, access);
+    localStorage.setItem(SECTOR_REFRESH_KEY, refresh);
+    document.cookie = `${COOKIE_NAME}=${access}; path=/; max-age=86400; SameSite=Lax`;
   },
   clear: (): void => {
     if (typeof window === "undefined") return;
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(REFRESH_KEY);
-    document.cookie = "agt_auth=; path=/; max-age=0";
+    localStorage.removeItem(SECTOR_TOKEN_KEY);
+    localStorage.removeItem(SECTOR_REFRESH_KEY);
+    document.cookie = `${COOKIE_NAME}=; path=/; max-age=0`;
   },
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
 // API ERROR — erreur structurée { status, body }
 // ══════════════════════════════════════════════════════════════════════════════
-/**
- * Erreur levée par le client API pour toute réponse non-ok (status >= 400).
- * Porte le code HTTP et le body JSON du backend pour permettre aux consommateurs
- * de détecter des cas précis (ex: EMAIL_NOT_VERIFIED sur login).
- */
 export class ApiError extends Error {
   public readonly status: number;
   public readonly body: unknown;
@@ -43,20 +43,12 @@ export class ApiError extends Error {
     this.body = body;
   }
 
-  /**
-   * True si le backend a répondu 403 avec detail=EMAIL_NOT_VERIFIED.
-   * Utilisé par login/page.tsx pour rediriger vers /pending.
-   */
   isEmailNotVerified(): boolean {
     if (this.status !== 403) return false;
     const b = this.body as { detail?: string } | null;
     return b?.detail === "EMAIL_NOT_VERIFIED";
   }
 
-  /**
-   * Email associé à l'erreur (ex: renvoyé avec EMAIL_NOT_VERIFIED).
-   * Retourne null si le backend ne l'a pas inclus.
-   */
   getEmail(): string | null {
     if (typeof this.body !== "object" || this.body === null) return null;
     const b = this.body as { email?: unknown };
@@ -73,16 +65,9 @@ function extractDetail(body: unknown): string | null {
 // ══════════════════════════════════════════════════════════════════════════════
 // REFRESH AUTO — queue thread-safe
 // ══════════════════════════════════════════════════════════════════════════════
-// Si N requêtes reçoivent 401 simultanément, une seule déclenche le refresh.
-// Les autres attendent la fin via refreshQueue, puis retry avec le nouveau token.
-
 let isRefreshing = false;
 let refreshQueue: Array<(token: string | null) => void> = [];
 
-/**
- * Appelle /auth/token/refresh/ via fetch direct (pas via request() pour éviter
- * toute récursion). Retourne le nouveau access token ou null en cas d'échec.
- */
 async function refreshAccessToken(): Promise<string | null> {
   const refresh = tokenStorage.getRefresh();
   if (!refresh) return null;
@@ -96,7 +81,6 @@ async function refreshAccessToken(): Promise<string | null> {
     if (!res.ok) return null;
     const data = (await res.json()) as { access?: string };
     if (!data.access) return null;
-    // Le backend ne rotate pas le refresh — on réutilise l'existant.
     tokenStorage.set(data.access, refresh);
     return data.access;
   } catch {
@@ -120,11 +104,6 @@ function flushRefreshQueue(token: string | null): void {
 // ══════════════════════════════════════════════════════════════════════════════
 interface RequestOptions extends RequestInit {
   params?: Record<string, string>;
-  /**
-   * Si true, ne tente PAS de refresh automatique sur 401.
-   * À utiliser sur les endpoints d'auth publics (login, register, forgot-password,
-   * token/refresh lui-même, etc.) pour éviter les boucles.
-   */
   skipAuthRefresh?: boolean;
 }
 
@@ -150,7 +129,6 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     let newToken: string | null;
 
     if (isRefreshing) {
-      // Un refresh est déjà en cours — on attend son résultat
       newToken = await waitForRefresh();
     } else {
       isRefreshing = true;
@@ -160,10 +138,8 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     }
 
     if (newToken) {
-      // Retry avec le nouveau token
       res = await doFetch();
     } else {
-      // Refresh échoué — nettoyage, on laisse l'ApiError 401 remonter
       tokenStorage.clear();
     }
   }

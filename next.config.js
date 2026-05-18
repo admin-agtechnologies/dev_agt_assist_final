@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  distDir: process.env.NEXT_PUBLIC_SECTOR ? `.next-${process.env.NEXT_PUBLIC_SECTOR}` : ".next",
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "**" },
@@ -10,12 +11,11 @@ const nextConfig = {
   webpack: (config, { dev }) => {
     if (dev) {
       config.watchOptions = {
-        poll: 1000,        // vérifie les changements toutes les 1s
+        poll: 1000,
         aggregateTimeout: 300,
       };
     }
     return config;
   },
 };
-
 module.exports = nextConfig;
