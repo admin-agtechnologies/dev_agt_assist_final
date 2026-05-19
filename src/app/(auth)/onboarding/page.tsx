@@ -1,8 +1,7 @@
 "use client";
 // ============================================================
-// FICHIER : src/app/(auth)/onboarding/page.tsx  — v6
-// Fix build : Suspense wrapper pour useSearchParams (Next.js 14)
-// Fix runtime : déclarations router + searchParams manquantes
+// FICHIER : src/app/(auth)/onboarding/page.tsx  — v7
+// Fix : Google OAuth onboarding → googleRegister endpoint dédié
 // ============================================================
 
 import { useState, useEffect, useCallback, Suspense } from "react";
@@ -27,6 +26,7 @@ import { FeaturePicker } from "@/components/onboarding/FeaturePicker";
 import { AccountStep } from "@/components/onboarding/AccountStep";
 import { EmailCheckStep } from "@/components/onboarding/EmailCheckStep";
 import { LoadingPage } from "@/components/data/LoadingSpinner";
+import { redirectAfterAuth } from "@/lib/sector-redirect";
 import { ROUTES } from "@/lib/constants";
 import type { SecteurActivite } from "@/types/api";
 
@@ -59,8 +59,8 @@ function resolveAccent(slug: string): string {
 
 // ── Composant interne — contient tous les hooks client ────────────────────────
 function OnboardingContent() {
-  const router = useRouter();          // ✅ déclaré ici
-  const searchParams = useSearchParams();    // ✅ déclaré ici (exige Suspense parent)
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, refreshUser } = useAuth();
   const { locale } = useLanguage();
 
@@ -151,6 +151,10 @@ function OnboardingContent() {
     } finally { setLoading(false); }
   };
 
+  // ── Google OAuth — inscription via endpoint dédié ────────────────────────
+  // Utilise googleRegister (POST /auth/google/register/) qui :
+  //   - crée le user si email inconnu → continue l'onboarding
+  //   - connecte si email déjà existant → redirect dashboard
   const handleGoogleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
@@ -159,17 +163,30 @@ function OnboardingContent() {
           headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         });
         const googleUser = await res.json() as { email: string; name: string; sub: string };
-        const result = await authRepository.google({
+
+        const result = await authRepository.googleRegister({
           email: googleUser.email,
           name: googleUser.name ?? "",
           google_id: googleUser.sub ?? "",
         });
-        if (result?.access) {
-          tokenStorage.set(result.access, result.refresh ?? "");
+
+        tokenStorage.set(result.access, result.refresh ?? "");
+
+        // User existant avec entreprise → redirect dashboard sectoriel
+        if (result.user?.entreprise) {
+          redirectAfterAuth(
+            result.user.entreprise?.secteur?.slug ?? null,
+            { access: result.access, refresh: result.refresh ?? "" },
+          );
+          return;
         }
+
+        // Nouvel user Google → continuer l'onboarding (étape finalize)
         await refreshUser?.();
         setStep("finalize");
-      } catch { setRegError("Connexion Google échouée. Réessayez."); }
+      } catch {
+        setRegError("Connexion Google échouée. Réessayez.");
+      }
     },
     onError: () => setRegError("Connexion Google échouée. Réessayez."),
   });
@@ -293,5 +310,3 @@ export default function OnboardingPage() {
     </WithGoogleOAuth>
   );
 }
-
-// END OF FILE: src/app/(auth)/onboarding/page.tsx

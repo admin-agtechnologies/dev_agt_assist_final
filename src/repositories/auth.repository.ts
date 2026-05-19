@@ -14,6 +14,8 @@ export const authRepository = {
         api.post<AuthResponse>("/api/v1/auth/register/", payload, { skipAuthRefresh: true }),
     google: (payload: GoogleAuthPayload): Promise<AuthResponse> =>
         api.post<AuthResponse>("/api/v1/auth/google/", payload, { skipAuthRefresh: true }),
+    googleRegister: (payload: GoogleAuthPayload): Promise<AuthResponse> =>
+        api.post<AuthResponse>("/api/v1/auth/google/register/", payload, { skipAuthRefresh: true }),
     me: (): Promise<User> =>
         api.get<User>("/api/v1/auth/me/"),
     refreshToken: (payload: RefreshTokenPayload): Promise<TokenRefreshResponse> =>
