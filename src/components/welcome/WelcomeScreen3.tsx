@@ -8,6 +8,8 @@
 //   · Dérivations inclus/extras basées sur included_in_plan + activeSet
 //   · Gating plan : badges + blocage bouton si module incompatible avec plan choisi
 //   · handlePay branché sur purchase/ au lieu de confirmUpgrade
+// B2 :
+//   · Ajout label "Solde actuel" sous le montant dans la carte portefeuille
 // ============================================================
 import { useState, useEffect, useCallback } from "react";
 import {
@@ -54,6 +56,7 @@ const T = {
     bonusBtn:       "Réclamer",
     bonusClaimed:   "Bonus réclamé ✓",
     wallet:         "Mon portefeuille",
+    balanceBefore:  "Solde actuel",
     modulesTitle:   "Vos modules sélectionnés",
     free:           "Gratuit",
     includedInPlan: "Inclus dans votre plan",
@@ -81,6 +84,7 @@ const T = {
     bonusBtn:       "Claim",
     bonusClaimed:   "Bonus claimed ✓",
     wallet:         "My wallet",
+    balanceBefore:  "Current balance",
     modulesTitle:   "Your selected modules",
     free:           "Free",
     includedInPlan: "Included in your plan",
@@ -136,8 +140,6 @@ export function WelcomeScreen3({ selectedSlugs, locale, onBack, onSuccess }: Pro
   );
 
   // ── Chargement initial : plans + wallet + features actives ────────────────
-  // NB : getCatalogue n'est PAS appelé ici — il sera déclenché par l'effet
-  // sur selectedPlan dès que le premier plan est positionné.
   useEffect(() => {
     Promise.all([
       api.get<unknown>("/api/v1/billing/plans/?is_active=true"),
@@ -156,9 +158,6 @@ export function WelcomeScreen3({ selectedSlugs, locale, onBack, onSuccess }: Pro
   }, []); // eslint-disable-line
 
   // ── Recalcul catalogueMap à chaque changement de plan sélectionné ─────────
-  // GET /api/v1/features/catalogue/?plan_slug=X
-  // → included_in_plan calculé pour ce plan hypothétique
-  // → la séparation inclus/extras se met à jour dynamiquement
   useEffect(() => {
     if (!selectedPlan) return;
     setCatalogueReady(false);
@@ -170,9 +169,7 @@ export function WelcomeScreen3({ selectedSlugs, locale, onBack, onSuccess }: Pro
     });
   }, [selectedPlan?.slug]); // eslint-disable-line
 
-  // ── Init checkedExtras — une seule fois au premier chargement du catalogue ─
-  // On coche par défaut les extras hors plan, pas les modules déjà inclus.
-  // On ne re-coche pas si le user a déjà interagi (prev.size > 0).
+  // ── Init checkedExtras ────────────────────────────────────────────────────
   useEffect(() => {
     if (!catalogueReady) return;
     setCheckedExtras(prev => {
@@ -187,13 +184,6 @@ export function WelcomeScreen3({ selectedSlugs, locale, onBack, onSuccess }: Pro
   }, [catalogueReady]); // eslint-disable-line
 
   // ── Dérivations ───────────────────────────────────────────────────────────
-  //
-  // inclus = déjà actif en base OU inclus dans le plan sélectionné
-  //          → affiché en vert, prix = 0, non modifiable
-  //
-  // extras = pas encore actif ET non inclus dans le plan sélectionné
-  //          → checkboxes, prix unitaire affiché, ajouté au total
-  //
   const inclus: string[] = selectedSlugs.filter(s =>
     activeSet.has(s) || catalogueMap[s]?.included_in_plan === true,
   );
@@ -215,14 +205,11 @@ export function WelcomeScreen3({ selectedSlugs, locale, onBack, onSuccess }: Pro
   const balanceAfter = balance - total;
   const canAfford    = selectedPlan != null && balance >= total;
 
-  // Modules cochés dont le plan minimum requis est supérieur au plan choisi
   const conflicts = extras.filter(f =>
     checkedExtras.has(f.slug) &&
     isPlanInsufficient(f.min_plan_nom, selectedPlan?.slug ?? ""),
   );
   const hasConflicts = conflicts.length > 0;
-
-  // Paiement possible = solde suffisant ET aucun conflit
   const canPay = canAfford && !hasConflicts;
 
   // ── Handlers ──────────────────────────────────────────────────────────────
@@ -336,6 +323,7 @@ export function WelcomeScreen3({ selectedSlugs, locale, onBack, onSuccess }: Pro
           <div>
             <p className="text-xs text-[var(--text-muted)]">{t.wallet}</p>
             <p className="text-2xl font-black text-[var(--text)]">{formatCurrency(balance)}</p>
+            <p className="text-[11px] text-[var(--text-muted)] mt-0.5">{t.balanceBefore}</p>
           </div>
           <Sparkles className="w-5 h-5 text-[var(--color-primary)] opacity-30" />
         </div>
@@ -535,7 +523,7 @@ export function WelcomeScreen3({ selectedSlugs, locale, onBack, onSuccess }: Pro
           </div>
         )}
 
-        {/* ── Alerte solde insuffisant (seulement si pas de conflit) ──────── */}
+        {/* ── Alerte solde insuffisant ─────────────────────────────────────── */}
         {selectedPlan && !canAfford && !hasConflicts && (
           <div className="flex items-start gap-2 text-sm text-amber-700
                           bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
@@ -554,7 +542,6 @@ export function WelcomeScreen3({ selectedSlugs, locale, onBack, onSuccess }: Pro
           </button>
 
           {canPay ? (
-            // Cas normal — solde ok, aucun conflit
             <button
               onClick={handlePay}
               disabled={paying}
@@ -567,7 +554,6 @@ export function WelcomeScreen3({ selectedSlugs, locale, onBack, onSuccess }: Pro
                 : <><CreditCard className="w-4 h-4" />{t.pay}</>}
             </button>
           ) : hasConflicts ? (
-            // Conflit plan — bouton bloqué explicitement
             <button
               disabled
               className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold
@@ -577,7 +563,6 @@ export function WelcomeScreen3({ selectedSlugs, locale, onBack, onSuccess }: Pro
               {t.fixConflicts}
             </button>
           ) : (
-            // Solde insuffisant — proposer la recharge
             <button
               onClick={() => setShowTopUp(true)}
               className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold

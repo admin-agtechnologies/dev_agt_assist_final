@@ -1,13 +1,13 @@
 "use client";
 // ============================================================
-// FICHIER : src/components/onboarding/FeaturePicker.tsx — v3
-// S25 — 4 groupes : Obligatoires / Recommandés / Complémentaires /
-//        Autres activités (accordéon)
-// Custom : obligatoires pré-sélectionnés, tout le reste désélectionné
+// FICHIER : src/components/onboarding/FeaturePicker.tsx — v4
+// B2 — Suppression groupe g4 "Autres activités"
+// Le user ne voit que les features de son secteur en 3 sous-listes :
+//   g1 — obligatoires / g2 — recommandés / g3 — complémentaires
+// Exception : secteur "custom" → comportement inchangé (tout s'affiche)
 // ============================================================
 
 import { useState, useMemo } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
 import { FeatureCard, type FeatureGroup } from "./FeatureCard";
 import { LoadingSpinner } from "@/components/data/LoadingSpinner";
 import type { Locale } from "@/contexts/LanguageContext";
@@ -24,10 +24,6 @@ const LABELS = {
     g2hint:       "Pré-sélectionnés selon votre activité. Décochez ce dont vous n'avez pas besoin.",
     g3:           "Modules complémentaires",
     g3hint:       "Fonctionnalités universelles disponibles quel que soit votre secteur.",
-    g4:           "Autres activités",
-    g4hint:       "Modules spécifiques à d'autres secteurs — utiles si vous exercez plusieurs activités.",
-    g4open:       "Voir les modules d'autres secteurs",
-    g4close:      "Réduire",
     g4custom:     "Choisissez vos modules",
     g4customhint: "Aucun module n'est pré-sélectionné. Choisissez librement selon vos besoins.",
     note:         "Certains modules consomment du quota selon votre plan d'abonnement.",
@@ -44,10 +40,6 @@ const LABELS = {
     g2hint:       "Pre-selected based on your activity. Uncheck what you don't need.",
     g3:           "Complementary modules",
     g3hint:       "Universal features available regardless of your sector.",
-    g4:           "Other activities",
-    g4hint:       "Sector-specific modules — useful if you run multiple activities.",
-    g4open:       "See modules from other sectors",
-    g4close:      "Collapse",
     g4custom:     "Choose your modules",
     g4customhint: "No modules are pre-selected. Choose freely based on your needs.",
     note:         "Some modules consume quota depending on your subscription plan.",
@@ -112,30 +104,26 @@ export function FeaturePicker({
 }: FeaturePickerProps) {
   const t        = LABELS[locale];
   const isCustom = sectorSlug === "custom";
-  const [accordionOpen, setAccordionOpen] = useState(false);
-  const [saving,        setSaving]        = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // ── Groupes ────────────────────────────────────────────────────────────────
-  const sectorSlugs = useMemo(() => new Set(features.map(f => f.slug)), [features]);
-
   const g1 = useMemo(() => features.filter(f => f.is_mandatory), [features]);
   const g2 = useMemo(() => features.filter(f => !f.is_mandatory && f.recommended), [features]);
   const g3 = useMemo(
     () => features.filter(f => !f.is_mandatory && !f.recommended && f.categorie === "base"),
     [features],
   );
-  const g4Normal = useMemo(
-    () => allFeatures.filter(f => !sectorSlugs.has(f.slug) && f.categorie === "sectorielle"),
-    [allFeatures, sectorSlugs],
-  );
+
+  // Custom uniquement — recommandés + libres (tous non-obligatoires)
   const g4CustomRec = useMemo(
-   () => (isCustom ? allFeatures.filter(f => !f.is_mandatory && f.recommended) : []),
-   [isCustom, allFeatures],
- );
- const g4CustomFree = useMemo(
-   () => (isCustom ? allFeatures.filter(f => !f.is_mandatory && !f.recommended) : []),
-   [isCustom, allFeatures],
- );
+    () => (isCustom ? allFeatures.filter(f => !f.is_mandatory && f.recommended) : []),
+    [isCustom, allFeatures],
+  );
+  const g4CustomFree = useMemo(
+    () => (isCustom ? allFeatures.filter(f => !f.is_mandatory && !f.recommended) : []),
+    [isCustom, allFeatures],
+  );
+
   // ── Sélection initiale ─────────────────────────────────────────────────────
   // Custom : obligatoires seulement
   // Autres : obligatoires + recommandés
@@ -184,68 +172,34 @@ export function FeaturePicker({
           selected={selected} locale={locale} accentColor={accentColor} onToggle={toggle}
         />
 
+        {/* Secteurs normaux — g2 Recommandés + g3 Complémentaires uniquement */}
         {!isCustom && (
           <>
-            {/* Groupe 2 — Recommandés secteur */}
             <GroupSection
               title={t.g2} hint={t.g2hint} items={g2} group="recommended"
               selected={selected} locale={locale} accentColor={accentColor} onToggle={toggle}
             />
-
-            {/* Groupe 3 — Complémentaires (base non-obligatoires) */}
             <GroupSection
               title={t.g3} hint={t.g3hint} items={g3} group="complementary"
               selected={selected} locale={locale} accentColor={accentColor} onToggle={toggle}
             />
-
-            {/* Groupe 4 — Autres activités (accordéon, sectorielles cross-secteur) */}
-            {g4Normal.length > 0 && (
-              <section className="space-y-3">
-                <div>
-                  <h3 className="text-[11px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
-                    {t.g4}
-                  </h3>
-                  <p className="text-xs text-[var(--text-muted)] mt-0.5 opacity-75">{t.g4hint}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setAccordionOpen(v => !v)}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold transition-colors"
-                  style={{ color: accentColor }}
-                >
-                  {accordionOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                  {accordionOpen ? t.g4close : t.g4open}
-                </button>
-
-                {accordionOpen && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                    {g4Normal.map(f => (
-                      <FeatureCard
-                        key={f.slug} feature={f} selected={selected.has(f.slug)}
-                        locale={locale} accentColor={accentColor} group="other"
-                        onClick={() => toggle(f.slug)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </section>
-            )}
+            {/* g4 "Autres activités" supprimé — B2 */}
           </>
         )}
 
         {/* Custom — tous les modules non-obligatoires, désélectionnés */}
-       {isCustom && (
-            <>
-              <GroupSection
-                title={t.g2} hint={t.g2hint} items={g4CustomRec} group="recommended"
-                selected={selected} locale={locale} accentColor={accentColor} onToggle={toggle}
-              />
-              <GroupSection
-                title={t.g4custom} hint={t.g4customhint} items={g4CustomFree} group="complementary"
-                selected={selected} locale={locale} accentColor={accentColor} onToggle={toggle}
-              />
-            </>
-              )}
+        {isCustom && (
+          <>
+            <GroupSection
+              title={t.g2} hint={t.g2hint} items={g4CustomRec} group="recommended"
+              selected={selected} locale={locale} accentColor={accentColor} onToggle={toggle}
+            />
+            <GroupSection
+              title={t.g4custom} hint={t.g4customhint} items={g4CustomFree} group="complementary"
+              selected={selected} locale={locale} accentColor={accentColor} onToggle={toggle}
+            />
+          </>
+        )}
 
       </div>
 
