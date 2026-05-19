@@ -125,4 +125,37 @@ export const knowledge = {
     errorSave:   "Error saving",
     errorDelete: "Error deleting",
   },
+
+  // ── B5 S35 ──────────────────────────────────────────────────────────────────
+
+  comingSoon: {
+    title:    "Coming soon",
+    subtitle: "The configuration of {feature} will be available in an upcoming update.",
+  },
+
+  captureProspect: {
+    newBtn:             "New scenario",
+    nomLabel:           "Scenario name",
+    nomPlaceholder:     "Ex: Restaurant qualification",
+    declencheurLabel:   "Trigger",
+    questionsLabel:     "Questions (one per line — format: Question → field_name)",
+    questionsPlaceholder: "What is your budget? → budget\nYour company name? → company_name",
+    empty:              "No qualification scenarios configured.",
+    createSuccess:      "Scenario created",
+    updateSuccess:      "Scenario updated",
+    deleteSuccess:      "Deleted",
+    errorLoad:          "Loading error",
+    errorDelete:        "Deletion error",
+    declencheurs: {
+      premier_message:  "First message",
+      mot_cle:          "Keyword detected",
+      toujours:         "Always",
+    },
+  },
+
+  ressource: {
+    errorLoad:      "Loading error",
+    createSuccess:  "Resource created",
+    dispoSuccess:   "Availability saved",
+  },
 } as const;

@@ -125,4 +125,37 @@ export const knowledge = {
     errorSave:   "Erreur lors de la sauvegarde",
     errorDelete: "Erreur lors de la suppression",
   },
+
+  // ── B5 S35 ──────────────────────────────────────────────────────────────────
+
+  comingSoon: {
+    title:    "Bientôt disponible",
+    subtitle: "La configuration de {feature} sera disponible dans une prochaine mise à jour.",
+  },
+
+  captureProspect: {
+    newBtn:             "Nouveau scénario",
+    nomLabel:           "Nom du scénario",
+    nomPlaceholder:     "Ex : Qualification restaurant",
+    declencheurLabel:   "Déclencheur",
+    questionsLabel:     "Questions (une par ligne — format : Question → champ_cible)",
+    questionsPlaceholder: "Quel est votre budget ? → budget\nNom de votre entreprise ? → nom_entreprise",
+    empty:              "Aucun scénario de qualification configuré.",
+    createSuccess:      "Scénario créé",
+    updateSuccess:      "Scénario mis à jour",
+    deleteSuccess:      "Supprimé",
+    errorLoad:          "Erreur chargement",
+    errorDelete:        "Erreur lors de la suppression",
+    declencheurs: {
+      premier_message:  "Premier message",
+      mot_cle:          "Mot-clé détecté",
+      toujours:         "Toujours",
+    },
+  },
+
+  ressource: {
+    errorLoad:      "Erreur de chargement",
+    createSuccess:  "Ressource créée",
+    dispoSuccess:   "Disponibilités enregistrées",
+  },
 } as const;
