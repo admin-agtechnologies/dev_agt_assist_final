@@ -646,7 +646,7 @@ Démarrer avec : `apps/agent/engine/context.py` (correction FAQ) + `apps/feature
 **Tâche :** B5 Phase 0.3 — Refactoring seeders (Groupe 1/2) + Interface admin features-matrix
 **Fichiers touchés :**
 apps/tenants/seeders/features_seeder.py, billing_seeder.py, agent_seeder.py,
-apps/tenants/management/commands/seed.py,
+apps/tenants/management/commands/seed.py,       
 apps/tenants/seeders/demo/ (13 fichiers),
 apps/features/views/admin_views.py, apps/features/urls.py,
 src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
@@ -662,3 +662,9 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - Bugs corrigés : UnboundLocalError _purchase_logic, ModuleNotFoundError check_quota, TypeScript Transaction metadata, usage_rdv/emails non remis à 0
 - Zones touchées : apps/billing/, apps/features/views/, src/components/onboarding/, src/components/welcome/, src/app/(dashboard)/billing/, src/lib/pdf/, src/types/api/
 - Rapport : docs/reports/session_35_gabriel.md
+
+---
+| S36 | 19/05/2026 | Gabriel | KB Socle + Seeders fonctionnement | i18n fix ComingSoonKbTab/CaptureProspectTab/RessourceKbTab · knowledge.fr/en.ts sections comingSoon/captureProspect/ressource · KnowledgeTabs flèches scroll · page.tsx 18 tabs (billets ajouté) · bootstrap.py nouveau (3 exemples/feature idempotent) · tenant.py toggle→bootstrap · demo/base.py run()→bootstrap · billing_seeder.py +28 PLAN_SECTOR_FEATURES custom · 15 tabs ✅ 200 · 3 bugs 500 serializers à corriger S37 (ChambreType:image_url · CatalogueProduit:description_en · SpecialiteMedicale:description_fr) |
+
+---
+| S37 | 19/05/2026 | Gabriel+Penka | KB Socle complet + Serializers fix | 3 conversations : audit plan B5 KB · serializers.py fix complet (5 bugs 500 : ChambreType image_url, CatalogueProduit description_en/stock/reference, SpecialiteMedicale description_fr→description, CatalogueTrajet prix→tarif, CatalogueService description_en) · MenuCategorieSerializer nested plats · ScenarioProspection backend (serializer+view+url) · knowledge.types.ts + knowledge.repository.ts · ComingSoonKbTab/CaptureProspectTab/RessourceKbTab créés · KnowledgeTabs flèches scroll · page.tsx 18 tabs · bootstrap.py 3 exemples/feature idempotent · tenant.py toggle→bootstrap · demo/base.py run()→bootstrap · billing_seeder.py +28 PLAN_SECTOR_FEATURES custom · ChambresTab corrigé · MedicalTab corrigé +S33 (mots_cles_symptomes, contact_urgence) · 15/18 tabs ✅ 200 · Reste S38 : CatalogueProduit/Service/TrajetTab forms, CitoyensTab/InscriptionsTab/FaqTab S33, Étape 6 migration ItemCatalogue |
