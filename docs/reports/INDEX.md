@@ -654,3 +654,11 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 **Tests :** seed --demo ✅ · non-régression frontend ✅
 **Prochaine session (S35) :** Socle KB + fix context.py FAQ
 ---
+
+## session_35_gabriel
+- Type : Génération + Debug + Tests
+- Date : 2026-05-19
+- Flux couverts : B2 (Onboarding/Welcome), B3 (C5→C10 Facturation)
+- Bugs corrigés : UnboundLocalError _purchase_logic, ModuleNotFoundError check_quota, TypeScript Transaction metadata, usage_rdv/emails non remis à 0
+- Zones touchées : apps/billing/, apps/features/views/, src/components/onboarding/, src/components/welcome/, src/app/(dashboard)/billing/, src/lib/pdf/, src/types/api/
+- Rapport : docs/reports/session_35_gabriel.md
