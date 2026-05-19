@@ -20,6 +20,9 @@ export const auth = {
   backToLogin: "Retour à la connexion",
   noAccount: "Pas encore de compte ?",
   signUp: "Créer un compte",
+  googleNotRegistered: "Aucun compte associé à ce compte Google.",
+  googleNotRegisteredHint: "Vous n'avez pas encore de compte AGT. Créez-en un pour commencer.",
+  googleSignUpCta: "Créer mon compte",
   tabPassword: "Mot de passe",
   tabMagicLink: "Lien magique",
   pending: {
