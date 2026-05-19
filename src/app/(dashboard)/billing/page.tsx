@@ -1,9 +1,14 @@
 "use client";
+// C7 — Remplacement bouton "Imprimer l'historique" par :
+//   · Sélecteur mois/année
+//   · Bouton "Bilan PDF" filtré sur la période
+// Tout le reste est identique à la version précédente
+
 import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { useToast } from "@/components/ui/Toast";
-import { useRouter } from "next/navigation";
+import { useAuth }      from "@/contexts/AuthContext";
+import { useLanguage }  from "@/contexts/LanguageContext";
+import { useToast }     from "@/components/ui/Toast";
+import { useRouter }    from "next/navigation";
 import {
   subscriptionsRepository,
   walletsRepository,
@@ -13,10 +18,8 @@ import {
   featuresRepository,
 } from "@/repositories";
 import { SectionHeader, PageLoader } from "@/components/ui";
-import { Printer } from "lucide-react";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import { formatDateTime } from "@/lib/utils";
+import { FileDown } from "lucide-react";
+import { generateBillingReportPDF } from "@/lib/pdf/invoice-generator";
 import type {
   Subscription,
   Wallet as WalletType,
@@ -25,7 +28,6 @@ import type {
 } from "@/types/api";
 import type { ActiveFeature } from "@/repositories/features.repository";
 
-// Import des composants isolés
 import { BillingHeader }        from "./components/BillingHeader";
 import { PlanList }             from "./components/PlanList";
 import { TransactionList }      from "./components/TransactionList";
@@ -34,19 +36,46 @@ import { ChangePlanModal }      from "./components/ChangePlanModal";
 import { QuotaProgressSection } from "@/components/billing/QuotaProgressSection";
 import { ROUTES }               from "@/lib/constants";
 
+// ── Helpers période ───────────────────────────────────────────────────────────
+
+const MOIS = [
+  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
+];
+
+function buildPeriodOptions(): { label: string; value: string }[] {
+  const options = [];
+  const now     = new Date();
+  for (let i = 0; i < 12; i++) {
+    const d   = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    options.push({ label: `${MOIS[d.getMonth()]} ${d.getFullYear()}`, value: val });
+  }
+  return options;
+}
+
+function filterByPeriod(transactions: Transaction[], period: string): Transaction[] {
+  const [year, month] = period.split("-").map(Number);
+  return transactions.filter((tr) => {
+    const d = new Date(tr.created_at);
+    return d.getFullYear() === year && d.getMonth() + 1 === month;
+  });
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
 export default function PmeBillingPage() {
   const { user } = useAuth();
 
-  // DONNÉES DE SECOURS (Si le backend ne renvoie rien)
   const FALLBACK_WALLET: WalletType = {
-    id:               "temp-wallet-id",
-    entreprise:       "unknown",
-    entreprise_name:  "Entreprise",
-    solde:            0,
-    frozen_balance:   0,
-    total_balance:    0,
-    devise:           "XAF",
-    updated_at:       new Date().toISOString(),
+    id:              "temp-wallet-id",
+    entreprise:      "unknown",
+    entreprise_name: "Entreprise",
+    solde:           0,
+    frozen_balance:  0,
+    total_balance:   0,
+    devise:          "XAF",
+    updated_at:      new Date().toISOString(),
   };
 
   const { dictionary: d } = useLanguage();
@@ -61,9 +90,13 @@ export default function PmeBillingPage() {
   const [features,     setFeatures]     = useState<ActiveFeature[]>([]);
   const [loading,      setLoading]      = useState(true);
 
-  const [topUpOpen,      setTopUpOpen]      = useState(false);
-  const [changePlanId,   setChangePlanId]   = useState<string | null>(null);
-  const [pollingTxnId,   setPollingTxnId]   = useState<string | null>(null);
+  const [topUpOpen,    setTopUpOpen]    = useState(false);
+  const [changePlanId, setChangePlanId] = useState<string | null>(null);
+  const [pollingTxnId, setPollingTxnId] = useState<string | null>(null);
+
+  // ── C7 — état sélecteur période ───────────────────────────────────────────
+  const periodOptions                         = buildPeriodOptions();
+  const [selectedPeriod, setSelectedPeriod]   = useState(periodOptions[0].value);
 
   const fetchData = useCallback(async () => {
     try {
@@ -104,7 +137,6 @@ export default function PmeBillingPage() {
   // Polling transaction
   useEffect(() => {
     if (!pollingTxnId) return;
-
     const interval = setInterval(async () => {
       try {
         const res = (await billingRepository.pollTransaction(pollingTxnId)) as {
@@ -115,39 +147,19 @@ export default function PmeBillingPage() {
           setPollingTxnId(null);
           fetchData();
         }
-      } catch {
-        // En cas d'erreur de polling, on continue d'attendre
-      }
+      } catch { /* continue */ }
     }, 3000);
-
     return () => clearInterval(interval);
   }, [pollingTxnId, fetchData, toast]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  const handleExportPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text("Historique des Transactions - AGT Assist", 14, 22);
-    doc.setFontSize(11);
-    doc.text(`Généré le : ${new Date().toLocaleString()}`, 14, 30);
-    const tableRows = transactions.map((tr) => [
-      formatDateTime(tr.created_at),
-      tr.label,
-      tr.type === "credit" ? "Crédit" : "Débit",
-      tr.service_paiement_nom || "Système",
-      tr.reference || "-",
-      tr.montant.toLocaleString() + " FCFA",
-    ]);
-    autoTable(doc, {
-      startY: 40,
-      head: [["Date", "Description", "Type", "Opérateur", "Référence", "Montant"]],
-      body:  tableRows,
-      theme: "grid",
-    });
-    doc.save(`facturation-agt-${new Date().getTime()}.pdf`);
+  // ── C7 — handler bilan PDF ────────────────────────────────────────────────
+  const handleBilanPDF = () => {
+    const periodLabel = periodOptions.find((o) => o.value === selectedPeriod)?.label ?? selectedPeriod;
+    const filtered    = filterByPeriod(transactions, selectedPeriod);
+    const name        = user?.entreprise?.name ?? wallet?.entreprise_name ?? "Mon entreprise";
+    generateBillingReportPDF(filtered, periodLabel, name);
   };
 
   if (loading) return <PageLoader />;
@@ -158,12 +170,28 @@ export default function PmeBillingPage() {
       {/* ── En-tête page ──────────────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <SectionHeader title={t.title} subtitle={t.subtitle} />
-        <button
-          onClick={handleExportPDF}
-          className="btn-primary flex items-center gap-2"
-        >
-          <Printer className="w-4 h-4" /> Imprimer l'historique
-        </button>
+
+        {/* C7 — Sélecteur période + bouton bilan PDF */}
+        <div className="flex items-center gap-2">
+          <select
+            value={selectedPeriod}
+            onChange={(e) => setSelectedPeriod(e.target.value)}
+            className="text-sm border border-[var(--border)] rounded-xl px-3 py-2
+                       bg-[var(--bg)] text-[var(--text)] focus:outline-none
+                       focus:ring-2 focus:ring-[var(--color-primary)]/30"
+          >
+            {periodOptions.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+          <button
+            onClick={handleBilanPDF}
+            className="btn-primary flex items-center gap-2"
+          >
+            <FileDown className="w-4 h-4" />
+            Bilan PDF
+          </button>
+        </div>
       </div>
 
       {/* ── Wallet + Abonnement ───────────────────────────────────────────── */}
@@ -194,10 +222,7 @@ export default function PmeBillingPage() {
         <TopUpModal
           wallet={wallet}
           onClose={() => setTopUpOpen(false)}
-          onSuccess={() => {
-            setTopUpOpen(false);
-            fetchData();
-          }}
+          onSuccess={() => { setTopUpOpen(false); fetchData(); }}
           setPollingTxnId={setPollingTxnId}
         />
       )}
@@ -209,10 +234,7 @@ export default function PmeBillingPage() {
           wallet={wallet}
           tenantId={user?.entreprise?.id ?? ""}
           onClose={() => setChangePlanId(null)}
-          onSuccess={() => {
-            setChangePlanId(null);
-            router.push(ROUTES.dashboard);
-          }}
+          onSuccess={() => { setChangePlanId(null); router.push(ROUTES.dashboard); }}
         />
       )}
 

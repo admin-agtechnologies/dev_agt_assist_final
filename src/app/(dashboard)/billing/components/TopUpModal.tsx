@@ -179,11 +179,12 @@ export function TopUpModal({ wallet, onClose, onSuccess }: TopUpModalProps) {
                   {/* Actions */}
                   <div className="flex gap-3">
                     <button type="button" onClick={onClose} className="btn-ghost flex-1">{d.common.cancel}</button>
-                    <button
-                      type="submit"
-                      disabled={saving || code.trim().length < 4}
-                      className="btn-primary flex-1 flex items-center justify-center gap-2 disabled:opacity-50"
-                    >
+                      <button
+                        type="submit"
+                        disabled={saving || code.trim().length < 4}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white disabled:opacity-50 transition-all"
+                        style={{ backgroundColor: theme.primary }}
+                      >
                       {saving
                         ? <><Loader2 className="w-4 h-4 animate-spin" />{t.codeVerifying}</>
                         : <><CheckCircle2 className="w-4 h-4" />{t.codeApplyBtn}</>
