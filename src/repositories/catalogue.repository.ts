@@ -1,18 +1,16 @@
 // src/repositories/catalogue.repository.ts
-// Migration S1/S2 → S3 (B5 S38)
-// Les 4 repositories KB pointent désormais vers ItemCatalogue S3.
-// URLs inchangées côté backend — seuls les types de retour changent.
-
+// B5 S38/S39 — Migration S2→S3
+// Endpoints inchangés (même URLs), types de retour mis à jour → CatalogueItemKB
+// Les anciens types CatalogueProduit/Service/Trajet/ProduitFinancier sont supprimés.
 import { api } from "@/lib/api-client";
 import type {
-  // S3 — types KB unifiés
-  CatalogueItemKB,
-  CreateCatalogueItemKBPayload,
-  UpdateCatalogueItemKBPayload,
-  // ProduitFinancier conserve son type étendu
-  ProduitFinancierKB,
-  CreateProduitFinancierKBPayload,
-  UpdateProduitFinancierKBPayload,
+  Catalogue,               CreateCataloguePayload,
+  CatalogueDetail,
+  CategorieCatalogue,      CreateCategoriePayload,
+  ItemCatalogue,           CreateItemPayload,
+  CatalogueFilters,
+  CatalogueItemKB,         CreateCatalogueItemKBPayload, UpdateCatalogueItemKBPayload,
+  ProduitFinancierKB,      CreateProduitFinancierKBPayload, UpdateProduitFinancierKBPayload,
 } from "@/types/api/catalogue.types";
 
 const BASE = "/api/v1/knowledge";
@@ -22,7 +20,28 @@ function toList<T>(data: unknown): T[] {
   return ((data as { results?: T[] }).results) ?? [];
 }
 
-// ── Produits (catalogue_produits — e-commerce) ────────────────────────────────
+// ── Catalogues génériques (catalogues.repository — admin) ────────────────────
+
+export const catalogueRepository = {
+  getList: (filters?: CatalogueFilters) =>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+api.get<Catalogue[]>(`${BASE}/catalogues/`, { params: filters as any }),
+  getById: (id: string) =>
+    api.get<CatalogueDetail>(`${BASE}/catalogues/${id}/`),
+  create: (p: CreateCataloguePayload) =>
+    api.post<Catalogue>(`${BASE}/catalogues/`, p),
+  update: (id: string, p: Partial<CreateCataloguePayload>) =>
+    api.patch<Catalogue>(`${BASE}/catalogues/${id}/`, p),
+  delete: (id: string) =>
+    api.delete(`${BASE}/catalogues/${id}/`) as Promise<void>,
+  addCategorie: (catalogueId: string, p: CreateCategoriePayload) =>
+    api.post<CategorieCatalogue>(`${BASE}/catalogues/${catalogueId}/categories/`, p),
+  addItem: (categorieId: string, p: CreateItemPayload) =>
+    api.post<ItemCatalogue>(`${BASE}/categories/${categorieId}/items/`, p),
+};
+
+// ── Produits (ecommerce) — S3 ─────────────────────────────────────────────────
+
 export const catalogueProduitRepository = {
   getList: () =>
     api.get(`${BASE}/catalogue-produits/`).then((d) => toList<CatalogueItemKB>(d)),
@@ -34,7 +53,8 @@ export const catalogueProduitRepository = {
     api.delete(`${BASE}/catalogue-produits/${id}/`) as Promise<void>,
 };
 
-// ── Services (catalogue_services — PME/services) ──────────────────────────────
+// ── Services (pme / hotel / sante) — S3 ──────────────────────────────────────
+
 export const catalogueServiceRepository = {
   getList: () =>
     api.get(`${BASE}/catalogue-services/`).then((d) => toList<CatalogueItemKB>(d)),
@@ -46,7 +66,8 @@ export const catalogueServiceRepository = {
     api.delete(`${BASE}/catalogue-services/${id}/`) as Promise<void>,
 };
 
-// ── Trajets (catalogue_trajets — transport) ───────────────────────────────────
+// ── Trajets (transport) — S3 ──────────────────────────────────────────────────
+
 export const catalogueTrajetRepository = {
   getList: () =>
     api.get(`${BASE}/catalogue-trajets/`).then((d) => toList<CatalogueItemKB>(d)),
@@ -58,7 +79,8 @@ export const catalogueTrajetRepository = {
     api.delete(`${BASE}/catalogue-trajets/${id}/`) as Promise<void>,
 };
 
-// ── Produits financiers (catalogue_produits_financiers — banking) ─────────────
+// ── Produits financiers (banque) — S3 ─────────────────────────────────────────
+
 export const produitFinancierRepository = {
   getList: () =>
     api.get(`${BASE}/produits-financiers/`).then((d) => toList<ProduitFinancierKB>(d)),
@@ -70,15 +92,4 @@ export const produitFinancierRepository = {
     api.delete(`${BASE}/produits-financiers/${id}/`) as Promise<void>,
 };
 
-// ── Menu digital (menu_digital — restaurant) ──────────────────────────────────
-// Remplace MenuCategorie/MenuPlat S1 supprimés
-export const menuDigitalRepository = {
-  getList: () =>
-    api.get(`${BASE}/menu-items/`).then((d) => toList<CatalogueItemKB>(d)),
-  create: (p: CreateCatalogueItemKBPayload) =>
-    api.post(`${BASE}/menu-items/`, p) as Promise<CatalogueItemKB>,
-  update: (id: string, p: UpdateCatalogueItemKBPayload) =>
-    api.patch(`${BASE}/menu-items/${id}/`, p) as Promise<CatalogueItemKB>,
-  delete: (id: string) =>
-    api.delete(`${BASE}/menu-items/${id}/`) as Promise<void>,
-};
+// END OF FILE: src/repositories/catalogue.repository.ts

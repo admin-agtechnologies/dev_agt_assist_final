@@ -97,7 +97,7 @@ export default function CatalogueDetailPage() {
                       : item.est_sur_devis
                         ? t.surDevis
                         : item.prix !== null
-                          ? `${item.prix.toLocaleString(locale)} ${item.devise}`
+                          ? `${item.prix?.toLocaleString(locale) ?? "—"} ${item.devise}`
                           : t.surDevis;
                     return (
                       <li

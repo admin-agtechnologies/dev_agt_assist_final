@@ -22,9 +22,11 @@ export interface Catalogue {
   id: string;
   entreprise: string;
   agence: string;
+  agence_id: string; 
   feature: string;
   feature_slug: string;
   nom: string;
+  categories_count: number;
   description?: string;
   is_active: boolean;
   metadata?: Record<string, unknown>;
@@ -39,6 +41,7 @@ export interface CategorieCatalogue {
   description?: string;
   ordre: number;
   is_active: boolean;
+  items: ItemCatalogue[];
   metadata?: Record<string, unknown>;
 }
 
@@ -64,6 +67,7 @@ export interface CatalogueDetail extends Catalogue {
 
 export interface CreateCataloguePayload {
   nom: string;
+  description?: string;
   feature_slug: string;
   agence_id: string;
   is_active?: boolean;
@@ -107,6 +111,8 @@ export interface CatalogueItemKB {
   feature_slug: string | null;
   categorie: string;          // UUID de la CategorieCatalogue
   categorie_nom: string | null;
+  agence_id: string;
+  categories_count: number;
   // Champs principaux
   nom: string;
   description?: string;

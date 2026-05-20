@@ -668,3 +668,31 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 
 ---
 | S37 | 19/05/2026 | Gabriel+Penka | KB Socle complet + Serializers fix | 3 conversations : audit plan B5 KB · serializers.py fix complet (5 bugs 500 : ChambreType image_url, CatalogueProduit description_en/stock/reference, SpecialiteMedicale description_fr→description, CatalogueTrajet prix→tarif, CatalogueService description_en) · MenuCategorieSerializer nested plats · ScenarioProspection backend (serializer+view+url) · knowledge.types.ts + knowledge.repository.ts · ComingSoonKbTab/CaptureProspectTab/RessourceKbTab créés · KnowledgeTabs flèches scroll · page.tsx 18 tabs · bootstrap.py 3 exemples/feature idempotent · tenant.py toggle→bootstrap · demo/base.py run()→bootstrap · billing_seeder.py +28 PLAN_SECTOR_FEATURES custom · ChambresTab corrigé · MedicalTab corrigé +S33 (mots_cles_symptomes, contact_urgence) · 15/18 tabs ✅ 200 · Reste S38 : CatalogueProduit/Service/TrajetTab forms, CitoyensTab/InscriptionsTab/FaqTab S33, Étape 6 migration ItemCatalogue |
+
+---
+## session_38_gabriel
+
+- **Type :** Génération + Debug — Migration S1/S2→S3 catalogue + Plan B5
+- **Date :** 2026-05-20
+- **Flux couverts :** B5 Étape 1 (socle KB — migration catalogue S3)
+- **Bugs corrigés :** paiement_en_ligne catalogues, ProfilEntreprise message_accueil (setup.py + bootstrap_sector.py), noms entreprise vides (tenants_seeder.py), upsert_catalogue_item feature hardcodée
+- **Zones touchées :** `apps/knowledge/`, `apps/tenants/seeders/demo/`, `apps/agent/services/`, `src/repositories/`, `src/types/api/`
+- **Fichiers modifiés :** 13 (9 backend + 2 frontend + 2 docs)
+- **Décision clé :** Plan B5 en 9 étapes — ordre non négociable — `b5_plan_execution.md` uploadé dans PK
+- **Note :** conteneur Docker = `api` (pas `backend`), `--reset` n'existe pas dans seed
+- **Rapport :** `docs/reports/session_38_gabriel.md`
+
+---
+
+## session_39_gabriel
+
+- **Type :** Debug + Génération — Migration S3 tabs catalogue + Bugs KB + Seeder custom complet
+- **Date :** 2026-05-20
+- **Flux couverts :** B5 Étape 1 fin + corrections KB visuelles
+- **Bugs corrigés :** Menu 404 (MenuTab→S3), Conciergerie noms vides (S2→S3), Disponibilités POST 500 (metadata serializer), 10 erreurs TypeScript (catalogue.types.ts + ProduitFinancierTab + catalogue.repository.ts + page.tsx), Billets vide (seeder), Abonnement 404 custom (Pro billing), Wallet insuffisant custom
+- **Zones touchées :** `src/app/(dashboard)/knowledge/_components/`, `src/repositories/`, `src/types/api/`, `apps/reservations/`, `apps/tenants/seeders/demo/`
+- **Fichiers créés/modifiés :** 15 + 3 à supprimer (MenuCategoriePanel, MenuPlatGrid, menu.repository.ts — dead code)
+- **Décision clé :** Seeder custom = compte Pro complet (29 features, 5M XAF, 33 items, 15 ressources) — référence de validation B5
+- **TypeScript :** 0 erreur ✅
+- **Seed :** flush + seed validé ✅ — custom Pro actif jusqu'au 20/05/2027
+- **Rapport :** `docs/reports/session_39_gabriel.md`
