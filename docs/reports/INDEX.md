@@ -749,3 +749,16 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Bugs corrigés :** `transfer_to_human` → `apps.knowledge.TransfertHumain` (S40) · `create_commande` feature `commande_paiement` → `menu_digital` · `send_email` → crée `EmailLog` · 5 actions enrichies champs S33
 - **Zones touchées :** `apps/agent/actions/` (7 modifiés + 8 créés) · `apps/tenants/seeders/agent_seeder.py`
 - **Fichiers créés :** `faq.py` · `catalogue_sectoriel.py` · `suivi.py` · `concierger
+
+
+----
+
+## session_43_donpk
+
+- **Type :** UX Frontend — Dark mode, scroll, langue, logo, quota illimité
+- **Date :** 2026-05-20
+- **Flux couverts :** Dashboard UX complet
+- **Bugs corrigés :** Scroll sidebar (layout), dark mode fond (layout), langue Header (contexte wrong), dark mode Header (couleurs hardcodées), quota -1 illimité (SubscriptionUsage), bulles chat dark mode (ConversationReportModal), logo sidebar "AGT Platform" supprimé (Sidebar)
+- **Zones touchées :** `src/app/(dashboard)/layout.tsx` · `src/components/layout/Header.tsx` · `src/components/layout/Sidebar.tsx` · `src/app/pme/dashboard/_components/SubscriptionUsage.tsx` · `src/app/pme/bots/_components/ConversationReportModal.tsx`
+- **Règles permanentes établies :** Light→fond sectoriel / Dark→var(--bg) · CSS vars only · Logo sidebar getLogoAssets · useLanguage depuis LanguageContext uniquement · quota -1→∞
+- **Rapport :** `docs/reports/session_43_donpk.md`
