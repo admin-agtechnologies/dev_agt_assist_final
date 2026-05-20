@@ -699,6 +699,20 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 
 
 ---
+
+## session_40_donpk
+
+- **Type :** Backend — Modèles Results + Migrations + Serializers + Views + Seeder + Tests API
+- **Date :** 2026-05-20
+- **Flux couverts :** B5 Étape 1 fin + Étape 2 backend Results complet
+- **Bugs corrigés :** `DemandeConciergerie` doublon knowledge/reservations · `statut_crm` → `statut` · filtre `Reservation.feature` → `ressource__feature__slug` · filtres `feature__slug` inexistants (inscriptions + dossiers) · `service_libre` invalide (DemandeConciergericSerializer) · `service_id NOT NULL` (seeder conciergerie) · `display_name()` inexistant (ContactListSerializer) · container reload manquant
+- **Zones touchées :** `apps/knowledge/` · `apps/reservations/` · `apps/inscriptions/` · `apps/dossiers/` · `apps/notifications/` · `apps/contacts/` · `apps/tenants/seeders/`
+- **Fichiers créés :** migration `0010_transferthumain` · `results_seeder.py`
+- **Fichiers modifiés :** 8 backend
+- **Endpoints testés ✅ :** transferts-humains (3) · email-logs (5) · reservations filtrées (7) · commandes (4) · inscriptions (3) · dossiers (3)
+- **Endpoints fix livré ⏳ :** demandes-conciergerie · contacts
+- **Seeder :** 34 enregistrements Results en base
+- **Rapport :** `docs/reports/session_40_donpk.md`
 ---
 
 ## session_41_gabriel
