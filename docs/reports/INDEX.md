@@ -737,3 +737,15 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
   - **Penka :** Amélioration interfaces KB + Results + seeders — zones `src/app/(dashboard)/knowledge/` + `src/app/(dashboard)/results/`
   - **Règle :** Gabriel ne touche pas KB/Results · Penka ne touche pas `apps/agent/` · modèles partagés → concertation
   - **S42 Gabriel :** démarrer directement Étape 4 (audit + conception actions bot) — lire `b5_plan_execution.md` + `b5_phase0_01_audit_kb.md`
+
+  ---
+  ---
+
+## session_42_gabriel
+
+- **Type :** Audit + Conception + Génération — B5 Étapes 4 & 5 (Actions bot complètes)
+- **Date :** 2026-05-20
+- **Flux couverts :** B5 Étape 4 ✅ (audit actions) · B5 Étape 5 ✅ (40 actions implémentées)
+- **Bugs corrigés :** `transfer_to_human` → `apps.knowledge.TransfertHumain` (S40) · `create_commande` feature `commande_paiement` → `menu_digital` · `send_email` → crée `EmailLog` · 5 actions enrichies champs S33
+- **Zones touchées :** `apps/agent/actions/` (7 modifiés + 8 créés) · `apps/tenants/seeders/agent_seeder.py`
+- **Fichiers créés :** `faq.py` · `catalogue_sectoriel.py` · `suivi.py` · `concierger
