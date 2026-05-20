@@ -1,17 +1,17 @@
 // src/app/(dashboard)/results/_components/ReservationResultCard.tsx
 "use client";
-
 import { Calendar, User, Clock } from "lucide-react";
-import { formatDateTime }        from "@/lib/utils";
-import type { Reservation }      from "@/types/api/reservation.types";
+import { formatDateTime }              from "@/lib/utils";
+import type { Reservation }            from "@/types/api/reservation.types";
 
 const STATUT_STYLE: Record<string, string> = {
-  confirmee:              "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  en_attente:             "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  en_attente_confirmation:"bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  terminee:               "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
-  annulee:                "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400",
+  confirmee:               "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  en_attente:              "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+  en_attente_confirmation: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  terminee:                "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
+  annulee:                 "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400",
 };
+
 const STATUT_LABEL: Record<string, string> = {
   confirmee:               "Confirmée",
   en_attente:              "En attente",
@@ -27,8 +27,7 @@ export function ReservationResultCard({ item }: Props) {
     <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-full bg-[var(--accent)]/10 flex items-center
-            justify-center flex-shrink-0">
+          <div className="w-8 h-8 rounded-full bg-[var(--accent)]/10 flex items-center justify-center flex-shrink-0">
             <User className="w-4 h-4 text-[var(--accent)]" />
           </div>
           <div className="min-w-0">
@@ -51,7 +50,7 @@ export function ReservationResultCard({ item }: Props) {
         </div>
         <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
           <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="truncate">{item.ressource_nom}</span>
+          <span className="truncate">{formatDateTime(item.date_fin)}</span>
         </div>
       </div>
 
