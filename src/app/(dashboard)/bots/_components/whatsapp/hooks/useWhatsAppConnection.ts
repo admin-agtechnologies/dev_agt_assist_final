@@ -63,7 +63,9 @@ export function useWhatsAppConnection(botId: string): WhatsAppConnectionApi {
       setState((s) => ({
         ...s,
         status: data.status,
-        qrBase64: data.qr_base64 ?? null,
+        qrBase64:
+          data.qr_base64 ??
+          (data.status === "SCAN_QR_CODE" ? s.qrBase64 : null),
         phoneNumber: data.phone_number ?? "",
         connectedAt: data.connected_at ?? null,
         error: null,
