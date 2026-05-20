@@ -749,3 +749,16 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Bugs corrigés :** `transfer_to_human` → `apps.knowledge.TransfertHumain` (S40) · `create_commande` feature `commande_paiement` → `menu_digital` · `send_email` → crée `EmailLog` · 5 actions enrichies champs S33
 - **Zones touchées :** `apps/agent/actions/` (7 modifiés + 8 créés) · `apps/tenants/seeders/agent_seeder.py`
 - **Fichiers créés :** `faq.py` · `catalogue_sectoriel.py` · `suivi.py` · `concierger
+
+
+---
+## session_44_gabriel
+
+- **Type :** Génération — B5 Étape 6 Skills
+- **Date :** 2026-05-20
+- **Flux couverts :** B5 Étape 6 ✅ (génération complète) — tests partiels ⚠️
+- **Bugs corrigés :** SkillsSeeder.__init__, mélange features/actions disque
+- **Zones touchées :** `apps/agent/models/`, `apps/agent/migrations/`, `apps/agent/engine/`, `apps/agent/skills/`, `apps/tenants/seeders/`
+- **Fichiers créés :** 4 Python + 78 Markdown
+- **Dette ouverte :** Migration django_celery_results DuplicateTable à fixer S45 avant seed skills
+- **Rapport :** `docs/reports/session_44_gabriel.md`
