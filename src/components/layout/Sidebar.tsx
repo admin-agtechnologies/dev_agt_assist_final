@@ -7,12 +7,12 @@ import {
   CreditCard, BookOpen, Bot,
   Sun, Moon, Globe, LogOut,
   HelpCircle, MessageCircle, Star, AlertTriangle,
-  UserCircle, LayoutGrid, Lock,
+  UserCircle, LayoutGrid, Lock, BarChart2,
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth }     from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useTheme } from "@/components/ui/ThemeProvider";
-import { useSector } from "@/hooks/useSector";
+import { useTheme }    from "@/components/ui/ThemeProvider";
+import { useSector }   from "@/hooks/useSector";
 import { DASHBOARD_ROUTES } from "./Sidebar.config";
 import { cn, initials } from "@/lib/utils";
 
@@ -25,6 +25,7 @@ const ACTIVE_ONLY_ROUTES = new Set([
   "/contacts",
   "/bots",
   "/knowledge",
+  "/results",
   "/modules",
   "/feedback",
   "/report",
@@ -35,11 +36,11 @@ interface Props {
 }
 
 export function Sidebar({ onClose }: Props) {
-  const { user, logout }                   = useAuth();
+  const { user, logout }                     = useAuth();
   const { dictionary: d, locale, setLocale } = useLanguage();
-  const { theme: uiTheme, toggle }         = useTheme();
-  const { theme: sectorTheme }             = useSector();
-  const pathname                           = usePathname();
+  const { theme: uiTheme, toggle }           = useTheme();
+  const { theme: sectorTheme }               = useSector();
+  const pathname                             = usePathname();
 
   const isSubscriptionActive =
     user?.onboarding?.abonnement_statut === "actif";
@@ -63,20 +64,23 @@ export function Sidebar({ onClose }: Props) {
     "text-[var(--text-muted)] opacity-40 cursor-not-allowed select-none",
   );
 
+  // S41 — ordre centré valeur client :
+  // Dashboard → Bots → Résultats → KB → Clients → Facturation → Profil
   const STATIC_ITEMS = [
     { href: DASHBOARD_ROUTES.home,      icon: LayoutDashboard, label: d.nav.dashboard },
-    { href: DASHBOARD_ROUTES.contacts,  icon: Users,           label: locale === "fr" ? "Mes Clients" : "My Clients" },
     { href: DASHBOARD_ROUTES.bots,      icon: Bot,             label: d.nav.bots },
+    { href: DASHBOARD_ROUTES.results,   icon: BarChart2,       label: locale === "fr" ? "Résultats"        : "Results" },
     { href: DASHBOARD_ROUTES.knowledge, icon: BookOpen,        label: d.nav.knowledge },
+    { href: DASHBOARD_ROUTES.contacts,  icon: Users,           label: locale === "fr" ? "Mes Clients"      : "My Clients" },
     { href: DASHBOARD_ROUTES.billing,   icon: CreditCard,      label: d.nav.billing },
     { href: DASHBOARD_ROUTES.profile,   icon: UserCircle,      label: d.nav.profile },
   ];
 
   const SUPPORT_ITEMS = [
-    { href: DASHBOARD_ROUTES.tutorial, icon: HelpCircle,    label: locale === "fr" ? "Tutoriel interface" : "Interface tutorial" },
-    { href: DASHBOARD_ROUTES.help,     icon: MessageCircle, label: locale === "fr" ? "Demander de l'aide" : "Get help" },
+    { href: DASHBOARD_ROUTES.tutorial, icon: HelpCircle,    label: locale === "fr" ? "Tutoriel interface"    : "Interface tutorial" },
+    { href: DASHBOARD_ROUTES.help,     icon: MessageCircle, label: locale === "fr" ? "Demander de l'aide"    : "Get help" },
     { href: DASHBOARD_ROUTES.feedback, icon: Star,          label: locale === "fr" ? "Laisser un témoignage" : "Leave a review" },
-    { href: DASHBOARD_ROUTES.report,   icon: AlertTriangle, label: locale === "fr" ? "Signaler un problème" : "Report an issue" },
+    { href: DASHBOARD_ROUTES.report,   icon: AlertTriangle, label: locale === "fr" ? "Signaler un problème"  : "Report an issue" },
   ];
 
   const renderNavItem = (href: string, Icon: React.ElementType, label: string) => {

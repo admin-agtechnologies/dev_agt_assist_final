@@ -696,3 +696,30 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **TypeScript :** 0 erreur ✅
 - **Seed :** flush + seed validé ✅ — custom Pro actif jusqu'au 20/05/2027
 - **Rapport :** `docs/reports/session_39_gabriel.md`
+
+
+---
+---
+
+## session_41_gabriel
+
+- **Type :** Debug + Génération — B5 Étapes 2 & 3 (Conception + Génération pages Résultats)
+- **Date :** 2026-05-20
+- **Flux couverts :** B5 Étape 2 ✅ (conception Results validée) · B5 Étape 3 ✅ (19 tabs Results générés)
+- **Bugs corrigés :** `service_libre`/`source`/`updated_at` inexistants (DemandeConciergericSerializer) · `display_name()` manquant (ContactSerializer) · `.telephone`→`.phone` (2 serializers) · `DEV_TOKEN` export illégal (admin page)
+- **Endpoints créés :** `/api/v1/knowledge/consultations-faq/` (ConsultationFAQViewSet)
+- **Zones touchées :**
+  - **Backend :** `apps/knowledge/serializers.py` · `apps/knowledge/views.py` · `apps/knowledge/urls.py` · `apps/contacts/serializers.py` · `apps/tenants/seeders/demo/custom.py` · `src/app/admin/features-matrix/page.tsx`
+  - **Frontend :** `src/types/api/results.types.ts` (NEW) · `src/repositories/results.repository.ts` (NEW) · `src/app/(dashboard)/results/` (NEW — page + 11 composants) · `src/app/(dashboard)/knowledge/_components/tabs/ChatbotResultTab.tsx` (NEW) · `src/app/(dashboard)/knowledge/_components/results/ChatbotConversationCard.tsx` (NEW) · `src/components/layout/Sidebar.tsx` · `src/components/layout/Sidebar.config.ts`
+- **Fichiers créés :** 16 frontend + 3 backend
+- **Fichiers modifiés :** 5 backend + 3 frontend
+- **TypeScript :** 0 erreur ✅
+- **Validation visuelle :** Page /results ✅ · 19 tabs ✅ · Modal rapport+chat ✅
+- **Seeder :** 5 conversations WhatsApp démo ajoutées au compte custom (custom.py)
+- **Navigation :** Ordre sidebar revu — Dashboard → Bots → Résultats → KB → Clients → Facturation → Profil
+- **Rapport :** `docs/reports/session_41_gabriel.md`
+- **⚠️ Organisation parallèle S42+ :**
+  - **Gabriel :** B5 Étapes 4→9 (agent actions, skills, tests, webhook) — zones `apps/agent/`
+  - **Penka :** Amélioration interfaces KB + Results + seeders — zones `src/app/(dashboard)/knowledge/` + `src/app/(dashboard)/results/`
+  - **Règle :** Gabriel ne touche pas KB/Results · Penka ne touche pas `apps/agent/` · modèles partagés → concertation
+  - **S42 Gabriel :** démarrer directement Étape 4 (audit + conception actions bot) — lire `b5_plan_execution.md` + `b5_phase0_01_audit_kb.md`

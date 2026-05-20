@@ -4,8 +4,9 @@ import { useState } from "react";
 import BooleansMatrix from "./BooleansMatrix";
 import SectorMatrix from "./SectorMatrix";
 
-export const DEV_TOKEN = process.env.NEXT_PUBLIC_DEV_TOKEN ?? "";
-export const API_BASE  = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8011";
+// S41 fix : export supprimé — Next.js interdit les named exports dans les pages
+const DEV_TOKEN = process.env.NEXT_PUBLIC_DEV_TOKEN ?? "";
+const API_BASE  = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8011";
 
 type Tab = "booleans" | "sectors";
 
