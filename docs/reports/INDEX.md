@@ -750,7 +750,6 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Zones touchées :** `apps/agent/actions/` (7 modifiés + 8 créés) · `apps/tenants/seeders/agent_seeder.py`
 - **Fichiers créés :** `faq.py` · `catalogue_sectoriel.py` · `suivi.py` · `concierger
 
-
 ----
 
 ## session_43_donpk
@@ -762,3 +761,15 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Zones touchées :** `src/app/(dashboard)/layout.tsx` · `src/components/layout/Header.tsx` · `src/components/layout/Sidebar.tsx` · `src/app/pme/dashboard/_components/SubscriptionUsage.tsx` · `src/app/pme/bots/_components/ConversationReportModal.tsx`
 - **Règles permanentes établies :** Light→fond sectoriel / Dark→var(--bg) · CSS vars only · Logo sidebar getLogoAssets · useLanguage depuis LanguageContext uniquement · quota -1→∞
 - **Rapport :** `docs/reports/session_43_donpk.md`
+---
+## session_44_gabriel
+
+- **Type :** Génération — B5 Étape 6 Skills
+- **Date :** 2026-05-20
+- **Flux couverts :** B5 Étape 6 ✅ (génération complète) — tests partiels ⚠️
+- **Bugs corrigés :** SkillsSeeder.__init__, mélange features/actions disque
+- **Zones touchées :** `apps/agent/models/`, `apps/agent/migrations/`, `apps/agent/engine/`, `apps/agent/skills/`, `apps/tenants/seeders/`
+- **Fichiers créés :** 4 Python + 78 Markdown
+- **Dette ouverte :** Migration django_celery_results DuplicateTable à fixer S45 avant seed skills
+- **Rapport :** `docs/reports/session_44_gabriel.md`
+

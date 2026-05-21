@@ -182,7 +182,7 @@ Brancher `apps/agent/` en remplacement de `chatbot_bridge/production_actions.py`
 
 ---
 
-## Pour démarrer S43 (Gabriel)
+## Pour démarrer S44(Gabriel)
 
 Démarrer directement sur **Étape 6 — Architecture Skills** :
 
