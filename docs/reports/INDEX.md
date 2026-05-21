@@ -762,6 +762,39 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Règles permanentes établies :** Light→fond sectoriel / Dark→var(--bg) · CSS vars only · Logo sidebar getLogoAssets · useLanguage depuis LanguageContext uniquement · quota -1→∞
 - **Rapport :** `docs/reports/session_43_donpk.md`
 ---
+
+## Session 43 — donpk (suite) — 20/05/2026
+
+**Fichiers modifiés (frontend) :**
+- `src/app/(dashboard)/bots/_components/tabs/BotSettingsPanel.tsx` — dark mode, bg-white purgés
+- `src/app/(dashboard)/bots/_components/tabs/ConversationsTab.tsx` — dark mode, UX WAOUH
+- `src/app/(dashboard)/bots/_components/tabs/StatsTab.tsx` — dark mode, tooltip CSS vars
+- `src/app/(dashboard)/bots/_components/tabs/BotConfigTab.tsx` — dark mode, inputs sectoriels
+- `src/app/(dashboard)/results/_components/ReservationResultCard.tsx` — suppression ressource_nom
+- `src/app/(dashboard)/bots/_components/ConversationReportModal.tsx` — re-export vers shared
+- `src/app/(dashboard)/knowledge/_components/tabs/ChatbotResultTab.tsx` — modal unifié
+- `src/components/shared/ConversationModal.tsx` — NOUVEAU composant partagé
+- `src/dictionaries/fr/bots.fr.ts` — nouvelles clés modal i18n
+- `src/dictionaries/en/bots.en.ts` — nouvelles clés modal i18n
+
+**Fichiers modifiés (backend) :**
+- `apps/tenants/seeders/demo/custom.py` — ajout _seed_prospects() 4 contacts CRM
+
+**Décisions prises :**
+- ConversationModal → composant partagé unique pour /bots et /results
+- Éditabilité résultats → reportée après production
+- globals.css btn-primary + input-base → décision pendante (voir rapport S44)
+
+**Zones à risque :**
+- `src/components/shared/` — nouveau dossier, vérifier imports dans autres membres
+- `src/dictionaries/` — si un autre membre ajoute des clés bots, merger avec S44
+
+**Prochaine priorité : Session 45**
+→ Redesign UX WAOUH page /results — tous les tabs
+→ Même règles : zéro hardcode couleur, zéro hardcode texte, useLanguage, CSS vars
+
+---
+
 ## session_44_gabriel
 
 - **Type :** Génération — B5 Étape 6 Skills
@@ -772,6 +805,23 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Fichiers créés :** 4 Python + 78 Markdown
 - **Dette ouverte :** Migration django_celery_results DuplicateTable à fixer S45 avant seed skills
 - **Rapport :** `docs/reports/session_44_gabriel.md`
+
+
+---
+
+## session_45_donpk
+
+- **Type :** Génération — Frontend UX WAOUH /results + /knowledge (partiel)
+- **Date :** 2026-05-21
+- **Flux couverts :** B5 Étape 3 UX ✅ (/results 11 cards) · B5 /knowledge Batch 1-2 ✅
+- **Bugs corrigés :** `confirm()` natif AgenceCard → modal inline · MenuTab filtre `feature_slug` manquant · `image_url` absent de `ChambreType` backend
+- **Zones touchées :** `src/app/(dashboard)/results/_components/` · `src/app/(dashboard)/knowledge/_components/` · `src/lib/image-placeholder.ts` · `src/app/globals.css` · `src/dictionaries/` · `apps/knowledge/models.py` · `apps/knowledge/serializers.py` · `apps/knowledge/migrations/`
+- **Fichiers créés :** `results.fr.ts` · `results.en.ts` · `image-placeholder.ts` · `0012_chambretype_image_url.py`
+- **Fichiers modifiés :** 23 frontend + 2 backend
+- **Migration appliquée :** `0012_chambretype_image_url` ✅
+- **Batches restants S46 :** ChambreCard · FaqTab · CitoyensTab · MedicalTab · InscriptionsTab · ChatbotConversationCard · KnowledgeSkeleton · ProduitFinancierTab
+- **Rapport :** `docs/reports/session_45_donpk.md`
+
 
 ---
 ## session_46_gabriel
@@ -789,6 +839,7 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
   - **Gabriel :** B5 Étape 7 suite — Niveau 2 (24 features) + Niveau 3 (secteurs) — zones `apps/agent/tests_e2e/`
   - **Penka :** KB + Results frontend — zones `src/app/(dashboard)/knowledge/` + `src/app/(dashboard)/results/`
 - **Rapport :** `docs/reports/session_46_gabriel.md`
+
 
 ---
 ## session_47_gabriel

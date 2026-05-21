@@ -40,7 +40,7 @@ import { transport } from './transport.fr';
 import { clinical } from "./clinical.fr";
 import { pme } from "./pme.fr";
 import { public_ } from "./public.fr";
-
+import { results } from "./results.fr";
 
 export const fr = {
   common,
@@ -84,6 +84,7 @@ export const fr = {
   clinical,
   pme,
   public_,
+  results,
 } as const;
 
 export type FrDict = typeof fr;

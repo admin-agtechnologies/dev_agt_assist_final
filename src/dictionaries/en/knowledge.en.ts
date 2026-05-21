@@ -49,6 +49,8 @@ export const knowledge = {
     createSuccess:    "Branch created",
     createError:      "Error creating branch",
     loadError:        "Unable to load branches",
+    deleteBtn:     "Delete",
+    deleteConfirm: "Delete agency \"{nom}\"?",
   },
 
   faq: {

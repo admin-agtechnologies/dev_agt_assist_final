@@ -40,6 +40,7 @@ import { transport } from './transport.en';
 import { clinical } from "./clinical.en";
 import { pme } from "./pme.en";
 import { public_ } from "./public.en";
+import { results } from "./results.en";
 
 export const en = {
   common,
@@ -83,6 +84,7 @@ export const en = {
   clinical,
   pme,
   public_,
+  results,
 } as const;
 
 export type EnDict = typeof en;
