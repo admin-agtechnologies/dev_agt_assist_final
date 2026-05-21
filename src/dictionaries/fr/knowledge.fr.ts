@@ -49,6 +49,8 @@ export const knowledge = {
     createSuccess:    "Agence créée",
     createError:      "Erreur lors de la création",
     loadError:        "Impossible de charger les agences",
+    deleteBtn:     "Supprimer",
+    deleteConfirm: "Supprimer l'agence \"{nom}\" ?",
   },
 
   faq: {
