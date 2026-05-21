@@ -197,7 +197,6 @@ export default function PmeDashboardPage() {
         <ConversationReportModal
           conversation={selectedConv}
           onClose={() => setSelectedConv(null)}
-          d={d}
           colors={SECTOR_COLORS.default}
         />
       )}

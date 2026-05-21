@@ -158,7 +158,6 @@ export function ConversationsTab({ conversations, d, colors }: ConversationsTabP
           <ConversationReportModal
             conversation={selectedConv}
             onClose={() => setSelectedConv(null)}
-            d={d}
             colors={colors}
           />,
           document.body,
