@@ -1,15 +1,18 @@
 // src/app/(dashboard)/knowledge/_components/tabs/FaqTab.tsx
+// S46 — Redesign : pills filtre par catégorie + toggle pill coloré + hover lift
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useMemo } from "react";
 import {
   Plus, Trash2, Save, ChevronDown, ChevronUp,
-  Loader2, HelpCircle, ToggleLeft, ToggleRight,
+  Loader2, HelpCircle,
 } from "lucide-react";
 import { useLanguage }         from "@/contexts/LanguageContext";
 import { useToast }            from "@/components/ui/Toast";
 import { useSector }           from "@/hooks/useSector";
 import { questionsRepository } from "@/repositories";
+import { FaqSkeleton }         from "../KnowledgeSkeleton";
+import { cn }                  from "@/lib/utils";
 import type { QuestionFrequente } from "@/types/api";
 
 const EMPTY = {
@@ -25,10 +28,11 @@ export function FaqTab() {
   const toast             = useToast();
 
   const [questions, setQuestions] = useState<QuestionFrequente[]>([]);
-  const [loading, setLoading]     = useState(true);
-  const [expanded, setExpanded]   = useState<string | null>(null);
-  const [adding, startAdd]        = useTransition();
-  const [draft, setDraft]         = useState<typeof EMPTY | null>(null);
+  const [loading,   setLoading]   = useState(true);
+  const [expanded,  setExpanded]  = useState<string | null>(null);
+  const [adding,    startAdd]     = useTransition();
+  const [draft,     setDraft]     = useState<typeof EMPTY | null>(null);
+  const [filterCat, setFilterCat] = useState<string | null>(null);
 
   useEffect(() => {
     questionsRepository.getList()
@@ -36,6 +40,17 @@ export function FaqTab() {
       .catch(() => toast.error(t.loadError))
       .finally(() => setLoading(false));
   }, []); // eslint-disable-line
+
+  // Catégories uniques extraites des questions
+  const categories = useMemo(() => {
+    return [...new Set(questions.map((q) => q.categorie).filter(Boolean))] as string[];
+  }, [questions]);
+
+  // Questions filtrées par catégorie
+  const filtered = useMemo(() => {
+    if (!filterCat) return questions;
+    return questions.filter((q) => q.categorie === filterCat);
+  }, [questions, filterCat]);
 
   const toggleActive = async (q: QuestionFrequente) => {
     try {
@@ -73,8 +88,8 @@ export function FaqTab() {
           question_fr: draft.question_fr.trim(),
           question_en: draft.question_en.trim() || undefined,
           reponse_fr:  draft.reponse_fr.trim(),
-          reponse_en:  draft.reponse_en.trim() || undefined,
-          categorie:   draft.categorie.trim() || undefined,
+          reponse_en:  draft.reponse_en.trim()  || undefined,
+          categorie:   draft.categorie.trim()   || undefined,
           is_active:   true,
           ordre:       Number(draft.ordre) || 0,
         });
@@ -85,21 +100,12 @@ export function FaqTab() {
     });
   };
 
-  const fieldLabels = {
-    qFr: t.fieldQuestionFr, rFr: t.fieldReponseFr,
-    qEn: t.fieldQuestionEn, rEn: t.fieldReponseEn,
-    cat: t.fieldCategorie,
-  };
-
-  if (loading) return (
-    <div className="flex justify-center py-20">
-      <Loader2 className="w-6 h-6 animate-spin text-[var(--text-muted)]" />
-    </div>
-  );
+  if (loading) return <FaqSkeleton />;
 
   return (
     <div className="space-y-4">
-      {/* Header */}
+
+      {/* ── Header + bouton ajouter ── */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-[var(--text-muted)]">
           {questions.length} question{questions.length !== 1 ? "s" : ""}
@@ -113,7 +119,41 @@ export function FaqTab() {
         )}
       </div>
 
-      {/* Formulaire nouvelle question */}
+      {/* ── Pills filtre catégorie ── */}
+      {categories.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <button type="button"
+            onClick={() => setFilterCat(null)}
+            className={cn(
+              "px-3 py-1 rounded-full text-xs font-medium transition-all",
+              !filterCat
+                ? "text-white shadow-sm"
+                : "bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]",
+            )}
+            style={!filterCat ? { backgroundColor: theme.primary } : undefined}>
+            {t.filterAll} ({questions.length})
+          </button>
+          {categories.map((cat) => {
+            const count    = questions.filter((q) => q.categorie === cat).length;
+            const isActive = filterCat === cat;
+            return (
+              <button key={cat} type="button"
+                onClick={() => setFilterCat(isActive ? null : cat)}
+                className={cn(
+                  "px-3 py-1 rounded-full text-xs font-medium transition-all",
+                  isActive
+                    ? "text-white shadow-sm"
+                    : "bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]",
+                )}
+                style={isActive ? { backgroundColor: theme.primary } : undefined}>
+                {cat} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Formulaire nouvelle question ── */}
       {draft && (
         <div className="rounded-2xl border-2 p-5 space-y-3 bg-[var(--bg-card)]"
           style={{ borderColor: theme.primary }}>
@@ -140,7 +180,7 @@ export function FaqTab() {
           ))}
           <div>
             <label className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-1 block">
-              Ordre
+              {t.fieldOrdre}
             </label>
             <input className="input-base w-24" type="number" min="0"
               value={draft.ordre}
@@ -148,8 +188,9 @@ export function FaqTab() {
           </div>
           <div className="flex justify-end gap-2 pt-1">
             <button type="button" onClick={() => setDraft(null)}
-              className="px-4 py-2 text-sm rounded-xl border border-[var(--border)] hover:bg-[var(--bg)] text-[var(--text-muted)]">
-              Annuler
+              className="px-4 py-2 text-sm rounded-xl border border-[var(--border)]
+                hover:bg-[var(--bg)] text-[var(--text-muted)]">
+              {d.common.cancel}
             </button>
             <button type="button" onClick={addQuestion} disabled={adding}
               className="btn-primary flex items-center gap-2 px-4 py-2 text-sm disabled:opacity-60">
@@ -160,16 +201,19 @@ export function FaqTab() {
         </div>
       )}
 
-      {/* Liste questions */}
+      {/* ── État vide ── */}
       {questions.length === 0 && !draft ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3 text-center
           bg-[var(--bg-card)] rounded-2xl border border-dashed border-[var(--border)]">
-          <HelpCircle className="w-10 h-10 text-[var(--text-muted)]" />
-          <p className="text-sm text-[var(--text-muted)]">{t.empty}</p>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
+            style={{ background: `color-mix(in srgb, ${theme.primary} 10%, transparent)` }}>
+            <HelpCircle className="w-7 h-7" style={{ color: theme.primary }} />
+          </div>
+          <p className="text-sm text-[var(--text-muted)] max-w-xs">{t.empty}</p>
         </div>
       ) : (
         <div className="space-y-2">
-          {questions.map((q) => (
+          {filtered.map((q) => (
             <QuestionRow
               key={q.id}
               question={q}
@@ -179,19 +223,27 @@ export function FaqTab() {
               onDelete={() => deleteQuestion(q.id)}
               onSave={(patch) => saveQuestion(q, patch)}
               primaryColor={theme.primary}
-              fieldLabels={fieldLabels}
+              t={t}
               saveLabel={d.common.save}
+              cancelLabel={d.common.cancel}
             />
           ))}
+          {filterCat && filtered.length === 0 && (
+            <p className="text-sm text-center text-[var(--text-muted)] py-8">
+              Aucune question dans cette catégorie.
+            </p>
+          )}
         </div>
       )}
     </div>
   );
 }
 
+// ── QuestionRow ───────────────────────────────────────────────────────────────
+
 function QuestionRow({
   question, expanded, onToggleExpand, onToggleActive,
-  onDelete, onSave, primaryColor, fieldLabels, saveLabel,
+  onDelete, onSave, primaryColor, t, saveLabel, cancelLabel,
 }: {
   question: QuestionFrequente;
   expanded: boolean;
@@ -200,8 +252,9 @@ function QuestionRow({
   onDelete: () => void;
   onSave: (p: Partial<QuestionFrequente>) => void;
   primaryColor: string;
+  t: Record<string, string>;
   saveLabel: string;
-  fieldLabels: { qFr: string; rFr: string; qEn: string; rEn: string; cat: string };
+  cancelLabel: string;
 }) {
   const [form, setForm] = useState({
     question_fr: question.question_fr,
@@ -213,42 +266,67 @@ function QuestionRow({
   });
 
   const FIELDS = [
-    { label: fieldLabels.qFr, key: "question_fr" as const },
-    { label: fieldLabels.rFr, key: "reponse_fr"  as const, textarea: true },
-    { label: fieldLabels.qEn, key: "question_en" as const },
-    { label: fieldLabels.rEn, key: "reponse_en"  as const, textarea: true },
-    { label: fieldLabels.cat, key: "categorie"   as const },
+    { label: t.fieldQuestionFr, key: "question_fr" as const },
+    { label: t.fieldReponseFr,  key: "reponse_fr"  as const, textarea: true },
+    { label: t.fieldQuestionEn, key: "question_en" as const },
+    { label: t.fieldReponseEn,  key: "reponse_en"  as const, textarea: true },
+    { label: t.fieldCategorie,  key: "categorie"   as const },
   ];
 
   return (
-    <div className={`rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] overflow-hidden
-      ${!question.is_active ? "opacity-60" : ""}`}>
+    <div className={cn(
+      "rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] overflow-hidden",
+      "hover:shadow-md hover:-translate-y-0.5 transition-all duration-200",
+      !question.is_active && "opacity-60",
+    )}>
       <div className="flex items-center gap-3 px-4 py-3">
-        <button type="button" onClick={onToggleActive} className="flex-shrink-0">
-          {question.is_active
-            ? <ToggleRight className="w-5 h-5" style={{ color: primaryColor }} />
-            : <ToggleLeft  className="w-5 h-5 text-[var(--text-muted)]" />}
+
+        {/* Toggle actif/inactif — pill coloré */}
+        <button type="button" onClick={onToggleActive}
+          className={cn(
+            "flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold",
+            "flex-shrink-0 transition-all",
+          )}
+          style={question.is_active
+            ? { background: "var(--status-success-bg)", color: "var(--status-success-text)" }
+            : { background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+          <span className={cn(
+            "w-1.5 h-1.5 rounded-full",
+            question.is_active ? "bg-current" : "bg-[var(--text-muted)]",
+          )} />
+          {question.is_active ? (t.active ?? "Actif") : (t.inactive ?? "Inactif")}
         </button>
+
         <button type="button" onClick={onToggleExpand}
           className="flex-1 text-left text-sm font-medium text-[var(--text)] truncate">
           {question.question_fr || "—"}
         </button>
+
         {question.categorie && (
-          <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--bg)] text-[var(--text-muted)] border border-[var(--border)]">
+          <span className="text-[10px] px-2 py-0.5 rounded-full font-medium flex-shrink-0"
+            style={{
+              background: `color-mix(in srgb, ${primaryColor} 10%, transparent)`,
+              color:      primaryColor,
+            }}>
             {question.categorie}
           </span>
         )}
+
         <span className="text-xs text-[var(--text-muted)]">#{question.ordre ?? 0}</span>
+
         <button type="button" onClick={onDelete}
-          className="text-[var(--text-muted)] hover:text-red-500 transition-colors flex-shrink-0">
+          className="text-[var(--text-muted)] hover:text-[var(--status-danger-text)]
+            hover:bg-[var(--status-danger-bg)] p-1 rounded-lg transition-colors flex-shrink-0">
           <Trash2 className="w-4 h-4" />
         </button>
+
         <button type="button" onClick={onToggleExpand}
-          className="flex-shrink-0 text-[var(--text-muted)]">
+          className="flex-shrink-0 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors">
           {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
       </div>
 
+      {/* Panneau édition */}
       {expanded && (
         <div className="px-4 pb-4 space-y-3 border-t border-[var(--border)] pt-3">
           {FIELDS.map(({ label, key, textarea }) => (
@@ -265,12 +343,12 @@ function QuestionRow({
           ))}
           <div>
             <label className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-1 block">
-              Ordre
+              {t.fieldOrdre}
             </label>
             <input className="input-base w-24" type="number" min="0" value={form.ordre}
               onChange={(e) => setForm((f) => ({ ...f, ordre: e.target.value }))} />
           </div>
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2 pt-1">
             <button type="button"
               onClick={() => onSave({
                 question_fr: form.question_fr,

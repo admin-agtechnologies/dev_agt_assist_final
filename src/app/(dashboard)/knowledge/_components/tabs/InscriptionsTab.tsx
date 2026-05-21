@@ -1,4 +1,5 @@
 // src/app/(dashboard)/knowledge/_components/tabs/InscriptionsTab.tsx
+// S46 — hover lift + empty state sectoriel + i18n complet + CSS vars toggle
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
@@ -8,28 +9,12 @@ import {
 } from "lucide-react";
 import { useSector }           from "@/hooks/useSector";
 import { useToast }            from "@/components/ui/Toast";
+import { useLanguage }         from "@/contexts/LanguageContext";
 import { programmeRepository } from "@/repositories/p5.repository";
 import { KnowledgeCardSkeleton } from "../KnowledgeSkeleton";
 import { cn } from "@/lib/utils";
 import type { ProgrammeAdmission, NiveauAdmission } from "@/types/api/p5.types";
 
-// Sync avec backend NIVEAU_CHOICES — 9 valeurs actives + 2 legacy
-const NIVEAUX: Record<NiveauAdmission, string> = {
-  primaire:      "Primaire",
-  college:       "Collège",
-  lycee:         "Lycée",
-  bts_dut:       "BTS / DUT",
-  licence:       "Licence / Bachelor",
-  master:        "Master",
-  doctorat:      "Doctorat",
-  formation_pro: "Formation pro",
-  autre:         "Autre",
-  // Legacy (conservés en BD, non proposés à la création)
-  secondaire:    "Secondaire",
-  superieur:     "Supérieur",
-};
-
-// Valeurs proposées dans le select (hors legacy)
 const NIVEAUX_SELECT: NiveauAdmission[] = [
   "primaire", "college", "lycee", "bts_dut",
   "licence", "master", "doctorat", "formation_pro", "autre",
@@ -40,8 +25,8 @@ const EMPTY = {
   duree: "", frais_inscription: "", conditions_admission: "",
   date_ouverture: "", date_fermeture: "",
   frais_scolarite_annuels: "", places_disponibles: "",
-  documents_requis: "",    // "CNI, Relevé de notes" → split par virgule
-  etapes_inscription: "", // une étape par ligne → string[]
+  documents_requis: "",
+  etapes_inscription: "",
 };
 
 const parseDocs   = (s: string) => s.split(",").map((d) => d.trim()).filter(Boolean);
@@ -50,8 +35,11 @@ const parseEtapes = (s: string) => s.split("\n").map((e) => e.trim()).filter(Boo
 const etapesToStr = (arr: string[]) => (arr ?? []).join("\n");
 
 export function InscriptionsTab() {
-  const { theme } = useSector();
-  const toast     = useToast();
+  const { theme }         = useSector();
+  const toast             = useToast();
+  const { dictionary: d } = useLanguage();
+  const t                 = d.knowledge.inscriptions;
+
   const [items,   setItems]   = useState<ProgrammeAdmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
@@ -62,7 +50,7 @@ export function InscriptionsTab() {
   useEffect(() => {
     programmeRepository.getList()
       .then(setItems)
-      .catch(() => toast.error("Erreur chargement"))
+      .catch(() => toast.error(t.errorLoad))
       .finally(() => setLoading(false));
   }, []); // eslint-disable-line
 
@@ -107,8 +95,8 @@ export function InscriptionsTab() {
     try {
       const c = await programmeRepository.create(toPayload(form));
       setItems((p) => [...p, c]); setShowAdd(false); setForm(EMPTY);
-      toast.success("Programme ajouté");
-    } catch { toast.error("Erreur"); }
+      toast.success(t.createSuccess);
+    } catch { toast.error(t.createError); }
   });
 
   const handleUpdate = (id: string) => startSave(async () => {
@@ -116,23 +104,23 @@ export function InscriptionsTab() {
     try {
       const u = await programmeRepository.update(id, toPayload(form));
       setItems((p) => p.map((x) => x.id === id ? u : x)); setEditId(null);
-      toast.success("Programme mis à jour");
-    } catch { toast.error("Erreur"); }
+      toast.success(t.updateSuccess);
+    } catch { toast.error(t.updateError); }
   });
 
   const handleDelete = (id: string) => startSave(async () => {
     try {
       await programmeRepository.delete(id);
       setItems((p) => p.filter((x) => x.id !== id));
-      toast.success("Programme supprimé");
-    } catch { toast.error("Erreur"); }
+      toast.success(t.deleteSuccess);
+    } catch { toast.error(t.deleteError); }
   });
 
   const handleToggle = (item: ProgrammeAdmission) => startSave(async () => {
     try {
       const u = await programmeRepository.update(item.id, { is_available: !item.is_available });
       setItems((p) => p.map((x) => x.id === item.id ? u : x));
-    } catch { toast.error("Erreur"); }
+    } catch { toast.error(t.updateError); }
   });
 
   if (loading) return (
@@ -151,33 +139,38 @@ export function InscriptionsTab() {
           <button type="button"
             onClick={() => { setShowAdd(true); setEditId(null); setForm(EMPTY); }}
             className="btn-primary flex items-center gap-2 px-4 py-2 text-sm">
-            <Plus className="w-4 h-4" /> Ajouter un programme
+            <Plus className="w-4 h-4" /> {t.addBtn}
           </button>
         )}
       </div>
 
       {showAdd && (
-        <ProgrammeForm form={form} set={set}
+        <ProgrammeForm form={form} set={set} theme={theme} t={t} d={d}
           onSave={handleCreate} onCancel={() => setShowAdd(false)}
-          saving={saving} theme={theme} label="Nouveau programme" />
+          saving={saving} label={t.newTitle}
+          niveauxSelect={NIVEAUX_SELECT} />
       )}
 
       {items.length === 0 && !showAdd ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-3 text-center
+        <div className="flex flex-col items-center justify-center py-20 gap-4 text-center
           bg-[var(--bg-card)] rounded-2xl border border-dashed border-[var(--border)]">
-          <GraduationCap className="w-10 h-10 text-[var(--text-muted)]" />
-          <p className="text-sm text-[var(--text-muted)]">Aucun programme configuré.</p>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
+            style={{ background: `color-mix(in srgb, ${theme.primary} 10%, transparent)` }}>
+            <GraduationCap className="w-7 h-7" style={{ color: theme.primary }} />
+          </div>
+          <p className="text-sm text-[var(--text-muted)]">{t.empty}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {items.map((item) => editId === item.id ? (
             <div key={item.id} className="sm:col-span-2 xl:col-span-3">
-              <ProgrammeForm form={form} set={set}
+              <ProgrammeForm form={form} set={set} theme={theme} t={t} d={d}
                 onSave={() => handleUpdate(item.id)} onCancel={() => setEditId(null)}
-                saving={saving} theme={theme} label="Modifier le programme" />
+                saving={saving} label={t.editTitle}
+                niveauxSelect={NIVEAUX_SELECT} />
             </div>
           ) : (
-            <ProgrammeCard key={item.id} item={item} theme={theme} saving={saving}
+            <ProgrammeCard key={item.id} item={item} theme={theme} t={t} saving={saving}
               onToggle={() => handleToggle(item)}
               onEdit={() => { setEditId(item.id); setForm(fillForm(item)); setShowAdd(false); }}
               onDelete={() => handleDelete(item.id)} />
@@ -188,20 +181,25 @@ export function InscriptionsTab() {
   );
 }
 
-// ── Card ──────────────────────────────────────────────────────────────────────
+// ── ProgrammeCard ─────────────────────────────────────────────────────────────
 
-function ProgrammeCard({ item, theme, saving, onToggle, onEdit, onDelete }: {
+function ProgrammeCard({ item, theme, t, saving, onToggle, onEdit, onDelete }: {
   item: ProgrammeAdmission;
   theme: { primary: string };
+  t: Record<string, string | Record<string, string>>;
   saving: boolean;
   onToggle: () => void; onEdit: () => void; onDelete: () => void;
 }) {
+  const { dictionary: d } = useLanguage();
+  const niveaux           = d.knowledge.inscriptions.niveaux as Record<string, string>;
   const docs   = item.documents_requis   ?? [];
   const etapes = item.etapes_inscription ?? [];
+
   return (
     <div className={cn(
-      "bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] p-5 flex flex-col gap-3 hover:shadow-md transition-all",
-      !item.is_available && "opacity-60"
+      "bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] p-5 flex flex-col gap-3",
+      "hover:shadow-md hover:-translate-y-0.5 transition-all duration-200",
+      !item.is_available && "opacity-60",
     )}>
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
@@ -209,14 +207,17 @@ function ProgrammeCard({ item, theme, saving, onToggle, onEdit, onDelete }: {
           <p className="font-semibold text-sm text-[var(--text)]">{item.nom_fr}</p>
           <span className="text-[10px] px-1.5 py-0.5 rounded font-medium mt-0.5 inline-block"
             style={{ backgroundColor: `${theme.primary}20`, color: theme.primary }}>
-            {NIVEAUX[item.niveau] ?? item.niveau}
+            {niveaux[item.niveau] ?? item.niveau}
           </span>
         </div>
         <button type="button" onClick={onToggle} disabled={saving}
-          className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold bg-[var(--bg)] flex-shrink-0">
+          className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold flex-shrink-0 transition-all"
+          style={item.is_available
+            ? { background: "var(--status-success-bg)", color: "var(--status-success-text)" }
+            : { background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
           {item.is_available
-            ? <><ToggleRight className="w-3.5 h-3.5 text-green-500" />Ouvert</>
-            : <><ToggleLeft  className="w-3.5 h-3.5 text-[var(--text-muted)]" />Fermé</>}
+            ? <><ToggleRight className="w-3.5 h-3.5" />{String(t.ouvert)}</>
+            : <><ToggleLeft  className="w-3.5 h-3.5" />{String(t.ferme)}</>}
         </button>
       </div>
 
@@ -232,7 +233,7 @@ function ProgrammeCard({ item, theme, saving, onToggle, onEdit, onDelete }: {
         <span>
           {item.frais_inscription != null
             ? <strong className="text-[var(--text)]">{Number(item.frais_inscription).toLocaleString("fr-FR")} XAF</strong>
-            : <span className="text-green-600 font-medium">Gratuit</span>}
+            : <span style={{ color: "var(--status-success-text)" }} className="font-medium">{String(t.gratuit)}</span>}
         </span>
         {item.places_disponibles != null && (
           <span>Places : <strong className="text-[var(--text)]">{item.places_disponibles}</strong></span>
@@ -242,7 +243,7 @@ function ProgrammeCard({ item, theme, saving, onToggle, onEdit, onDelete }: {
         )}
       </div>
 
-      {/* Documents requis — chips */}
+      {/* Documents requis */}
       {docs.length > 0 && (
         <div className="flex flex-wrap gap-1 items-center">
           <FileCheck className="w-3 h-3 text-[var(--text-muted)] flex-shrink-0" />
@@ -258,119 +259,113 @@ function ProgrammeCard({ item, theme, saving, onToggle, onEdit, onDelete }: {
         </div>
       )}
 
-      {/* Étapes */}
+      {/* Étapes + Dates */}
       {etapes.length > 0 && (
         <div className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
           <ListOrdered className="w-3 h-3" />
-          {etapes.length} étape{etapes.length > 1 ? "s" : ""}
+          {etapes.length} {etapes.length > 1 ? String(t.etapePlural) : String(t.etapeSingular)}
         </div>
       )}
-
-      {/* Dates */}
       {(item.date_ouverture || item.date_fermeture) && (
         <div className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
           <Calendar className="w-3 h-3" />
-          {item.date_ouverture && <span>Ouverture : {item.date_ouverture}</span>}
-          {item.date_fermeture && <span>— Clôture : {item.date_fermeture}</span>}
+          {item.date_ouverture && <span>Ouv.: {item.date_ouverture}</span>}
+          {item.date_fermeture && <span>— Clô.: {item.date_fermeture}</span>}
         </div>
       )}
 
       {/* Actions */}
       <div className="flex justify-end gap-1 mt-auto pt-1">
         <button type="button" onClick={onEdit}
-          className="p-1.5 rounded-lg hover:bg-[var(--bg)]">
+          className="p-1.5 rounded-lg hover:bg-[var(--bg)] transition-colors">
           <Pencil className="w-3.5 h-3.5 text-[var(--text-muted)]" />
         </button>
         <button type="button" onClick={onDelete} disabled={saving}
-          className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
-          <Trash2 className="w-3.5 h-3.5 text-red-400" />
+          className="p-1.5 rounded-lg hover:bg-[var(--status-danger-bg)] transition-colors">
+          <Trash2 className="w-3.5 h-3.5 text-[var(--text-muted)]" />
         </button>
       </div>
     </div>
   );
 }
 
-// ── Formulaire ────────────────────────────────────────────────────────────────
+// ── ProgrammeForm ─────────────────────────────────────────────────────────────
 
-function ProgrammeForm({ form, set, onSave, onCancel, saving, theme, label }: {
+function ProgrammeForm({ form, set, onSave, onCancel, saving, theme, t, d, label, niveauxSelect }: {
   form: typeof EMPTY;
   set: (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
   onSave: () => void; onCancel: () => void;
-  saving: boolean; theme: { primary: string }; label: string;
+  saving: boolean; theme: { primary: string };
+  t: Record<string, string | Record<string, string>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  d: any; label: string;
+  niveauxSelect: NiveauAdmission[];
 }) {
+  const niveaux = (t.niveaux ?? {}) as Record<string, string>;
+
   return (
     <div className="bg-[var(--bg-card)] rounded-2xl border-2 p-5 space-y-3"
       style={{ borderColor: theme.primary }}>
       <p className="text-sm font-semibold text-[var(--text)]">{label}</p>
-
-      <Row label="Nom du programme *">
+      <Row label={String(t.nomLabel)}>
         <input className="input-base" value={form.nom_fr} onChange={set("nom_fr")} autoFocus />
       </Row>
-      <Row label="Description">
+      <Row label={String(t.descriptionLabel)}>
         <textarea className="input-base resize-none" rows={2} value={form.description_fr} onChange={set("description_fr")} />
       </Row>
-
       <div className="grid grid-cols-2 gap-3">
-        <Row label="Niveau *">
+        <Row label={String(t.niveauLabel)}>
           <select className="input-base" value={form.niveau} onChange={set("niveau")}>
-            {NIVEAUX_SELECT.map((v) => (
-              <option key={v} value={v}>{NIVEAUX[v]}</option>
+            {niveauxSelect.map((v) => (
+              <option key={v} value={v}>{niveaux[v] ?? v}</option>
             ))}
           </select>
         </Row>
-        <Row label="Durée">
-          <input className="input-base" placeholder="2 ans" value={form.duree} onChange={set("duree")} />
+        <Row label={String(t.dureeLabel)}>
+          <input className="input-base" placeholder={String(t.dureePlh)} value={form.duree} onChange={set("duree")} />
         </Row>
       </div>
-
       <div className="grid grid-cols-2 gap-3">
-        <Row label="Frais d'inscription (XAF)">
+        <Row label={String(t.fraisInscLabel)}>
           <input className="input-base" type="number" min="0" value={form.frais_inscription} onChange={set("frais_inscription")} />
         </Row>
-        <Row label="Frais scolarité annuels (XAF)">
+        <Row label={String(t.fraisScolariteLabel)}>
           <input className="input-base" type="number" min="0" value={form.frais_scolarite_annuels} onChange={set("frais_scolarite_annuels")} />
         </Row>
       </div>
-
       <div className="grid grid-cols-2 gap-3">
-        <Row label="Places disponibles">
+        <Row label={String(t.placesLabel)}>
           <input className="input-base" type="number" min="0" value={form.places_disponibles} onChange={set("places_disponibles")} />
         </Row>
-        <Row label="Conditions d'admission">
+        <Row label={String(t.conditionsLabel)}>
           <input className="input-base" value={form.conditions_admission} onChange={set("conditions_admission")} />
         </Row>
       </div>
-
-      <Row label="Documents requis (séparés par virgule)">
-        <input className="input-base"
-          placeholder="CNI, Relevé de notes, Photo d'identité"
-          value={form.documents_requis} onChange={set("documents_requis")} />
+      <Row label={String(t.documentsLabel)}>
+        <input className="input-base" placeholder={String(t.documentsPlh)} value={form.documents_requis} onChange={set("documents_requis")} />
       </Row>
-
-      <Row label="Étapes d'inscription (une par ligne)">
-        <textarea className="input-base resize-none" rows={3}
-          placeholder={"Retirer le dossier au secrétariat\nRemplir et déposer le dossier\nPasser l'entretien"}
+      <Row label={String(t.etapesLabel)}>
+        <textarea className="input-base resize-none" rows={3} placeholder={String(t.etapesPlh)}
           value={form.etapes_inscription} onChange={set("etapes_inscription")} />
       </Row>
-
       <div className="grid grid-cols-2 gap-3">
-        <Row label="Ouverture des inscriptions">
+        <Row label={String(t.ouvertureLabel)}>
           <input className="input-base" type="date" value={form.date_ouverture} onChange={set("date_ouverture")} />
         </Row>
-        <Row label="Clôture des inscriptions">
+        <Row label={String(t.clotureLabel)}>
           <input className="input-base" type="date" value={form.date_fermeture} onChange={set("date_fermeture")} />
         </Row>
       </div>
-
       <div className="flex justify-end gap-2 pt-1">
         <button type="button" onClick={onCancel}
-          className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-xl border border-[var(--border)] hover:bg-[var(--bg)] text-[var(--text-muted)]">
-          <X className="w-4 h-4" /> Annuler
+          className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-xl
+            border border-[var(--border)] hover:bg-[var(--bg)] text-[var(--text-muted)]">
+          <X className="w-4 h-4" /> {d.common.cancel}
         </button>
         <button type="button" onClick={onSave} disabled={saving || !form.nom_fr.trim()}
           className="btn-primary flex items-center gap-1.5 px-4 py-2 text-sm disabled:opacity-60">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-          Enregistrer
+          {d.common.save}
         </button>
       </div>
     </div>
@@ -380,9 +375,7 @@ function ProgrammeForm({ form, set, onSave, onCancel, saving, theme, label }: {
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-1 block">
-        {label}
-      </label>
+      <label className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-1 block">{label}</label>
       {children}
     </div>
   );
