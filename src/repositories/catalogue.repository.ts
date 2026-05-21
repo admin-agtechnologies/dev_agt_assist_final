@@ -1,7 +1,7 @@
 // src/repositories/catalogue.repository.ts
 // B5 S38/S39 — Migration S2→S3
-// Endpoints inchangés (même URLs), types de retour mis à jour → CatalogueItemKB
-// Les anciens types CatalogueProduit/Service/Trajet/ProduitFinancier sont supprimés.
+// Endpoints inchangés (mêmes URLs), types de retour mis à jour → CatalogueItemKB
+// S46 — Ajout menuRepository (menu-items / MenuDigitalViewSet)
 import { api } from "@/lib/api-client";
 import type {
   Catalogue,               CreateCataloguePayload,
@@ -20,12 +20,12 @@ function toList<T>(data: unknown): T[] {
   return ((data as { results?: T[] }).results) ?? [];
 }
 
-// ── Catalogues génériques (catalogues.repository — admin) ────────────────────
+// ── Catalogues génériques (catalogues.repository — admin) ──────────────────────
 
 export const catalogueRepository = {
   getList: (filters?: CatalogueFilters) =>
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-api.get<Catalogue[]>(`${BASE}/catalogues/`, { params: filters as any }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    api.get<Catalogue[]>(`${BASE}/catalogues/`, { params: filters as any }),
   getById: (id: string) =>
     api.get<CatalogueDetail>(`${BASE}/catalogues/${id}/`),
   create: (p: CreateCataloguePayload) =>
@@ -40,7 +40,7 @@ api.get<Catalogue[]>(`${BASE}/catalogues/`, { params: filters as any }),
     api.post<ItemCatalogue>(`${BASE}/categories/${categorieId}/items/`, p),
 };
 
-// ── Produits (ecommerce) — S3 ─────────────────────────────────────────────────
+// ── Produits (ecommerce) — S3 ──────────────────────────────────────────────────
 
 export const catalogueProduitRepository = {
   getList: () =>
@@ -53,7 +53,7 @@ export const catalogueProduitRepository = {
     api.delete(`${BASE}/catalogue-produits/${id}/`) as Promise<void>,
 };
 
-// ── Services (pme / hotel / sante) — S3 ──────────────────────────────────────
+// ── Services (pme / hotel / sante) — S3 ───────────────────────────────────────
 
 export const catalogueServiceRepository = {
   getList: () =>
@@ -66,7 +66,7 @@ export const catalogueServiceRepository = {
     api.delete(`${BASE}/catalogue-services/${id}/`) as Promise<void>,
 };
 
-// ── Trajets (transport) — S3 ──────────────────────────────────────────────────
+// ── Trajets (transport) — S3 ───────────────────────────────────────────────────
 
 export const catalogueTrajetRepository = {
   getList: () =>
@@ -90,6 +90,21 @@ export const produitFinancierRepository = {
     api.patch(`${BASE}/produits-financiers/${id}/`, p) as Promise<ProduitFinancierKB>,
   delete: (id: string) =>
     api.delete(`${BASE}/produits-financiers/${id}/`) as Promise<void>,
+};
+
+// ── Menu digital (restaurant) — S46 fix ───────────────────────────────────────
+// Pointe vers MenuDigitalViewSet (FEATURE_SLUG="menu_digital") → /menu-items/
+// NE PAS utiliser catalogueProduitRepository pour le menu (bug URL S45)
+
+export const menuRepository = {
+  getList: () =>
+    api.get(`${BASE}/menu-items/`).then((d) => toList<CatalogueItemKB>(d)),
+  create: (p: CreateCatalogueItemKBPayload) =>
+    api.post(`${BASE}/menu-items/`, p) as Promise<CatalogueItemKB>,
+  update: (id: string, p: UpdateCatalogueItemKBPayload) =>
+    api.patch(`${BASE}/menu-items/${id}/`, p) as Promise<CatalogueItemKB>,
+  delete: (id: string) =>
+    api.delete(`${BASE}/menu-items/${id}/`) as Promise<void>,
 };
 
 // END OF FILE: src/repositories/catalogue.repository.ts
