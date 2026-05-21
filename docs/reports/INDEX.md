@@ -856,3 +856,16 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
   - **Gabriel :** B5 Étape 8 — 28 itérations features sur interface interne — zones `apps/agent/` + features
   - **Penka :** KB + Results frontend — zones `src/app/(dashboard)/knowledge/` + `results/`
 - **Rapport :** `docs/reports/session_47_gabriel.md`
+
+---
+
+## session_48_donpk
+
+- **Type :** Génération — Frontend UX WAOUH /knowledge Batches 3-4 + Bugfixes
+- **Date :** 2026-05-21
+- **Flux couverts :** B5 /knowledge Batch 3 ✅ · B5 /knowledge Batch 4 ✅
+- **Bugs corrigés :** BUG-S48-P01 (MenuTab URL) · BUG-S48-P02 (serializer categorie) · BUG-S48-P03 (image_url clear) · BUG-S48-P04 (AgenceCard modal)
+- **Zones touchées :** `src/app/(dashboard)/knowledge/_components/` · `src/repositories/` · `src/types/api/` · `src/dictionaries/` · `apps/knowledge/serializers.py`
+- **Fichiers créés :** `MenuDishCard.tsx`
+- **Fichiers modifiés :** 16 frontend + 1 backend
+- **Rapport :** `docs/reports/session_48_donpk.md`
