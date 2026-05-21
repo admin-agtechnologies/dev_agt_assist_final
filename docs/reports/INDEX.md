@@ -806,7 +806,6 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Dette ouverte :** Migration django_celery_results DuplicateTable à fixer S45 avant seed skills
 - **Rapport :** `docs/reports/session_44_gabriel.md`
 
-<<<<<<< HEAD
 
 ---
 
@@ -824,7 +823,6 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Rapport :** `docs/reports/session_45_donpk.md`
 
 
-=======
 ---
 ## session_46_gabriel
 
@@ -841,4 +839,20 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
   - **Gabriel :** B5 Étape 7 suite — Niveau 2 (24 features) + Niveau 3 (secteurs) — zones `apps/agent/tests_e2e/`
   - **Penka :** KB + Results frontend — zones `src/app/(dashboard)/knowledge/` + `src/app/(dashboard)/results/`
 - **Rapport :** `docs/reports/session_46_gabriel.md`
->>>>>>> 46aa9966190f6d8e0ecc9e63f0145dee82179e35
+
+
+---
+## session_47_gabriel
+
+- **Type :** Debug + Génération — B5 Étape 7 Niveaux 2 & 3
+- **Date :** 2026-05-21
+- **Flux couverts :** B5 Étape 7 ✅ complète (68/68)
+- **Bugs corrigés :** BUG-S47-01 à BUG-S47-18 (16 bugs scénarios Niveau 2 + 2 résiduels)
+- **Zones touchées :** `apps/agent/tests_e2e/features/` · `apps/agent/tests_e2e/sectors/` (NEW)
+- **Fichiers créés :** 3 (sectors/__init__.py · runner_sectors.py · scenarios_sectors.py)
+- **Fichiers modifiés :** 2 (scenarios_features_a.py · scenarios_features_b.py)
+- **Résultat :** 40/40 N1 ✅ · 24/24 N2 ✅ · 4/4 N3 ✅ — **68/68 tous niveaux**
+- **⚠️ Organisation parallèle S48 :**
+  - **Gabriel :** B5 Étape 8 — 28 itérations features sur interface interne — zones `apps/agent/` + features
+  - **Penka :** KB + Results frontend — zones `src/app/(dashboard)/knowledge/` + `results/`
+- **Rapport :** `docs/reports/session_47_gabriel.md`
