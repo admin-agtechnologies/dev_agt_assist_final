@@ -42,11 +42,60 @@ avec Penka et Steve possibles à tout moment).
 
 ### Règles de résolution de bugs
 
+**Principe fondamental : les testeurs sont des reporters, pas des fixeurs.**
+Aucun testeur ne corrige quoi que ce soit sans accord explicite de Gabriel.
+
 | Type de bug | Responsable | Règle |
 |---|---|---|
-| Bug **frontend** | Le testeur qui l'a trouvé | Peut corriger seul |
-| Bug **backend** | **Gabriel uniquement** | Personne d'autre ne touche le backend |
-| Bug **ambigu** | Testeur → Gabriel avant toute action | Signaler sans tenter de fix |
+| Tout bug trouvé | **Le testeur** | Documente dans `docs/bugs/bug_[slug].md` et **s'arrête** |
+| Décision de fix | **Gabriel** | Lit les rapports, décide qui fixe quoi et quand |
+| Fix **frontend** | Membre désigné par Gabriel | Après décision explicite |
+| Fix **backend** | **Gabriel uniquement** | Personne d'autre ne touche le backend |
+| Bug **ambigu** | Testeur → Gabriel | Décrire le symptôme sans tenter de diagnostic |
+
+### Architecture documentation des bugs
+
+Un fichier par feature dans `docs/bugs/`. Tous créés **upfront** (avant le début
+des tests) via la commande PowerShell suivante dans le terminal VSCode :
+
+```powershell
+$features = @(
+  "chatbot_whatsapp","faq","prise_rdv","reservation_table","reservation_chambre",
+  "reservation_billet","menu_digital","catalogue_produits","suivi_commande",
+  "catalogue_services","catalogue_trajets","catalogue_produits_financiers",
+  "inscription_admission","orientation_patient","orientation_citoyens",
+  "multi_agences","gestion_crm","conciergerie","communication","capture_prospect",
+  "emails_rappel","simulation_credit","suivi_dossier","collecte_documents",
+  "transfert_humain","commande_paiement","paiement_en_ligne","agent_vocal"
+)
+New-Item -ItemType Directory -Force -Path "docs/bugs" | Out-Null
+foreach ($f in $features) {
+  $path = "docs/bugs/bug_$f.md"
+  if (-not (Test-Path $path)) {
+    @"
+# Bugs — $f
+> Feature : $f
+> Testeur assigné : —
+> Statut : non testé
+
+## Bugs relevés
+
+_Aucun bug pour l'instant._
+
+<!-- Template :
+### BUG-001 — [Titre court]
+- **Étape** : a / b / c / d / e / f / g
+- **Description** : Ce qui se passe
+- **Attendu** : Ce qui devrait se passer
+- **Reproductible** : Oui / Non
+- **Capture** : (lien ou description)
+- **Statut** : ouvert / assigné à [prénom] / résolu
+-->
+"@ | Out-File -FilePath $path -Encoding utf8
+  }
+}
+Write-Host "28 fichiers créés dans docs/bugs/"
+```
 
 ### Prérequis avant d'envoyer les testeurs
 
@@ -62,16 +111,28 @@ Trois prérequis doivent être implémentés **en amont de toute attribution** :
 
 ### A. `sections_actives` — rôle et traitement UI
 
-Le champ `Bot.sections_actives` (JSONField, introduit S23) est devenu redondant
-avec l'architecture Skills (Étape 6) : le `ContextBuilder` se base désormais
-sur `features_autorisees_slugs` pour charger les skills actives.
+**Décision corrigée en S49 (après revue des screenshots de la page réelle) :**
 
-**Décision validée :**
-- `sections_actives` **reste en base et en backend** — aucune migration
-- `sections_actives` **disparaît de l'interface** dans `BotConfigTab`
-- Le state est conservé en mémoire côté frontend et continué d'être envoyé
-  dans `handleSave()` — le backend gère, l'utilisateur ne voit pas
-- L'entreprise configure **uniquement** les features autorisées
+`sections_actives` et `features_autorisees_slugs` sont deux curseurs **distincts
+et complémentaires** — ils ne font pas la même chose :
+
+```
+features_autorisees_slugs  →  CE QUE LE BOT PEUT FAIRE (actions)
+                               Exemple : peut prendre des RDV, afficher le menu
+
+sections_actives           →  CE QUE LE BOT PEUT LIRE dans son prompt (données)
+                               Exemple : Profil entreprise · FAQ · Infos agences
+```
+
+**Cas d'usage validé :** une entreprise avec 3 bots différents peut donner à
+chacun un accès différent aux sections de données, en plus des features.
+Le prompt dynamique de chaque bot ne charge que ce qui est autorisé dans
+sa configuration — les deux curseurs sont nécessaires.
+
+**Décision finale :**
+- `sections_actives` **reste visible et éditable** dans `BotConfigTab`
+- L'accordéon "Sections actives du prompt" est **conservé tel quel**
+- Aucune modification de ce champ côté frontend ni backend
 
 ### B. Affichage des features — sans badge secteur
 
@@ -96,15 +157,11 @@ Le frontend attend `actions_declenchees` mais le champ est toujours vide.
 **Fichier :** `src/app/(dashboard)/bots/_components/tabs/BotConfigTab.tsx`
 **Taille estimée :** ~200 lignes
 
-### 4.1 Suppression de l'accordéon sections_actives
+### 4.1 Accordéon sections_actives — conservé tel quel
 
-```tsx
-// Conservé mais JAMAIS rendu — ne pas supprimer ce state
-const [sectionsActives, setSectionsActives] = useState<string[]>(
-  bot.sections_actives ?? []
-);
-// handleSave() continue d'envoyer sections_actives: sectionsActives
-```
+L'accordéon "Sections actives du prompt" **n'est pas modifié**.
+Il reste visible et éditable. Aucune suppression de state ni de JSX.
+Seul l'accordéon "Features & actions" est restructuré (§4.2).
 
 ### 4.2 Groupement features — const à déclarer hors composant
 
@@ -307,23 +364,141 @@ export interface AIActionDeclenchee {
 
 **Fichier :** `src/app/(dashboard)/bots/[id]/test/_components/ConversationPanel.tsx`
 **Taille estimée :** ~200 lignes
+**Référence visuelle :** `test_page_v3_valide_S49.html` (disponible dans le project knowledge)
 
-### Structure — 3 zones
+### Vue d'ensemble — page de test redessinée
+
+La page de test est composée de deux zones :
+- **Gauche** : simulateur WhatsApp (existant enrichi)
+- **Droite** : panel `ConversationPanel` redessiné (4 accordéons + footer)
+
+---
+
+### Simulateur gauche — enrichissements
+
+#### Bouton "Assistant Vocal"
+- Comportement au **survol** : apparition d'un tooltip avec bouton "Voir la démo"
+- Clic "Voir la démo" → modal avec vidéo de démo **adaptée au secteur du tenant**
+- Le secteur est lu depuis `entreprise.secteur.slug` → URL vidéo correspondante
+- Si secteur inconnu → vidéo générique
+- Le bouton n'est PAS désactivé — il reste cliquable pour accéder à la démo
+
+#### Messages de statut en italique
+- Les messages `role: 'status'` sont déjà affichés en italique dans `WhatsAppSimulator`
+- Conserver ce comportement (non modifié)
+
+#### Suggestions de messages dynamiques
+- Les chips de suggestion rapide sont **dynamiques** :
+  - Basées sur le **secteur du tenant** (ex: Hôtel → "Réserver une chambre", "Nos tarifs ?")
+  - Basées sur la **langue active du bot** (`agent.langue_defaut`)
+  - Définies dans une const `SECTOR_SUGGESTIONS: Record<sectorSlug, Record<langue, string[]>>`
+  - 4 suggestions max affichées
+
+#### Cartes action inline dans le chat
+Quand le bot confirme une action, il l'accompagne d'une carte visuelle inline.
+Deux états possibles :
+
+**Carte verte — action complète :**
+```
+┌─ 🗓 RDV planifié                    ✓ ─┐
+│  ACTION EXÉCUTÉE                       │
+│  👤 Gabriel Nomo                       │
+│  📞 +237655585975                      │
+│  🕐 22 mai 2026, 14:00                 │
+│  🔑 Chambre Standard                   │
+│  📍 Hotel Hilltop Yaounde — Siège     │
+│  ⚠️ Mode test — aucun RDV réel.       │
+└────────────────────────────────────────┘
+```
+
+**Carte orange — infos manquantes :**
+```
+┌─ 🗓 RDV en attente                  ⚠ ─┐
+│  INFOS MANQUANTES                      │
+│  👤 Gabriel Nomo                       │
+│  📞 non collecté  ← en orange         │
+│  🕐 non précisée  ← en orange         │
+│  ⚠️ Le bot attend ces informations.   │
+└────────────────────────────────────────┘
+```
+
+La carte est générée depuis `response_recue` de l'`AIActionLog` correspondant.
+Un helper `buildActionCard(slug, response)` retourne `{ complete: boolean, fields: Field[] }`.
+
+#### Carte email cliquable
+Quand une action `send_email` est déclenchée, une carte bleue apparaît inline.
+Clic sur la carte → modal avec le contenu complet de l'email (to, subject, body).
+
+---
+
+### Panel droit — 4 accordéons
+
+#### Accordéon 1 — Données collectées (ouvert par défaut)
+Affiche en temps réel depuis `conversation.contexte` :
+- Nom, téléphone, email du contact
+- Compteur d'itérations (`iteration_count`)
+- Résumé dynamique (`contexte.summary`) dans une box grisée
+
+#### Accordéon 2 — Actions effectuées (ouvert par défaut)
+Timeline des `AIActionLog` de la conversation.
+Chaque ligne affiche : icône métier + label + résumé payload + `duree_ms`
+**Chaque ligne est cliquable** → ouvre un modal dédié :
+
+| Action cliquée | Modal ouvert |
+|---|---|
+| `search_faq` / toute FAQ | Modal FAQ : liste Q&R de la session |
+| `create_reservation` / toute réservation | Modal Réservation : carte verte/orange |
+| `send_email` | Modal Email : contenu complet |
+| Autres actions | Modal générique : `response_recue` JSON formaté |
+
+**Modal FAQ :**
+- Header : "Détail — FAQ consultée"
+- Body : liste d'items `{ question, réponse }` avec icônes question/check
+- Note : "N questions traitées durant cette session"
+
+**Modal Réservation :**
+- Header : "Détail — Réservation créée"
+- Body : carte identique à la carte inline (verte ou orange selon complétude)
+- Warning "Mode test" en bas
+
+**Modal Email :**
+- Header : "Contenu de l'email envoyé"
+- Body : De/À + sujet + corps de l'email
+
+#### Accordéon 3 — Configuration IA (fermé par défaut)
+Affiche en lecture seule : statut (En ligne/Hors ligne), température, tokens max.
+
+#### Accordéon 4 — Sessions de test (fermé par défaut)
+Nombre de sessions actives.
+
+---
+
+### Footer panel — bouton "Ajuster la configuration"
+
+Ouvre un **modal de configuration** synchronisé avec `BotConfigTab` :
+- Champ éditable : **Prompt système** (visible directement — usage métier)
+- Section collapsible "Paramètres avancés" : température (slider) + tokens max
+  → Ces paramètres sont techniques, cachés par défaut pour l'utilisateur métier
+- Lien en bas à gauche : **"Retourner à la configuration du bot"**
+  → navigue vers `(dashboard)/bots/[id]/configuration`
+- Boutons : Annuler | Enregistrer
+
+**Synchronisation :** le modal lit et écrit les mêmes données que `BotConfigTab`
+via `botsRepository.updateConfig()`. Pas de duplication de logique.
+
+---
+
+### Modal vidéo démo (Assistant Vocal)
 
 ```
-┌──────────────────────────────────────────┐
-│  ZONE 1 — Header                         │
-│  Nom du bot  ·  Badge statut conv.       │
-├──────────────────────────────────────────┤
-│  ZONE 2 — Features actives du bot        │
-│  Chips 2 colonnes :                      │
-│  [✅ FAQ] [✅ Menu digital]              │
-│  [✅ Prise RDV] [⚠️ Catalogue]          │
-├──────────────────────────────────────────┤
-│  ZONE 3 — Timeline actions               │
-│  Icône + label + badge statut + durée    │
-│  Résumé payload (1 ligne)                │
-└──────────────────────────────────────────┘
+┌─ Démo — Assistant Vocal AGT ──── [×] ─┐
+│  [vidéo adaptée au secteur]            │
+│  🏨 Hôtel & Hébergement               │
+│  "Vidéo chargée dynamiquement"         │
+│                                        │
+│  L'assistant vocal s'adapte à votre    │
+│  secteur. Disponible prochainement.    │
+└────────────────────────────────────────┘
 ```
 
 ### Map `ACTION_META` — lucide-react (hors composant)
@@ -467,69 +642,95 @@ function summarizePayload(
 
 **Emplacement :** `docs/testing/FEATURES_QUEUE.md`
 
-**Règles :**
-- Gabriel met le prénom + date quand il assigne une feature
-- Testeur coche les steps au fur et à mesure
-- Bug frontend → note dans le fichier · Bug backend → appelle Gabriel
+### Règles d'utilisation
+- Gabriel assigne en mettant le prénom + date devant la feature
+- **Testeurs = reporters uniquement** — aucun fix sans accord explicite de Gabriel
+- Bugs → documenter dans `docs/bugs/bug_[slug].md` et s'arrêter
+- Steps : `a`=KB · `b`=Tab config · `c`=Config bot · `d`=Agent lit · `e`=Agent écrit · `f`=Résultats · `g`=E2E · `h`=Validation Gabriel
 
-**Contenu :**
+### Features "coming soon" — comportement attendu du bot
+Pour les features hors scope Chantier 1, si le testeur tente une interaction,
+le bot **doit répondre** : *"Cette fonctionnalité sera disponible prochainement."*
+Un step spécifique `x` est ajouté pour valider ce message côté testeur.
+
+### Contenu complet du fichier
 
 ```markdown
 # Features Queue — B5 Étape 8
-> Règle : Gabriel assigne (prénom + date devant). 1 feature = 1 testeur à la fois.
+> Règle : Gabriel assigne (prénom + date). 1 feature = 1 testeur à la fois.
+> Testeurs = reporters uniquement. Aucun fix sans accord de Gabriel.
+> Bug trouvé → docs/bugs/bug_[slug].md → arrêter → prévenir Gabriel.
 > Steps : a=KB · b=Tab config · c=Config bot · d=Agent lit · e=Agent écrit
 >         f=Résultats · g=E2E interne · h=Validation Gabriel
-> Bug frontend : corriger seul + noter ici.
-> Bug backend : STOP → appeler Gabriel avant tout fix.
 
 ---
 
-## 🤖 Core
+## 🤖 Core (5 features)
 - [ ] **chatbot_whatsapp** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 - [ ] **faq** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 - [ ] **suivi_commande** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 - [ ] **transfert_humain** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 - [ ] **gestion_crm** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 
-## 📅 Réservations
+## 📅 Réservations (4 features)
 - [ ] **prise_rdv** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 - [ ] **reservation_table** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 - [ ] **reservation_chambre** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 - [ ] **reservation_billet** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 
-## 🛒 Catalogue & Ventes
+## 🛒 Catalogue & Ventes (4 features)
 - [ ] **menu_digital** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 - [ ] **catalogue_produits** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 - [ ] **catalogue_services** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 - [ ] **catalogue_trajets** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 
-## 👥 CRM & Prospection
+## 👥 CRM & Prospection (3 features)
 - [ ] **capture_prospect** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 - [ ] **emails_rappel** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 - [ ] **communication** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 
-## 🏛️ Public & Éducation
+## 🏛️ Public & Éducation (4 features)
 - [ ] **inscription_admission** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 - [ ] **orientation_patient** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 - [ ] **orientation_citoyens** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 - [ ] **multi_agences** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 
-## 💰 Finance (Banking)
+## 💰 Finance / Banking (4 features)
 - [ ] **catalogue_produits_financiers** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 - [ ] **simulation_credit** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 - [ ] **suivi_dossier** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 - [ ] **collecte_documents** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 
-## 🎭 Custom
+## 🎭 Custom (1 feature)
 - [ ] **conciergerie** — _libre_ — [ ]a [ ]b [ ]c [ ]d [ ]e [ ]f [ ]g [ ]h
 
 ---
 
-## ❌ Hors scope Chantier 1
-- **commande_paiement** → C2 (provider paiement externe requis)
-- **paiement_en_ligne** → C2 (accord Orange Money / MTN requis)
-- **agent_vocal** → C2 (pipeline STT/TTS)
-- **dashboard** → B6 (Penka)
+**Total features testables : 25**
+(chatbot_whatsapp · faq · suivi_commande · transfert_humain · gestion_crm ·
+prise_rdv · reservation_table · reservation_chambre · reservation_billet ·
+menu_digital · catalogue_produits · catalogue_services · catalogue_trajets ·
+capture_prospect · emails_rappel · communication · inscription_admission ·
+orientation_patient · orientation_citoyens · multi_agences ·
+catalogue_produits_financiers · simulation_credit · suivi_dossier ·
+collecte_documents · conciergerie)
+
+---
+
+## ⏳ Coming Soon — Bientôt disponible (à tester côté message bot)
+
+Ces features sont hors scope Chantier 1. Le bot doit répondre
+*"Cette fonctionnalité sera disponible prochainement."* quand sollicité.
+Step unique `x` = valider que le message "bientôt disponible" s'affiche.
+
+- [ ] **commande_paiement** — _libre_ — [ ]x
+  → Raison : provider paiement externe requis · Cible : Chantier 2
+- [ ] **paiement_en_ligne** — _libre_ — [ ]x
+  → Raison : accord Orange Money / MTN requis · Cible : Chantier 2
+- [ ] **agent_vocal** — _libre_ — [ ]x
+  → Raison : pipeline STT/TTS non implémenté · Cible : Chantier 2
+- [ ] **dashboard** — _hors scope_ — géré par Penka (B6)
+  → Ne pas tester ici
 ```
 
 ---
@@ -551,22 +752,28 @@ function summarizePayload(
    c. npx tsc --noEmit → 0 erreur avant de continuer
 
 3. ConversationPanel v2 — tout membre
-   a. Implémenter §7 complet
-   b. Test : simulateur → envoyer message → vérifier Zone 3 peuplée
+   a. Implémenter §7 complet (référence : test_page_v3_valide_S49.html)
+   b. Test : simulateur → envoyer message → vérifier accordéon "Actions effectuées" peuplé
+   c. Test : cliquer chaque action → vérifier modal correspondant s'ouvre
 
 4. BotConfigTab v2 — tout membre
-   a. Implémenter §4 complet
+   a. Implémenter §4 complet (sections_actives conservé)
    b. Vérifier groupes visibles sur compte custom (toutes features actives)
    c. Vérifier badge "KB requise" sur faq, prise_rdv, menu_digital
 
-5. FEATURES_QUEUE.md — Gabriel
+5. Créer docs/bugs/ — Gabriel
+   a. Exécuter la commande PowerShell (§2) → 28 fichiers créés
+   b. Vérifier la création des fichiers
+
+6. FEATURES_QUEUE.md — Gabriel
    a. Créer docs/testing/FEATURES_QUEUE.md (§8)
    b. Partager avec l'équipe
 
-6. Lancement parallèle
+7. Lancement parallèle
    a. Gabriel assigne 1 feature par testeur disponible
    b. Chaque testeur suit les steps a→h
-   c. Bug frontend → corrige seul · Bug backend → Gabriel
+   c. Bug trouvé → docs/bugs/bug_[slug].md → arrêter → prévenir Gabriel
+   d. Gabriel lit les rapports, décide des fixes, assigne
 ```
 
 ---
@@ -579,14 +786,27 @@ Demander les credentials à Gabriel en début de session.
 
 ---
 
-## 11. Récapitulatif dévis
+## 11. Référence visuelle — Maquette validée
+
+**Fichier :** `test_page_v3_valide_S49.html` (disponible dans le project knowledge)
+
+Maquette HTML interactive complète de la page de test telle que conçue en S49.
+Ouvrir dans un navigateur pour visualiser le design final avant implémentation.
+Contient tous les états : conversation simulée, cartes action vertes, modal FAQ,
+modal email, modal réservation, modal configuration, modal vidéo démo vocal.
+
+---
+
+## 12. Récapitulatif dévis
 
 | Livrable | Fichier(s) | Backend | Lignes |
 |---|---|---|---|
 | A — BotConfigTab v2 | 1 modifié | ✅ Oui (ActiveFeatureSerializer) | ~200 |
 | B — AIConversationSerializer | 1 modifié | ✅ Oui — bloquant | ~30 diff |
 | C — agent.types.ts | 1 diff | — | ~8 diff |
-| D — ConversationPanel v2 | 1 réécrit | Dépend de B | ~200 |
-| E — FEATURES_QUEUE.md | 1 créé | — | ~60 |
+| D — ConversationPanel v2 | 1 réécrit | Dépend de B | ~250 |
+| E — FEATURES_QUEUE.md | 1 créé | — | ~80 |
+| F — docs/bugs/ (28 fichiers) | 28 créés via PowerShell | — | auto |
 
-**Total : 5 fichiers · ~500 lignes · 1 session suffisante si B validé en premier**
+**Total : 4 fichiers code · ~490 lignes · + 28 fichiers bugs créés automatiquement**
+**1 session suffisante si le backend (B) est validé en premier**

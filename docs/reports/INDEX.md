@@ -856,3 +856,20 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
   - **Gabriel :** B5 Étape 8 — 28 itérations features sur interface interne — zones `apps/agent/` + features
   - **Penka :** KB + Results frontend — zones `src/app/(dashboard)/knowledge/` + `results/`
 - **Rapport :** `docs/reports/session_47_gabriel.md`
+
+---
+---
+## session_49_gabriel
+
+- **Type :** Planification + Conception + Design
+- **Date :** 2026-05-21
+- **Flux couverts :** B5 Étape 8 — conception socle test parallélisé (aucun code généré)
+- **Bugs corrigés :** Aucun
+- **Zones touchées :** `docs/testing/` (nouveaux fichiers) · `docs/bugs/` (à créer) · `src/app/(dashboard)/bots/_components/tabs/BotConfigTab.tsx` (conception) · `src/app/(dashboard)/bots/[id]/test/_components/ConversationPanel.tsx` (conception) · `apps/agent/serializers.py` (conception) · `apps/features/serializers.py` (conception)
+- **Fichiers créés :** `conception_socle_test_b5_etape8.md` (NEW) · `test_page_v3_valide_S49.html` (NEW — maquette validée)
+- **Fichiers modifiés :** Aucun
+- **Résultat :** Conception complète validée ✅ · Maquette HTML page test validée ✅ · Prêt pour implémentation
+- **⚠️ Organisation parallèle S49/S50 :**
+  - **Gabriel :** B5 Étape 8 socle — implémenter `conception_socle_test_b5_etape8.md` — zones `apps/agent/` + `apps/features/` + `bots/[id]/test/`
+  - **Penka (S48) :** KB + Results frontend — zones `src/app/(dashboard)/knowledge/` + `results/` — **ne pas toucher**
+- **Rapport :** `docs/reports/session_49_gabriel.md`
