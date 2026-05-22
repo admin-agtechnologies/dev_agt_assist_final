@@ -37,6 +37,7 @@ export interface Conversation {
 
 export interface ConversationFilters {
   bot?: string;
+  bot_id?: string;   // S53 — filtre AIConversation par bot_id
   statut?: string;
   human_handoff?: boolean;
   page?: number;
@@ -91,8 +92,8 @@ export interface ChatActionPayload {
 }
 
 export interface ChatAction {
-  type: 'create_client' | 'create_appointment' | 'send_email' | 'human_handoff';
-  status: 'success' | 'error';
+  type: "create_client" | "create_appointment" | "send_email" | "human_handoff";
+  status: "success" | "error";
   payload: ChatActionPayload;
 }
 
@@ -146,7 +147,7 @@ export interface TestSessionSummary {
 export interface TestMessage {
   id: string;
   session: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   contenu: string;
   tokens: number;
   metadata: {
@@ -167,85 +168,4 @@ export interface TestEmail {
   body: string;
   is_test: boolean;
   created_at: string;
-}
-
-export interface TestSessionDetail extends TestSessionSummary {
-  messages: TestMessage[];
-  emails: TestEmail[];
-}
-
-// ── WAHA / WhatsApp sessions ──────────────────────────────────────────────────
-
-export type WahaSessionStatus =
-  | 'STARTING'
-  | 'SCAN_QR_CODE'
-  | 'WORKING'
-  | 'STOPPED'
-  | 'FAILED';
-
-export interface WahaStatusResponse {
-  status: WahaSessionStatus;
-  phone_number: string;
-  connected_at: string | null;
-  qr_base64: string | null;
-}
-
-export interface WahaConnectResponse {
-  status: WahaSessionStatus;
-  phone_number: string;
-  connected_at: string | null;
-}
-
-export interface WahaDisconnectResponse {
-  status: 'STOPPED';
-}
-
-// ── Agent IA ──────────────────────────────────────────────────────────────────
-
-export type MessageRole = 'user' | 'assistant' | 'system' | 'status';
-
-export interface AIMessage {
-  id: string;
-  role: MessageRole;
-  contenu: string;
-  created_at: string;
-}
-
-export interface AIActionDeclenchee {
-  action_slug: string;
-  statut: 'succes' | 'echec' | 'en_cours';
-  created_at: string;
-}
-
-export interface AIContactResume {
-  id: string;
-  nom: string;
-  phone: string;
-}
-
-export interface AIConversation {
-  id: string;
-  statut: 'active' | 'terminee' | 'transferee';
-  canal: 'web' | 'whatsapp' | 'vocal';
-  contact: AIContactResume | null;
-  messages: AIMessage[];
-  actions_declenchees: AIActionDeclenchee[];
-}
-
-export interface AIConversationFilters {
-  statut?: 'active' | 'terminee' | 'transferee';
-  canal?: 'web' | 'whatsapp' | 'vocal';
-  page?: number;
-  page_size?: number;
-}
-
-export interface SendMessagePayload {
-  message: string;
-  conversation_id: string | null;
-  canal: 'web' | 'whatsapp' | 'vocal';
-}
-
-export interface SendMessageResponse {
-  conversation_id: string;
-  status: 'processing';
 }

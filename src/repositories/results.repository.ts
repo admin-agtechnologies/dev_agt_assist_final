@@ -1,6 +1,7 @@
 // src/repositories/results.repository.ts
 // Endpoints Results — données créées par le bot, lues par le tenant.
 // Distinct des repositories KB (configuration).
+// S53 — ajout bot_id? sur tous les filtres (filtre par conversation__bot_id backend).
 
 import { api } from "@/lib/api-client";
 import type { PaginatedResponse }          from "@/types/api";
@@ -25,9 +26,12 @@ const toPage = <T>(data: unknown): PaginatedResponse<T> =>
     ? { results: data as T[], count: (data as T[]).length, next: null, previous: null }
     : (data as PaginatedResponse<T>);
 
+// ── Types filtres enrichis bot_id ─────────────────────────────────────────────
+type WithBotId<T> = T & { bot_id?: string };
+
 // ── Réservations Results ──────────────────────────────────────────────────────
 export const reservationsResultRepository = {
-  getList: (f?: ReservationFilters): Promise<PaginatedResponse<Reservation>> =>
+  getList: (f?: WithBotId<ReservationFilters>): Promise<PaginatedResponse<Reservation>> =>
     api.get("/api/v1/reservations/", { params: p(f) }).then(toPage<Reservation>),
 
   updateStatut: (id: string, statut: string) =>
@@ -36,7 +40,7 @@ export const reservationsResultRepository = {
 
 // ── Commandes Results ─────────────────────────────────────────────────────────
 export const commandesResultRepository = {
-  getList: (f?: CommandeResultFilters): Promise<PaginatedResponse<CommandeResult>> =>
+  getList: (f?: WithBotId<CommandeResultFilters>): Promise<PaginatedResponse<CommandeResult>> =>
     api.get("/api/v1/catalogue/commandes/", { params: p(f) }).then(toPage<CommandeResult>),
 
   updateStatut: (id: string, statut: string) =>
@@ -45,25 +49,25 @@ export const commandesResultRepository = {
 
 // ── Inscriptions Results ──────────────────────────────────────────────────────
 export const inscriptionsResultRepository = {
-  getList: (f?: { statut?: string; page?: number; page_size?: number }): Promise<PaginatedResponse<InscriptionResult>> =>
+  getList: (f?: { statut?: string; page?: number; page_size?: number; bot_id?: string }): Promise<PaginatedResponse<InscriptionResult>> =>
     api.get("/api/v1/inscriptions/", { params: p(f) }).then(toPage<InscriptionResult>),
 };
 
 // ── Dossiers Results ──────────────────────────────────────────────────────────
 export const dossiersResultRepository = {
-  getList: (f?: { statut?: string; page?: number; page_size?: number }): Promise<PaginatedResponse<DossierResult>> =>
+  getList: (f?: { statut?: string; page?: number; page_size?: number; bot_id?: string }): Promise<PaginatedResponse<DossierResult>> =>
     api.get("/api/v1/dossiers/", { params: p(f) }).then(toPage<DossierResult>),
 };
 
 // ── Contacts Results ──────────────────────────────────────────────────────────
 export const contactsResultRepository = {
-  getList: (f?: ContactFilters): Promise<PaginatedResponse<Contact>> =>
+  getList: (f?: WithBotId<ContactFilters>): Promise<PaginatedResponse<Contact>> =>
     api.get("/api/v1/contacts/", { params: p(f) }).then(toPage<Contact>),
 };
 
 // ── Transferts humains Results ────────────────────────────────────────────────
 export const transfertsResultRepository = {
-  getList: (f?: { statut?: string; page?: number; page_size?: number }): Promise<PaginatedResponse<TransfertHumainResult>> =>
+  getList: (f?: { statut?: string; page?: number; page_size?: number; bot_id?: string }): Promise<PaginatedResponse<TransfertHumainResult>> =>
     api.get("/api/v1/knowledge/transferts-humains/", { params: p(f) }).then(toPage<TransfertHumainResult>),
 
   updateStatut: (id: string, statut: string) =>
@@ -72,7 +76,7 @@ export const transfertsResultRepository = {
 
 // ── Demandes conciergerie Results ─────────────────────────────────────────────
 export const conciergerieResultRepository = {
-  getList: (f?: { statut?: string; page?: number; page_size?: number }): Promise<PaginatedResponse<DemandeConciergerieResult>> =>
+  getList: (f?: { statut?: string; page?: number; page_size?: number; bot_id?: string }): Promise<PaginatedResponse<DemandeConciergerieResult>> =>
     api.get("/api/v1/knowledge/demandes-conciergerie/", { params: p(f) }).then(toPage<DemandeConciergerieResult>),
 
   updateStatut: (id: string, statut: string) =>
@@ -81,12 +85,12 @@ export const conciergerieResultRepository = {
 
 // ── Email logs Results ────────────────────────────────────────────────────────
 export const emailLogsResultRepository = {
-  getList: (f?: { statut?: string; source_type?: string; page?: number; page_size?: number }): Promise<PaginatedResponse<EmailLogResult>> =>
+  getList: (f?: { statut?: string; source_type?: string; page?: number; page_size?: number; bot_id?: string }): Promise<PaginatedResponse<EmailLogResult>> =>
     api.get("/api/v1/notifications/email-logs/", { params: p(f) }).then(toPage<EmailLogResult>),
 };
 
 // ── Consultations FAQ Results ─────────────────────────────────────────────────
 export const consultationsFAQResultRepository = {
-  getList: (f?: ConsultationFAQFilters): Promise<PaginatedResponse<ConsultationFAQResult>> =>
+  getList: (f?: WithBotId<ConsultationFAQFilters>): Promise<PaginatedResponse<ConsultationFAQResult>> =>
     api.get("/api/v1/knowledge/consultations-faq/", { params: p(f) }).then(toPage<ConsultationFAQResult>),
 };

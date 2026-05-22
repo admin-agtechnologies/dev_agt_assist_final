@@ -2,11 +2,14 @@
 import { api } from "@/lib/api-client";
 import type {
     Bot, CreateBotPayload, BotFilters, NumeroTelephone,
-    PaginatedResponse, WahaStatusResponse, WahaConnectResponse, WahaDisconnectResponse,
+    PaginatedResponse,
     ChatbotConfig, UpdateChatbotConfigPayload, ChatbotTestPayload, ChatbotTestResponse,
-    TestSessionSummary, TestSessionDetail, BotConfigPayload,
+    TestSessionSummary, BotConfigPayload,
 } from "@/types/api";
-import getConfig from "next/config";
+import type {
+    WahaStatusResponse, WahaConnectResponse, WahaDisconnectResponse,
+    TestSessionDetail,
+} from "@/types/api/chatbot.types";
 
 const p = (f?: object): Record<string, string> =>
     Object.fromEntries(

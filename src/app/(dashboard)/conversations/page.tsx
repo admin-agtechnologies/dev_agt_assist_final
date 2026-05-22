@@ -2,36 +2,43 @@
 // src/app/(dashboard)/conversations/page.tsx
 
 import { useState, useCallback, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { useSector } from "@/hooks/useSector";
+import { useRouter }      from "next/navigation";
+import { useLanguage }    from "@/contexts/LanguageContext";
+import { useSector }      from "@/hooks/useSector";
 import { agentRepository } from "@/repositories/agent.repository";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { DataTable } from "@/components/ui/DataTable";
-import { FilterBar } from "@/components/ui/FilterBar";
+import { PageHeader }     from "@/components/ui/PageHeader";
+import { DataTable }      from "@/components/ui/DataTable";
+import { FilterBar }      from "@/components/ui/FilterBar";
 import { ConversationStatus } from "@/components/conversations/ConversationStatus";
-import type { AIConversation } from "@/types/api/agent.types";
-import type { AIConversationFilters} from "@/types/api";
+import type { AIConversation }   from "@/types/api/agent.types";
 import type { PaginatedResponse } from "@/types/api";
-import type { DataTableColumn } from "@/components/ui/DataTable";
-import type { FilterOption } from "@/components/ui/FilterBar";
+import type { DataTableColumn }   from "@/components/ui/DataTable";
+import type { FilterOption }      from "@/components/ui/FilterBar";
+
+// Filtres pour l'agent repository — définis localement pour éviter le conflit barrel
+interface AIConversationFilters {
+  statut?:    "active" | "terminee" | "transferee";
+  canal?:     "web" | "whatsapp" | "vocal";
+  page?:      number;
+  page_size?: number;
+}
 
 const PAGE_SIZE = 20;
 
 export default function ConversationsPage() {
-  const router = useRouter();
-  const { dictionary: d } = useLanguage();
-  const { theme } = useSector();
+  const router              = useRouter();
+  const { dictionary: d }   = useLanguage();
+  const { theme }           = useSector();
 
   const cv = d.conversations;
-  const c = d.common;
+  const c  = d.common;
 
-  const [rows, setRows] = useState<AIConversation[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
+  const [rows,      setRows]      = useState<AIConversation[]>([]);
+  const [total,     setTotal]     = useState(0);
+  const [page,      setPage]      = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [statut, setStatut] = useState("");
+  const [search,    setSearch]    = useState("");
+  const [statut,    setStatut]    = useState("");
 
   const load = useCallback(() => {
     setIsLoading(true);
@@ -60,14 +67,14 @@ export default function ConversationsPage() {
     : rows;
 
   const statutOptions: FilterOption[] = [
-    { value: "active",    label: cv.statuses.active },
-    { value: "terminee",  label: cv.statuses.terminee },
+    { value: "active",     label: cv.statuses.active },
+    { value: "terminee",   label: cv.statuses.terminee },
     { value: "transferee", label: cv.statuses.transferee },
   ];
 
   const columns: DataTableColumn<AIConversation>[] = [
     {
-      key: "contact",
+      key:    "contact",
       header: cv.table.contact,
       render: (r) => (
         <div>
@@ -77,23 +84,23 @@ export default function ConversationsPage() {
       ),
     },
     {
-      key: "canal",
-      header: cv.table.canal,
-      render: (r) => (
+      key:          "canal",
+      header:       cv.table.canal,
+      render:       (r) => (
         <span className="text-xs capitalize text-[var(--text-muted)]">{r.canal}</span>
       ),
       hideOnMobile: true,
     },
     {
-      key: "statut",
+      key:    "statut",
       header: cv.table.statut,
       render: (r) => <ConversationStatus statut={r.statut} labels={cv.statuses} size="xs" />,
     },
     {
-      key: "messages",
-      header: cv.table.messages,
-      align: "center",
-      render: (r) => (
+      key:          "messages",
+      header:       cv.table.messages,
+      align:        "center",
+      render:       (r) => (
         <span className="text-sm text-[var(--text-muted)]">{r.messages?.length ?? 0}</span>
       ),
       hideOnMobile: true,
@@ -121,11 +128,11 @@ export default function ConversationsPage() {
         searchPlaceholder={c.search}
         filters={[
           {
-            key: "statut",
+            key:         "statut",
             placeholder: cv.filters.allStatuses,
-            options: statutOptions,
-            value: statut,
-            onChange: setStatut,
+            options:     statutOptions,
+            value:       statut,
+            onChange:    setStatut,
           },
         ]}
         resetLabel={c.all}
@@ -147,9 +154,9 @@ export default function ConversationsPage() {
           onPageChange: setPage,
           labels: {
             previous: c.prev,
-            next: c.next,
-            of: "/",
-            results: c.noData,
+            next:     c.next,
+            of:       "/",
+            results:  c.noData,
           },
         }}
       />
