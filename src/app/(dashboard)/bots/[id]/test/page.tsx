@@ -19,6 +19,7 @@ import { ConversationPanel } from "./_components/ConversationPanel";
 import { VoiceDemoPlayer } from "./_components/VoiceDemoPlayer";
 import type { Bot, ChatbotConfig } from "@/types/api";
 import type { AIConversation } from "@/types/api/agent.types";
+import { useAuth } from "@/contexts/AuthContext";
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -42,6 +43,7 @@ export default function BotTestPage() {
   const { dictionary: d } = useLanguage();
   const t = d.bots;
   const toast = useToast();
+  const { user } = useAuth();
 
   // ── État global ───────────────────────────────────────────────────────────
   const [bot, setBot]               = useState<Bot | null>(null);
@@ -66,7 +68,7 @@ export default function BotTestPage() {
     } finally {
       setLoading(false);
     }
-  }, [botId, t.errorLoad, toast]);
+  }, [botId]);
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
@@ -151,6 +153,8 @@ export default function BotTestPage() {
             <WhatsAppSimulator
               key={resetKey}
               botNom={bot.nom}
+              sectorSlug={user?.entreprise?.secteur?.slug ?? undefined}
+              sectorNom={user?.entreprise?.secteur?.label_fr ?? undefined}
               onConversationUpdate={setConversation}
             />
           ) : (

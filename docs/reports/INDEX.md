@@ -884,3 +884,16 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
   - **Gabriel :** B5 Étape 8 socle — implémenter `conception_socle_test_b5_etape8.md` — zones `apps/agent/` + `apps/features/` + `bots/[id]/test/`
   - **Penka (S48) :** KB + Results frontend — zones `src/app/(dashboard)/knowledge/` + `results/` — **ne pas toucher**
 - **Rapport :** `docs/reports/session_49_gabriel.md`
+
+---
+## session_50_gabriel
+
+- **Type :** Génération full-stack + Debug
+- **Date :** 2026-05-22
+- **Flux couverts :** B5 Étape 8 — socle interface test (backend sérialiseurs + frontend complet)
+- **Bugs corrigés :** BUG-S50-01 (description_fr AttributeError) · BUG-S50-02 (TS2322 ActionModals) · BUG-S50-03 (EntrepriseInUser.secteur_slug)
+- **Zones touchées :** `apps/agent/serializers.py` · `apps/features/serializers.py` · `apps/features/services.py` · `src/types/api/agent.types.ts` · `src/app/(dashboard)/bots/[id]/test/_components/` · `src/app/(dashboard)/bots/_components/tabs/BotConfigTab.tsx` · `src/app/(dashboard)/bots/[id]/test/page.tsx`
+- **Fichiers créés :** `action-helpers.ts` · `ActionModals.tsx`
+- **Fichiers modifiés :** 8
+- **Bug résiduel :** BUG-S50-04 (boucle 401 page test — fix S51)
+- **Rapport :** `docs/reports/session_50_gabriel.md`

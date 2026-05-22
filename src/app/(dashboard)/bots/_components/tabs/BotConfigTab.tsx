@@ -1,7 +1,7 @@
 // src/app/(dashboard)/bots/_components/tabs/BotConfigTab.tsx
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Save, Building2, FileText, Zap, ChevronDown, User } from "lucide-react";
+import { Save, Building2, FileText, Zap, ChevronDown, User, Bot, CalendarDays, ShoppingBag, Users, Landmark, Coins, Sparkles } from "lucide-react";
 import { Spinner } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/Toast";
@@ -11,6 +11,20 @@ import { featuresRepository } from "@/repositories/features.repository";
 import type { BotPair } from "../bots.types";
 import type { AgenceKnowledge } from "@/types/api/agence.types";
 import type { ActiveFeature } from "@/repositories/features.repository";
+
+// ── S50 — Groupes features ────────────────────────────────────────────────────
+
+const FEATURE_GROUPS: Array<{
+  key: string; icon: React.ElementType; label: string; slugs: string[];
+}> = [
+  { key: "core",      icon: Bot,         label: "Core",                slugs: ["chatbot_whatsapp", "faq", "suivi_commande", "transfert_humain", "communication"] },
+  { key: "rdv",       icon: CalendarDays, label: "Réservations",       slugs: ["prise_rdv", "reservation_table", "reservation_chambre", "reservation_billet", "conciergerie"] },
+  { key: "catalogue", icon: ShoppingBag,  label: "Catalogue & Ventes", slugs: ["menu_digital", "catalogue_produits", "catalogue_services", "catalogue_trajets", "commande_paiement", "paiement_en_ligne"] },
+  { key: "crm",       icon: Users,        label: "CRM & Prospection",  slugs: ["gestion_crm", "capture_prospect", "emails_rappel"] },
+  { key: "public",    icon: Landmark,     label: "Public & Éducation", slugs: ["inscription_admission", "orientation_patient", "orientation_citoyens", "multi_agences"] },
+  { key: "finance",   icon: Coins,        label: "Finance",            slugs: ["catalogue_produits_financiers", "simulation_credit", "suivi_dossier", "collecte_documents"] },
+  { key: "custom",    icon: Sparkles,     label: "Custom",             slugs: ["dashboard", "agent_vocal"] },
+];
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
@@ -66,24 +80,20 @@ function Accordion({
         onClick={() => setOpen((o) => !o)}
         className="w-full flex items-center gap-3 px-5 py-4 text-left transition-colors duration-200 hover:bg-[var(--bg)]"
       >
-        {/* Icône colorée */}
         <div
           className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{ background: `${colors.primary}18` }}
         >
           <span style={{ color: colors.primary }}>{icon}</span>
         </div>
-
         <span className="flex-1 text-sm font-black uppercase tracking-widest text-[var(--text)]">
           {title}
         </span>
-
         {badge && (
           <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[var(--bg)] text-[var(--text-muted)] border border-[var(--border)]">
             {badge}
           </span>
         )}
-
         <div
           className={cn(
             "w-6 h-6 rounded-lg flex items-center justify-center transition-transform duration-300 flex-shrink-0",
@@ -94,7 +104,6 @@ function Accordion({
           <ChevronDown className="w-3.5 h-3.5 text-[var(--text-muted)]" />
         </div>
       </button>
-
       {open && (
         <div className="px-5 pb-5 pt-3 border-t border-[var(--border)] space-y-4">
           {children}
@@ -113,10 +122,11 @@ interface CheckRowProps {
   label: string;
   sub?: string;
   badge?: string;
+  badgeVariant?: "default" | "kb";  // S50 : "kb" = badge orange KB requise
   colors: { primary: string; accent: string };
 }
 
-function CheckRow({ checked, onChange, disabled, label, sub, badge, colors }: CheckRowProps) {
+function CheckRow({ checked, onChange, disabled, label, sub, badge, badgeVariant = "default", colors }: CheckRowProps) {
   return (
     <div className="flex items-center gap-3 py-2.5 border-b border-[var(--border)] last:border-0">
       <input
@@ -134,7 +144,12 @@ function CheckRow({ checked, onChange, disabled, label, sub, badge, colors }: Ch
         )}
       </div>
       {badge && (
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--bg)] text-[var(--text-muted)] border border-[var(--border)]">
+        <span className={cn(
+          "text-[10px] font-bold px-2 py-0.5 rounded-full border",
+          badgeVariant === "kb"
+            ? "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-700"
+            : "bg-[var(--bg)] text-[var(--text-muted)] border-[var(--border)]",
+        )}>
           {badge}
         </span>
       )}
@@ -224,162 +239,132 @@ export function BotConfigTab({ pair, colors, onRefresh }: BotConfigTabProps) {
     </div>
   );
 
+  // S50 — index features par slug pour le groupement
+  const featureBySlug = Object.fromEntries(features.map((f) => [f.slug, f]));
+  const allGroupedSlugs = new Set(FEATURE_GROUPS.flatMap((g) => g.slugs));
+
   return (
     <div className="space-y-3">
 
       {/* ── Identité & personnalité ── */}
-      <Accordion
-        icon={<User className="w-3.5 h-3.5" />}
-        title="Identité & personnalité"
-        defaultOpen
-        colors={colors}
-      >
+      <Accordion icon={<User className="w-3.5 h-3.5" />} title="Identité & personnalité" defaultOpen colors={colors}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Nom du bot */}
           <div>
-            <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">
-              Nom du bot
-            </label>
-            <input
-              className={inputClass}
-              value={nom}
-              onChange={(e) => setNom(e.target.value)}
-              placeholder="Ex: Sophie"
-              {...focusHandlers}
-            />
+            <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Nom du bot</label>
+            <input className={inputClass} value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Ex: Sophie" {...focusHandlers} />
           </div>
-
-          {/* Ton de communication */}
           <div>
-            <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">
-              Ton de communication
-            </label>
-            <select
-              className={cn(inputClass, "cursor-pointer")}
-              value={ton}
-              onChange={(e) => setTon(e.target.value)}
-              {...focusHandlers}
-            >
-              {TON_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
+            <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Ton de communication</label>
+            <select className={cn(inputClass, "cursor-pointer")} value={ton} onChange={(e) => setTon(e.target.value)} {...focusHandlers}>
+              {TON_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </div>
         </div>
-
-        {/* Personnalité */}
         <div>
-          <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">
-            Personnalité & instructions comportement
-          </label>
-          <textarea
-            className={cn(inputClass, "resize-y leading-relaxed")}
-            rows={3}
-            value={personnalite}
+          <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Personnalité & instructions comportement</label>
+          <textarea className={cn(inputClass, "resize-y leading-relaxed")} rows={3} value={personnalite}
             onChange={(e) => setPersonnalite(e.target.value)}
-            placeholder="Ex : Tu es chaleureux, tu vouvoies le client, tu proposes des alternatives..."
-            {...focusHandlers}
-          />
+            placeholder="Ex : Tu es chaleureux, tu vouvoies le client, tu proposes des alternatives..." {...focusHandlers} />
         </div>
-
-        {/* Message d'accueil */}
         <div>
-          <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">
-            Message d&apos;accueil
-          </label>
-          <input
-            className={inputClass}
-            value={messageAccueil}
-            onChange={(e) => setMessageAccueil(e.target.value)}
-            placeholder="Bonjour ! Comment puis-je vous aider ?"
-            {...focusHandlers}
-          />
+          <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Message d&apos;accueil</label>
+          <input className={inputClass} value={messageAccueil} onChange={(e) => setMessageAccueil(e.target.value)}
+            placeholder="Bonjour ! Comment puis-je vous aider ?" {...focusHandlers} />
         </div>
       </Accordion>
 
       {/* ── Agences accessibles ── */}
-      <Accordion
-        icon={<Building2 className="w-3.5 h-3.5" />}
-        title="Agences accessibles dans le prompt"
-        badge={agencesSet.length ? `${agencesSet.length} sélectionnée(s)` : "toutes"}
-        colors={colors}
-      >
-        <p className="text-xs text-[var(--text-muted)] -mt-1">
-          Aucune sélectionnée = toutes les agences actives.
-        </p>
+      <Accordion icon={<Building2 className="w-3.5 h-3.5" />} title="Agences accessibles dans le prompt"
+        badge={agencesSet.length ? `${agencesSet.length} sélectionnée(s)` : "toutes"} colors={colors}>
+        <p className="text-xs text-[var(--text-muted)] -mt-1">Aucune sélectionnée = toutes les agences actives.</p>
         {agences.length === 0 ? (
           <p className="text-sm text-[var(--text-muted)]">Aucune agence trouvée.</p>
-        ) : (
-          agences.map((a) => (
-            <CheckRow
-              key={a.id}
-              checked={agencesSet.length === 0 || agencesSet.includes(a.id)}
-              onChange={() => toggle(agencesSet, setAgencesSet, a.id)}
-              label={a.nom}
-              sub={a.est_siege ? "agence principale" : (a.ville ?? "")}
-              colors={colors}
-            />
-          ))
-        )}
-      </Accordion>
-
-      {/* ── Sections du prompt ── */}
-      <Accordion
-        icon={<FileText className="w-3.5 h-3.5" />}
-        title="Sections actives du prompt"
-        badge={sectionsActives.length ? `${sectionsActives.length}/4` : "toutes"}
-        colors={colors}
-      >
-        <p className="text-xs text-[var(--text-muted)] -mt-1">
-          Aucune sélectionnée = toutes les sections incluses.
-        </p>
-        {SECTIONS_KB.map((s) => (
-          <CheckRow
-            key={s.key}
-            checked={isSectionActive(s.key)}
-            onChange={() => toggle(sectionsActives, setSectionsActives, s.key)}
-            label={s.label}
-            sub={s.sub}
-            colors={colors}
-          />
+        ) : agences.map((a) => (
+          <CheckRow key={a.id} checked={agencesSet.length === 0 || agencesSet.includes(a.id)}
+            onChange={() => toggle(agencesSet, setAgencesSet, a.id)}
+            label={a.nom} sub={a.est_siege ? "agence principale" : (a.ville ?? "")} colors={colors} />
         ))}
       </Accordion>
 
-      {/* ── Features & actions ── */}
-      <Accordion
-        icon={<Zap className="w-3.5 h-3.5" />}
-        title="Features & actions autorisées"
-        badge={featuresSet.length ? `${featuresSet.length} feature(s)` : "toutes"}
-        colors={colors}
-      >
-        <p className="text-xs text-[var(--text-muted)] -mt-1">
-          Aucune sélectionnée = toutes les features actives du tenant.
-        </p>
+      {/* ── Sections du prompt — conservé tel quel (décision S49) ── */}
+      <Accordion icon={<FileText className="w-3.5 h-3.5" />} title="Sections actives du prompt"
+        badge={sectionsActives.length ? `${sectionsActives.length}/4` : "toutes"} colors={colors}>
+        <p className="text-xs text-[var(--text-muted)] -mt-1">Aucune sélectionnée = toutes les sections incluses.</p>
+        {SECTIONS_KB.map((s) => (
+          <CheckRow key={s.key} checked={isSectionActive(s.key)}
+            onChange={() => toggle(sectionsActives, setSectionsActives, s.key)}
+            label={s.label} sub={s.sub} colors={colors} />
+        ))}
+      </Accordion>
+
+      {/* ── Features & actions — S50 : groupées par catégorie + badge KB ── */}
+      <Accordion icon={<Zap className="w-3.5 h-3.5" />} title="Features & actions autorisées"
+        badge={featuresSet.length ? `${featuresSet.length} feature(s)` : "toutes"} colors={colors}>
+        <p className="text-xs text-[var(--text-muted)] -mt-1">Aucune sélectionnée = toutes les features actives du tenant.</p>
+        {/* Actions système toujours actives */}
         <CheckRow checked disabled label="Répondre aux questions" sub="action système" badge="système" colors={colors} />
         <CheckRow checked disabled label="Transfert humain" sub="action système" badge="système" colors={colors} />
+
         {features.length === 0 ? (
           <p className="text-sm text-[var(--text-muted)]">Aucune feature active.</p>
         ) : (
-          features.map((f) => (
-            <CheckRow
-              key={f.id}
-              checked={featuresSet.length === 0 || featuresSet.includes(f.id)}
-              onChange={() => toggle(featuresSet, setFeaturesSet, f.id)}
-              label={f.nom_fr ?? f.slug}
-              sub={f.slug}
-              colors={colors}
-            />
-          ))
+          <>
+            {/* Groupes nommés */}
+            {FEATURE_GROUPS.map((group) => {
+              const groupFeatures = group.slugs
+                .map((slug) => featureBySlug[slug])
+                .filter(Boolean) as ActiveFeature[];
+              if (groupFeatures.length === 0) return null;
+              const GroupIcon = group.icon;
+              return (
+                <div key={group.key} className="mt-2">
+                  <div className="flex items-center gap-2 py-1.5 mb-0.5 border-b border-[var(--border)]">
+                    <GroupIcon className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">{group.label}</span>
+                  </div>
+                  {groupFeatures.map((f) => {
+                    const hasKb = (f as ActiveFeature & { entreprise_configure_kb?: boolean }).entreprise_configure_kb;
+                    return (
+                      <CheckRow
+                        key={f.id}
+                        checked={featuresSet.length === 0 || featuresSet.includes(f.id)}
+                        onChange={() => toggle(featuresSet, setFeaturesSet, f.id)}
+                        label={f.nom_fr ?? f.slug}
+                        sub={f.slug}
+                        badge={hasKb ? "KB requise" : undefined}
+                        badgeVariant={hasKb ? "kb" : "default"}
+                        colors={colors}
+                      />
+                    );
+                  })}
+                </div>
+              );
+            })}
+
+            {/* Features hors groupes */}
+            {(() => {
+              const ungrouped = features.filter((f) => !allGroupedSlugs.has(f.slug));
+              if (ungrouped.length === 0) return null;
+              return (
+                <div className="mt-2">
+                  <div className="flex items-center gap-2 py-1.5 mb-0.5 border-b border-[var(--border)]">
+                    <Zap className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Autres</span>
+                  </div>
+                  {ungrouped.map((f) => (
+                    <CheckRow key={f.id} checked={featuresSet.length === 0 || featuresSet.includes(f.id)}
+                      onChange={() => toggle(featuresSet, setFeaturesSet, f.id)}
+                      label={f.nom_fr ?? f.slug} sub={f.slug} colors={colors} />
+                  ))}
+                </div>
+              );
+            })()}
+          </>
         )}
       </Accordion>
 
-      {/* ── Bouton save sticky ── */}
-      <div
-        className="sticky bottom-0 -mx-5 px-5 py-4 mt-2 border-t border-[var(--border)]"
-        style={{ background: "var(--bg-card)" }}
-      >
+      {/* ── Bouton save sticky — identique à l'existant ── */}
+      <div className="sticky bottom-0 -mx-5 px-5 py-4 mt-2 border-t border-[var(--border)]" style={{ background: "var(--bg-card)" }}>
         <div className="flex justify-end">
           <button
             onClick={handleSave}
@@ -391,11 +376,7 @@ export function BotConfigTab({ pair, colors, onRefresh }: BotConfigTabProps) {
             }}
           >
             <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-700 pointer-events-none" />
-            {saving ? (
-              <Spinner className="border-white/30 border-t-white" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
+            {saving ? <Spinner className="border-white/30 border-t-white" /> : <Save className="w-4 h-4" />}
             Enregistrer la configuration
           </button>
         </div>
