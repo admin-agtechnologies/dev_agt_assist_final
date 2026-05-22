@@ -1,5 +1,13 @@
 // src/dictionaries/en/bots.en.ts
 export const bots = {
+  testCardRdvPlanned:          "Scheduled appointment",
+testCardActionDone:          "Action executed",
+testCardTestMode:            "Test mode — no real appointment created.",
+testCardViewDetail:          "View details",
+testCardEmailDefaultSubject: "Confirmation email",
+testCardEmailSent:           "SENT",
+testCardEmailTo:             "To",
+testCardViewEmail:           "View email content",
   title: "My Bots",
   subtitle: "Manage your virtual assistants.",
   newBtn: "New bot",

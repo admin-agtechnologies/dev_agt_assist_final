@@ -132,7 +132,6 @@ export default function PmeBotsPage() {
                 key={pair.waBot.id}
                 pair={pair}
                 isExpanded={expandedPairId === pair.waBot.id}
-                sector={sector}
                 onToggleExpand={() =>
                   setExpandedPairId(expandedPairId === pair.waBot.id ? null : pair.waBot.id)
                 }

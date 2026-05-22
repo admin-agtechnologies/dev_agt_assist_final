@@ -28,13 +28,15 @@ import { TodayAppointments } from "./_components/TodayAppointments";
 import { EmailStats } from "./_components/EmailStats";
 import { QuickLinks } from "./_components/QuickLinks";
 import { ConversationReportModal } from "../bots/_components/ConversationReportModal";
-import { SECTOR_COLORS } from "../bots/_components/bots.types";
+import { useSector } from "@/hooks/useSector";
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function PmeDashboardPage() {
   const { user } = useAuth();
   const { dictionary: d } = useLanguage();
   const t = d.dashboard.pme;
+  const { theme } = useSector();
 
   const [stats, setStats] = useState<TenantStats | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -197,7 +199,7 @@ export default function PmeDashboardPage() {
         <ConversationReportModal
           conversation={selectedConv}
           onClose={() => setSelectedConv(null)}
-          colors={SECTOR_COLORS.default}
+          colors={theme}
         />
       )}
     </>

@@ -17,38 +17,6 @@ export type DetailTab =
   | "stats"
   | "whatsapp";
 
-export const SECTOR_COLORS: Record<string, { primary: string; accent: string }> = {
-  sante:        { primary: "#0EA5E9", accent: "#38BDF8" },
-  santé:        { primary: "#0EA5E9", accent: "#38BDF8" },
-  juridique:    { primary: "#1E3A5F", accent: "#3B82F6" },
-  beaute:       { primary: "#EC4899", accent: "#F9A8D4" },
-  beauté:       { primary: "#EC4899", accent: "#F9A8D4" },
-  restauration: { primary: "#F97316", accent: "#FDBA74" },
-  commerce:     { primary: "#8B5CF6", accent: "#C4B5FD" },
-  finance:      { primary: "#059669", accent: "#34D399" },
-  education:    { primary: "#6366F1", accent: "#A5B4FC" },
-  transport:    { primary: "#64748B", accent: "#94A3B8" },
-  default:      { primary: "#075E54", accent: "#25D366" },
-};
-
-export function getSectorColor(sector: string): { primary: string; accent: string } {
-  const key = (sector ?? "")
-    .toLowerCase()
-    .replace(/[éè]/g, "e")
-    .replace(/[àâ]/g, "a");
-  return SECTOR_COLORS[key] ?? SECTOR_COLORS.default;
-}
-
-export const MOCK_WEEK_DATA = [
-  { day: "Lun", messages: 38, calls: 3, appointments: 2, emails: 10, handoffs: 1 },
-  { day: "Mar", messages: 52, calls: 5, appointments: 4, emails: 15, handoffs: 2 },
-  { day: "Mer", messages: 45, calls: 2, appointments: 1, emails:  8, handoffs: 0 },
-  { day: "Jeu", messages: 61, calls: 7, appointments: 5, emails: 20, handoffs: 3 },
-  { day: "Ven", messages: 48, calls: 4, appointments: 3, emails: 12, handoffs: 1 },
-  { day: "Sam", messages: 32, calls: 2, appointments: 8, emails:  5, handoffs: 0 },
-  { day: "Dim", messages: 36, calls: 3, appointments: 6, emails:  7, handoffs: 1 },
-];
-
 export interface MockMessage { role: "bot" | "client"; text: string; time: string; }
 
 export const MOCK_HISTORY: Record<string, MockMessage[]> = {

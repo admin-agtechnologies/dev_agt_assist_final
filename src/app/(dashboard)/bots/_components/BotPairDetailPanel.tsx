@@ -66,17 +66,17 @@ export function BotPairDetailPanel({ pair, d, colors, onRefresh }: BotPairDetail
   const kpiCards = [
     { show: true,                      label: t.statsMessages,     value: totalMessages, icon: MessageSquare,  color: "#25D366" },
     { show: !!pair.voiceBot,           label: t.statsCalls,        value: totalCalls,    icon: Phone,          color: "#6C3CE1" },
-    { show: hasFeature("rendez_vous"), label: t.statsAppointments, value: totalRdv,      icon: CalendarDays,   color: "#F59E0B" },
+    { show: hasFeature("prise_rdv"),   label: t.statsAppointments, value: totalRdv,      icon: CalendarDays,   color: "#F59E0B" },
     { show: true,                      label: "Transferts",        value: totalHandoffs, icon: ArrowRightLeft, color: "#EF4444" },
     { show: true,                      label: "Emails",            value: totalEmails,   icon: MessageSquare,  color: "#0EA5E9" },
   ].filter(k => k.show);
 
   const tabs: { id: DetailTab; label: string; icon: React.ElementType }[] = [
-    { id: "configuration", label: "Configuration",   icon: Settings },
+    { id: "configuration", label: "Configuration", icon: Settings },
     { id: "conversations", label: t.conversationsTab, icon: MessageSquare },
     { id: "agenda",        label: t.agendaTab,        icon: CalendarDays },
     { id: "stats",         label: t.statsTab,         icon: BarChart3 },
-    { id: "whatsapp",      label: (d.bots as unknown as Record<string, string>).whatsappTab ?? "WhatsApp", icon: MessageCircle },
+    { id: "whatsapp",      label: d.bots.whatsappTab ?? "WhatsApp", icon: MessageCircle },
   ];
 
   return (

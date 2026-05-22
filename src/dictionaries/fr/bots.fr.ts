@@ -1,5 +1,13 @@
 // src/dictionaries/fr/bots.fr.ts
 export const bots = {
+  testCardRdvPlanned:          "RDV planifié",
+testCardActionDone:          "Action exécutée",
+testCardTestMode:            "Mode test — aucun RDV réel.",
+testCardViewDetail:          "Voir le détail",
+testCardEmailDefaultSubject: "Email de confirmation",
+testCardEmailSent:           "ENVOYÉ",
+testCardEmailTo:             "À",
+testCardViewEmail:           "Voir le contenu de l'email",
   title: "Mes Bots",
   subtitle: "Gérez vos assistants virtuels.",
   newBtn: "Nouveau bot",

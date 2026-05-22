@@ -79,9 +79,9 @@ async function refreshAccessToken(): Promise<string | null> {
       body: JSON.stringify({ refresh }),
     });
     if (!res.ok) return null;
-    const data = (await res.json()) as { access?: string };
+   const data = (await res.json()) as { access?: string; refresh?: string };
     if (!data.access) return null;
-    tokenStorage.set(data.access, refresh);
+    tokenStorage.set(data.access, data.refresh ?? refresh);
     return data.access;
   } catch {
     return null;
@@ -137,11 +137,14 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
       flushRefreshQueue(newToken);
     }
 
-    if (newToken) {
-      res = await doFetch();
-    } else {
-      tokenStorage.clear();
-    }
+  if (newToken) {
+        res = await doFetch();
+      } else {
+        tokenStorage.clear();
+        window.dispatchEvent(new CustomEvent("auth:session-expired"));
+        // On throw directement — pas la peine de relire res (toujours 401)
+        throw new ApiError(401, { detail: "Session expirée" }, "Session expirée");
+      }
   }
 
   if (!res.ok) {

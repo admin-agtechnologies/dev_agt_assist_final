@@ -897,3 +897,25 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Fichiers modifiés :** 8
 - **Bug résiduel :** BUG-S50-04 (boucle 401 page test — fix S51)
 - **Rapport :** `docs/reports/session_50_gabriel.md`
+
+---
+---
+
+## session_51_gabriel
+
+- **Type :** Debug + Refactoring — Auth/Refresh + Modularisation pages bots
+- **Date :** 2026-05-22
+- **Flux couverts :** B5 (pages /bots et /bots/[id]/test — modularisation)
+- **Bugs corrigés :** BUG-S50-04 (boucle 401 — session fantôme après expiration token)
+- **Zones touchées :**
+  - `src/app/(dashboard)/bots/_components/tabs/` — BotConfigTab, StatsTab, BotSettingsPanel (supprimé)
+  - `src/app/(dashboard)/bots/[id]/test/_components/` — ConversationPanel, WhatsAppSimulator, VoiceDemoPlayer + nouveaux modules _ui/ et modals/
+  - `src/contexts/AuthContext.tsx`, `src/lib/api-client.ts`
+  - `config/settings.py`, `apps/auth_bridge/views.py`
+  - `src/dictionaries/fr/bots.fr.ts`, `src/dictionaries/en/bots.en.ts`
+  - `src/app/(dashboard)/dashboard/page.tsx`
+- **Fichiers créés :** `statsData.ts`, `bot-config.constants.ts`, `BotConfigElements.tsx`, `StatsCharts.tsx`, `demo-transcript.ts`, `modal-primitives.tsx`, `ActionCards.tsx`, `PanelAccordion.tsx`, `ActionsLog.tsx`, `modals/ActionModals.tsx`, `modals/SystemModals.tsx`
+- **Fichiers refactorisés :** `BotConfigTab.tsx`, `StatsTab.tsx`, `ConversationPanel.tsx`, `WhatsAppSimulator.tsx`, `VoiceDemoPlayer.tsx`, `AuthContext.tsx`
+- **Fichiers supprimés :** `BotSettingsPanel.tsx` (fichier mort — jamais importé)
+- **Specs transversales notées pour S52 :** (1) i18n strict — zéro string hardcodée FR/EN dans les composants bots ; (2) couleurs sectorielles — zéro hexadécimal hardcodé, tout via `useSector().theme`
+- **Rapport :** `docs/reports/session_51_gabriel.md`
