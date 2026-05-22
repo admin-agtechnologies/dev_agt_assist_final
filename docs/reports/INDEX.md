@@ -919,3 +919,18 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Fichiers supprimés :** `BotSettingsPanel.tsx` (fichier mort — jamais importé)
 - **Specs transversales notées pour S52 :** (1) i18n strict — zéro string hardcodée FR/EN dans les composants bots ; (2) couleurs sectorielles — zéro hexadécimal hardcodé, tout via `useSector().theme`
 - **Rapport :** `docs/reports/session_51_gabriel.md`
+
+---
+---
+## session_52_gabriel
+
+- **Type :** Conception + Génération + Debug — Backend tabs dynamiques /bots
+- **Date :** 2026-05-22
+- **Flux couverts :** B5 Étape 8 — architecture tabs dynamiques + traçabilité bot (backend complet ✅)
+- **Bugs corrigés :** Aucun (session feature)
+- **Zones touchées :** `apps/agent/models/` · `apps/agent/serializers.py` · `apps/agent/views.py` · `apps/agent/actions/` (5 fichiers) · `apps/reservations/` · `apps/catalogue/` · `apps/inscriptions/` · `apps/dossiers/` · `apps/notifications/` · `apps/knowledge/views.py` · `apps/contacts/views.py`
+- **Fichiers créés :** 6 migrations · `docs/s53_implementation.md`
+- **Fichiers modifiés :** 20 fichiers backend
+- **Décisions clés :** FK `AIConversation.bot` · FK `conversation` sur 5 modèles résultats · filtre `?bot_id=` sur 8 ViewSets · architecture tabs dynamiques `feature:${slug}` validée · seeders mock AIConversation décidés
+- **⚠️ Organisation S53 :** Frontend complet `/bots` tabs + `/results` filtre bot — voir `docs/s53_implementation.md`
+- **Rapport :** `docs/reports/session_52_gabriel.md`
