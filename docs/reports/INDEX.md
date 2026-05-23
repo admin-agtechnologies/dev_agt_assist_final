@@ -1024,3 +1024,17 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Fichiers modifiés :** `custom.py` · `results_modules/__init__.py` · `stats.repository.ts` · `BotPairDetailPanel.tsx` · `StatsTab.tsx` · `FeatureStatsSection.tsx` · `DashboardHeroKPIs.tsx` · `dashboard/page.tsx` · `statistiques/page.tsx` · `fr/index.ts` · `en/index.ts`
 - **Dette créée :** `adminStatsRepository` à recréer côté admin · design stats/dashboard S58
 - **Rapport :** `docs/reports/session_57_gabriel.md`
+
+---
+## session_58_gabriel
+
+- **Type :** Conception + Génération — Backend Seeder v3
+- **Date :** 2026-05-24
+- **Flux couverts :** Seeder démo complet (10 secteurs) — pattern open/closed
+- **Bugs corrigés :** BUG-S58-01 (TestSession import chatbot_bridge) · BUG-S58-02 (slugs mock_stats incorrects) · BUG-S58-03 (conv_map non passé aux stats)
+- **Zones touchées :** `apps/tenants/seeders/demo/` · `apps/tenants/seeders/demo/results_modules/`
+- **Fichiers créés :** `conv_scenarios.py` · `test_sessions.py` · `restaurant.py`
+- **Fichiers modifiés :** 25 fichiers (conversations_demo, kb_custom, results_bundle, __init__, reservations, commandes, contacts_crm, dossiers, inscriptions, transferts, conciergerie, faq_consultations, emails, account_patch, mock_stats, custom, hotel, banque, sante, education, ecommerce, transport, pme, public)
+- **Décisions clés :** conv_scenarios.py source de vérité pure data · SECTOR_FEATURES importé dynamiquement depuis features_seeder.SECTOR_MATRIX · patch_demo_account générique (plan_slug + wallet_amount) · abonnements adaptés par secteur · mock_stats 2 couches (conv_map + historique 90j) · Option A migration 6.20 pour Conversations/Sessions test vides
+- **Dette créée :** DETTE-S58-01 (Conversations/Sessions test vides → migration 6.20) · DETTE-S58-02 (test_sessions à migrer vers AIConversation mode=test) · DETTE-S58-03 (stats couche 1 non régénérées au second seed)
+- **Rapport :** docs/reports/session_58_gabriel.md
