@@ -10,47 +10,44 @@ import {
   Bot as BotIcon, Wifi, WifiOff,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useToast } from "@/components/ui/Toast";
+import { useToast }    from "@/components/ui/Toast";
+import { useSector }   from "@/hooks/useSector";
 import { Badge, PageLoader } from "@/components/ui";
-import { cn } from "@/lib/utils";
+import { cn }               from "@/lib/utils";
 import { botsRepository, chatbotRepository } from "@/repositories";
 import { WhatsAppSimulator } from "./_components/WhatsAppSimulator";
 import { ConversationPanel } from "./_components/ConversationPanel";
-import { VoiceDemoPlayer } from "./_components/VoiceDemoPlayer";
+import { VoiceDemoPlayer }   from "./_components/VoiceDemoPlayer";
 import type { Bot, ChatbotConfig } from "@/types/api";
-import type { AIConversation } from "@/types/api/agent.types";
+import type { BotPair }            from "../../_components/bots.types";
+import type { AIConversation }     from "@/types/api/agent.types";
 import { useAuth } from "@/contexts/AuthContext";
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
 type Canal = "whatsapp" | "vocal";
 
-/**
- * URL de la vidéo de démonstration de l'agent vocal.
- * Anciennement en commentaire dans page.tsx, maintenant constant nommé.
- */
 const VOICE_DEMO_URL =
   "https://api.salma.agtgroupholding.com/media/seed/bourses/demo_test.mp4";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PAGE
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function BotTestPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const botId = params.id;
+  const botId  = params.id;
   const { dictionary: d } = useLanguage();
-  const t = d.bots;
+  const t     = d.bots;
   const toast = useToast();
-  const { user } = useAuth();
+  const { user }  = useAuth();
+  const { theme } = useSector();
 
   // ── État global ───────────────────────────────────────────────────────────
-  const [bot, setBot]               = useState<Bot | null>(null);
-  const [config, setConfig]         = useState<ChatbotConfig | null>(null);
-  const [loading, setLoading]       = useState(true);
-  const [canal, setCanal]           = useState<Canal>("whatsapp");
-  const [resetKey, setResetKey]     = useState(0);
+  const [bot,          setBot]          = useState<Bot | null>(null);
+  const [config,       setConfig]       = useState<ChatbotConfig | null>(null);
+  const [loading,      setLoading]      = useState(true);
+  const [canal,        setCanal]        = useState<Canal>("whatsapp");
+  const [resetKey,     setResetKey]     = useState(0);
   const [conversation, setConversation] = useState<AIConversation | null>(null);
 
   // ── Chargement initial ────────────────────────────────────────────────────
@@ -68,9 +65,9 @@ export default function BotTestPage() {
     } finally {
       setLoading(false);
     }
-  }, [botId]);
+  }, [botId, t.errorLoad, toast]);
 
-  useEffect(() => { loadAll(); }, [loadAll]);
+  useEffect(() => { void loadAll(); }, [loadAll]);
 
   // ── Réinitialisation ──────────────────────────────────────────────────────
   const handleReset = () => {
@@ -80,18 +77,18 @@ export default function BotTestPage() {
 
   // ── Guards ────────────────────────────────────────────────────────────────
   if (loading) return <PageLoader />;
-  if (!bot) return null;
+  if (!bot)    return null;
 
   const isOnline = bot.statut === "actif";
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // RENDU
-  // ─────────────────────────────────────────────────────────────────────────
+  // Construire la BotPair nécessaire pour ConversationPanel / BotConfigSections
+  const pair: BotPair = { waBot: bot, voiceBot: null };
 
+  // ── Rendu ─────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full space-y-4 animate-fade-in">
 
-      {/* ── Header ──────────────────────────────────────────────────────────── */}
+      {/* ── Header ── */}
       <div className="flex items-center gap-3 flex-wrap">
         <button
           onClick={() => router.back()}
@@ -100,8 +97,11 @@ export default function BotTestPage() {
           <ArrowLeft className="w-4 h-4 text-[var(--text-muted)]" />
         </button>
 
-        <div className="w-10 h-10 rounded-2xl bg-[#25D366]/10 flex items-center justify-center flex-shrink-0">
-          <BotIcon className="w-5 h-5 text-[#25D366]" />
+        <div
+          className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: `${theme.primary}18` }}
+        >
+          <BotIcon className="w-5 h-5" style={{ color: theme.primary }} />
         </div>
 
         <div className="flex-1 min-w-0">
@@ -111,28 +111,30 @@ export default function BotTestPage() {
 
         <Badge variant={isOnline ? "green" : "slate"}>
           {isOnline
-            ? <><Wifi className="w-3 h-3 mr-1" />{t.testPublishedBadge}</>
+            ? <><Wifi    className="w-3 h-3 mr-1" />{t.testPublishedBadge}</>
             : <><WifiOff className="w-3 h-3 mr-1" />{t.testUnpublishedBadge}</>}
         </Badge>
 
         {/* Switch canal */}
         <div className="flex rounded-xl border border-[var(--border)] overflow-hidden bg-[var(--bg-card)]">
-          {(["whatsapp", "vocal"] as Canal[]).map(c => (
-            <button
-              key={c}
-              onClick={() => setCanal(c)}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-colors",
-                canal === c
-                  ? c === "whatsapp" ? "bg-[#25D366] text-white" : "bg-[#6C3CE1] text-white"
-                  : "text-[var(--text-muted)] hover:text-[var(--text)]",
-              )}
-            >
-              {c === "whatsapp"
-                ? <><MessageSquare className="w-3.5 h-3.5" /> WhatsApp</>
-                : <><Phone className="w-3.5 h-3.5" /> {t.testVoiceTitle}</>}
-            </button>
-          ))}
+          {(["whatsapp", "vocal"] as Canal[]).map(c => {
+            const isActive = canal === c;
+            return (
+              <button
+                key={c}
+                onClick={() => setCanal(c)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-colors",
+                  isActive ? "text-white" : "text-[var(--text-muted)] hover:text-[var(--text)]",
+                )}
+                style={isActive ? { backgroundColor: theme.primary } : undefined}
+              >
+                {c === "whatsapp"
+                  ? <><MessageSquare className="w-3.5 h-3.5" /> WhatsApp</>
+                  : <><Phone className="w-3.5 h-3.5" /> {t.testVoiceTitle}</>}
+              </button>
+            );
+          })}
         </div>
 
         {/* Reset session */}
@@ -144,7 +146,7 @@ export default function BotTestPage() {
         </button>
       </div>
 
-      {/* ── Corps principal ──────────────────────────────────────────────────── */}
+      {/* ── Corps principal ── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 flex-1 min-h-0">
 
         {/* Simulateur (3/5) */}
@@ -173,9 +175,9 @@ export default function BotTestPage() {
         <div className="lg:col-span-2">
           <ConversationPanel
             conversation={conversation}
-            botId={botId}
+            pair={pair}
             config={config}
-            onConfigSaved={setConfig}
+            onConfigSaved={(c: ChatbotConfig) => setConfig(c)}
           />
         </div>
       </div>

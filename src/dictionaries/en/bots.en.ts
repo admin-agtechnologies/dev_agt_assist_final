@@ -196,7 +196,7 @@ export const bots = {
   tabEmails:       "Emails",
   tabClients:      "Clients",
 
-  // ── S53 — Config tab i18n ─────────────────────────────────────────────────────
+  // ── S53 — Config tab i18n ────────────────────────────────────────────────────
   configBotName:       "Bot name",
   configTone:          "Communication tone",
   configPersonality:   "Personality & instructions",
@@ -218,4 +218,36 @@ export const bots = {
   configSaved:         "Configuration saved!",
   configSaveError:     "Error saving configuration.",
   testModeBadge:       "TEST",
+
+  // ── S55 — New enriched config keys ──────────────────────────────────────────
+  configBasicsTitle:      "Basic settings",
+  configBasicsSave:       "Save basic settings",
+  configBasicsSaved:      "Basic settings saved!",
+  configBasicsSaveError:  "Error saving basic settings.",
+  configSignature:        "Automatic signature",
+  configSignaturePlaceholder: "e.g. The AGT Bot Team",
+  configLangues:          "Bot languages",
+  configIASection:        "AI Configuration",
+  configIASave:           "Save AI configuration",
+  configIASaved:          "AI configuration saved!",
+  configIASaveError:      "Error saving AI configuration.",
+  configIAPromptLabel:    "System prompt",
+  configIAPromptHint:     "Instructions injected at the start of each conversation.",
+  configIAPromptPlaceholder: "You are the assistant for…",
+  configIATemperature:    "Temperature",
+  configIATemperatureLow: "0 = deterministic",
+  configIATemperatureHigh:"1 = creative",
+  configIATokens:         "Max tokens",
+  configIAStatus:         "AI status",
+  configAdjustBtn:        "Adjust configuration",
+  configIAReadonlyPrompt: "System prompt",
+  configIANoPrompt:       "No prompt defined.",
+  configIANotLoaded:      "Configuration not loaded.",
+  configReadonlyTitle:    "Bot configuration",
+  configReadonlySeeAll:   "See all details",
+
+  // ── S55 — ModalVideoDemo ─────────────────────────────────────────────────
+  videoDemoTitle:         "Demo — AGT Voice Assistant",
+  videoDemoPlaceholder:   "Demo video adapted to your sector, loaded dynamically.",
+  videoDemoDescription:   "The AGT voice assistant adapts to your sector, your catalogue and your language. Coming soon.",
 } as const;

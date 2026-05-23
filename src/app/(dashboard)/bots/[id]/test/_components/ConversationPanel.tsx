@@ -1,21 +1,24 @@
 "use client";
 // src/app/(dashboard)/bots/[id]/test/_components/ConversationPanel.tsx
-// Panneau droit : 4 accordéons (données, actions, config IA, sessions) + footer.
-// Accordion → _ui/PanelAccordion · Actions → _ui/ActionsLog · Modals → modals/
+// Panneau droit : 4 accordéons (données, actions, config bot, sessions) + footer.
+// Accordéon 3 — config bot en lecture seule (résumé 5 sections) + bouton "Ajuster".
 
 import { useState, useCallback, useEffect } from "react";
 import {
   User, Phone, Mail, Zap,
   Database, AlertTriangle, Settings, Clock,
 } from "lucide-react";
-import { Badge } from "@/components/ui";
-import { useToast } from "@/components/ui/Toast";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { Badge }        from "@/components/ui";
+import { useToast }     from "@/components/ui/Toast";
+import { useLanguage }  from "@/contexts/LanguageContext";
+import { useSector }    from "@/hooks/useSector";
 import type { ChatbotConfig } from "@/types/api";
 import type { AIConversation, AIActionDeclenchee } from "@/types/api/agent.types";
-import { getModalType } from "./action-helpers";
-import { PanelAccordion } from "./_ui/PanelAccordion";
-import { ActionsLog } from "./_ui/ActionsLog";
+import type { BotPair } from "../../../_components/bots.types";
+import { getModalType }    from "./action-helpers";
+import { PanelAccordion }  from "./_ui/PanelAccordion";
+import { ActionsLog }      from "./_ui/ActionsLog";
+import { BotConfigSections } from "../../../_components/tabs/_ui/BotConfigSections";
 import {
   ModalReservation, ModalFAQ, ModalEmail, ModalCommande,
   ModalInscriptionDossier, ModalFinance, ModalConsultation,
@@ -26,17 +29,19 @@ import { ModalConfigIA } from "./modals/SystemModals";
 
 interface Props {
   conversation: AIConversation | null;
-  botId: string;
-  config: ChatbotConfig | null;
+  /** Paire de bots — nécessaire pour ModalConfigIA (BotConfigSections) */
+  pair:         BotPair;
+  config:       ChatbotConfig | null;
   onConfigSaved: (c: ChatbotConfig) => void;
 }
 
 // ── Composant ─────────────────────────────────────────────────────────────────
 
-export function ConversationPanel({ conversation, botId, config, onConfigSaved }: Props) {
+export function ConversationPanel({ conversation, pair, config, onConfigSaved }: Props) {
   const { dictionary: d } = useLanguage();
   const t     = d.bots;
   const toast = useToast();
+  const { theme } = useSector();
 
   const [activeAction, setActiveAction] = useState<AIActionDeclenchee | null>(null);
   const [configOpen,   setConfigOpen]   = useState(false);
@@ -105,7 +110,6 @@ export function ConversationPanel({ conversation, botId, config, onConfigSaved }
                   Aucune donnée collectée pour l&apos;instant.
                 </p>
               )}
-              {/* Itération */}
               {iterCount !== undefined && (
                 <div className="flex items-center justify-between pt-1.5 mt-1 border-t border-[var(--border)]">
                   <span className="text-[11px] text-[var(--text-muted)]">Itération</span>
@@ -114,13 +118,11 @@ export function ConversationPanel({ conversation, botId, config, onConfigSaved }
                   </span>
                 </div>
               )}
-              {/* Résumé */}
               {summary && (
                 <div className="mt-2 p-2 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[11px] text-[var(--text-muted)] leading-relaxed">
                   {summary}
                 </div>
               )}
-              {/* Alerte transfert */}
               {hasTransfer && (
                 <div className="mt-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 flex items-center gap-2">
                   <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
@@ -143,50 +145,43 @@ export function ConversationPanel({ conversation, botId, config, onConfigSaved }
           <ActionsLog actions={actions} onActionClick={setActiveAction} />
         </PanelAccordion>
 
-        {/* ── Accordéon 3 : Configuration IA ── */}
-        <PanelAccordion icon={<Settings className="w-3 h-3" />} title={t.testConfigTitle}>
-          {savedConfig ? (
-            <div className="space-y-1.5 pt-1">
-              <div className="flex justify-between text-[11px]">
-                <span className="text-[var(--text-muted)]">Statut</span>
-                <Badge variant={savedConfig.is_deployed ? "green" : "slate"}>
-                  {savedConfig.is_deployed ? t.testPublishedBadge : t.testUnpublishedBadge}
-                </Badge>
-              </div>
-              <div className="flex justify-between text-[11px]">
-                <span className="text-[var(--text-muted)]">{t.testConfigTemperature}</span>
-                <span className="font-medium text-[var(--text)]">{savedConfig.temperature}</span>
-              </div>
-              <div className="flex justify-between text-[11px]">
-                <span className="text-[var(--text-muted)]">{t.testConfigMaxTokens}</span>
-                <span className="font-medium text-[var(--text)]">{savedConfig.max_tokens.toLocaleString()}</span>
-              </div>
-            </div>
+        {/* ── Accordéon 3 : Configuration du bot (lecture seule) ── */}
+        <PanelAccordion icon={<Settings className="w-3 h-3" />} title={t.configReadonlyTitle}>
+          {!savedConfig && !pair.waBot ? (
+            <p className="text-[11px] text-[var(--text-muted)] italic py-1">{t.configIANotLoaded}</p>
           ) : (
-            <p className="text-[11px] text-[var(--text-muted)] italic py-1">Configuration non chargée.</p>
+            <BotConfigSections
+              mode="readonly"
+              pair={pair}
+              chatbotConfig={savedConfig}
+            />
           )}
         </PanelAccordion>
 
         {/* ── Accordéon 4 : Sessions ── */}
         <PanelAccordion
           icon={<Clock className="w-3 h-3" />}
-          title="Sessions de test"
+          title={t.testSessions}
           badge={conversation ? 1 : 0}
         >
           <p className="text-[11px] text-[var(--text-muted)] pt-1">
-            {conversation ? "1 session active" : "Aucune session en cours."}
+            {conversation ? "1 session active" : t.testSessionsEmpty}
           </p>
         </PanelAccordion>
       </div>
 
-      {/* ── Footer ── */}
+      {/* ── Footer — bouton Ajuster ── */}
       <div className="border-t border-[var(--border)] p-3">
         <button
           onClick={() => setConfigOpen(true)}
-          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-[var(--border)] text-[12px] text-[var(--text)] hover:bg-[var(--bg)] transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-[12px] font-medium transition-all duration-200 hover:opacity-80"
+          style={{
+            borderColor: theme.primary,
+            color:       theme.primary,
+          }}
         >
           <Settings className="w-3.5 h-3.5" />
-          Ajuster la configuration
+          {t.configAdjustBtn}
         </button>
       </div>
 
@@ -199,12 +194,12 @@ export function ConversationPanel({ conversation, botId, config, onConfigSaved }
       <ModalFinance            open={modalType === "finance"}              onClose={closeModal} action={activeAction} />
       <ModalConsultation       open={modalType === "consultation"}         onClose={closeModal} action={activeAction} />
 
-      {/* ── Modal config IA ── */}
+      {/* ── Modal config bot enrichie ── */}
       <ModalConfigIA
         open={configOpen}
         onClose={() => setConfigOpen(false)}
         config={savedConfig}
-        botId={botId}
+        pair={pair}
         onSaved={handleConfigSaved}
       />
     </div>

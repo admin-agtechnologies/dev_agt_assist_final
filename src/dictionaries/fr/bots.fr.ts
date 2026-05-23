@@ -179,7 +179,7 @@ export const bots = {
       "Un seul bot WhatsApp peut être connecté à la fois sur la plateforme.",
   },
 
-  // ── S53 — Tabs dynamiques features ───────────────────────────────────────────
+  // ── S53 — Tabs dynamiques features ──────────────────────────────────────────
   tabAgenda:       "Agenda",
   tabTables:       "Tables",
   tabChambres:     "Chambres",
@@ -196,7 +196,7 @@ export const bots = {
   tabEmails:       "Emails",
   tabClients:      "Clients",
 
-  // ── S53 — Config tab i18n ─────────────────────────────────────────────────────
+  // ── S53 — Config tab i18n ────────────────────────────────────────────────────
   configBotName:       "Nom du bot",
   configTone:          "Ton de communication",
   configPersonality:   "Personnalité & instructions",
@@ -218,4 +218,36 @@ export const bots = {
   configSaved:         "Configuration sauvegardée !",
   configSaveError:     "Erreur lors de la sauvegarde.",
   testModeBadge:       "TEST",
+
+  // ── S55 — Nouvelles clés config enrichie ────────────────────────────────────
+  configBasicsTitle:      "Configs de base",
+  configBasicsSave:       "Enregistrer les configs de base",
+  configBasicsSaved:      "Configs de base sauvegardées !",
+  configBasicsSaveError:  "Erreur lors de la sauvegarde des configs de base.",
+  configSignature:        "Signature automatique",
+  configSignaturePlaceholder: "Ex : L'équipe AGT Bot",
+  configLangues:          "Langues du bot",
+  configIASection:        "Configuration IA",
+  configIASave:           "Enregistrer la configuration IA",
+  configIASaved:          "Configuration IA sauvegardée !",
+  configIASaveError:      "Erreur lors de la sauvegarde de la configuration IA.",
+  configIAPromptLabel:    "Prompt système",
+  configIAPromptHint:     "Instructions injectées au début de chaque conversation.",
+  configIAPromptPlaceholder: "Tu es l'assistant de…",
+  configIATemperature:    "Température",
+  configIATemperatureLow: "0 = déterministe",
+  configIATemperatureHigh:"1 = créatif",
+  configIATokens:         "Tokens max",
+  configIAStatus:         "Statut IA",
+  configAdjustBtn:        "Ajuster la configuration",
+  configIAReadonlyPrompt: "Prompt système",
+  configIANoPrompt:       "Aucun prompt défini.",
+  configIANotLoaded:      "Configuration non chargée.",
+  configReadonlyTitle:    "Configuration du bot",
+  configReadonlySeeAll:   "Voir tous les détails",
+
+  // ── S55 — ModalVideoDemo ─────────────────────────────────────────────────
+  videoDemoTitle:         "Démo — Assistant Vocal AGT",
+  videoDemoPlaceholder:   "Vidéo de démo adaptée à votre secteur, chargée dynamiquement.",
+  videoDemoDescription:   "L'assistant vocal AGT s'adapte à votre secteur, votre catalogue et votre langue. Disponible prochainement.",
 } as const;

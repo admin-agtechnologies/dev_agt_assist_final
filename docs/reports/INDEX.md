@@ -979,3 +979,20 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
   - Stats dynamiques (depuis features actives) + page statistiques transversale → S55+
 - **Séquence restante B5 :** UI-1 validation → UI-2 validation → 28 features → WAHA réel
 - **Rapport :** `docs/reports/session_54_gabriel.md`
+
+---
+---
+## session_55_gabriel
+
+- **Type :** Conception + Génération + Debug — Frontend Tab Config + Page Test
+- **Date :** 2026-05-23
+- **Flux couverts :** B5 Étape 8 — enrichissement UI tab Config bots + page test (specs Gabriel)
+- **Bugs corrigés :** BUG-S55-01 (chemins relatifs modals 4 niveaux) · BUG-S55-02 (SectorColors→SectionColors) · BUG-S55-03 (any implicite) · BUG-S55-04 (botId→pair page.tsx) · BUG-S55-05 (couleurs hardcodées page.tsx) · BUG-S55-06 (bouton 404 SystemModals) · BUG-S55-07 (texte en dur ModalVideoDemo) · BUG-S55-08 (props toggle→onToggle)
+- **Zones touchées :** `src/app/(dashboard)/bots/_components/tabs/` · `src/app/(dashboard)/bots/[id]/test/` · `src/repositories/bots.repository.ts` · `src/dictionaries/fr/bots.fr.ts` · `src/dictionaries/en/bots.en.ts` · `docs/prompts/`
+- **Fichiers créés :** `BotConfigSections.tsx` · `_sections/types.ts` · `_sections/SectionBasics.tsx` · `_sections/SectionIA.tsx` · `_sections/SectionKB.tsx` · `_sections/SectionReadonly.tsx` · `docs/prompts/frontend_specs.md`
+- **Fichiers modifiés :** `BotConfigTab.tsx` · `bot-config.constants.ts` · `SystemModals.tsx` · `ConversationPanel.tsx` · `page.tsx` (test) · `bots.repository.ts` · `bots.fr.ts` · `bots.en.ts` · `init_session.md` · `end_session.md`
+- **Specs traitées :** Tab Config 5 sections ✅ · patches auto checkboxes ✅ · 2 Save séparés ✅ · signature+langues ✅ · page test accordéon readonly ✅ · modale Ajuster enrichie ✅
+- **Dette créée :** Aucune
+- **⚠️ PowerShell LiteralPath :** Les fichiers dans `[id]/test/` nécessitent `-LiteralPath` :
+  `Get-Content -LiteralPath "C:\...\src\app\(dashboard)\bots\[id]\test\page.tsx" | Set-Clipboard`
+- **Rapport :** `docs/reports/session_55_gabriel.md`

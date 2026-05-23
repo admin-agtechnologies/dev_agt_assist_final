@@ -33,10 +33,20 @@ export const botsRepository = {
         api.patch(`/api/v1/bots/${id}/`, payload),
     delete: (id: string): Promise<void> =>
         api.delete(`/api/v1/bots/${id}/`),
+
+    // ── Config Bot (nom, ton, sections, agences, features) ────────────────
     getConfig: (id: string): Promise<Bot> =>
         api.get(`/api/v1/bots/${id}/config/`),
     updateConfig: (id: string, payload: BotConfigPayload): Promise<Bot> =>
         api.patch(`/api/v1/bots/${id}/config/`, payload),
+
+    // ── Config Chatbot IA (system_prompt, temperature, max_tokens) ────────
+    // Endpoint : GET/PATCH /api/v1/bots/{id}/chatbot/
+    // Permission : IsEntreprise — accessible aux PME uniquement.
+    getChatbot: (id: string): Promise<ChatbotConfig> =>
+        api.get(`/api/v1/bots/${id}/chatbot/`),
+    updateChatbot: (id: string, payload: UpdateChatbotConfigPayload): Promise<ChatbotConfig> =>
+        api.patch(`/api/v1/bots/${id}/chatbot/`, payload),
 };
 
 export const phoneNumbersRepository = {
