@@ -934,3 +934,48 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Décisions clés :** FK `AIConversation.bot` · FK `conversation` sur 5 modèles résultats · filtre `?bot_id=` sur 8 ViewSets · architecture tabs dynamiques `feature:${slug}` validée · seeders mock AIConversation décidés
 - **⚠️ Organisation S53 :** Frontend complet `/bots` tabs + `/results` filtre bot — voir `docs/s53_implementation.md`
 - **Rapport :** `docs/reports/session_52_gabriel.md`
+
+---
+## session_53_gabriel
+- **Type :** Génération — Backend seeders + Frontend tabs dynamiques /bots + filtre bot /results
+- **Date :** 2026-05-23
+- **Flux couverts :** Seeders demo (10 secteurs), tabs feature /bots, filtre bot /results, i18n bots FR/EN
+- **Bugs corrigés :** type_ressource→type, date_debut dans defaults (6 seeders), METRIC_DEFS manquant, colors prop BotConfigTab, bot_id ConversationFilters, doublon Bot/BotIcon
+- **Zones touchées :** `apps/tenants/seeders/demo/`, `src/app/(dashboard)/bots/_components/`, `src/app/(dashboard)/results/`, `src/repositories/results.repository.ts`, `src/types/api/conversation.types.ts`, `src/dictionaries/`
+- **Rapport :** `docs/reports/session_53_gabriel.md`
+---
+---
+---
+## session_54_gabriel
+
+- **Type :** Debug + Génération + Architecture — Build TS, Seeder modulaire, Cohérence /bots ↔ /results
+- **Date :** 2026-05-23
+- **Flux couverts :** B5 Étape 8 — Socle UI /bots + /results (suite S53)
+- **Bugs corrigés :**
+  - BUG-S54-01 : 31 erreurs TypeScript (fichiers S53 jamais placés + doublon BotPairDetailPanel swappé)
+  - BUG-S54-02 : Bot custom sans `features_autorisees` → 0 tab feature sur /bots → `upsert_demo_bot()`
+  - BUG-S54-03 : Labels "Dossiers" ×3 → labels distincts (Citoyens / Suivi dossier / Documents)
+  - BUG-S54-04 : Tabs FAQ/Emails/Conciergerie/Transferts vides → 4 nouveaux modules seeder
+  - BUG-S54-05 : Seeders conciergerie + FAQ (champs incorrects) → corrigés en 3 itérations
+- **Zones touchées :**
+  - `src/config/features-master-config.ts` (NEW — source de vérité 22 features)
+  - `src/app/(dashboard)/bots/_components/` — BotPairDetailPanel, bots.types, feature-tab-manifest
+  - `src/app/(dashboard)/bots/_components/whatsapp/hooks/useWhatsAppConnection.ts`
+  - `src/app/(dashboard)/bots/_components/tabs/BotFeatureResultTab.tsx`
+  - `src/app/(dashboard)/results/` — page, _config/results-tab-config, _components/ResultsTabContent, BotFilterDropdown
+  - `src/app/(dashboard)/conversations/page.tsx`
+  - `src/components/conversations/` — ConversationStatus, MessageBubble
+  - `src/repositories/bots.repository.ts`
+  - `apps/tenants/seeders/demo/base.py` (+upsert_demo_bot)
+  - `apps/tenants/seeders/demo/custom.py` (refactorisé modulaire)
+  - `apps/tenants/seeders/demo/results_modules/` (9 fichiers NEW)
+- **Fichiers créés :** `features-master-config.ts`, `ResultsTabContent.tsx`, `BotFilterDropdown.tsx`, `results-tab-config.ts`, `results_modules/__init__.py`, `results_modules/reservations.py`, `results_modules/commandes.py`, `results_modules/inscriptions.py`, `results_modules/dossiers.py`, `results_modules/contacts_crm.py`, `results_modules/faq_consultations.py`, `results_modules/emails.py`, `results_modules/transferts.py`, `results_modules/conciergerie.py`
+- **Décisions clés :**
+  - ⚠️ **PLAN B5 VERROUILLÉ** : 28 itérations features démarrent UNIQUEMENT après validation UI-1 (/bots) ET UI-2 (/test) par Gabriel — toute session Claude doit respecter cette séquence
+  - `gestion_crm` → nom unique "Clients" partout — toujours visible — à passer en feature de base dans seeder + billing (S55+)
+  - `chatbot_whatsapp` → renommé "Sessions test" (≠ "Conversations" = conversations WhatsApp réelles)
+  - Source de vérité unique `features-master-config.ts` — 22 features partagées /bots + /results
+  - Tabs FIXES /bots : Conversations · Stats · Config · WhatsApp (4 — "Clients" géré par feature `gestion_crm`)
+  - Stats dynamiques (depuis features actives) + page statistiques transversale → S55+
+- **Séquence restante B5 :** UI-1 validation → UI-2 validation → 28 features → WAHA réel
+- **Rapport :** `docs/reports/session_54_gabriel.md`

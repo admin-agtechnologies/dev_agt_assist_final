@@ -8,8 +8,8 @@ export interface BotPair {
   voiceBot: BotData | null;
 }
 
-// ── S53 — tabs dynamiques ─────────────────────────────────────────────────────
-export type FixedTab = "configuration" | "conversations" | "clients" | "stats" | "whatsapp";
+// ── S54 — tabs dynamiques (clients retiré des fixes → feature gestion_crm) ───
+export type FixedTab = "configuration" | "conversations" | "stats" | "whatsapp";
 export type FeatureTab = `feature:${string}`;
 export type DetailTab = FixedTab | FeatureTab;
 
@@ -17,13 +17,14 @@ export interface FeatureTabDef {
   slug: string;
   label: { fr: string; en: string };
   icon: React.ElementType;
-  fetcher: (params: {
+  special?: "chatbot";
+  fetcher?: (params: {
     page: number;
     page_size: number;
     bot_id: string;
   }) => Promise<import("@/types/api").PaginatedResponse<{ id: string }>>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ResultCard: React.ComponentType<{ item: any }>;
+  ResultCard?: React.ComponentType<{ item: any }>;
   emptyMessage: { fr: string; en: string };
   emptyHint:    { fr: string; en: string };
 }

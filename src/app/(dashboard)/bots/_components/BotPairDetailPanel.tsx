@@ -1,12 +1,10 @@
 "use client";
 // src/app/(dashboard)/bots/_components/BotPairDetailPanel.tsx
-// Panel détail bot — tabs fixes + tabs dynamiques par feature active.
-// S53 : tabs feature injectés depuis FEATURE_TAB_MANIFEST selon features_autorisees_slugs du bot.
+// Panel détail bot — 4 tabs fixes + tabs dynamiques depuis FEATURE_TAB_MANIFEST.
+// S54 : "Clients" retiré des tabs fixes → géré par feature gestion_crm (toujours visible).
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import {
-  MessageSquare, BarChart3, Settings, Users, Phone,
-} from "lucide-react";
+import { MessageSquare, BarChart3, Settings, Phone } from "lucide-react";
 import { Spinner }                 from "@/components/ui";
 import { cn }                      from "@/lib/utils";
 import { conversationsRepository } from "@/repositories";
@@ -14,14 +12,13 @@ import { useLanguage }             from "@/contexts/LanguageContext";
 import { useSector }               from "@/hooks/useSector";
 import type { Conversation }       from "@/types/api";
 
-import { type BotPair, type DetailTab }  from "./bots.types";
-import { FEATURE_TAB_MAP }               from "./feature-tab-manifest";
-import { ConversationsTab }              from "./tabs/ConversationsTab";
-import { StatsTab }                      from "./tabs/StatsTab";
-import { BotConfigTab }                  from "./tabs/BotConfigTab";
-import { BotFeatureResultTab }           from "./tabs/BotFeatureResultTab";
-import { BotClientsTab }                 from "./tabs/BotClientsTab";
-import { WhatsAppPanel }                 from "./whatsapp/WhatsAppPanel";
+import { type BotPair, type DetailTab } from "./bots.types";
+import { FEATURE_TAB_MAP }              from "./feature-tab-manifest";
+import { ConversationsTab }             from "./tabs/ConversationsTab";
+import { StatsTab }                     from "./tabs/StatsTab";
+import { BotConfigTab }                 from "./tabs/BotConfigTab";
+import { BotFeatureResultTab }          from "./tabs/BotFeatureResultTab";
+import { WhatsAppPanel }                from "./whatsapp/WhatsAppPanel";
 
 interface BotPairDetailPanelProps {
   pair:      BotPair;
@@ -37,9 +34,9 @@ interface TabDef {
 }
 
 export function BotPairDetailPanel({ pair, d, colors, onRefresh }: BotPairDetailPanelProps) {
-  const { locale }  = useLanguage();
-  const { theme }   = useSector();
-  const primary     = theme?.primary ?? colors.primary;
+  const { locale } = useLanguage();
+  const { theme }  = useSector();
+  const primary    = theme?.primary ?? colors.primary;
 
   const [activeTab,     setActiveTab]     = useState<DetailTab>("conversations");
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -48,7 +45,6 @@ export function BotPairDetailPanel({ pair, d, colors, onRefresh }: BotPairDetail
   const fetchData = useCallback(async () => {
     setLoadingData(true);
     try {
-      // ConversationFilters utilise "bot" (legacy) — pas "bot_id"
       const res = await conversationsRepository.getList({ bot: pair.waBot.id });
       setConversations(
         Array.isArray(res) ? res : (res as { results: Conversation[] }).results ?? [],
@@ -62,7 +58,7 @@ export function BotPairDetailPanel({ pair, d, colors, onRefresh }: BotPairDetail
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // ── Construction des tabs dynamiques depuis les features autorisées du bot ──
+  // ── Tabs dynamiques depuis features_autorisées du bot ──────────────────────
   const featureTabs = useMemo<TabDef[]>(() => {
     const slugs: string[] = pair.waBot.features_autorisees_slugs ?? [];
     const seen = new Set<string>();
@@ -73,26 +69,20 @@ export function BotPairDetailPanel({ pair, d, colors, onRefresh }: BotPairDetail
       const key = `feature:${slug}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      tabs.push({
-        id:    `feature:${slug}` as DetailTab,
-        label: def.label[locale],
-        icon:  def.icon,
-      });
+      tabs.push({ id: key as DetailTab, label: def.label[locale], icon: def.icon });
     }
     return tabs;
   }, [pair.waBot.features_autorisees_slugs, locale]);
 
-  // ── Tabs fixes ──────────────────────────────────────────────────────────────
+  // ── Tabs fixes : Conversations · Stats · Config · WhatsApp ─────────────────
   const fixedTabs: TabDef[] = [
     { id: "conversations", label: locale === "fr" ? "Conversations" : "Conversations", icon: MessageSquare },
-    { id: "clients",       label: locale === "fr" ? "Clients"       : "Clients",       icon: Users },
-    { id: "stats",         label: locale === "fr" ? "Stats"         : "Stats",         icon: BarChart3 },
-    { id: "configuration", label: locale === "fr" ? "Config"        : "Config",        icon: Settings },
-    { id: "whatsapp",      label: "WhatsApp",                                           icon: Phone },
+    { id: "stats",         label: locale === "fr" ? "Stats"         : "Stats",         icon: BarChart3     },
+    { id: "configuration", label: locale === "fr" ? "Config"        : "Config",        icon: Settings      },
+    { id: "whatsapp",      label: "WhatsApp",                                           icon: Phone         },
   ];
 
   const allTabs = [...fixedTabs, ...featureTabs];
-
   const safeTab = allTabs.find((t) => t.id === activeTab) ? activeTab : "conversations";
 
   return (
@@ -136,14 +126,11 @@ export function BotPairDetailPanel({ pair, d, colors, onRefresh }: BotPairDetail
               {safeTab === "conversations" && (
                 <ConversationsTab conversations={conversations} d={d} colors={colors} />
               )}
-              {safeTab === "clients" && (
-                <BotClientsTab botId={pair.waBot.id} />
-              )}
               {safeTab === "stats" && (
                 <StatsTab conversations={conversations} d={d} />
               )}
               {safeTab === "configuration" && (
-               <BotConfigTab pair={pair} onRefresh={onRefresh} />
+                <BotConfigTab pair={pair} onRefresh={onRefresh} />
               )}
               {safeTab === "whatsapp" && (
                 <div className="max-w-2xl mx-auto">

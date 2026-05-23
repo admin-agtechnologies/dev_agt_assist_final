@@ -33,13 +33,13 @@ export function ResultsTabContent({ tabId, botId }: Props) {
   // Cas standard : ResultListTab avec la card et le fetcher du registre
   if (!def?.fetcher || !def?.ResultCard) return null;
 
+  const Card = def.ResultCard!;
   return (
     <ResultListTab
       key={`${tabId}-${botId ?? "all"}`}
       cacheKey={`${tabId}:${botId ?? "all"}`}
       fetcher={fetcher!}
-      renderCard={((Card) => (item) => <Card item={item} />)(def.ResultCard)}
-      emptyIcon={def.emptyIcon}
+      renderCard={(item) => <Card item={item} />}
       emptyMessage={def.emptyMessage?.[locale] ?? ""}
       emptyHint={def.emptyHint?.[locale] ?? ""}
     />

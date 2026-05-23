@@ -46,7 +46,7 @@ export default function ResultsPage() {
       .map((id) => ({
         id,
         label: TAB_CONFIG[id].label[locale],
-        icon:  TAB_CONFIG[id].icon,
+       icon:  TAB_CONFIG[id].icon as import("lucide-react").LucideIcon,
       })),
     [isFeatureActive, locale],
   );

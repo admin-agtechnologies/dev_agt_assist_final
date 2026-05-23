@@ -17,18 +17,21 @@ export function BotFeatureResultTab({ def, botId }: Props) {
   const { locale } = useLanguage();
 
   // Fetcher wrappé avec bot_id
-  const fetcher = useMemo(
+ const fetcher = useMemo(
     () => (params: { page: number; page_size: number }) =>
-      def.fetcher({ ...params, bot_id: botId }),
+      def.fetcher!({ ...params, bot_id: botId }),
     [def, botId],
   );
+
+  if (!def.fetcher || !def.ResultCard) return null;
+  const Card = def.ResultCard;
 
   return (
     <ResultListTab
       key={`${def.slug}-${botId}`}
       cacheKey={`${def.slug}:${botId}`}
       fetcher={fetcher}
-      renderCard={(item) => <def.ResultCard item={item} />}
+      renderCard={(item) => <Card item={item} />}
       emptyMessage={def.emptyMessage[locale]}
       emptyHint={def.emptyHint[locale]}
     />
