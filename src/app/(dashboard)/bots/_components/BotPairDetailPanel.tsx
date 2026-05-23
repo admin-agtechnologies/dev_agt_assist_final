@@ -1,7 +1,8 @@
 "use client";
 // src/app/(dashboard)/bots/_components/BotPairDetailPanel.tsx
 // Panel détail bot — 4 tabs fixes + tabs dynamiques depuis FEATURE_TAB_MANIFEST.
-// S54 : "Clients" retiré des tabs fixes → géré par feature gestion_crm (toujours visible).
+// S54 : tabs fixes = Conversations · Stats · Config · WhatsApp
+// S57 : fix StatsTab prop conversations→botId
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { MessageSquare, BarChart3, Settings, Phone } from "lucide-react";
@@ -117,7 +118,7 @@ export function BotPairDetailPanel({ pair, d, colors, onRefresh }: BotPairDetail
       {/* ── Contenu ── */}
       <div className="overflow-y-auto" style={{ maxHeight: "calc(100vh - 340px)" }}>
         <div className="p-5">
-          {loadingData && (safeTab === "conversations" || safeTab === "stats") ? (
+          {loadingData && safeTab === "conversations" ? (
             <div className="flex justify-center py-8">
               <Spinner className="border-[var(--border)] border-t-[var(--text-muted)]" />
             </div>
@@ -126,8 +127,9 @@ export function BotPairDetailPanel({ pair, d, colors, onRefresh }: BotPairDetail
               {safeTab === "conversations" && (
                 <ConversationsTab conversations={conversations} d={d} colors={colors} />
               )}
+              {/* S57 fix — botId au lieu de conversations */}
               {safeTab === "stats" && (
-                <StatsTab conversations={conversations} d={d} />
+                <StatsTab botId={pair.waBot.id} d={d} />
               )}
               {safeTab === "configuration" && (
                 <BotConfigTab pair={pair} onRefresh={onRefresh} />

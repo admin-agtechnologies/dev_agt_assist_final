@@ -996,3 +996,31 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **⚠️ PowerShell LiteralPath :** Les fichiers dans `[id]/test/` nécessitent `-LiteralPath` :
   `Get-Content -LiteralPath "C:\...\src\app\(dashboard)\bots\[id]\test\page.tsx" | Set-Clipboard`
 - **Rapport :** `docs/reports/session_55_gabriel.md`
+
+
+---
+## session_56_gabriel
+
+- **Type :** Conception + Génération full-stack — Stats 3 niveaux + Dashboard
+- **Date :** 2026-05-23
+- **Flux couverts :** B6 Stats N1/N2/N3 (backend ✅ · frontend généré ⏳ 33 erreurs TS)
+- **Bugs corrigés :** BUG-S56-01 (agent.views pas un package) · BUG-S56-02 (date_debut→periode_debut, partiel) · BUG-S56-03 (get_or_create mock conversations)
+- **Zones touchées :** `apps/agent/` · `apps/dashboard/` · `apps/tenants/seeders/demo/` · `src/types/api/` · `src/repositories/` · `src/app/(dashboard)/stats/` · `src/app/(dashboard)/statistiques/` · `src/app/(dashboard)/bots/_components/tabs/StatsTab.tsx` · `src/app/(dashboard)/dashboard/` · `src/dictionaries/`
+- **Fichiers créés :** `bot_stats.py` · `mock_stats.py` · `stats.repository.ts` · `stats-feature-config.ts` · `FeatureStatsSection.tsx` · `stats.fr.ts` · `stats.en.ts` · `statistiques/page.tsx` · `DashboardHeroKPIs.tsx` · `DashboardSectorWidgets.tsx`
+- **Fichiers modifiés :** `custom.py` · `agent/urls.py` · `dashboard/views.py` · `dashboard/urls.py` · `stats.types.ts` · `StatsTab.tsx` · `dashboard/page.tsx`
+- **Dette créée :** DETTE-S56-01 (abonnement periode_debut) · DETTE-S56-02 (33 erreurs TS) · DETTE-S56-04/05 (index.ts + Sidebar)
+- **Rapport :** docs/reports/session_56_gabriel.md
+```
+
+---
+## session_57_gabriel
+
+- **Type :** Debug + Génération — Fix TS + Seeder modulaire
+- **Date :** 2026-05-23
+- **Flux couverts :** 0 erreur tsc stats 3 niveaux ✅ · seeder custom Pro actif ✅
+- **Bugs corrigés :** BUG-S57-01 (33 erreurs TS) · BUG-S57-02 (api.get<T>()) · BUG-S57-03 (Abonnement barrel) · BUG-S57-04/05 (periode_debut/fin + Pro actif) · BUG-S57-06 (adminStatsRepository retiré client)
+- **Zones touchées :** `src/dictionaries/` · `src/repositories/stats.repository.ts` · `src/app/(dashboard)/bots/` · `src/app/(dashboard)/stats/` · `src/app/(dashboard)/statistiques/` · `src/app/(dashboard)/dashboard/` · `apps/tenants/seeders/demo/`
+- **Fichiers créés :** `account_patch.py` · `kb_custom.py` · `conversations_demo.py` · `results_bundle.py` · `statistiques/_components/FeatureStatsSection.tsx`
+- **Fichiers modifiés :** `custom.py` · `results_modules/__init__.py` · `stats.repository.ts` · `BotPairDetailPanel.tsx` · `StatsTab.tsx` · `FeatureStatsSection.tsx` · `DashboardHeroKPIs.tsx` · `dashboard/page.tsx` · `statistiques/page.tsx` · `fr/index.ts` · `en/index.ts`
+- **Dette créée :** `adminStatsRepository` à recréer côté admin · design stats/dashboard S58
+- **Rapport :** `docs/reports/session_57_gabriel.md`

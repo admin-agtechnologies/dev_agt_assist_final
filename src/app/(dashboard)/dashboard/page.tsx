@@ -1,207 +1,236 @@
-// src/app/pme/dashboard/page.tsx
 "use client";
+// src/app/(dashboard)/dashboard/page.tsx
+// Dashboard central — N3. Data-driven, sectoriel, branché sur vraies données.
+// S56 refonte — S57 fix : barrel subscriptionsRepository, Subscription type,
+//   cast d.dashboard.pme, featuresActives prop, retrait page_size.
+
 import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useRouter }    from "next/navigation";
+import { useAuth }      from "@/contexts/AuthContext";
+import { useLanguage }  from "@/contexts/LanguageContext";
+import { useSector }    from "@/hooks/useSector";
 import {
-  statsRepository,
   conversationsRepository,
-  subscriptionsRepository,
   rendezVousRepository,
-  type WeeklyDataPoint,
+  subscriptionsRepository,
 } from "@/repositories";
-import { PageLoader } from "@/components/ui";
-import { PLANS_CONFIG } from "@/lib/constants";
-import type {
-  TenantStats,
-  Conversation,
-  Subscription,
-  RendezVous,
-} from "@/types/api";
+import { entrepriseStatsRepository } from "@/repositories/stats.repository";
+import { Spinner }                   from "@/components/ui";
+import { DashboardHeroKPIs }         from "./_components/DashboardHeroKPIs";
+import { DashboardSectorWidgets }    from "./_components/DashboardSectorWidgets";
+import type { Conversation, RendezVous, Subscription } from "@/types/api";
+import type { EntrepriseStats }      from "@/types/api/stats.types";
 
-import { KpiCards } from "./_components/KpiCards";
-import { WeekChart } from "./_components/WeekChart";
-import { ActiveConversations } from "./_components/ActiveConversations";
-import { RecentConversations } from "./_components/RecentConversations";
-import { SubscriptionUsage } from "./_components/SubscriptionUsage";
-import { TodayAppointments } from "./_components/TodayAppointments";
-import { EmailStats } from "./_components/EmailStats";
-import { QuickLinks } from "./_components/QuickLinks";
-import { ConversationReportModal } from "../bots/_components/ConversationReportModal";
-import { useSector } from "@/hooks/useSector";
+// ── Page ──────────────────────────────────────────────────────────────────────
 
-// ─────────────────────────────────────────────────────────────────────────────
+export default function DashboardPage() {
+  const router                    = useRouter();
+  const { user }                  = useAuth();
+  const { locale, dictionary: d } = useLanguage();
+  const { theme }                 = useSector();
 
-export default function PmeDashboardPage() {
-  const { user } = useAuth();
-  const { dictionary: d } = useLanguage();
+  // S57 fix — accès direct d.dashboard.pme (pas de cast Record<...>)
   const t = d.dashboard.pme;
-  const { theme } = useSector();
 
-  const [stats, setStats] = useState<TenantStats | null>(null);
+  const [loading,       setLoading]       = useState(true);
+  const [stats,         setStats]         = useState<EntrepriseStats | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [todayAppointments, setTodayAppointments] = useState<RendezVous[]>([]);
-  const [weeklyData, setWeeklyData] = useState<WeeklyDataPoint[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
+  const [appointments,  setAppointments]  = useState<RendezVous[]>([]);
+  const [sub,           setSub]           = useState<Subscription | null>(null);
 
-  const fetchAll = useCallback(async () => {
+  // ── Chargement des données ─────────────────────────────────────────────────
+
+  const loadAll = useCallback(async () => {
     setLoading(true);
-    const today = new Date().toISOString().split("T")[0];
-    const [s, c, sub, appts, weekly] = await Promise.all([
-      statsRepository.getByTenant().catch(() => null),
-      conversationsRepository.getList().catch(() => ({
-        results: [] as Conversation[],
-        count: 0,
-        next: null,
-        previous: null,
-      })),
-      subscriptionsRepository.getMine().catch(() => null),
-      rendezVousRepository.getList().catch(() => ({
-        results: [] as RendezVous[],
-        count: 0,
-        next: null,
-        previous: null,
-      })),
-      statsRepository.getWeekly().catch(() => []),
-    ]);
-    setStats(s);
-    setConversations((c.results ?? []).slice(0, 5));
-    setSubscription(sub);
-    setTodayAppointments(
-      (appts.results ?? [])
-        .filter((a: RendezVous) => a.scheduled_at?.startsWith(today))
-        .slice(0, 3),
-    );
-    setWeeklyData(weekly);
-    setLoading(false);
+    try {
+      const [statsRes, convsRes, apptRes, subRes] = await Promise.all([
+        entrepriseStatsRepository.getStats(),
+        // S57 fix — retrait page_size (type conflict), limitation client-side
+        conversationsRepository.getList().catch(() => ({ results: [] as Conversation[] })),
+        rendezVousRepository.getList().catch(() => ({ results: [] as RendezVous[] })),
+        subscriptionsRepository.getMine().catch((): null => null),
+      ]);
+      setStats(statsRes);
+      const convList = Array.isArray(convsRes)
+        ? convsRes
+        : (convsRes as { results: Conversation[] }).results ?? [];
+      setConversations(convList.slice(0, 5));
+      const apptList = Array.isArray(apptRes)
+        ? apptRes
+        : (apptRes as { results: RendezVous[] }).results ?? [];
+      setAppointments(apptList.slice(0, 5));
+      setSub(subRes);
+    } catch {
+      /* fail silently — composants gèrent leur état vide */
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+  useEffect(() => { loadAll(); }, [loadAll]);
 
-  if (loading) return <PageLoader />;
+  // ── Billing labels (absents de dashboard.fr.ts → fallback locale) ──────────
+  const billingLabels = {
+    active:     locale === "fr" ? "Actif"           : "Active",
+    suspended:  locale === "fr" ? "Suspendu"        : "Suspended",
+    renewsOn:   locale === "fr" ? "Renouvellement"  : "Renews on",
+  };
 
-  // ── Plan courant (pour UsageBar) ─────────────────────────────────────────
-  const currentPlan = subscription
-    ? (PLANS_CONFIG.find((p) => p.slug === subscription.plan?.slug) ?? null)
-    : null;
+  // ── Render ─────────────────────────────────────────────────────────────────
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Spinner className="border-[var(--border)] border-t-[var(--color-primary)]" />
+      </div>
+    );
+  }
 
   return (
-    <>
-      <div className="space-y-6 animate-fade-in">
-        {/* ── Header ──────────────────────────────────────────────────────── */}
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--text)]">{t.title}</h1>
-          <p className="text-sm text-[var(--text-muted)] mt-0.5">
-            {t.welcome},{" "}
-            <span className="font-semibold text-[var(--text)]">
-              {user?.name}
-            </span>
-          </p>
-        </div>
+    <div className="space-y-6 p-6">
 
-        {/* ── KPI Cards ───────────────────────────────────────────────────── */}
-        <KpiCards
-          stats={stats}
-          labels={{
-            messagesToday: t.messagesToday,
-            callsToday: t.callsToday,
-            appointmentsToday: t.appointmentsToday,
-            thisWeek: t.thisWeek,
-          }}
-        />
-
-        {/* ── Conversations actives ────────────────────────────────────────── */}
-        {stats && (
-          <ActiveConversations
-            stats={stats}
-            label={t.activeConversations ?? "Conversations actives"}
-          />
-        )}
-
-        {/* ── Accès rapides ────────────────────────────────────────────────── */}
-        <QuickLinks
-          labels={{
-            title: t.quickLinks,
-            bots: d.nav.bots,
-            services: d.nav.services,
-            appointments: d.nav.appointments,
-            billing: d.nav.billing,
-          }}
-        />
-
-        {/* ── Contenu principal 2 colonnes ─────────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Colonne gauche 3/5 */}
-          <div className="lg:col-span-3 space-y-6">
-            <WeekChart data={weeklyData} title={t.thisWeek} />
-            <RecentConversations
-              conversations={conversations}
-              onSelect={setSelectedConv}
-              labels={{
-                title: t.recentConversations,
-                empty: t.noConversations,
-                channelWhatsapp: t.channel_whatsapp,
-                channelVoice: t.channel_voice,
-              }}
-            />
-          </div>
-
-          {/* Colonne droite 2/5 */}
-          <div className="lg:col-span-2 space-y-6">
-            <SubscriptionUsage
-              subscription={subscription}
-              stats={stats}
-              currentPlan={currentPlan}
-              labels={{
-                title: t.subscription,
-                active: d.billing.statusActive,
-                suspended: d.billing.statusSuspended,
-                renewsOn: d.billing.renewsOn,
-                changePlan: d.billing.changePlan,
-                usageMessages: t.usageMessages,
-                usageCalls: t.usageCalls,
-                noSubscription: t.noSubscription,
-              }}
-            />
-            <TodayAppointments
-              appointments={todayAppointments}
-              labels={{
-                title: t.todayAppointments,
-                viewAgenda: t.viewAgenda,
-                none: t.noAppointmentsToday,
-                statuses: {
-                  confirme: d.appointments.statuses.confirmed,
-                  en_attente: d.appointments.statuses.pending,
-                  termine: d.appointments.statuses.done,
-                  annule: d.appointments.statuses.cancelled,
-                },
-              }}
-            />
-            <EmailStats
-              stats={stats}
-              labels={{
-                title: t.emailStats,
-                sentWeek: t.emailsSentWeek,
-                opened: t.emailsOpened,
-                failed: t.emailsFailed,
-              }}
-            />
-          </div>
-        </div>
+      {/* ── Titre ── */}
+      <div>
+        <h1 className="text-2xl font-black text-[var(--text)]">
+          {t.welcome}{user?.name ? `, ${user.name.split(" ")[0]}` : ""} 👋
+        </h1>
+        <p className="text-sm text-[var(--text-muted)] mt-1">
+          {t.subtitle}
+        </p>
       </div>
 
-      {/* ── Modale conversation (rapport détaillé + chat coulissant) ───────── */}
-      {selectedConv && (
-        <ConversationReportModal
-          conversation={selectedConv}
-          onClose={() => setSelectedConv(null)}
-          colors={theme}
-        />
-      )}
-    </>
+      {/* ── Hero KPIs ── */}
+      <DashboardHeroKPIs stats={stats} />
+
+      {/* ── Widgets sectoriels — S57 fix : prop featuresActives ── */}
+      <DashboardSectorWidgets
+        stats={stats}
+        featuresActives={stats?.features_actives ?? []}
+      />
+
+      {/* ── Grille widgets secondaires ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+        {/* Conversations récentes */}
+        <div className="lg:col-span-2 bg-[var(--bg-card)] rounded-2xl border border-[var(--border)]">
+          <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
+            <h2 className="text-sm font-bold text-[var(--text)]">
+              {t.recentConversations}
+            </h2>
+            <span className="text-xs font-bold text-[var(--text-muted)]">
+              {t.thisWeek}
+            </span>
+          </div>
+          {conversations.length === 0 ? (
+            <div className="flex items-center justify-center py-10 text-[var(--text-muted)]">
+              <p className="text-sm">{t.noConversations}</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-[var(--border)]">
+              {conversations.map((conv) => (
+                <div
+                  key={conv.id}
+                  className="px-5 py-3 flex items-center gap-3 hover:bg-[var(--bg)] transition-colors cursor-pointer"
+                  onClick={() => router.push(`/conversations`)}
+                >
+                  <div
+                    className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-black text-white"
+                    style={{ background: theme?.primary ?? "var(--color-primary)" }}
+                  >
+                    {(conv as { contact_name?: string }).contact_name?.[0]?.toUpperCase() ?? "?"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-[var(--text)] truncate">
+                      {(conv as { contact_name?: string }).contact_name ?? "—"}
+                    </p>
+                    <p className="text-xs text-[var(--text-muted)]">
+                      {conv.bot_type === "vocal" ? t.channel_voice : t.channel_whatsapp}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Colonne droite */}
+        <div className="space-y-4">
+
+          {/* Abonnement */}
+          <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] p-5">
+            <h3 className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-3">
+              {t.subscription}
+            </h3>
+            {!sub ? (
+              <p className="text-sm text-[var(--text-muted)]">{t.noSubscription}</p>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-[var(--text)]">
+                    {sub.plan?.nom}
+                  </span>
+                  <span
+                    className="text-xs font-bold px-2 py-0.5 rounded-full"
+                    style={{
+                      background: sub.statut === "actif"
+                        ? "var(--status-success-bg)"
+                        : "var(--status-amber-bg)",
+                      color: sub.statut === "actif"
+                        ? "var(--status-success-text)"
+                        : "var(--status-amber-text)",
+                    }}
+                  >
+                    {sub.statut === "actif" ? billingLabels.active : billingLabels.suspended}
+                  </span>
+                </div>
+                {sub.periode_fin && (
+                  <p className="text-xs text-[var(--text-muted)]">
+                    {billingLabels.renewsOn} : {new Date(sub.periode_fin).toLocaleDateString(locale)}
+                  </p>
+                )}
+                <p className="text-xs text-[var(--text-muted)]">
+                  {t.usageMessages} : {sub.usage_messages ?? 0}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* RDV du jour */}
+          <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] p-5">
+            <h3 className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-3">
+              {t.todayAppointments}
+            </h3>
+            {appointments.length === 0 ? (
+              <p className="text-sm text-[var(--text-muted)]">{t.noAppointmentsToday}</p>
+            ) : (
+              <div className="space-y-2">
+                {appointments.map((appt) => (
+                  <div key={appt.id} className="flex items-center justify-between gap-2">
+                    <span className="text-sm text-[var(--text)] truncate flex-1">
+                      {appt.client_nom}
+                    </span>
+                    <span
+                      className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                      style={{ background: "var(--bg)", color: "var(--text-muted)" }}
+                    >
+                      {d.appointments.statuses[appt.statut as keyof typeof d.appointments.statuses]
+                        ?? appt.statut}
+                    </span>
+                  </div>
+                ))}
+                <button
+                  onClick={() => router.push("/appointments")}
+                  className="text-xs font-bold mt-1"
+                  style={{ color: theme?.primary ?? "var(--color-primary)" }}
+                >
+                  {t.viewAgenda}
+                </button>
+              </div>
+            )}
+          </div>
+
+        </div>
+      </div>
+    </div>
   );
 }
