@@ -1038,3 +1038,19 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Décisions clés :** conv_scenarios.py source de vérité pure data · SECTOR_FEATURES importé dynamiquement depuis features_seeder.SECTOR_MATRIX · patch_demo_account générique (plan_slug + wallet_amount) · abonnements adaptés par secteur · mock_stats 2 couches (conv_map + historique 90j) · Option A migration 6.20 pour Conversations/Sessions test vides
 - **Dette créée :** DETTE-S58-01 (Conversations/Sessions test vides → migration 6.20) · DETTE-S58-02 (test_sessions à migrer vers AIConversation mode=test) · DETTE-S58-03 (stats couche 1 non régénérées au second seed)
 - **Rapport :** docs/reports/session_58_gabriel.md
+
+---
+---
+## session_59_gabriel
+
+- **Type :** Debug + Migration + Génération — Frontend
+- **Date :** 2026-05-24
+- **Flux couverts :** Migration Conversation→AIConversation sur /bots, /bots/[id]/test, /results · Tab Conversations live ajouté dans /results
+- **Bugs corrigés :** BUG-S59-01 · BUG-S59-02 · BUG-S59-03 · BUG-S59-04 · BUG-S59-05 · BUG-S59-06
+- **Zones touchées :** `src/app/(dashboard)/bots/_components/` · `src/app/(dashboard)/bots/[id]/test/_components/` · `src/app/(dashboard)/knowledge/_components/` · `src/app/(dashboard)/results/` · `src/repositories/agent.repository.ts`
+- **Fichiers créés :** `ConvModal.tsx` · `ConversationsResultTab.tsx`
+- **Fichiers modifiés :** `ConversationsTab.tsx` · `ConversationPanel.tsx` · `ChatbotConversationCard.tsx` · `ChatbotResultTab.tsx` · `BotPairDetailPanel.tsx` · `BotFeatureResultTab.tsx` · `agent.repository.ts` · `results-tab-config.ts` · `results/page.tsx` · `ResultsTabContent.tsx`
+- **Dette créée :** `ConversationModal` encore sur ancien type (`as never`) · `ConversationReportModal` code mort à supprimer · UI-2 validation à faire · Plan B5 verrouillé
+- **⚠️ Chemin frontend correct :** `C:\Users\hp\Documents\gabriel\AGT-BOT\dev_agt_assist_final\`
+- **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "C:\Users\hp\Documents\gabriel\AGT-BOT\dev_agt_assist_final\src\app\(dashboard)\bots\[id]\test\page.tsx" | Set-Clipboard`
+- **Rapport :** `docs/reports/session_59_gabriel.md`

@@ -1,17 +1,19 @@
 "use client";
 // src/app/(dashboard)/bots/[id]/test/_components/ConversationPanel.tsx
 // Panneau droit : 4 accordéons (données, actions, config bot, sessions) + footer.
-// Accordéon 3 — config bot en lecture seule (résumé 5 sections) + bouton "Ajuster".
+// S59 — accordéon 4 enrichi : charge les sessions passées via AIConversation(mode=test).
 
 import { useState, useCallback, useEffect } from "react";
 import {
   User, Phone, Mail, Zap,
   Database, AlertTriangle, Settings, Clock,
+  MessageSquare,
 } from "lucide-react";
 import { Badge }        from "@/components/ui";
 import { useToast }     from "@/components/ui/Toast";
 import { useLanguage }  from "@/contexts/LanguageContext";
 import { useSector }    from "@/hooks/useSector";
+import { agentRepository } from "@/repositories/agent.repository";
 import type { ChatbotConfig } from "@/types/api";
 import type { AIConversation, AIActionDeclenchee } from "@/types/api/agent.types";
 import type { BotPair } from "../../../_components/bots.types";
@@ -35,6 +37,23 @@ interface Props {
   onConfigSaved: (c: ChatbotConfig) => void;
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function getSessionContact(conv: AIConversation): string {
+  const ctx = (conv.contexte ?? {}) as Record<string, unknown>;
+  const contact = ctx.contact as Record<string, string> | undefined;
+  const nom = contact?.nom ?? (conv.contact as { nom?: string } | null)?.nom;
+  return nom ?? "Client";
+}
+
+function getSessionLastMsg(conv: AIConversation): string {
+  const msgs = conv.messages ?? [];
+  const last = [...msgs].reverse().find(
+    (m) => m.role === "user" || m.role === "assistant",
+  );
+  return last?.contenu?.slice(0, 60) ?? "—";
+}
+
 // ── Composant ─────────────────────────────────────────────────────────────────
 
 export function ConversationPanel({ conversation, pair, config, onConfigSaved }: Props) {
@@ -46,6 +65,10 @@ export function ConversationPanel({ conversation, pair, config, onConfigSaved }:
   const [activeAction, setActiveAction] = useState<AIActionDeclenchee | null>(null);
   const [configOpen,   setConfigOpen]   = useState(false);
 
+  // Sessions passées (mode=test, bot courant)
+  const [pastSessions,     setPastSessions]     = useState<AIConversation[]>([]);
+  const [loadingSessions,  setLoadingSessions]  = useState(false);
+
   const contexte    = conversation?.contexte ?? {};
   const contact     = (contexte.contact ?? {}) as Record<string, string>;
   const summary     = contexte.summary as string | undefined;
@@ -56,6 +79,28 @@ export function ConversationPanel({ conversation, pair, config, onConfigSaved }:
   const [savedConfig, setSavedConfig] = useState(config);
   useEffect(() => { setSavedConfig(config); }, [config]);
 
+  // Charger les sessions passées dès qu'on connaît le bot
+  const botId = pair.waBot?.id;
+  const loadPastSessions = useCallback(async () => {
+    if (!botId) return;
+    setLoadingSessions(true);
+    try {
+      const res = await agentRepository.listConversations({ bot_id: botId, mode: "test" });
+      const all = (res as { results?: AIConversation[] }).results ?? [];
+      // Exclure la session active en cours
+      const past = conversation
+        ? all.filter((s) => s.id !== conversation.id)
+        : all;
+      setPastSessions(past);
+    } catch {
+      // silencieux — non bloquant
+    } finally {
+      setLoadingSessions(false);
+    }
+  }, [botId, conversation]);
+
+  useEffect(() => { void loadPastSessions(); }, [loadPastSessions]);
+
   const handleConfigSaved = useCallback((c: ChatbotConfig) => {
     setSavedConfig(c);
     onConfigSaved(c);
@@ -64,6 +109,9 @@ export function ConversationPanel({ conversation, pair, config, onConfigSaved }:
 
   const modalType = activeAction ? getModalType(activeAction.action_slug) : null;
   const closeModal = () => setActiveAction(null);
+
+  // Nombre de sessions : session active + sessions passées
+  const sessionCount = (conversation ? 1 : 0) + pastSessions.length;
 
   return (
     <div className="flex flex-col h-full">
@@ -82,11 +130,10 @@ export function ConversationPanel({ conversation, pair, config, onConfigSaved }:
                   conversation.statut === "active"     ? "green" :
                   conversation.statut === "transferee" ? "amber" : "slate"
                 }>
-                  {conversation.statut === "active"     ? "Active"    :
+                  {conversation.statut === "active"     ? "Active"     :
                    conversation.statut === "transferee" ? "Transférée" : "Terminée"}
                 </Badge>
               </div>
-              {/* Contact */}
               {contact.nom && (
                 <div className="flex items-center gap-2 text-[12px]">
                   <User  className="w-3 h-3 text-[var(--text-muted)] flex-shrink-0" />
@@ -158,15 +205,57 @@ export function ConversationPanel({ conversation, pair, config, onConfigSaved }:
           )}
         </PanelAccordion>
 
-        {/* ── Accordéon 4 : Sessions ── */}
+        {/* ── Accordéon 4 : Sessions de test ── */}
         <PanelAccordion
           icon={<Clock className="w-3 h-3" />}
           title={t.testSessions}
-          badge={conversation ? 1 : 0}
+          badge={sessionCount}
         >
-          <p className="text-[11px] text-[var(--text-muted)] pt-1">
-            {conversation ? "1 session active" : t.testSessionsEmpty}
-          </p>
+          {loadingSessions ? (
+            <p className="text-[11px] text-[var(--text-muted)] italic py-1">Chargement…</p>
+          ) : sessionCount === 0 ? (
+            <p className="text-[11px] text-[var(--text-muted)] italic py-1">{t.testSessionsEmpty}</p>
+          ) : (
+            <div className="space-y-1.5 pt-1">
+              {/* Session active en cours */}
+              {conversation && (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0 animate-pulse" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium text-[var(--text)] truncate">
+                      {getSessionContact(conversation)}
+                    </p>
+                    <p className="text-[10px] text-[var(--text-muted)] truncate">
+                      {getSessionLastMsg(conversation)}
+                    </p>
+                  </div>
+                  <span className="text-[9px] bg-green-500/10 text-green-600 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                    Active
+                  </span>
+                </div>
+              )}
+              {/* Sessions passées */}
+              {pastSessions.map((s) => (
+                <div
+                  key={s.id}
+                  className="flex items-center gap-2 p-2 rounded-lg bg-[var(--bg)] border border-[var(--border)]"
+                >
+                  <MessageSquare className="w-3 h-3 text-[var(--text-muted)] flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium text-[var(--text)] truncate">
+                      {getSessionContact(s)}
+                    </p>
+                    <p className="text-[10px] text-[var(--text-muted)] truncate">
+                      {getSessionLastMsg(s)}
+                    </p>
+                  </div>
+                  <span className="text-[9px] text-[var(--text-muted)] flex-shrink-0">
+                    {(s.messages ?? []).filter((m) => m.role === "user" || m.role === "assistant").length} msg
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </PanelAccordion>
       </div>
 
@@ -175,10 +264,7 @@ export function ConversationPanel({ conversation, pair, config, onConfigSaved }:
         <button
           onClick={() => setConfigOpen(true)}
           className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-[12px] font-medium transition-all duration-200 hover:opacity-80"
-          style={{
-            borderColor: theme.primary,
-            color:       theme.primary,
-          }}
+          style={{ borderColor: theme.primary, color: theme.primary }}
         >
           <Settings className="w-3.5 h-3.5" />
           {t.configAdjustBtn}

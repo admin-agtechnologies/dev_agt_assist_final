@@ -8,6 +8,7 @@ import { useLanguage }       from "@/contexts/LanguageContext";
 import { ResultListTab }     from "./ResultListTab";
  import { ChatbotResultTab }  from "@/app/(dashboard)/knowledge/_components/tabs/ChatbotResultTab";
 import { TAB_CONFIG, type TabId } from "../_config/results-tab-config";
+import { ConversationsResultTab } from "./ConversationsResultTab";
 
 interface Props {
   tabId:  TabId;
@@ -28,6 +29,9 @@ export function ResultsTabContent({ tabId, botId }: Props) {
   // Cas spécial : chatbot WhatsApp
   if (def?.special === "chatbot") {
     return <ChatbotResultTab />;
+  }
+  if (def?.special === "conversations") {
+    return <ConversationsResultTab botId={botId} />;
   }
 
   // Cas standard : ResultListTab avec la card et le fetcher du registre

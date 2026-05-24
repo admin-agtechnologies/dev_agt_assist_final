@@ -27,9 +27,10 @@ import { TransfertHumainResultCard }     from "../_components/TransfertHumainRes
 import { DemandeConciergericResultCard } from "../_components/DemandeConciergericResultCard";
 import { EmailResultCard }               from "../_components/EmailResultCard";
 import { ConsultationFAQResultCard }     from "../_components/ConsultationFAQResultCard";
+import { MessageSquare } from "lucide-react";
 
 // Re-export TabId depuis FeatureSlug pour cohérence
-export type TabId = FeatureSlug;
+export type TabId = FeatureSlug | "conversations";
 
 type FetchParams = { page: number; page_size: number; bot_id?: string };
 
@@ -51,6 +52,11 @@ export interface ResultTabDef {
 const m = (slug: FeatureSlug) => FEATURES_MASTER.find((f) => f.slug === slug)!;
 
 export const TAB_CONFIG: Record<TabId, ResultTabDef> = {
+  conversations: {
+  icon:    MessageSquare,  // import à ajouter
+  label:   { fr: "Conversations", en: "Conversations" },
+  special: "conversations" as never,
+},
 
   chatbot_whatsapp: {
     icon:    m("chatbot_whatsapp").icon,
@@ -269,4 +275,4 @@ export const TAB_CONFIG: Record<TabId, ResultTabDef> = {
 };
 
 /** Ordre d'affichage canonique — depuis le master */
-export const TAB_ORDER: TabId[] = FEATURES_ORDER as TabId[];
+export const TAB_ORDER: TabId[] = ["conversations", ...FEATURES_ORDER as TabId[]];

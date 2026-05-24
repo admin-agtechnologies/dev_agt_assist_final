@@ -40,6 +40,7 @@ export default function ResultsPage() {
   const visibleTabs = useMemo<KnowledgeTab[]>(() =>
     TAB_ORDER
       .filter((id) => {
+        if (id === "conversations") return true;
         const feature = TAB_CONFIG[id].feature;
         return !feature || isFeatureActive(feature);
       })

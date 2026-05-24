@@ -8,11 +8,10 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { MessageSquare, BarChart3, Settings, Phone } from "lucide-react";
 import { Spinner }                 from "@/components/ui";
 import { cn }                      from "@/lib/utils";
-import { conversationsRepository } from "@/repositories";
+import type { AIConversation } from "@/types/api/agent.types";
+import { agentRepository } from "@/repositories/agent.repository";
 import { useLanguage }             from "@/contexts/LanguageContext";
 import { useSector }               from "@/hooks/useSector";
-import type { Conversation }       from "@/types/api";
-
 import { type BotPair, type DetailTab } from "./bots.types";
 import { FEATURE_TAB_MAP }              from "./feature-tab-manifest";
 import { ConversationsTab }             from "./tabs/ConversationsTab";
@@ -40,16 +39,14 @@ export function BotPairDetailPanel({ pair, d, colors, onRefresh }: BotPairDetail
   const primary    = theme?.primary ?? colors.primary;
 
   const [activeTab,     setActiveTab]     = useState<DetailTab>("conversations");
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversations, setConversations] = useState<AIConversation[]>([]);
   const [loadingData,   setLoadingData]   = useState(true);
 
   const fetchData = useCallback(async () => {
     setLoadingData(true);
     try {
-      const res = await conversationsRepository.getList({ bot: pair.waBot.id });
-      setConversations(
-        Array.isArray(res) ? res : (res as { results: Conversation[] }).results ?? [],
-      );
+      const res = await agentRepository.listConversations({ bot_id: pair.waBot.id, mode: "live" });
+      setConversations((res as { results: AIConversation[] }).results ?? []);
     } catch {
       setConversations([]);
     } finally {

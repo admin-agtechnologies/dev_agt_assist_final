@@ -7,6 +7,7 @@ import { useMemo }                  from "react";
 import { useLanguage }              from "@/contexts/LanguageContext";
 import { ResultListTab }            from "@/app/(dashboard)/results/_components/ResultListTab";
 import type { FeatureTabDef }       from "../bots.types";
+import { ChatbotResultTab } from "@/app/(dashboard)/knowledge/_components/tabs/ChatbotResultTab";
 
 interface Props {
   def:    FeatureTabDef;
@@ -22,10 +23,11 @@ export function BotFeatureResultTab({ def, botId }: Props) {
       def.fetcher!({ ...params, bot_id: botId }),
     [def, botId],
   );
-
-  if (!def.fetcher || !def.ResultCard) return null;
-  const Card = def.ResultCard;
-
+  const Card = def.ResultCard!;
+    if (!def.fetcher || !def.ResultCard) {
+      if (def.special === "chatbot") return <ChatbotResultTab />;
+      return null;
+    }
   return (
     <ResultListTab
       key={`${def.slug}-${botId}`}
