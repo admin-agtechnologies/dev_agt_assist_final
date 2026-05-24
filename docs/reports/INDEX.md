@@ -1070,3 +1070,18 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Specs traitées :** Conception Stats B6 v2 ✅ · Audit modèles 28 features ✅ · 4 migrations appliquées ✅
 - **Dette créée :** DETTE-S60-01 (5 actions agent) · DETTE-S60-02 (seeders nouvelles tables) · DETTE-S60-03 (tests invoque-request) · DETTE-S60-04 (admin+serializers nouvelles tables)
 - **Rapport :** docs/reports/session_60_gabriel.md
+
+---
+---
+## session_61_gabriel
+
+- **Type :** Debug + Génération — Backend
+- **Date :** 2026-05-24
+- **Flux couverts :** DETTE-S60-01 (5 actions agent) ✅ · DETTE-S60-02 (seeders nouvelles tables) ✅ · DETTE-S60-03 (tests invoque-request) ✅ · B6 backend stats v2 (historique + kpis_sectoriels 10 secteurs) ✅
+- **Bugs corrigés :** BUG-S61-01 (ConsultationCatalogue.action_slug max_length) · BUG-S61-02 (DashboardStatsView 0 partout — entreprise_id) · BUG-S61-03 (TransfertHumain mauvais import)
+- **Zones touchées :** `apps/agent/actions/` · `apps/agent/bot_stats.py` · `apps/agent/bot_stats_aggregators.py` · `apps/dashboard/views.py` · `apps/catalogue/migrations/` · `apps/tenants/seeders/demo/results_modules/`
+- **Fichiers créés :** `bot_stats_aggregators.py` · `0005_consultationcatalogue_action_slug_max100.py` · `consultations_catalogue.py` · `consultations_agence.py` · `orientations_patient.py` · `simulations_credit.py`
+- **Fichiers modifiés :** `catalogue.py` · `agences.py` · `sante.py` · `banking.py` · `bot_stats.py` · `dashboard/views.py` · `results_bundle.py` · `results_modules/__init__.py`
+- **Specs traitées :** DETTE-S60-01/02/03 ✅ · B6 stats v2 backend ✅
+- **Dette créée :** DETTE-S61-01 (admin+serializers nouvelles tables — reporté) · NOTE-S61-01 (seed --demo --only custom non supporté — flush+seed --demo obligatoire)
+- **Rapport :** docs/reports/session_61_gabriel.md
