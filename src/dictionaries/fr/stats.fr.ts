@@ -1,5 +1,6 @@
 // src/dictionaries/fr/stats.fr.ts
 // S56 — dictionnaire stats N1 + N2 + N3
+// S62 — ajout libellés filtres période étendus + drill-down
 export const stats = {
   // Page /statistiques
   title:        "Statistiques",
@@ -9,12 +10,28 @@ export const stats = {
   noStats:      "Aucune statistique sur cette période.",
   noStatsHint:  "Les données apparaîtront dès que le bot aura traité des conversations.",
   refresh:      "Actualiser",
-  custom:       "Personnalisé",
-  // Période
+  custom:       "Personnalisée",
+
+  // Filtres période (S62)
+  periodeJour:    "Aujourd'hui",
+  periodeSemaine: "7 jours",
+  periode30:      "30 jours",
+  periode3m:      "3 mois",
+  periode6m:      "6 mois",
+  periodeAn:      "1 an",
+  periodeCustom:  "Personnalisée",
+
+  // Drill-down (S62)
+  voirResultats:    "Voir les résultats",
+  dernieresEntrees: "Dernières entrées",
+  aucuneEntree:     "Aucune entrée récente.",
+
+  // Périodes legacy (gardées pour compatibilité N2)
   period7:      "7 jours",
   period30:     "30 jours",
   period90:     "90 jours",
-  // KPIs communs
+
+  // KPIs
   kpiSessions:          "Sessions",
   kpiAvgMessages:       "Msg / session",
   kpiHandoffs:          "Transferts",
@@ -52,5 +69,3 @@ export const stats = {
   kpiConcDone:          "Effectuées",
   kpiConcOngoing:       "En cours",
 } as const;
-
-// ─────────────────────────────────────────────────────────────────────────────

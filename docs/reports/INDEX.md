@@ -1085,3 +1085,14 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Specs traitées :** DETTE-S60-01/02/03 ✅ · B6 stats v2 backend ✅
 - **Dette créée :** DETTE-S61-01 (admin+serializers nouvelles tables — reporté) · NOTE-S61-01 (seed --demo --only custom non supporté — flush+seed --demo obligatoire)
 - **Rapport :** docs/reports/session_61_gabriel.md
+
+
+---
+---
+## session_62_gabriel
+
+- **Type :** Génération + Debug — Frontend
+- **Date :** 2026-05-24
+- **Flux couverts :** B6 N1 — StatsTab refondu (/bots tab Stats)
+- **Bugs corrigés :** BUG-S62-01 (toEntries types stricts) · BUG-S62-02 (EntrepriseStats régression S56)
+- **Zones touchées :** `src/types/api/stats.types.ts` · `src/dictionaries/fr/stats.fr.ts` · `src/dictionaries/en/stats.en.ts` · `src/app/(dashboard)/bots/_components/tabs/StatsTab.tsx` · `src/app/(dashboard)/bots/_components/tabs/stats/`

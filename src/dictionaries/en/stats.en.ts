@@ -1,6 +1,8 @@
-
 // src/dictionaries/en/stats.en.ts
+// S56 — dictionnaire stats N1 + N2 + N3
+// S62 — ajout libellés filtres période étendus + drill-down
 export const statsEn = {
+  // Page /statistiques
   title:        "Statistics",
   subtitle:     "Detailed analysis of your bots' activity.",
   allBots:      "All bots",
@@ -9,9 +11,27 @@ export const statsEn = {
   noStatsHint:  "Data will appear once the bot has processed conversations.",
   refresh:      "Refresh",
   custom:       "Custom",
+
+  // Filtres période (S62)
+  periodeJour:    "Today",
+  periodeSemaine: "7 days",
+  periode30:      "30 days",
+  periode3m:      "3 months",
+  periode6m:      "6 months",
+  periodeAn:      "1 year",
+  periodeCustom:  "Custom",
+
+  // Drill-down (S62)
+  voirResultats:    "View results",
+  dernieresEntrees: "Recent entries",
+  aucuneEntree:     "No recent entries.",
+
+  // Périodes legacy (gardées pour compatibilité N2)
   period7:      "7 days",
   period30:     "30 days",
   period90:     "90 days",
+
+  // KPIs
   kpiSessions:          "Sessions",
   kpiAvgMessages:       "Msg / session",
   kpiHandoffs:          "Handoffs",
