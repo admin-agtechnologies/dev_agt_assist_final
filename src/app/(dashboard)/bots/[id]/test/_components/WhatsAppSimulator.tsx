@@ -1,23 +1,24 @@
 "use client";
 // src/app/(dashboard)/bots/[id]/test/_components/WhatsAppSimulator.tsx
 // Simulateur WhatsApp — envoi de messages, rendu du fil de conversation.
-// Cartes inline → _ui/ActionCards · Modals → modals/
+// S65 — suggestions features actives · charger session passée · strings i18n.
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Bot as BotIcon, Send, User, MessageSquare,
-  Loader2, Mic,
+  Loader2, Mic, Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/Toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { agentRepository } from "@/repositories/agent.repository";
+import type { ActiveFeature } from "@/repositories/features.repository";
 import type { AIConversation, AIMessage, AIActionDeclenchee } from "@/types/api/agent.types";
 import { CardReservation, CardEmail } from "./_ui/ActionCards";
 import { ModalEmail, ModalReservation } from "./modals/ActionModals";
 import { ModalVideoDemo } from "./modals/SystemModals";
 
-// ── Suggestions par secteur ───────────────────────────────────────────────────
+// ── Suggestions de base par secteur ──────────────────────────────────────────
 
 const SECTOR_SUGGESTIONS: Record<string, string[]> = {
   hotel:      ["Réserver une chambre", "Nos tarifs ?", "Disponibilités", "Parler à quelqu'un"],
@@ -31,6 +32,44 @@ const SECTOR_SUGGESTIONS: Record<string, string[]> = {
   public:     ["Services disponibles", "Déposer un dossier", "Suivi dossier", "Parler à quelqu'un"],
   _default:   ["Je veux un RDV", "Vos services ?", "Vos horaires ?", "Parler à quelqu'un"],
 };
+
+/** Suggestions basées sur les features actives du tenant. */
+function buildSuggestions(
+  sectorSlug: string | undefined,
+  activeFeatures: ActiveFeature[],
+): string[] {
+  const FEATURE_SUGGESTIONS: Record<string, string> = {
+    prise_rdv:           "Prendre un RDV",
+    reservation_chambre: "Réserver une chambre",
+    reservation_table:   "Réserver une table",
+    reservation_billet:  "Réserver un billet",
+    menu_digital:        "Voir le menu",
+    catalogue_produits:  "Voir le catalogue",
+    faq:                 "Une question ?",
+    simulation_credit:   "Simuler un crédit",
+    inscription_admission: "S'inscrire",
+    suivi_commande:      "Suivre ma commande",
+    orientation_patient: "Orientation médicale",
+    orientation_citoyens:"Services disponibles",
+    transfert_humain:    "Parler à quelqu'un",
+  };
+
+  const featureSuggs = activeFeatures
+    .filter((f) => f.is_active && FEATURE_SUGGESTIONS[f.slug])
+    .map((f) => FEATURE_SUGGESTIONS[f.slug]!)
+    .slice(0, 3);
+
+  if (featureSuggs.length >= 3) {
+    // Compléter avec "Parler à quelqu'un" si pas déjà présent
+    const hasHuman = featureSuggs.some((s) => s.includes("quelqu'un"));
+    return hasHuman ? featureSuggs.slice(0, 4) : [...featureSuggs.slice(0, 3), "Parler à quelqu'un"];
+  }
+
+  // Fallback sectoriel
+  const base = SECTOR_SUGGESTIONS[sectorSlug ?? "_default"] ?? SECTOR_SUGGESTIONS._default;
+  const merged = [...new Set([...featureSuggs, ...base])];
+  return merged.slice(0, 4);
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -47,32 +86,79 @@ interface Props {
   botNom: string;
   sectorSlug?: string;
   sectorNom?: string;
+  activeFeatures: ActiveFeature[];
+  /** Session passée à charger au montage (clic depuis accordéon 4). */
+  initialSession?: AIConversation | null;
   onConversationUpdate: (conv: AIConversation) => void;
 }
 
 // ── Composant ─────────────────────────────────────────────────────────────────
 
-export function WhatsAppSimulator({ botNom: _botNom, sectorSlug, sectorNom, onConversationUpdate }: Props) {
+export function WhatsAppSimulator({
+  botNom: _botNom,
+  sectorSlug,
+  sectorNom,
+  activeFeatures,
+  initialSession,
+  onConversationUpdate,
+}: Props) {
   const { dictionary: d } = useLanguage();
   const t     = d.bots;
   const toast = useToast();
 
-  const [messages,      setMessages]      = useState<DisplayMessage[]>([]);
-  const [input,         setInput]         = useState("");
-  const [isSending,     setIsSending]     = useState(false);
-  const [showVideoModal, setShowVideo]    = useState(false);
-  const [activeRes,     setActiveRes]     = useState<AIActionDeclenchee | null>(null);
-  const [activeEmail,   setActiveEmail]   = useState<AIActionDeclenchee | null>(null);
+  const [messages,       setMessages]       = useState<DisplayMessage[]>([]);
+  const [input,          setInput]          = useState("");
+  const [isSending,      setIsSending]      = useState(false);
+  const [showVideoModal, setShowVideo]      = useState(false);
+  const [activeRes,      setActiveRes]      = useState<AIActionDeclenchee | null>(null);
+  const [activeEmail,    setActiveEmail]    = useState<AIActionDeclenchee | null>(null);
+  const [sessionLoaded,  setSessionLoaded]  = useState(false);
 
   const conversationIdRef = useRef<string | null>(null);
   const shownIdsRef       = useRef<Set<string>>(new Set());
   const bottomRef         = useRef<HTMLDivElement>(null);
 
-  const suggestions = SECTOR_SUGGESTIONS[sectorSlug ?? "_default"] ?? SECTOR_SUGGESTIONS._default;
+  const suggestions = buildSuggestions(sectorSlug, activeFeatures);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // ── Charger une session passée au montage ─────────────────────────────────
+
+  useEffect(() => {
+    if (!initialSession) return;
+    conversationIdRef.current = initialSession.id;
+    onConversationUpdate(initialSession);
+
+    const loaded: DisplayMessage[] = [];
+    for (const m of initialSession.messages ?? []) {
+      if (m.role === "status") {
+        loaded.push({ id: m.id, role: "status", content: m.contenu });
+      } else if (m.role === "user" || m.role === "assistant") {
+        loaded.push({ id: m.id, role: m.role, content: m.contenu });
+      }
+      shownIdsRef.current.add(m.id);
+    }
+    // Injecter les cartes des actions passées
+    for (const action of initialSession.actions_declenchees ?? []) {
+      if (action.statut !== "succes") continue;
+      const cardId = `card-${action.id}`;
+      shownIdsRef.current.add(cardId);
+      const slug = action.action_slug;
+      if (["create_reservation", "check_disponibilite", "create_demande_conciergerie",
+           "create_rdv", "book_room", "book_table", "book_ticket"].includes(slug)) {
+        loaded.push({ id: cardId, role: "assistant", content: "", actionCard: "reservation", actionData: action });
+      } else if (["send_email", "send_reminder"].includes(slug)) {
+        loaded.push({ id: cardId, role: "assistant", content: "", actionCard: "email", actionData: action });
+      }
+    }
+    setMessages(loaded);
+    setSessionLoaded(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSession?.id]);
+
+  // ── Injection des nouveaux messages IA ───────────────────────────────────
 
   const injectAIMessages = useCallback((aiMessages: AIMessage[], actions: AIActionDeclenchee[]) => {
     const toAdd: DisplayMessage[] = [];
@@ -81,14 +167,15 @@ export function WhatsAppSimulator({ botNom: _botNom, sectorSlug, sectorNom, onCo
       if (shownIdsRef.current.has(m.id)) continue;
       shownIdsRef.current.add(m.id);
       if (m.role === "user") continue;
-      toAdd.push({ id: m.id, role: m.role, content: m.contenu });
+      toAdd.push({ id: m.id, role: m.role as "assistant" | "status", content: m.contenu });
     }
 
     for (const action of actions) {
       const cardId = `card-${action.id}`;
       if (shownIdsRef.current.has(cardId) || action.statut !== "succes") continue;
       const slug = action.action_slug;
-      if (["create_reservation", "check_disponibilite", "create_demande_conciergerie"].includes(slug)) {
+      if (["create_reservation", "check_disponibilite", "create_demande_conciergerie",
+           "create_rdv", "book_room", "book_table", "book_ticket"].includes(slug)) {
         shownIdsRef.current.add(cardId);
         toAdd.push({ id: cardId, role: "assistant", content: "", actionCard: "reservation", actionData: action });
       } else if (["send_email", "send_reminder"].includes(slug)) {
@@ -99,6 +186,8 @@ export function WhatsAppSimulator({ botNom: _botNom, sectorSlug, sectorNom, onCo
 
     setMessages(prev => [...prev.filter(m => m.id !== "typing"), ...toAdd]);
   }, []);
+
+  // ── Envoi de message ──────────────────────────────────────────────────────
 
   const sendMessage = useCallback(async (text?: string) => {
     const content = (text ?? input).trim();
@@ -115,7 +204,7 @@ export function WhatsAppSimulator({ botNom: _botNom, sectorSlug, sectorNom, onCo
     ]);
 
     try {
-      const res  = await agentRepository.sendMessage({
+      const res = await agentRepository.sendMessage({
         conversation_id: conversationIdRef.current ?? undefined,
         message: content,
         canal:   "whatsapp",
@@ -131,21 +220,33 @@ export function WhatsAppSimulator({ botNom: _botNom, sectorSlug, sectorNom, onCo
         shownIdsRef.current.add(tid);
         setMessages(prev => [
           ...prev,
-          { id: tid, role: "status", content: "🔄 Conversation transférée à un agent humain." },
+          { id: tid, role: "status", content: t.testSessionTransferred },
         ]);
       }
     } catch {
       setMessages(prev => prev.filter(m => m.id !== "typing"));
       toast.error(t.testSendError);
-    } finally { setIsSending(false); }
-  }, [input, isSending, onConversationUpdate, injectAIMessages, t.testSendError, toast]);
+    } finally {
+      setIsSending(false);
+    }
+  }, [input, isSending, onConversationUpdate, injectAIMessages, t, toast]);
 
   const handleKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void sendMessage(); }
   };
 
+  // ── Rendu ─────────────────────────────────────────────────────────────────
+
   return (
     <div className="flex flex-col flex-1 min-h-0">
+
+      {/* Bandeau "session chargée" */}
+      {sessionLoaded && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-[var(--bg)] border-b border-[var(--border)]">
+          <Info className="w-3.5 h-3.5 text-[var(--text-muted)] flex-shrink-0" />
+          <p className="text-[11px] text-[var(--text-muted)]">{t.testSessionContinueHint}</p>
+        </div>
+      )}
 
       {/* ── Fil de messages ── */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[400px] max-h-[580px]">
@@ -159,6 +260,7 @@ export function WhatsAppSimulator({ botNom: _botNom, sectorSlug, sectorNom, onCo
         )}
 
         {messages.map(msg => {
+          // Message de statut
           if (msg.role === "status") return (
             <div key={msg.id} className="flex justify-center">
               <span className="text-xs text-[var(--text-muted)] italic bg-[var(--bg)] px-3 py-1 rounded-full border border-[var(--border)]">
@@ -167,14 +269,15 @@ export function WhatsAppSimulator({ botNom: _botNom, sectorSlug, sectorNom, onCo
             </div>
           );
 
+          // Cartes action inline
           if (msg.actionCard === "reservation" && msg.actionData) return (
             <CardReservation key={msg.id} action={msg.actionData} onClick={() => setActiveRes(msg.actionData!)} />
           );
-
           if (msg.actionCard === "email" && msg.actionData) return (
             <CardEmail key={msg.id} action={msg.actionData} onClick={() => setActiveEmail(msg.actionData!)} />
           );
 
+          // Bulle normale
           const isUser = msg.role === "user";
           return (
             <div key={msg.id} className={cn("flex gap-2", isUser ? "flex-row-reverse" : "flex-row")}>
@@ -211,18 +314,16 @@ export function WhatsAppSimulator({ botNom: _botNom, sectorSlug, sectorNom, onCo
         <div ref={bottomRef} />
       </div>
 
-      {/* ── Suggestions (état initial) ── */}
-      {messages.length === 0 && (
-        <div className="px-4 pb-2 flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] text-[var(--text-muted)] flex-shrink-0">Suggestions :</span>
-          {suggestions.map(s => (
-            <button key={s} onClick={() => void sendMessage(s)} disabled={isSending}
-              className="px-2.5 py-1 rounded-full border border-[var(--border)] text-[10px] font-medium text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--text-muted)] transition-colors disabled:opacity-40">
-              {s}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* ── Suggestions — toujours visibles ── */}
+      <div className="px-4 py-2 flex items-center gap-1.5 flex-wrap border-t border-[var(--border)]">
+        <span className="text-[10px] text-[var(--text-muted)] flex-shrink-0">Suggestions :</span>
+        {suggestions.map(s => (
+          <button key={s} onClick={() => void sendMessage(s)} disabled={isSending}
+            className="px-2.5 py-1 rounded-full border border-[var(--border)] text-[10px] font-medium text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--text-muted)] transition-colors disabled:opacity-40">
+            {s}
+          </button>
+        ))}
+      </div>
 
       {/* ── Zone de saisie ── */}
       <div className="border-t border-[var(--border)] p-4">
@@ -242,10 +343,10 @@ export function WhatsAppSimulator({ botNom: _botNom, sectorSlug, sectorNom, onCo
               <Mic className="w-4 h-4" />
             </button>
             <div className="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl shadow-lg p-3 whitespace-nowrap z-10 text-center">
-              <p className="text-[10px] text-[var(--text-muted)] mb-1.5">Fonctionnalité bientôt disponible</p>
+              <p className="text-[10px] text-[var(--text-muted)] mb-1.5">{t.testVoiceComingSoon}</p>
               <button onClick={() => setShowVideo(true)}
                 className="text-[11px] bg-[#25D366] text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 mx-auto hover:opacity-90">
-                ▶ Voir la démo
+                ▶ {t.testVoiceSeeDemo}
               </button>
             </div>
           </div>

@@ -1,22 +1,18 @@
 "use client";
 // src/app/(dashboard)/dashboard/page.tsx
 // Dashboard central — N3. Data-driven, sectoriel, branché sur vraies données.
-// S56 refonte — S57 fix — S63 enrichissement :
-//   + DashboardQuickActions (bannière actions rapides)
-//   + DashboardFeaturesChart (graphique multi-features)
-//   + DashboardRecentFeatures (accordion 4 features)
-//   + DashboardSubscription (abonnement avec barres progression)
-//   - Suppression widget RDV hardcodé
+// S56 refonte — S57 fix — S63 enrichissement (DashboardQuickActions, FeaturesChart,
+//   RecentFeatures, Subscription).
+// S64 FIX — BUG-S64-04 : conversationsRepository → agentRepository.listConversations
+//           Les conversations live sont sur /api/v1/agent/conversations/, pas /api/v1/conversations/
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter }    from "next/navigation";
 import { useAuth }      from "@/contexts/AuthContext";
 import { useLanguage }  from "@/contexts/LanguageContext";
 import { useSector }    from "@/hooks/useSector";
-import {
-  conversationsRepository,
-  subscriptionsRepository,
-} from "@/repositories";
+import { agentRepository }           from "@/repositories/agent.repository";
+import { subscriptionsRepository }   from "@/repositories";
 import { entrepriseStatsRepository } from "@/repositories/stats.repository";
 import { Spinner }                   from "@/components/ui";
 import { DashboardHeroKPIs }         from "./_components/DashboardHeroKPIs";
@@ -25,7 +21,8 @@ import { DashboardQuickActions }     from "./_components/DashboardQuickActions";
 import { DashboardFeaturesChart }    from "./_components/DashboardFeaturesChart";
 import { DashboardRecentFeatures }   from "./_components/DashboardRecentFeatures";
 import { DashboardSubscription }     from "./_components/DashboardSubscription";
-import type { Conversation, Subscription } from "@/types/api";
+import type { Subscription }         from "@/types/api";
+import type { AIConversation }       from "@/types/api/agent.types";
 import type { EntrepriseStats }      from "@/types/api/stats.types";
 
 export default function DashboardPage() {
@@ -38,21 +35,26 @@ export default function DashboardPage() {
 
   const [loading,       setLoading]       = useState(true);
   const [stats,         setStats]         = useState<EntrepriseStats | null>(null);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversations, setConversations] = useState<AIConversation[]>([]);
   const [sub,           setSub]           = useState<Subscription | null>(null);
+
+  // Suppression de la variable locale inutilisée
+  void locale;
 
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
       const [statsRes, convsRes, subRes] = await Promise.all([
         entrepriseStatsRepository.getStats(),
-        conversationsRepository.getList().catch(() => ({ results: [] as Conversation[] })),
+        // S64 FIX — agentRepository.listConversations (endpoint /api/v1/agent/conversations/)
+        // l'ancien conversationsRepository pointait vers /api/v1/conversations/ (déprécié)
+        agentRepository.listConversations({ mode: "live" }).catch(() => ({ results: [] as AIConversation[], count: 0, next: null, previous: null })),
         subscriptionsRepository.getMine().catch((): null => null),
       ]);
       setStats(statsRes);
       const convList = Array.isArray(convsRes)
-        ? convsRes
-        : (convsRes as { results: Conversation[] }).results ?? [];
+        ? (convsRes as AIConversation[])
+        : (convsRes as { results: AIConversation[] }).results ?? [];
       setConversations(convList.slice(0, 5));
       setSub(subRes);
     } catch {
@@ -92,10 +94,7 @@ export default function DashboardPage() {
       <DashboardHeroKPIs stats={stats} />
 
       {/* ── Widgets sectoriels ── */}
-      <DashboardSectorWidgets
-        stats={stats}
-        featuresActives={featuresActives}
-      />
+      <DashboardSectorWidgets stats={stats} featuresActives={featuresActives} />
 
       {/* ── Graphique multi-features ── */}
       <DashboardFeaturesChart featuresActives={featuresActives} />
@@ -129,16 +128,29 @@ export default function DashboardPage() {
                     className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-black text-white"
                     style={{ background: theme?.primary ?? "var(--color-primary)" }}
                   >
-                    {(conv as { contact_name?: string }).contact_name?.[0]?.toUpperCase() ?? "?"}
+                    {conv.contact?.nom?.[0]?.toUpperCase() ?? "?"}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-[var(--text)] truncate">
-                      {(conv as { contact_name?: string }).contact_name ?? "—"}
+                      {conv.contact?.nom ?? conv.contact?.phone ?? "—"}
                     </p>
                     <p className="text-xs text-[var(--text-muted)]">
-                      {conv.bot_type === "vocal" ? t.channel_voice : t.channel_whatsapp}
+                      {conv.canal === "vocal" ? t.channel_voice : t.channel_whatsapp}
                     </p>
                   </div>
+                  <span
+                    className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                    style={{
+                      background: conv.statut === "active"
+                        ? "color-mix(in srgb, var(--color-primary) 15%, transparent)"
+                        : "var(--bg)",
+                      color: conv.statut === "active"
+                        ? "var(--color-primary)"
+                        : "var(--text-muted)",
+                    }}
+                  >
+                    {conv.statut}
+                  </span>
                 </div>
               ))}
             </div>
@@ -147,13 +159,8 @@ export default function DashboardPage() {
 
         {/* Colonne droite — 1/3 */}
         <div className="space-y-4">
-
-          {/* Abonnement enrichi */}
           <DashboardSubscription sub={sub} />
-
-          {/* Accordion 4 features actives */}
           <DashboardRecentFeatures featuresActives={featuresActives} />
-
         </div>
       </div>
     </div>

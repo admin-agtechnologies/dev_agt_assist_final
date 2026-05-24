@@ -8,6 +8,26 @@ export const bots = {
   testCardEmailSent:           "SENT",
   testCardEmailTo:             "To",
   testCardViewEmail:           "View email content",
+  // ── S65 — ActionCards ────────────────────────────────────────────────────────
+  testCardInfoMissing:         "Missing info",
+  testCardFieldMissing:        "not collected",
+  testCardContactNom:          "Name",
+  testCardContactPhone:        "Phone",
+  testCardContactEmail:        "Email",
+  testCardDateTime:            "Date / time",
+  testCardResource:            "Resource",
+  testCardLocation:            "Location",
+  // ── S65 — WhatsAppSimulator ──────────────────────────────────────────────────
+  testVoiceComingSoon:         "Feature coming soon",
+  testVoiceSeeDemo:            "See demo",
+  testSessionTransferred:      "Conversation transferred to a human agent.",
+  testSessionLoadError:        "Error loading session.",
+  testSessionLoadBtn:          "Load this session",
+  testSessionContinueHint:     "Previous session loaded — continue the conversation.",
+  // ── S65 — ConversationPanel sessions ────────────────────────────────────────
+  testSessionSeeMore:          "See more",
+  testSessionSeeLess:          "Show less",
+  testDataEmpty:               "No data collected yet.",
   title:            "My Bots",
   subtitle:         "Manage your virtual assistants.",
   newBtn:           "New bot",
@@ -178,7 +198,6 @@ export const bots = {
     singleSessionInfo:
       "Only one WhatsApp bot can be connected at a time on the platform.",
   },
-
   // ── S53 — Dynamic feature tabs ───────────────────────────────────────────────
   tabAgenda:       "Agenda",
   tabTables:       "Tables",
@@ -195,7 +214,6 @@ export const bots = {
   tabConciergerie: "Concierge",
   tabEmails:       "Emails",
   tabClients:      "Clients",
-
   // ── S53 — Config tab i18n ────────────────────────────────────────────────────
   configBotName:       "Bot name",
   configTone:          "Communication tone",
@@ -218,7 +236,6 @@ export const bots = {
   configSaved:         "Configuration saved!",
   configSaveError:     "Error saving configuration.",
   testModeBadge:       "TEST",
-
   // ── S55 — New enriched config keys ──────────────────────────────────────────
   configBasicsTitle:      "Basic settings",
   configBasicsSave:       "Save basic settings",
@@ -245,8 +262,7 @@ export const bots = {
   configIANotLoaded:      "Configuration not loaded.",
   configReadonlyTitle:    "Bot configuration",
   configReadonlySeeAll:   "See all details",
-
-  // ── S55 — ModalVideoDemo ─────────────────────────────────────────────────
+  // ── S55 — ModalVideoDemo ─────────────────────────────────────────────────────
   videoDemoTitle:         "Demo — AGT Voice Assistant",
   videoDemoPlaceholder:   "Demo video adapted to your sector, loaded dynamically.",
   videoDemoDescription:   "The AGT voice assistant adapts to your sector, your catalogue and your language. Coming soon.",

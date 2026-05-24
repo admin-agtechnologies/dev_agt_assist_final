@@ -1096,3 +1096,37 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Flux couverts :** B6 N1 — StatsTab refondu (/bots tab Stats)
 - **Bugs corrigés :** BUG-S62-01 (toEntries types stricts) · BUG-S62-02 (EntrepriseStats régression S56)
 - **Zones touchées :** `src/types/api/stats.types.ts` · `src/dictionaries/fr/stats.fr.ts` · `src/dictionaries/en/stats.en.ts` · `src/app/(dashboard)/bots/_components/tabs/StatsTab.tsx` · `src/app/(dashboard)/bots/_components/tabs/stats/`
+
+---
+---
+## session_63_gabriel
+
+- **Type :** Génération + Debug + Backend
+- **Date :** 2026-05-24
+- **Flux couverts :** B6 N2 `/statistiques` refondu ✅ · B6 N3 `/dashboard` enrichi + validé ✅ · Seeder exhaustif 3 ans ⏳
+- **Bugs corrigés :** BUG-S63-01 (nav.statistiques TS2339) · BUG-S63-02 (fr/index.ts corrompu) · BUG-S63-03 (AIActionLog champs incorrects) · BUG-S63-04 (BotPair typage)
+- **Zones touchées :** `src/components/layout/` · `src/dictionaries/fr/nav.fr.ts` · `src/dictionaries/en/nav.en.ts` · `src/app/(dashboard)/statistiques/page.tsx` · `src/app/(dashboard)/bots/_components/tabs/stats/StatsRecentEntries.tsx` · `src/app/(dashboard)/dashboard/` · `apps/tenants/seeders/demo/results_modules/mock_stats.py`
+- **Fichiers créés :** `DashboardQuickActions.tsx` · `DashboardFeaturesChart.tsx` · `DashboardRecentFeatures.tsx` · `DashboardSubscription.tsx`
+- **Fichiers modifiés :** `Sidebar.config.ts` · `Sidebar.tsx` · `nav.fr.ts` · `nav.en.ts` · `statistiques/page.tsx` · `StatsRecentEntries.tsx` · `dashboard/page.tsx` · `mock_stats.py`
+- **Dette créée :** DETTE-S63-01 (10 features sans AIAction) · DETTE-S63-02 (3 aggregators imports incorrects) · DETTE-S63-03 (conversations dashboard vides)
+- **Rapport :** docs/reports/session_63_gabriel.md
+---
+
+seesion 64 arrive,c'est sur les seeders,en parrallèle
+
+
+---
+---
+## session_65_gabriel
+
+- **Type :** Génération + Debug — Frontend UI-2
+- **Date :** 2026-05-24
+- **Flux couverts :** UI-2 `/bots/[id]/test` — maquette S49 ✅
+- **Bugs corrigés :** BUG-S65-01 (path ConvModal) · BUG-S65-02 (session Active sans Charger) · BUG-S65-03 (strings hardcodés) · BUG-S65-04 (espace mort header)
+- **Zones touchées :** `src/app/(dashboard)/bots/[id]/test/` · `src/dictionaries/fr/bots.fr.ts` · `src/dictionaries/en/bots.en.ts`
+- **Fichiers modifiés :** `page.tsx` · `WhatsAppSimulator.tsx` · `ConversationPanel.tsx` · `ActionCards.tsx` · `bots.fr.ts` · `bots.en.ts`
+- **Fichiers créés :** Aucun
+- **Specs traitées :** UI-2 header compact ✅ · suggestions dynamiques ✅ · sessions navigables ✅ · resize panel ✅ · cartes inline ⏳ (bloqué backend)
+- **Dette créée :** DETTE-S65-01 (LLM JSON Deepseek) · DETTE-S65-02 (italique messages status)
+- **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "C:\Users\hp\Documents\gabriel\AGT-BOT\dev_agt_assist_final\src\app\(dashboard)\bots\[id]\test\page.tsx" | Set-Clipboard`
+- **Rapport :** docs/reports/session_65_gabriel.md

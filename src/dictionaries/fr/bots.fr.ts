@@ -8,6 +8,26 @@ export const bots = {
   testCardEmailSent:           "ENVOYÉ",
   testCardEmailTo:             "À",
   testCardViewEmail:           "Voir le contenu de l'email",
+  // ── S65 — ActionCards ────────────────────────────────────────────────────────
+  testCardInfoMissing:         "Infos manquantes",
+  testCardFieldMissing:        "non collecté",
+  testCardContactNom:          "Nom",
+  testCardContactPhone:        "Téléphone",
+  testCardContactEmail:        "Email",
+  testCardDateTime:            "Date / heure",
+  testCardResource:            "Ressource",
+  testCardLocation:            "Lieu",
+  // ── S65 — WhatsAppSimulator ──────────────────────────────────────────────────
+  testVoiceComingSoon:         "Fonctionnalité bientôt disponible",
+  testVoiceSeeDemo:            "Voir la démo",
+  testSessionTransferred:      "Conversation transférée à un agent humain.",
+  testSessionLoadError:        "Erreur lors du chargement de la session.",
+  testSessionLoadBtn:          "Charger cette session",
+  testSessionContinueHint:     "Session précédente chargée — continuez la conversation.",
+  // ── S65 — ConversationPanel sessions ────────────────────────────────────────
+  testSessionSeeMore:          "Voir plus",
+  testSessionSeeLess:          "Réduire",
+  testDataEmpty:               "Aucune donnée collectée pour l'instant.",
   title:            "Mes Bots",
   subtitle:         "Gérez vos assistants virtuels.",
   newBtn:           "Nouveau bot",
@@ -178,7 +198,6 @@ export const bots = {
     singleSessionInfo:
       "Un seul bot WhatsApp peut être connecté à la fois sur la plateforme.",
   },
-
   // ── S53 — Tabs dynamiques features ──────────────────────────────────────────
   tabAgenda:       "Agenda",
   tabTables:       "Tables",
@@ -195,7 +214,6 @@ export const bots = {
   tabConciergerie: "Conciergerie",
   tabEmails:       "Emails",
   tabClients:      "Clients",
-
   // ── S53 — Config tab i18n ────────────────────────────────────────────────────
   configBotName:       "Nom du bot",
   configTone:          "Ton de communication",
@@ -218,8 +236,7 @@ export const bots = {
   configSaved:         "Configuration sauvegardée !",
   configSaveError:     "Erreur lors de la sauvegarde.",
   testModeBadge:       "TEST",
-
-  // ── S55 — Nouvelles clés config enrichie ────────────────────────────────────
+  // ── S55 — Config enrichie ────────────────────────────────────────────────────
   configBasicsTitle:      "Configs de base",
   configBasicsSave:       "Enregistrer les configs de base",
   configBasicsSaved:      "Configs de base sauvegardées !",
@@ -245,8 +262,7 @@ export const bots = {
   configIANotLoaded:      "Configuration non chargée.",
   configReadonlyTitle:    "Configuration du bot",
   configReadonlySeeAll:   "Voir tous les détails",
-
-  // ── S55 — ModalVideoDemo ─────────────────────────────────────────────────
+  // ── S55 — ModalVideoDemo ─────────────────────────────────────────────────────
   videoDemoTitle:         "Démo — Assistant Vocal AGT",
   videoDemoPlaceholder:   "Vidéo de démo adaptée à votre secteur, chargée dynamiquement.",
   videoDemoDescription:   "L'assistant vocal AGT s'adapte à votre secteur, votre catalogue et votre langue. Disponible prochainement.",
