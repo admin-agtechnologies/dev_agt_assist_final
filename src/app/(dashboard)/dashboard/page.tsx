@@ -1,8 +1,12 @@
 "use client";
 // src/app/(dashboard)/dashboard/page.tsx
 // Dashboard central — N3. Data-driven, sectoriel, branché sur vraies données.
-// S56 refonte — S57 fix : barrel subscriptionsRepository, Subscription type,
-//   cast d.dashboard.pme, featuresActives prop, retrait page_size.
+// S56 refonte — S57 fix — S63 enrichissement :
+//   + DashboardQuickActions (bannière actions rapides)
+//   + DashboardFeaturesChart (graphique multi-features)
+//   + DashboardRecentFeatures (accordion 4 features)
+//   + DashboardSubscription (abonnement avec barres progression)
+//   - Suppression widget RDV hardcodé
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter }    from "next/navigation";
@@ -11,17 +15,18 @@ import { useLanguage }  from "@/contexts/LanguageContext";
 import { useSector }    from "@/hooks/useSector";
 import {
   conversationsRepository,
-  rendezVousRepository,
   subscriptionsRepository,
 } from "@/repositories";
 import { entrepriseStatsRepository } from "@/repositories/stats.repository";
 import { Spinner }                   from "@/components/ui";
 import { DashboardHeroKPIs }         from "./_components/DashboardHeroKPIs";
 import { DashboardSectorWidgets }    from "./_components/DashboardSectorWidgets";
-import type { Conversation, RendezVous, Subscription } from "@/types/api";
+import { DashboardQuickActions }     from "./_components/DashboardQuickActions";
+import { DashboardFeaturesChart }    from "./_components/DashboardFeaturesChart";
+import { DashboardRecentFeatures }   from "./_components/DashboardRecentFeatures";
+import { DashboardSubscription }     from "./_components/DashboardSubscription";
+import type { Conversation, Subscription } from "@/types/api";
 import type { EntrepriseStats }      from "@/types/api/stats.types";
-
-// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const router                    = useRouter();
@@ -29,25 +34,19 @@ export default function DashboardPage() {
   const { locale, dictionary: d } = useLanguage();
   const { theme }                 = useSector();
 
-  // S57 fix — accès direct d.dashboard.pme (pas de cast Record<...>)
   const t = d.dashboard.pme;
 
   const [loading,       setLoading]       = useState(true);
   const [stats,         setStats]         = useState<EntrepriseStats | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [appointments,  setAppointments]  = useState<RendezVous[]>([]);
   const [sub,           setSub]           = useState<Subscription | null>(null);
-
-  // ── Chargement des données ─────────────────────────────────────────────────
 
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [statsRes, convsRes, apptRes, subRes] = await Promise.all([
+      const [statsRes, convsRes, subRes] = await Promise.all([
         entrepriseStatsRepository.getStats(),
-        // S57 fix — retrait page_size (type conflict), limitation client-side
         conversationsRepository.getList().catch(() => ({ results: [] as Conversation[] })),
-        rendezVousRepository.getList().catch(() => ({ results: [] as RendezVous[] })),
         subscriptionsRepository.getMine().catch((): null => null),
       ]);
       setStats(statsRes);
@@ -55,28 +54,15 @@ export default function DashboardPage() {
         ? convsRes
         : (convsRes as { results: Conversation[] }).results ?? [];
       setConversations(convList.slice(0, 5));
-      const apptList = Array.isArray(apptRes)
-        ? apptRes
-        : (apptRes as { results: RendezVous[] }).results ?? [];
-      setAppointments(apptList.slice(0, 5));
       setSub(subRes);
     } catch {
-      /* fail silently — composants gèrent leur état vide */
+      /* fail silently */
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => { loadAll(); }, [loadAll]);
-
-  // ── Billing labels (absents de dashboard.fr.ts → fallback locale) ──────────
-  const billingLabels = {
-    active:     locale === "fr" ? "Actif"           : "Active",
-    suspended:  locale === "fr" ? "Suspendu"        : "Suspended",
-    renewsOn:   locale === "fr" ? "Renouvellement"  : "Renews on",
-  };
-
-  // ── Render ─────────────────────────────────────────────────────────────────
 
   if (loading) {
     return (
@@ -86,6 +72,8 @@ export default function DashboardPage() {
     );
   }
 
+  const featuresActives = stats?.features_actives ?? [];
+
   return (
     <div className="space-y-6 p-6">
 
@@ -94,24 +82,28 @@ export default function DashboardPage() {
         <h1 className="text-2xl font-black text-[var(--text)]">
           {t.welcome}{user?.name ? `, ${user.name.split(" ")[0]}` : ""} 👋
         </h1>
-        <p className="text-sm text-[var(--text-muted)] mt-1">
-          {t.subtitle}
-        </p>
+        <p className="text-sm text-[var(--text-muted)] mt-1">{t.subtitle}</p>
       </div>
+
+      {/* ── Actions rapides ── */}
+      <DashboardQuickActions featuresActives={featuresActives} />
 
       {/* ── Hero KPIs ── */}
       <DashboardHeroKPIs stats={stats} />
 
-      {/* ── Widgets sectoriels — S57 fix : prop featuresActives ── */}
+      {/* ── Widgets sectoriels ── */}
       <DashboardSectorWidgets
         stats={stats}
-        featuresActives={stats?.features_actives ?? []}
+        featuresActives={featuresActives}
       />
 
-      {/* ── Grille widgets secondaires ── */}
+      {/* ── Graphique multi-features ── */}
+      <DashboardFeaturesChart featuresActives={featuresActives} />
+
+      {/* ── Grille principale ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-        {/* Conversations récentes */}
+        {/* Conversations récentes — 2/3 */}
         <div className="lg:col-span-2 bg-[var(--bg-card)] rounded-2xl border border-[var(--border)]">
           <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
             <h2 className="text-sm font-bold text-[var(--text)]">
@@ -131,7 +123,7 @@ export default function DashboardPage() {
                 <div
                   key={conv.id}
                   className="px-5 py-3 flex items-center gap-3 hover:bg-[var(--bg)] transition-colors cursor-pointer"
-                  onClick={() => router.push(`/conversations`)}
+                  onClick={() => router.push("/conversations")}
                 >
                   <div
                     className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-black text-white"
@@ -153,81 +145,14 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Colonne droite */}
+        {/* Colonne droite — 1/3 */}
         <div className="space-y-4">
 
-          {/* Abonnement */}
-          <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] p-5">
-            <h3 className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-3">
-              {t.subscription}
-            </h3>
-            {!sub ? (
-              <p className="text-sm text-[var(--text-muted)]">{t.noSubscription}</p>
-            ) : (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-[var(--text)]">
-                    {sub.plan?.nom}
-                  </span>
-                  <span
-                    className="text-xs font-bold px-2 py-0.5 rounded-full"
-                    style={{
-                      background: sub.statut === "actif"
-                        ? "var(--status-success-bg)"
-                        : "var(--status-amber-bg)",
-                      color: sub.statut === "actif"
-                        ? "var(--status-success-text)"
-                        : "var(--status-amber-text)",
-                    }}
-                  >
-                    {sub.statut === "actif" ? billingLabels.active : billingLabels.suspended}
-                  </span>
-                </div>
-                {sub.periode_fin && (
-                  <p className="text-xs text-[var(--text-muted)]">
-                    {billingLabels.renewsOn} : {new Date(sub.periode_fin).toLocaleDateString(locale)}
-                  </p>
-                )}
-                <p className="text-xs text-[var(--text-muted)]">
-                  {t.usageMessages} : {sub.usage_messages ?? 0}
-                </p>
-              </div>
-            )}
-          </div>
+          {/* Abonnement enrichi */}
+          <DashboardSubscription sub={sub} />
 
-          {/* RDV du jour */}
-          <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] p-5">
-            <h3 className="text-xs font-black uppercase tracking-widest text-[var(--text-muted)] mb-3">
-              {t.todayAppointments}
-            </h3>
-            {appointments.length === 0 ? (
-              <p className="text-sm text-[var(--text-muted)]">{t.noAppointmentsToday}</p>
-            ) : (
-              <div className="space-y-2">
-                {appointments.map((appt) => (
-                  <div key={appt.id} className="flex items-center justify-between gap-2">
-                    <span className="text-sm text-[var(--text)] truncate flex-1">
-                      {appt.client_nom}
-                    </span>
-                    <span
-                      className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
-                      style={{ background: "var(--bg)", color: "var(--text-muted)" }}
-                    >
-                      {d.appointments.statuses[appt.statut as keyof typeof d.appointments.statuses]
-                        ?? appt.statut}
-                    </span>
-                  </div>
-                ))}
-                <button
-                  onClick={() => router.push("/appointments")}
-                  className="text-xs font-bold mt-1"
-                  style={{ color: theme?.primary ?? "var(--color-primary)" }}
-                >
-                  {t.viewAgenda}
-                </button>
-              </div>
-            )}
-          </div>
+          {/* Accordion 4 features actives */}
+          <DashboardRecentFeatures featuresActives={featuresActives} />
 
         </div>
       </div>

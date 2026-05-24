@@ -8,6 +8,7 @@ import {
   Sun, Moon, Globe, LogOut,
   HelpCircle, MessageCircle, Star, AlertTriangle,
   UserCircle, LayoutGrid, Lock, BarChart2,
+  LineChart,
 } from "lucide-react";
 import Image from "next/image";
 import { useAuth }        from "@/contexts/AuthContext";
@@ -56,6 +57,7 @@ export function Sidebar({ onClose }: Props) {
     { href: DASHBOARD_ROUTES.home,      icon: LayoutDashboard, label: d.nav.dashboard },
     { href: DASHBOARD_ROUTES.bots,      icon: Bot,             label: d.nav.bots },
     { href: DASHBOARD_ROUTES.results,   icon: BarChart2,       label: locale === "fr" ? "Résultats"   : "Results" },
+    { href: DASHBOARD_ROUTES.statistiques, icon: LineChart, label: d.nav.statistiques },
     { href: DASHBOARD_ROUTES.knowledge, icon: BookOpen,        label: d.nav.knowledge },
     { href: DASHBOARD_ROUTES.contacts,  icon: Users,           label: locale === "fr" ? "Mes Clients" : "My Clients" },
     { href: DASHBOARD_ROUTES.billing,   icon: CreditCard,      label: d.nav.billing },

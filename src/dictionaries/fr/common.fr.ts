@@ -56,6 +56,7 @@ export const common = {
     help: "Demander de l'aide",
     tutorial: "Tutoriel interface",
     knowledge: "Base de connaissance",
+    statistiques: "Statistiques",
     feedback: "Laisser un témoignage",
     bug: "Signaler un problème",
   },
