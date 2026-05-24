@@ -234,6 +234,7 @@ export default function BotTestPage() {
             <WhatsAppSimulator
               key={resetKey}
               botNom={bot.nom}
+              botId={botId}
               sectorSlug={user?.entreprise?.secteur?.slug ?? undefined}
               sectorNom={user?.entreprise?.secteur?.label_fr ?? undefined}
               activeFeatures={activeFeatures}

@@ -1112,7 +1112,19 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Rapport :** docs/reports/session_63_gabriel.md
 ---
 
-seesion 64 arrive,c'est sur les seeders,en parrallèle
+---
+## session_64_gabriel
+
+- **Type :** Debug Backend + Diagnostic
+- **Date :** 2026-05-24
+- **Flux couverts :** B6 debug seeder + B6 debug aggregators + B6 N3 dashboard conversations fix
+- **Bugs corrigés :** BUG-S64-mock-01 (slugs uniques MISSING_ACTIONS) · BUG-S63-04 (conversations dashboard endpoint)
+- **Bugs identifiés non corrigés :** BUG-S64-01→05 (5 aggregators imports/fields incorrects)
+- **Zones touchées :** `apps/tenants/seeders/demo/results_modules/mock_stats.py` · `src/app/(dashboard)/dashboard/page.tsx`
+- **Décision architecture :** Option A validée — `_historique_from_logs` via AIActionLog (50 965 logs 3 ans en base)
+- **État seed :** 7414 AIConversation live + 50 965 AIActionLog bot demo-custom ✅
+- **Dette créée :** DETTE-S64-01 (5 bugs aggregators) · DETTE-S64-02 (_historique_from_logs) · DETTE-S64-03 (contact serializer)
+- **Rapport :** docs/reports/session_64_gabriel.md
 
 
 ---
@@ -1130,3 +1142,19 @@ seesion 64 arrive,c'est sur les seeders,en parrallèle
 - **Dette créée :** DETTE-S65-01 (LLM JSON Deepseek) · DETTE-S65-02 (italique messages status)
 - **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "C:\Users\hp\Documents\gabriel\AGT-BOT\dev_agt_assist_final\src\app\(dashboard)\bots\[id]\test\page.tsx" | Set-Clipboard`
 - **Rapport :** docs/reports/session_65_gabriel.md
+
+---
+---
+## session_66_gabriel
+
+- **Type :** Debug + Conception + Génération — Backend + Frontend
+- **Date :** 2026-05-24
+- **Flux couverts :** Fix persistance sessions bot · Audit system prompt LLM · Conception contrat JSON itératif · Socle engine fixes · Frontend heure bulles + status italique
+- **Bugs corrigés :** BUG-S66-01 (bot_id non persisté → session disparaît) · BUG-S66-02 (HandleMessagePayload sans bot_id) · BUG-S66-03/04 (botId non propagé frontend) · BUG-S66-05 (RESPONSE_SCHEMA absent system prompt) · ENG-03 (CRM signal crash) · FE-01 (heure bulles)
+- **Zones touchées :** `apps/agent/views.py` · `apps/agent/engine/context.py` · `apps/agent/engine/core.py` · `apps/agent/skills/_central/system_prompt.md` · `apps/chatbot_bridge/urls.py` · `apps/chatbot_bridge/views.py` · `src/types/api/agent.types.ts` · `src/app/(dashboard)/bots/[id]/test/_components/WhatsAppSimulator.tsx` · `src/app/(dashboard)/bots/[id]/test/page.tsx`
+- **Fichiers créés :** Aucun
+- **Fichiers modifiés :** views.py (agent) · context.py · core.py · system_prompt.md · chatbot_bridge/urls.py · chatbot_bridge/views.py · agent.types.ts · WhatsAppSimulator.tsx · page.tsx (diff)
+- **Specs traitées :** DETTE-S65-01 (LLM JSON) ⏳ Partiel · DETTE-S65-02 (italique status) ⏳ Partiel · ENG-01/02/03 ✅ · FE-01/03 ✅
+- **Dette créée :** BUG-S66-06 (LLM n'actionne pas) · BUG-S66-07 (phone non persisté) · BUG-S66-08 (InconsistentMigrationHistory knowledge.0010↔contacts.0005) · BUG-S66-09 (feedback non systématique) · BUG-S66-10 (suggestions incorrectes) · ENG-04 (skill files actions à auditer)
+- **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "C:\Users\hp\Documents\gabriel\AGT-BOT\dev_agt_assist_final\src\app\(dashboard)\bots\[id]\test\page.tsx" | Set-Clipboard`
+- **Rapport :** docs/reports/session_66_gabriel.md
