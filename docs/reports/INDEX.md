@@ -1158,3 +1158,18 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Dette créée :** BUG-S66-06 (LLM n'actionne pas) · BUG-S66-07 (phone non persisté) · BUG-S66-08 (InconsistentMigrationHistory knowledge.0010↔contacts.0005) · BUG-S66-09 (feedback non systématique) · BUG-S66-10 (suggestions incorrectes) · ENG-04 (skill files actions à auditer)
 - **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "C:\Users\hp\Documents\gabriel\AGT-BOT\dev_agt_assist_final\src\app\(dashboard)\bots\[id]\test\page.tsx" | Set-Clipboard`
 - **Rapport :** docs/reports/session_66_gabriel.md
+
+---
+---
+## session_67_gabriel
+
+- **Type :** Debug + Architecture + Outillage B5
+- **Date :** 2026-05-24
+- **Steps B5 validés :** menu_digital b✅ · c✅ · d✅ · e❌ (BUG-B5-001)
+- **Bugs corrigés :** BUG-S66-08 (migration knowledge.0010) · BUG-S66-06 (AIAgentAction 7→47) · ENG-02 (DeepSeek JSON)
+- **Bugs découverts :** BUG-B5-001 à BUG-B5-008 (voir TODO_B5.md)
+- **Zones touchées :** `apps/knowledge/migrations/0010` · `apps/features/services.py` · `apps/agent/signals.py` · `apps/agent/serializers.py` · `apps/agent/views.py` · `apps/agent/urls.py` · `apps/chatbot_bridge/deepseek_provider.py`
+- **Fichiers créés :** `docs/testing/TODO_B5.md` · `docs/prompts/init_feature_test.md` · `docs/prompts/end_feature_test.md`
+- **Fichiers modifiés :** services.py (features) · signals.py · serializers.py · views.py · urls.py (agent) · deepseek_provider.py · knowledge/migrations/0010
+- **TODO_B5 :** docs/testing/TODO_B5.md créé — 24 features × 8 steps · 8 bugs actifs
+- **Rapport :** docs/reports/session_67_gabriel.md
