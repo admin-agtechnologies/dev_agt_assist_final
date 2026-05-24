@@ -1054,3 +1054,19 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **⚠️ Chemin frontend correct :** `C:\Users\hp\Documents\gabriel\AGT-BOT\dev_agt_assist_final\`
 - **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "C:\Users\hp\Documents\gabriel\AGT-BOT\dev_agt_assist_final\src\app\(dashboard)\bots\[id]\test\page.tsx" | Set-Clipboard`
 - **Rapport :** `docs/reports/session_59_gabriel.md`
+
+
+---
+---
+## session_60_gabriel
+
+- **Type :** conception + génération + debug
+- **Date :** 24/05/2026
+- **Flux couverts :** Audit modèles résultats 28 features · Conception Stats B6 v2 (N1/N2/N3) · Migrations M2/M5/M6/M7 · App sante créée
+- **Bugs corrigés :** BUG-S60-01 (knowledge.0010 dépendance tenants) · BUG-S60-02 (container crash loop)
+- **Zones touchées :** apps/sante/ · apps/catalogue/models.py · apps/tenants/models.py · apps/dossiers/models.py · apps/contacts/models.py · apps/knowledge/migrations/ · config/settings.py
+- **Fichiers créés :** sante/apps.py · sante/models.py · sante/migrations/0001_initial.py · catalogue/migrations/0004 · tenants/migrations/0004 · dossiers/migrations/0004
+- **Fichiers modifiés :** catalogue/models.py · tenants/models.py · dossiers/models.py · contacts/models.py · knowledge/migrations/0010 · config/settings.py
+- **Specs traitées :** Conception Stats B6 v2 ✅ · Audit modèles 28 features ✅ · 4 migrations appliquées ✅
+- **Dette créée :** DETTE-S60-01 (5 actions agent) · DETTE-S60-02 (seeders nouvelles tables) · DETTE-S60-03 (tests invoque-request) · DETTE-S60-04 (admin+serializers nouvelles tables)
+- **Rapport :** docs/reports/session_60_gabriel.md
