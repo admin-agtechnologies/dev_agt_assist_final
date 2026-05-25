@@ -1207,3 +1207,19 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Dette créée :** DETTE-S69-01 (apps.conversations nettoyage complet — session dédiée) · DETTE-S69-02 (system_prompt.md reply obligatoire) · DETTE-S69-03 (CardTransfert response enrichir) · DETTE-S69-04 (create_commande.md reply confirmation) · DETTE-S69-05 (_parse_llm_response résidu)
 - **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "C:\Users\hp\Documents\gabriel\AGT-BOT\dev_agt_assist_final\src\app\(dashboard)\bots\[id]\test\_components\WhatsAppSimulator.tsx" | Set-Clipboard`
 - **Rapport :** docs/reports/session_69_gabriel.md
+
+---
+---
+## session_71_donpk
+
+- **Type :** Debug + Génération — Frontend UX /knowledge + Backend fix
+- **Date :** 2026-05-25
+- **Flux couverts :** B5 /knowledge UX V2 ✅ (BUG 1-2-3-4 + Inscriptions bonus)
+- **Bugs corrigés :** BUG-S71-01 (405 GET disponibilites — @action DRF conflit url_path) · BUG-S71-02 (expansion cascade grid — accordéon hors grid) · BUG-S71-03 (FAQ badge → toggle switch iOS) · BUG-S71-04 (Produits/Services liste → grid cards hero) · BUG-S71-05 (ImagePreviewModal Eye sur tous les onglets images) · BUG-S71-06 (InscriptionsTab cards hauteur — items-start + expandable)
+- **Zones touchées :** `src/components/reservations/RessourceManager/` · `src/app/(dashboard)/knowledge/_components/tabs/` · `src/app/(dashboard)/knowledge/_components/catalogue/` · `src/app/(dashboard)/knowledge/_components/chambres/` · `apps/reservations/views.py`
+- **Fichiers créés :** `ImagePreviewModal.tsx`
+- **Fichiers modifiés :** `RessourceManager/index.tsx` · `FaqTab.tsx` · `CatalogueProduitTab.tsx` · `CatalogueServiceTab.tsx` · `ConciergerieKbTab.tsx` · `MenuDishCard.tsx` · `MenuTab.tsx` · `ChambreCard.tsx` · `ChambresTab.tsx` · `InscriptionsTab.tsx` · `apps/reservations/views.py`
+- **Patterns établis :** `items-start` grid pour cards variables · accordéon hors grid (pleine largeur) · `ImagePreviewModal` pattern réutilisable · `@action` DRF fusionner GET+POST même url_path
+- **Dette créée :** MedicalTab · CitoyensTab · ProduitFinancierTab · CatalogueTrajetTab non redesignés
+- **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "src\components\reservations\RessourceManager\index.tsx" | Set-Clipboard`
+- **Rapport :** `docs/reports/session_71_donpk.md`
