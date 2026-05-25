@@ -1,11 +1,11 @@
 // src/app/(dashboard)/knowledge/_components/chambres/ChambreCard.tsx
-// S46 — Redesign créatif : image hero resolveImage + hover scale + overlay actions
+// S71 — Ajout bouton Eye preview image (BUG 3)
 "use client";
 
 import { useState, useTransition } from "react";
 import {
   BedDouble, Users, Pencil, Trash2, Loader2,
-  Check, X, ToggleLeft, ToggleRight,
+  Check, X, ToggleLeft, ToggleRight, Eye,
 } from "lucide-react";
 import { useSector }         from "@/hooks/useSector";
 import { useToast }          from "@/components/ui/Toast";
@@ -19,6 +19,7 @@ interface Props {
   chambre:   ChambreType;
   onUpdated: (c: ChambreType) => void;
   onDeleted: (id: string) => void;
+  onPreview: (src: string, alt: string) => void;
   t:         Record<string, string>;
 }
 
@@ -42,14 +43,14 @@ function chambreToForm(c: ChambreType): FormState {
   };
 }
 
-export function ChambreCard({ chambre, onUpdated, onDeleted, t }: Props) {
-  const { theme }           = useSector();
-  const { dictionary: d }   = useLanguage();
-  const tc                  = d.knowledge.chambres;
-  const toast               = useToast();
-  const [editing, setEditing]   = useState(false);
-  const [form,    setForm]      = useState<FormState>(chambreToForm(chambre));
-  const [saving,  startSave]    = useTransition();
+export function ChambreCard({ chambre, onUpdated, onDeleted, onPreview, t }: Props) {
+  const { theme }         = useSector();
+  const { dictionary: d } = useLanguage();
+  const tc                = d.knowledge.chambres;
+  const toast             = useToast();
+  const [editing, setEditing] = useState(false);
+  const [form,    setForm]    = useState<FormState>(chambreToForm(chambre));
+  const [saving,  startSave]  = useTransition();
 
   const set = (k: string) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -65,7 +66,7 @@ export function ChambreCard({ chambre, onUpdated, onDeleted, t }: Props) {
         capacite:       Number(form.capacite)      || 1,
         prix_nuit:      Number(form.prix_nuit),
         equipements:    form.equipements.split(",").map((e) => e.trim()).filter(Boolean),
-        image_url: form.image_url.trim() || "",
+        image_url:      form.image_url.trim() || "",
       };
       const updated = await chambreRepository.update(chambre.id, payload);
       onUpdated(updated);
@@ -88,7 +89,7 @@ export function ChambreCard({ chambre, onUpdated, onDeleted, t }: Props) {
     } catch { toast.error(tc.errorDelete); }
   });
 
-  // ── Mode édition (pleine largeur) ────────────────────────────────────────────
+  // ── Mode édition ──────────────────────────────────────────────────────────
   if (editing) {
     return (
       <div className="bg-[var(--bg-card)] rounded-2xl border-2 p-5 space-y-3
@@ -157,7 +158,9 @@ export function ChambreCard({ chambre, onUpdated, onDeleted, t }: Props) {
     );
   }
 
-  // ── Mode affichage ───────────────────────────────────────────────────────────
+  // ── Mode affichage ────────────────────────────────────────────────────────
+  const imgSrc = resolveImage(chambre.image_url, "chambre", chambre.nom_fr);
+
   return (
     <div className={cn(
       "group bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] overflow-hidden",
@@ -167,7 +170,7 @@ export function ChambreCard({ chambre, onUpdated, onDeleted, t }: Props) {
       {/* Image hero */}
       <div className="relative h-40 overflow-hidden">
         <img
-          src={resolveImage(chambre.image_url, "chambre", chambre.nom_fr)}
+          src={imgSrc}
           alt={chambre.nom_fr}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
@@ -175,13 +178,22 @@ export function ChambreCard({ chambre, onUpdated, onDeleted, t }: Props) {
 
         {/* Overlay actions au hover */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100
-          transition-opacity duration-200 flex items-center justify-center gap-3">
+          transition-opacity duration-200 flex items-center justify-center gap-2">
+          {/* Eye — preview */}
+          <button type="button"
+            onClick={() => onPreview(imgSrc, chambre.nom_fr)}
+            className="p-2.5 rounded-xl bg-white/90 text-gray-800
+              hover:bg-white hover:scale-110 transition-all shadow-sm">
+            <Eye className="w-4 h-4" />
+          </button>
+          {/* Edit */}
           <button type="button"
             onClick={() => { setForm(chambreToForm(chambre)); setEditing(true); }}
             className="p-2.5 rounded-xl bg-white/90 text-gray-800
               hover:bg-white hover:scale-110 transition-all shadow-sm">
             <Pencil className="w-4 h-4" />
           </button>
+          {/* Delete */}
           <button type="button" onClick={handleDelete} disabled={saving}
             className="p-2.5 rounded-xl bg-white/90 text-red-500
               hover:bg-white hover:scale-110 transition-all shadow-sm disabled:opacity-50">
@@ -189,7 +201,7 @@ export function ChambreCard({ chambre, onUpdated, onDeleted, t }: Props) {
           </button>
         </div>
 
-        {/* Toggle disponibilité — glassmorphism */}
+        {/* Toggle disponibilité */}
         <button type="button" onClick={handleToggle} disabled={saving}
           className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full
             text-[10px] font-semibold backdrop-blur-sm bg-white/85 shadow-sm hover:bg-white
@@ -205,7 +217,7 @@ export function ChambreCard({ chambre, onUpdated, onDeleted, t }: Props) {
               </>}
         </button>
 
-        {/* Gradient bottom pour lisibilité */}
+        {/* Gradient bas */}
         <div className="absolute bottom-0 left-0 right-0 h-12
           bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
       </div>
@@ -220,8 +232,6 @@ export function ChambreCard({ chambre, onUpdated, onDeleted, t }: Props) {
             {chambre.description_fr}
           </p>
         )}
-
-        {/* Capacité + Prix */}
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
             <Users className="w-3 h-3" /> {chambre.capacite} pers.
@@ -230,8 +240,6 @@ export function ChambreCard({ chambre, onUpdated, onDeleted, t }: Props) {
             {Number(chambre.prix_nuit).toLocaleString("fr-FR")} XAF/nuit
           </span>
         </div>
-
-        {/* Équipements */}
         {chambre.equipements.length > 0 && (
           <div className="flex flex-wrap gap-1 pt-0.5">
             {chambre.equipements.slice(0, 4).map((eq) => (

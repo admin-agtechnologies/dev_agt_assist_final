@@ -1,10 +1,5 @@
 // src/app/(dashboard)/knowledge/_components/tabs/MenuTab.tsx
-// S46 — Redesign complet UX menu
-//   - Fix URL bug : menuRepository (/menu-items/ → MenuDigitalViewSet)
-//   - UX : pills catégories scrollables + grille cards plats
-//   - Nouvelle catégorie : input inline dans les pills
-//   - Supprimer catégorie : confirmation inline
-//   - Ajouter plat : formulaire au-dessus de la grille
+// S71 — Ajout ImagePreviewModal + prop onPreview sur MenuDishCard (BUG 3)
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
@@ -16,6 +11,7 @@ import { useToast }          from "@/components/ui/Toast";
 import { useLanguage }       from "@/contexts/LanguageContext";
 import { menuRepository }    from "@/repositories/catalogue.repository";
 import { MenuDishCard }      from "./MenuDishCard";
+import { ImagePreviewModal } from "../ImagePreviewModal";
 import { KnowledgeCardSkeleton } from "../KnowledgeSkeleton";
 import { resolveImage }          from "@/lib/image-placeholder";
 import { cn }                    from "@/lib/utils";
@@ -50,6 +46,7 @@ export function MenuTab() {
   const [editId,      setEditId]      = useState<string | null>(null);
   const [form,        setForm]        = useState(EMPTY);
   const [saving,      startSave]      = useTransition();
+  const [previewSrc,  setPreviewSrc]  = useState<{ src: string; alt: string } | null>(null);
 
   useEffect(() => {
     menuRepository.getList()
@@ -71,7 +68,7 @@ export function MenuTab() {
     description:   f.description.trim() || undefined,
     prix:          f.prix ? Number(f.prix) : null,
     categorie_nom: f.categorie_nom.trim() || activeCat || "Plats",
-    image_url: f.image_url.trim() || "",
+    image_url:     f.image_url.trim() || "",
     allergenes:    f.allergenes.trim()
       ? f.allergenes.split(",").map((a) => a.trim()).filter(Boolean)
       : undefined,
@@ -172,6 +169,15 @@ export function MenuTab() {
 
   return (
     <div className="space-y-5">
+
+      {/* Preview modal */}
+      {previewSrc && (
+        <ImagePreviewModal
+          src={previewSrc.src}
+          alt={previewSrc.alt}
+          onClose={() => setPreviewSrc(null)}
+        />
+      )}
 
       {/* ── Pills catégories ── */}
       <div className="flex items-center gap-2 flex-wrap">
@@ -366,6 +372,7 @@ export function MenuTab() {
                   onToggle={() => handleToggle(item)}
                   onEdit={() => startEdit(item)}
                   onDelete={() => handleDeleteDish(item.id)}
+                  onPreview={(src, alt) => setPreviewSrc({ src, alt })}
                 />
               ))}
             </div>
@@ -376,11 +383,17 @@ export function MenuTab() {
   );
 }
 
+// ── Formulaire plat ───────────────────────────────────────────────────────────
+
 function PlatForm({ form, set, onSave, onCancel, saving, theme, label, locale }: {
-  form: Record<string, string>;
-  set: (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onSave: () => void; onCancel: () => void;
-  saving: boolean; theme: { primary: string }; label: string; locale: string;
+  form:     Record<string, string>;
+  set:      (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onSave:   () => void;
+  onCancel: () => void;
+  saving:   boolean;
+  theme:    { primary: string };
+  label:    string;
+  locale:   string;
 }) {
   const imgPreview = resolveImage(form.image_url?.trim() || "", "plat", form.nom);
 

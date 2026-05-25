@@ -1,5 +1,5 @@
 // src/app/(dashboard)/knowledge/_components/tabs/FaqTab.tsx
-// S46 — Redesign : pills filtre par catégorie + toggle pill coloré + hover lift
+// S71 — Toggle switch iOS/Android sur QuestionRow (remplace pill actif/inactif)
 "use client";
 
 import { useState, useEffect, useTransition, useMemo } from "react";
@@ -41,12 +41,10 @@ export function FaqTab() {
       .finally(() => setLoading(false));
   }, []); // eslint-disable-line
 
-  // Catégories uniques extraites des questions
   const categories = useMemo(() => {
     return [...new Set(questions.map((q) => q.categorie).filter(Boolean))] as string[];
   }, [questions]);
 
-  // Questions filtrées par catégorie
   const filtered = useMemo(() => {
     if (!filterCat) return questions;
     return questions.filter((q) => q.categorie === filterCat);
@@ -239,22 +237,71 @@ export function FaqTab() {
   );
 }
 
+// ── ToggleSwitch — composant iOS/Android réutilisable ─────────────────────────
+
+function ToggleSwitch({
+  checked,
+  onChange,
+  primaryColor,
+  labelOn,
+  labelOff,
+}: {
+  checked:      boolean;
+  onChange:     () => void;
+  primaryColor: string;
+  labelOn:      string;
+  labelOff:     string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onChange}
+      className="flex items-center gap-2 flex-shrink-0 group"
+      aria-pressed={checked}
+    >
+      {/* Track */}
+      <span
+        className="relative inline-flex items-center w-9 h-5 rounded-full transition-colors duration-200 ease-in-out focus-visible:outline-none"
+        style={{
+          backgroundColor: checked ? primaryColor : "var(--border)",
+        }}
+      >
+        {/* Curseur */}
+        <span
+          className={cn(
+            "inline-block w-3.5 h-3.5 rounded-full bg-white shadow-sm",
+            "transform transition-transform duration-200 ease-in-out",
+            checked ? "translate-x-[18px]" : "translate-x-[3px]",
+          )}
+        />
+      </span>
+      {/* Label */}
+      <span
+        className="text-[10px] font-semibold transition-colors duration-200"
+        style={{ color: checked ? primaryColor : "var(--text-muted)" }}
+      >
+        {checked ? labelOn : labelOff}
+      </span>
+    </button>
+  );
+}
+
 // ── QuestionRow ───────────────────────────────────────────────────────────────
 
 function QuestionRow({
   question, expanded, onToggleExpand, onToggleActive,
   onDelete, onSave, primaryColor, t, saveLabel, cancelLabel,
 }: {
-  question: QuestionFrequente;
-  expanded: boolean;
+  question:       QuestionFrequente;
+  expanded:       boolean;
   onToggleExpand: () => void;
   onToggleActive: () => void;
-  onDelete: () => void;
-  onSave: (p: Partial<QuestionFrequente>) => void;
-  primaryColor: string;
-  t: Record<string, string>;
-  saveLabel: string;
-  cancelLabel: string;
+  onDelete:       () => void;
+  onSave:         (p: Partial<QuestionFrequente>) => void;
+  primaryColor:   string;
+  t:              Record<string, string>;
+  saveLabel:      string;
+  cancelLabel:    string;
 }) {
   const [form, setForm] = useState({
     question_fr: question.question_fr,
@@ -281,27 +328,22 @@ function QuestionRow({
     )}>
       <div className="flex items-center gap-3 px-4 py-3">
 
-        {/* Toggle actif/inactif — pill coloré */}
-        <button type="button" onClick={onToggleActive}
-          className={cn(
-            "flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold",
-            "flex-shrink-0 transition-all",
-          )}
-          style={question.is_active
-            ? { background: "var(--status-success-bg)", color: "var(--status-success-text)" }
-            : { background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
-          <span className={cn(
-            "w-1.5 h-1.5 rounded-full",
-            question.is_active ? "bg-current" : "bg-[var(--text-muted)]",
-          )} />
-          {question.is_active ? (t.active ?? "Actif") : (t.inactive ?? "Inactif")}
-        </button>
+        {/* ── Toggle switch iOS/Android ── */}
+        <ToggleSwitch
+          checked={question.is_active}
+          onChange={onToggleActive}
+          primaryColor={primaryColor}
+          labelOn={t.active   ?? "Actif"}
+          labelOff={t.inactive ?? "Inactif"}
+        />
 
+        {/* Question (cliquable pour expand) */}
         <button type="button" onClick={onToggleExpand}
           className="flex-1 text-left text-sm font-medium text-[var(--text)] truncate">
           {question.question_fr || "—"}
         </button>
 
+        {/* Badge catégorie */}
         {question.categorie && (
           <span className="text-[10px] px-2 py-0.5 rounded-full font-medium flex-shrink-0"
             style={{

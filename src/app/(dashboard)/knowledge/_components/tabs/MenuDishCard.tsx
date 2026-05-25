@@ -1,24 +1,26 @@
 // src/app/(dashboard)/knowledge/_components/tabs/MenuDishCard.tsx
-// S46 — Dish card pour le MenuTab redesign
-// Hover: image scale + overlay actions + badge disponibilité
+// S71 — Ajout bouton Eye preview image (BUG 3)
 "use client";
 
-import { ToggleLeft, ToggleRight, Pencil, Trash2, Loader2 } from "lucide-react";
+import { ToggleLeft, ToggleRight, Pencil, Trash2, Loader2, Eye } from "lucide-react";
 import { resolveImage } from "@/lib/image-placeholder";
 import { cn }           from "@/lib/utils";
 import type { CatalogueItemKB } from "@/types/api/catalogue.types";
 
 interface Props {
-  item:     CatalogueItemKB;
-  theme:    { primary: string };
-  saving:   boolean;
-  locale:   string;
-  onToggle: () => void;
-  onEdit:   () => void;
-  onDelete: () => void;
+  item:      CatalogueItemKB;
+  theme:     { primary: string };
+  saving:    boolean;
+  locale:    string;
+  onToggle:  () => void;
+  onEdit:    () => void;
+  onDelete:  () => void;
+  onPreview: (src: string, alt: string) => void;
 }
 
-export function MenuDishCard({ item, theme, saving, locale, onToggle, onEdit, onDelete }: Props) {
+export function MenuDishCard({ item, theme, saving, locale, onToggle, onEdit, onDelete, onPreview }: Props) {
+  const imgSrc = resolveImage(item.image_url, "plat", item.nom);
+
   return (
     <div className={cn(
       "group bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] overflow-hidden",
@@ -28,20 +30,28 @@ export function MenuDishCard({ item, theme, saving, locale, onToggle, onEdit, on
       {/* Image */}
       <div className="relative h-36 overflow-hidden">
         <img
-          src={resolveImage(item.image_url, "plat", item.nom)}
+          src={imgSrc}
           alt={item.nom}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
         />
 
-        {/* Overlay edit/delete au hover */}
+        {/* Overlay actions au hover */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100
-          transition-opacity duration-200 flex items-center justify-center gap-3">
+          transition-opacity duration-200 flex items-center justify-center gap-2">
+          {/* Eye — preview */}
+          <button type="button" onClick={() => onPreview(imgSrc, item.nom)}
+            className="p-2.5 rounded-xl bg-white/90 text-gray-800
+              hover:bg-white hover:scale-110 transition-all duration-150 shadow-sm">
+            <Eye className="w-4 h-4" />
+          </button>
+          {/* Edit */}
           <button type="button" onClick={onEdit}
             className="p-2.5 rounded-xl bg-white/90 text-gray-800
               hover:bg-white hover:scale-110 transition-all duration-150 shadow-sm">
             <Pencil className="w-4 h-4" />
           </button>
+          {/* Delete */}
           <button type="button" onClick={onDelete} disabled={saving}
             className="p-2.5 rounded-xl bg-white/90 text-red-500
               hover:bg-white hover:scale-110 transition-all duration-150 shadow-sm disabled:opacity-50">
