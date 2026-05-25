@@ -1,11 +1,12 @@
 // src/app/(dashboard)/knowledge/_components/tabs/InscriptionsTab.tsx
-// S46 — hover lift + empty state sectoriel + i18n complet + CSS vars toggle
+// S71 — ProgrammeCard sobre : accent fin + détails expandables + items-start grid
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
 import {
   Plus, Loader2, GraduationCap, ToggleLeft, ToggleRight,
   Pencil, Trash2, Check, X, Calendar, ListOrdered, FileCheck,
+  Users, BadgePercent, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { useSector }           from "@/hooks/useSector";
 import { useToast }            from "@/components/ui/Toast";
@@ -124,7 +125,7 @@ export function InscriptionsTab() {
   });
 
   if (loading) return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
       {[1, 2, 3].map((i) => <KnowledgeCardSkeleton key={i} />)}
     </div>
   );
@@ -161,7 +162,7 @@ export function InscriptionsTab() {
           <p className="text-sm text-[var(--text-muted)]">{t.empty}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
           {items.map((item) => editId === item.id ? (
             <div key={item.id} className="sm:col-span-2 xl:col-span-3">
               <ProgrammeForm form={form} set={set} theme={theme} t={t} d={d}
@@ -181,115 +182,211 @@ export function InscriptionsTab() {
   );
 }
 
-// ── ProgrammeCard ─────────────────────────────────────────────────────────────
+// ── ProgrammeCard — sobre + expandable ───────────────────────────────────────
 
 function ProgrammeCard({ item, theme, t, saving, onToggle, onEdit, onDelete }: {
-  item: ProgrammeAdmission;
-  theme: { primary: string };
-  t: Record<string, string | Record<string, string>>;
-  saving: boolean;
-  onToggle: () => void; onEdit: () => void; onDelete: () => void;
+  item:     ProgrammeAdmission;
+  theme:    { primary: string };
+  t:        Record<string, string | Record<string, string>>;
+  saving:   boolean;
+  onToggle: () => void;
+  onEdit:   () => void;
+  onDelete: () => void;
 }) {
   const { dictionary: d } = useLanguage();
   const niveaux           = d.knowledge.inscriptions.niveaux as Record<string, string>;
-  const docs   = item.documents_requis   ?? [];
-  const etapes = item.etapes_inscription ?? [];
+  const docs              = item.documents_requis   ?? [];
+  const etapes            = item.etapes_inscription ?? [];
+  const [expanded, setExpanded] = useState(false);
+
+  const hasDetails = docs.length > 0 || etapes.length > 0
+    || !!item.date_ouverture || !!item.date_fermeture
+    || item.places_disponibles != null || !!item.conditions_admission
+    || item.frais_scolarite_annuels != null;
 
   return (
     <div className={cn(
-      "bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] p-5 flex flex-col gap-3",
-      "hover:shadow-md hover:-translate-y-0.5 transition-all duration-200",
+      "bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] overflow-hidden",
+      "hover:shadow-md transition-shadow duration-200",
       !item.is_available && "opacity-60",
     )}>
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="font-semibold text-sm text-[var(--text)]">{item.nom_fr}</p>
-          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium mt-0.5 inline-block"
-            style={{ backgroundColor: `${theme.primary}20`, color: theme.primary }}>
-            {niveaux[item.niveau] ?? item.niveau}
-          </span>
-        </div>
-        <button type="button" onClick={onToggle} disabled={saving}
-          className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold flex-shrink-0 transition-all"
-          style={item.is_available
-            ? { background: "var(--status-success-bg)", color: "var(--status-success-text)" }
-            : { background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
-          {item.is_available
-            ? <><ToggleRight className="w-3.5 h-3.5" />{String(t.ouvert)}</>
-            : <><ToggleLeft  className="w-3.5 h-3.5" />{String(t.ferme)}</>}
-        </button>
-      </div>
+      {/* Barre accent fine */}
+      <div className="h-1 w-full" style={{ backgroundColor: theme.primary }} />
 
-      {item.description_fr && (
-        <p className="text-xs text-[var(--text-muted)] line-clamp-2">{item.description_fr}</p>
-      )}
+      {/* Corps principal */}
+      <div className="p-4 space-y-3">
 
-      {/* Infos financières & places */}
-      <div className="grid grid-cols-2 gap-1 text-xs text-[var(--text-muted)]">
-        {item.duree && (
-          <span>Durée : <strong className="text-[var(--text)]">{item.duree}</strong></span>
-        )}
-        <span>
-          {item.frais_inscription != null
-            ? <strong className="text-[var(--text)]">{Number(item.frais_inscription).toLocaleString("fr-FR")} XAF</strong>
-            : <span style={{ color: "var(--status-success-text)" }} className="font-medium">{String(t.gratuit)}</span>}
-        </span>
-        {item.places_disponibles != null && (
-          <span>Places : <strong className="text-[var(--text)]">{item.places_disponibles}</strong></span>
-        )}
-        {item.frais_scolarite_annuels != null && (
-          <span>Scolarité : <strong className="text-[var(--text)]">{Number(item.frais_scolarite_annuels).toLocaleString("fr-FR")} XAF/an</strong></span>
-        )}
-      </div>
-
-      {/* Documents requis */}
-      {docs.length > 0 && (
-        <div className="flex flex-wrap gap-1 items-center">
-          <FileCheck className="w-3 h-3 text-[var(--text-muted)] flex-shrink-0" />
-          {docs.slice(0, 3).map((doc) => (
-            <span key={doc}
-              className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--bg)] border border-[var(--border)] text-[var(--text-muted)]">
-              {doc}
+        {/* Nom + toggle */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm text-[var(--text)] leading-tight line-clamp-2">
+              {item.nom_fr}
+            </p>
+            <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full font-medium"
+              style={{
+                background: `color-mix(in srgb, ${theme.primary} 12%, transparent)`,
+                color: theme.primary,
+              }}>
+              {niveaux[item.niveau] ?? item.niveau}
             </span>
-          ))}
-          {docs.length > 3 && (
-            <span className="text-[10px] text-[var(--text-muted)]">+{docs.length - 3}</span>
+          </div>
+
+          {/* Toggle switch */}
+          <button type="button" onClick={onToggle} disabled={saving}
+            className="flex items-center gap-1.5 flex-shrink-0 mt-0.5">
+            <span
+              className="relative inline-flex items-center w-9 h-5 rounded-full transition-colors duration-200"
+              style={{ backgroundColor: item.is_available ? theme.primary : "var(--border)" }}
+            >
+              <span className={cn(
+                "inline-block w-3.5 h-3.5 rounded-full bg-white shadow-sm",
+                "transform transition-transform duration-200",
+                item.is_available ? "translate-x-[18px]" : "translate-x-[3px]",
+              )} />
+            </span>
+            <span className="text-[10px] font-semibold"
+              style={{ color: item.is_available ? theme.primary : "var(--text-muted)" }}>
+              {item.is_available
+                ? <>{String(t.ouvert)}</>
+                : <>{String(t.ferme)}</>}
+            </span>
+          </button>
+        </div>
+
+        {/* Infos clés condensées */}
+        <div className="flex items-center gap-3 flex-wrap text-xs text-[var(--text-muted)]">
+          {item.duree && (
+            <span className="flex items-center gap-1">
+              <Calendar className="w-3 h-3" />
+              {item.duree}
+            </span>
+          )}
+          {item.frais_inscription != null ? (
+            <span className="flex items-center gap-1 font-semibold"
+              style={{ color: theme.primary }}>
+              <BadgePercent className="w-3 h-3" />
+              {Number(item.frais_inscription).toLocaleString("fr-FR")} XAF
+            </span>
+          ) : (
+            <span className="font-semibold"
+              style={{ color: "var(--status-success-text)" }}>
+              {String(t.gratuit)}
+            </span>
+          )}
+        </div>
+
+        {/* Actions + bouton détails */}
+        <div className="flex items-center justify-between pt-0.5">
+          <div className="flex items-center gap-1">
+            <button type="button" onClick={onEdit}
+              className="p-1.5 rounded-lg hover:bg-[var(--bg)] transition-colors
+                text-[var(--text-muted)] hover:text-[var(--text)]">
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+            <button type="button" onClick={onDelete} disabled={saving}
+              className="p-1.5 rounded-lg transition-colors
+                text-[var(--text-muted)] hover:text-[var(--status-danger-text)]
+                hover:bg-[var(--status-danger-bg)]">
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {hasDetails && (
+            <button type="button"
+              onClick={() => setExpanded((p) => !p)}
+              className="flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg
+                hover:bg-[var(--bg)] transition-colors"
+              style={{ color: "var(--text-muted)" }}>
+              {expanded
+                ? <><ChevronUp className="w-3 h-3" /> Moins</>
+                : <><ChevronDown className="w-3 h-3" /> Détails</>}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Panneau détails expandable */}
+      {expanded && (
+        <div className="px-4 pb-4 space-y-2.5 border-t border-[var(--border)] pt-3">
+
+          {item.places_disponibles != null && (
+            <div className="flex items-center gap-2 text-xs">
+              <Users className="w-3 h-3 text-[var(--text-muted)]" />
+              <span className="text-[var(--text-muted)]">Places :</span>
+              <span className="font-semibold text-[var(--text)]">{item.places_disponibles}</span>
+            </div>
+          )}
+
+          {item.frais_scolarite_annuels != null && (
+            <div className="flex items-center gap-2 text-xs">
+              <BadgePercent className="w-3 h-3 text-[var(--text-muted)]" />
+              <span className="text-[var(--text-muted)]">Scolarité :</span>
+              <span className="font-semibold text-[var(--text)]">
+                {Number(item.frais_scolarite_annuels).toLocaleString("fr-FR")} XAF/an
+              </span>
+            </div>
+          )}
+
+          {(item.date_ouverture || item.date_fermeture) && (
+            <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+              <Calendar className="w-3 h-3 flex-shrink-0" />
+              {item.date_ouverture && <span>Ouv. {item.date_ouverture}</span>}
+              {item.date_ouverture && item.date_fermeture && <span>→</span>}
+              {item.date_fermeture && <span>Clôt. {item.date_fermeture}</span>}
+            </div>
+          )}
+
+          {docs.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="flex items-center gap-1 text-[10px] text-[var(--text-muted)]
+                uppercase tracking-wide font-medium">
+                <FileCheck className="w-3 h-3" /> Documents requis
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {docs.map((doc) => (
+                  <span key={doc}
+                    className="text-[10px] px-1.5 py-0.5 rounded-full
+                      bg-[var(--bg)] border border-[var(--border)] text-[var(--text-muted)]">
+                    {doc}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {etapes.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="flex items-center gap-1 text-[10px] text-[var(--text-muted)]
+                uppercase tracking-wide font-medium">
+                <ListOrdered className="w-3 h-3" />
+                {etapes.length} {etapes.length > 1 ? String(t.etapePlural) : String(t.etapeSingular)}
+              </p>
+              <ol className="space-y-1 pl-1">
+                {etapes.slice(0, 4).map((e, i) => (
+                  <li key={i} className="flex items-start gap-1.5 text-[10px] text-[var(--text-muted)]">
+                    <span className="w-3.5 h-3.5 rounded-full flex-shrink-0 flex items-center
+                      justify-center text-[8px] font-bold text-white mt-0.5"
+                      style={{ backgroundColor: theme.primary }}>
+                      {i + 1}
+                    </span>
+                    <span className="line-clamp-1">{e}</span>
+                  </li>
+                ))}
+                {etapes.length > 4 && (
+                  <li className="text-[10px] text-[var(--text-muted)] pl-5">
+                    +{etapes.length - 4} étape{etapes.length - 4 > 1 ? "s" : ""}
+                  </li>
+                )}
+              </ol>
+            </div>
           )}
         </div>
       )}
-
-      {/* Étapes + Dates */}
-      {etapes.length > 0 && (
-        <div className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
-          <ListOrdered className="w-3 h-3" />
-          {etapes.length} {etapes.length > 1 ? String(t.etapePlural) : String(t.etapeSingular)}
-        </div>
-      )}
-      {(item.date_ouverture || item.date_fermeture) && (
-        <div className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
-          <Calendar className="w-3 h-3" />
-          {item.date_ouverture && <span>Ouv.: {item.date_ouverture}</span>}
-          {item.date_fermeture && <span>— Clô.: {item.date_fermeture}</span>}
-        </div>
-      )}
-
-      {/* Actions */}
-      <div className="flex justify-end gap-1 mt-auto pt-1">
-        <button type="button" onClick={onEdit}
-          className="p-1.5 rounded-lg hover:bg-[var(--bg)] transition-colors">
-          <Pencil className="w-3.5 h-3.5 text-[var(--text-muted)]" />
-        </button>
-        <button type="button" onClick={onDelete} disabled={saving}
-          className="p-1.5 rounded-lg hover:bg-[var(--status-danger-bg)] transition-colors">
-          <Trash2 className="w-3.5 h-3.5 text-[var(--text-muted)]" />
-        </button>
-      </div>
     </div>
   );
 }
 
-// ── ProgrammeForm ─────────────────────────────────────────────────────────────
+// ── ProgrammeForm (inchangé) ──────────────────────────────────────────────────
 
 function ProgrammeForm({ form, set, onSave, onCancel, saving, theme, t, d, label, niveauxSelect }: {
   form: typeof EMPTY;
@@ -302,7 +399,6 @@ function ProgrammeForm({ form, set, onSave, onCancel, saving, theme, t, d, label
   niveauxSelect: NiveauAdmission[];
 }) {
   const niveaux = (t.niveaux ?? {}) as Record<string, string>;
-
   return (
     <div className="bg-[var(--bg-card)] rounded-2xl border-2 p-5 space-y-3"
       style={{ borderColor: theme.primary }}>
@@ -311,7 +407,8 @@ function ProgrammeForm({ form, set, onSave, onCancel, saving, theme, t, d, label
         <input className="input-base" value={form.nom_fr} onChange={set("nom_fr")} autoFocus />
       </Row>
       <Row label={String(t.descriptionLabel)}>
-        <textarea className="input-base resize-none" rows={2} value={form.description_fr} onChange={set("description_fr")} />
+        <textarea className="input-base resize-none" rows={2}
+          value={form.description_fr} onChange={set("description_fr")} />
       </Row>
       <div className="grid grid-cols-2 gap-3">
         <Row label={String(t.niveauLabel)}>
@@ -322,38 +419,47 @@ function ProgrammeForm({ form, set, onSave, onCancel, saving, theme, t, d, label
           </select>
         </Row>
         <Row label={String(t.dureeLabel)}>
-          <input className="input-base" placeholder={String(t.dureePlh)} value={form.duree} onChange={set("duree")} />
+          <input className="input-base" placeholder={String(t.dureePlh)}
+            value={form.duree} onChange={set("duree")} />
         </Row>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Row label={String(t.fraisInscLabel)}>
-          <input className="input-base" type="number" min="0" value={form.frais_inscription} onChange={set("frais_inscription")} />
+          <input className="input-base" type="number" min="0"
+            value={form.frais_inscription} onChange={set("frais_inscription")} />
         </Row>
         <Row label={String(t.fraisScolariteLabel)}>
-          <input className="input-base" type="number" min="0" value={form.frais_scolarite_annuels} onChange={set("frais_scolarite_annuels")} />
+          <input className="input-base" type="number" min="0"
+            value={form.frais_scolarite_annuels} onChange={set("frais_scolarite_annuels")} />
         </Row>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Row label={String(t.placesLabel)}>
-          <input className="input-base" type="number" min="0" value={form.places_disponibles} onChange={set("places_disponibles")} />
+          <input className="input-base" type="number" min="0"
+            value={form.places_disponibles} onChange={set("places_disponibles")} />
         </Row>
         <Row label={String(t.conditionsLabel)}>
-          <input className="input-base" value={form.conditions_admission} onChange={set("conditions_admission")} />
+          <input className="input-base"
+            value={form.conditions_admission} onChange={set("conditions_admission")} />
         </Row>
       </div>
       <Row label={String(t.documentsLabel)}>
-        <input className="input-base" placeholder={String(t.documentsPlh)} value={form.documents_requis} onChange={set("documents_requis")} />
+        <input className="input-base" placeholder={String(t.documentsPlh)}
+          value={form.documents_requis} onChange={set("documents_requis")} />
       </Row>
       <Row label={String(t.etapesLabel)}>
-        <textarea className="input-base resize-none" rows={3} placeholder={String(t.etapesPlh)}
+        <textarea className="input-base resize-none" rows={3}
+          placeholder={String(t.etapesPlh)}
           value={form.etapes_inscription} onChange={set("etapes_inscription")} />
       </Row>
       <div className="grid grid-cols-2 gap-3">
         <Row label={String(t.ouvertureLabel)}>
-          <input className="input-base" type="date" value={form.date_ouverture} onChange={set("date_ouverture")} />
+          <input className="input-base" type="date"
+            value={form.date_ouverture} onChange={set("date_ouverture")} />
         </Row>
         <Row label={String(t.clotureLabel)}>
-          <input className="input-base" type="date" value={form.date_fermeture} onChange={set("date_fermeture")} />
+          <input className="input-base" type="date"
+            value={form.date_fermeture} onChange={set("date_fermeture")} />
         </Row>
       </div>
       <div className="flex justify-end gap-2 pt-1">
@@ -362,7 +468,8 @@ function ProgrammeForm({ form, set, onSave, onCancel, saving, theme, t, d, label
             border border-[var(--border)] hover:bg-[var(--bg)] text-[var(--text-muted)]">
           <X className="w-4 h-4" /> {d.common.cancel}
         </button>
-        <button type="button" onClick={onSave} disabled={saving || !form.nom_fr.trim()}
+        <button type="button" onClick={onSave}
+          disabled={saving || !form.nom_fr.trim()}
           className="btn-primary flex items-center gap-1.5 px-4 py-2 text-sm disabled:opacity-60">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
           {d.common.save}
@@ -375,7 +482,9 @@ function ProgrammeForm({ form, set, onSave, onCancel, saving, theme, t, d, label
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-1 block">{label}</label>
+      <label className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-1 block">
+        {label}
+      </label>
       {children}
     </div>
   );
