@@ -2,10 +2,10 @@
 // src/app/(dashboard)/bots/[id]/test/_components/ConversationPanel.tsx
 // Panneau droit : 4 accordéons + footer.
 // S65 — données collectées toujours visible · sessions 3 max + voir plus
-//        · clic session → ConvModal · callback onLoadSession.
+//        · clic session → ConversationModal · callback onLoadSession.
+// S68 — ConvModal remplacé par ConversationModal (composant partagé unifié).
 
 import { useState, useCallback, useEffect } from "react";
-import { createPortal } from "react-dom";
 import {
   User, Phone, Mail, Zap,
   Database, AlertTriangle, Settings, Clock,
@@ -15,15 +15,15 @@ import { Badge }        from "@/components/ui";
 import { useToast }     from "@/components/ui/Toast";
 import { useLanguage }  from "@/contexts/LanguageContext";
 import { useSector }    from "@/hooks/useSector";
-import { agentRepository } from "@/repositories/agent.repository";
-import { ConvModal }    from "../../../_components/tabs/_ui/ConvModal";
-import type { ChatbotConfig } from "@/types/api";
+import { agentRepository }       from "@/repositories/agent.repository";
+import { ConversationModal }     from "@/components/shared/ConversationModal";
+import type { ChatbotConfig }    from "@/types/api";
 import type { AIConversation, AIActionDeclenchee } from "@/types/api/agent.types";
-import type { BotPair } from "../../../_components/bots.types";
-import { getModalType }    from "./action-helpers";
-import { PanelAccordion }  from "./_ui/PanelAccordion";
-import { ActionsLog }      from "./_ui/ActionsLog";
-import { BotConfigSections } from "../../../_components/tabs/_ui/BotConfigSections";
+import type { BotPair }          from "../../../_components/bots.types";
+import { getModalType }          from "./action-helpers";
+import { PanelAccordion }        from "./_ui/PanelAccordion";
+import { ActionsLog }            from "./_ui/ActionsLog";
+import { BotConfigSections }     from "../../../_components/tabs/_ui/BotConfigSections";
 import {
   ModalReservation, ModalFAQ, ModalEmail, ModalCommande,
   ModalInscriptionDossier, ModalFinance, ModalConsultation,
@@ -37,7 +37,6 @@ interface Props {
   pair:         BotPair;
   config:       ChatbotConfig | null;
   onConfigSaved: (c: ChatbotConfig) => void;
-  /** Appelé quand l'utilisateur clique "Charger" sur une session passée. */
   onLoadSession: (conv: AIConversation) => void;
 }
 
@@ -81,7 +80,6 @@ export function ConversationPanel({
   const [configOpen,   setConfigOpen]   = useState(false);
   const [modalConv,    setModalConv]    = useState<AIConversation | null>(null);
   const [showAllSess,  setShowAllSess]  = useState(false);
-  const [mounted,      setMounted]      = useState(false);
 
   // Sessions passées
   const [pastSessions,    setPastSessions]    = useState<AIConversation[]>([]);
@@ -96,7 +94,6 @@ export function ConversationPanel({
 
   const [savedConfig, setSavedConfig] = useState(config);
   useEffect(() => { setSavedConfig(config); }, [config]);
-  useEffect(() => { setMounted(true); }, []);
 
   // Charger les sessions passées
   const botId = pair.waBot?.id;
@@ -142,7 +139,6 @@ export function ConversationPanel({
         {/* ── Accordéon 1 : Données collectées — TOUJOURS VISIBLE ── */}
         <PanelAccordion icon={<Database className="w-3 h-3" />} title={t.testCollectedData} defaultOpen>
           <div className="space-y-1 pt-1">
-            {/* Statut — uniquement si conversation active */}
             {conversation && (
               <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-[var(--border)]">
                 <span className="text-[11px] text-[var(--text-muted)]">Statut</span>
@@ -155,27 +151,9 @@ export function ConversationPanel({
                 </Badge>
               </div>
             )}
-
-            {/* Champ Nom */}
-            <DataField
-              icon={<User  className="w-3 h-3 text-[var(--text-muted)]" />}
-              value={contact.nom}
-              label={t.testCardContactNom}
-            />
-            {/* Champ Téléphone */}
-            <DataField
-              icon={<Phone className="w-3 h-3 text-[var(--text-muted)]" />}
-              value={contact.phone}
-              label={t.testCardContactPhone}
-            />
-            {/* Champ Email */}
-            <DataField
-              icon={<Mail  className="w-3 h-3 text-[var(--text-muted)]" />}
-              value={contact.email}
-              label={t.testCardContactEmail}
-            />
-
-            {/* Compteur itérations */}
+            <DataField icon={<User  className="w-3 h-3 text-[var(--text-muted)]" />} value={contact.nom}   label={t.testCardContactNom}   />
+            <DataField icon={<Phone className="w-3 h-3 text-[var(--text-muted)]" />} value={contact.phone} label={t.testCardContactPhone} />
+            <DataField icon={<Mail  className="w-3 h-3 text-[var(--text-muted)]" />} value={contact.email} label={t.testCardContactEmail} />
             {iterCount !== undefined && (
               <div className="flex items-center justify-between pt-1.5 mt-1 border-t border-[var(--border)]">
                 <span className="text-[11px] text-[var(--text-muted)]">Itération</span>
@@ -184,15 +162,11 @@ export function ConversationPanel({
                 </span>
               </div>
             )}
-
-            {/* Résumé */}
             {summary && (
               <div className="mt-2 p-2 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[11px] text-[var(--text-muted)] leading-relaxed">
                 {summary}
               </div>
             )}
-
-            {/* Alerte transfert */}
             {hasTransfer && (
               <div className="mt-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 flex items-center gap-2">
                 <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
@@ -201,12 +175,8 @@ export function ConversationPanel({
                 </p>
               </div>
             )}
-
-            {/* Placeholder si aucune donnée et pas de conversation */}
             {!conversation && !contact.nom && !contact.phone && !contact.email && (
-              <p className="text-[11px] text-[var(--text-muted)] italic py-1">
-                {t.testDataEmpty}
-              </p>
+              <p className="text-[11px] text-[var(--text-muted)] italic py-1">{t.testDataEmpty}</p>
             )}
           </div>
         </PanelAccordion>
@@ -299,7 +269,6 @@ export function ConversationPanel({
                     </p>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    {/* Boutons : voir et charger */}
                     <button
                       onClick={() => setModalConv(s)}
                       className="opacity-0 group-hover:opacity-100 text-[9px] bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] px-1.5 py-0.5 rounded hover:text-[var(--text)] transition-all"
@@ -361,20 +330,19 @@ export function ConversationPanel({
         onSaved={handleConfigSaved}
       />
 
-      {/* ── ConvModal — session passée en lecture / continuation ── */}
-      {mounted && modalConv && createPortal(
-        <ConvModal
-          conv={modalConv}
+      {/* ── ConversationModal — session passée (composant partagé unifié) ── */}
+      {modalConv && (
+        <ConversationModal
+          conversation={modalConv}
           onClose={() => setModalConv(null)}
-          colors={{ primary: theme.primary }}
-        />,
-        document.body,
+          colors={{ primary: theme.primary, accent: theme.primary }}
+        />
       )}
     </div>
   );
 }
 
-// ── DataField (interne) — style maquette S49 ─────────────────────────────────
+// ── DataField (interne) ───────────────────────────────────────────────────────
 
 function DataField({
   icon, value, label,

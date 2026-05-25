@@ -1,137 +1,109 @@
 // src/components/shared/ConversationModal.tsx
-// Modal unifié — utilisé par /bots ET /results
-// S44 — zéro texte hardcodé, zéro couleur hardcodée, useLanguage complet
+// Modal unifié — utilisé par /bots ET /results ET /bots/[id]/test
+// S68 — Migration complète vers AIConversation (nouveau système agent)
+//       Suppression MOCK_HISTORY — données réelles uniquement
+//       Bilan construit depuis actions_declenchees + contexte
 "use client";
-import { useEffect, useRef, useState }    from "react";
-import { createPortal }                   from "react-dom";
+import { useEffect, useRef, useState } from "react";
+import { createPortal }                from "react-dom";
 import {
   Activity, MessageSquare, GlobeLock, X,
   CalendarDays, ArrowRightLeft, BookOpen,
-  Wrench, User, FlaskConical, Loader2,
+  Wrench, User, Loader2, CheckCircle2,
+  XCircle, Clock, Zap,
 } from "lucide-react";
-import { cn }                             from "@/lib/utils";
-import { useLanguage }                    from "@/contexts/LanguageContext";
-import { conversationsRepository }        from "@/repositories";
-import {
-  MOCK_HISTORY,
-  type MockMessage,
-} from "@/app/(dashboard)/bots/_components/bots.types";
-import type { Conversation }              from "@/types/api";
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-interface BackendMessage {
-  id:         string;
-  role:       "bot" | "client" | "humain" | string;
-  contenu:    string;
-  created_at: string;
-}
+import { cn }                          from "@/lib/utils";
+import { useLanguage }                 from "@/contexts/LanguageContext";
+import { agentRepository }             from "@/repositories/agent.repository";
+import type { AIConversation, AIMessage, AIActionDeclenchee } from "@/types/api/agent.types";
+// ── Types ────────────────────────────────────────────────────────────────────
 
 export interface ConversationModalProps {
-  conversation: Conversation;
+  conversation: AIConversation;
   onClose:      () => void;
-  /** Couleurs sectorielles — optionnel, défaut vert WhatsApp */
-  colors?: { primary: string; accent: string };
+  colors?:      { primary: string; accent: string };
+}
+
+interface ActionLog {
+  id:               string;
+  action_slug:      string;
+  action_nom:       string;
+  statut:           "succes" | "echec" | "validation_error" | "timeout" | string;
+  duree_ms:         number;
+  payload_envoye:   Record<string, unknown>;
+  response_recue:   Record<string, unknown>;
+  created_at:       string;
 }
 
 const DEFAULT_COLORS = { primary: "#075E54", accent: "#25D366" };
 
 const ACTION_ICONS: Record<string, React.ElementType> = {
-  appointment:       CalendarDays,
-  handoff:           ArrowRightLeft,
-  faq:               BookOpen,
-  service_info:      Wrench,
-  contact_collected: User,
-  email:             MessageSquare,
+  get_menu:             BookOpen,
+  create_commande:      Wrench,
+  prise_rdv:            CalendarDays,
+  create_reservation:   CalendarDays,
+  transfer_to_human:    ArrowRightLeft,
+  capture_prospect:     User,
+  search_faq:           MessageSquare,
 };
 
-const FETCH_TIMEOUT_MS = 5000;
-
-// ── Composant ─────────────────────────────────────────────────────────────────
+// ── Composant ────────────────────────────────────────────────────────────────
 
 export function ConversationModal({
-  conversation,
+  conversation: initialConv,
   onClose,
   colors: colorsProp,
 }: ConversationModalProps) {
   const { dictionary: d } = useLanguage();
   const t      = d.bots;
   const colors = { ...DEFAULT_COLORS, ...colorsProp };
-  const report = conversation.rapport;
 
-  const [showChat,        setShowChat]        = useState(false);
-  const [chatMessages,    setChatMessages]    = useState<MockMessage[] | null>(null);
-  const [loadingMessages, setLoadingMessages] = useState(false);
-  const [usingFallback,   setUsingFallback]   = useState(false);
-  const [mounted,         setMounted]         = useState(false);
-  const fetchTokenRef = useRef(0);
+  const [showChat,      setShowChat]      = useState(false);
+  const [conv,          setConv]          = useState<AIConversation>(initialConv);
+  const [loading,       setLoading]       = useState(false);
+  const [mounted,       setMounted]       = useState(false);
+  const fetchedRef = useRef(false);
 
   useEffect(() => { setMounted(true); }, []);
 
-  // ── Fetch messages ──────────────────────────────────────────────────────────
+  // Charger la conversation complète (messages + actions_declenchees) au mount
   useEffect(() => {
-    if (!showChat) return;
-    if (chatMessages !== null) return;
-
-    const myToken = ++fetchTokenRef.current;
-    setLoadingMessages(true);
-    setUsingFallback(false);
-
-    const timeoutId = window.setTimeout(() => {
-      if (fetchTokenRef.current !== myToken) return;
-      const fallback = MOCK_HISTORY[conversation.id] ?? MOCK_HISTORY.default;
-      setChatMessages(fallback);
-      setUsingFallback(true);
-      setLoadingMessages(false);
-    }, FETCH_TIMEOUT_MS);
-
-    conversationsRepository
-      .getMessages(conversation.id)
-      .then((data: unknown) => {
-        if (fetchTokenRef.current !== myToken) return;
-        let raw: BackendMessage[] = [];
-        if (Array.isArray(data)) {
-          raw = data as BackendMessage[];
-        } else if (
-          data && typeof data === "object" &&
-          Array.isArray((data as { results?: unknown }).results)
-        ) {
-          raw = (data as { results: BackendMessage[] }).results;
-        }
-        window.clearTimeout(timeoutId);
-        if (raw.length === 0) {
-          const fallback = MOCK_HISTORY[conversation.id] ?? MOCK_HISTORY.default;
-          setChatMessages(fallback);
-          setUsingFallback(true);
-        } else {
-          setChatMessages(raw.map((m) => ({
-            role: m.role === "client" ? "client" : "bot",
-            text: m.contenu,
-            time: formatTime(m.created_at),
-          })));
-          setUsingFallback(false);
-        }
-        setLoadingMessages(false);
-      })
-      .catch(() => {
-        if (fetchTokenRef.current !== myToken) return;
-        window.clearTimeout(timeoutId);
-        const fallback = MOCK_HISTORY[conversation.id] ?? MOCK_HISTORY.default;
-        setChatMessages(fallback);
-        setUsingFallback(true);
-        setLoadingMessages(false);
-      });
-
-    return () => {
-      window.clearTimeout(timeoutId);
-      fetchTokenRef.current++;
-    };
-  }, [showChat, conversation.id, chatMessages]);
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+    setLoading(true);
+    agentRepository
+      .getConversation(initialConv.id)
+      .then((data) => setConv(data))
+      .catch(() => {/* garde initialConv */})
+      .finally(() => setLoading(false));
+  }, [initialConv.id]);
 
   if (!mounted) return null;
 
-  const isWhatsapp = conversation.bot_type === "whatsapp";
+  // ── Données dérivées ────────────────────────────────────────────────────
+  const messages = (conv.messages ?? []).filter(
+    (m: AIMessage) => m.role === "user" || m.role === "assistant",
+  );
 
+  const actionLogs: AIActionDeclenchee[] = (
+    (conv as AIConversation & { actions_declenchees?: AIActionDeclenchee[] })
+      .actions_declenchees ?? []
+  ).filter((a) => !["init_conversation", "update_context"].includes(a.action_slug));
+
+  const ctx     = (conv.contexte ?? {}) as Record<string, unknown>;
+  const contact = ctx.contact as Record<string, string> | undefined;
+  const summary = (ctx.summary as string) || null;
+  const clientNom = contact?.nom
+    ?? (conv.contact as { nom?: string } | null)?.nom
+    ?? "Client";
+
+  const nbMessages  = messages.length;
+  const nbActions   = actionLogs.filter((a) => a.statut === "succes").length;
+  const nbEchecs    = actionLogs.filter((a) => a.statut !== "succes").length;
+  const isTransfere = conv.statut === "transferee";
+  const isWhatsapp  = conv.canal === "whatsapp";
+
+  // ── Modal ───────────────────────────────────────────────────────────────
   const modal = (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
       <div className="absolute inset-0" onClick={onClose} />
@@ -142,7 +114,7 @@ export function ConversationModal({
         showChat ? "max-w-5xl w-full" : "max-w-lg w-full",
       )} style={{ background: "var(--bg-card)" }}>
 
-        {/* ── Header ── */}
+        {/* Header */}
         <div
           className="p-5 border-b border-[var(--border)] flex items-center gap-3 z-20 flex-shrink-0"
           style={{ background: "var(--bg-card)" }}
@@ -156,7 +128,7 @@ export function ConversationModal({
 
           <div className="flex-1 min-w-0">
             <p className="font-bold text-[var(--text)] truncate">
-              {t.reportTitle} : {conversation.client_nom || "Client"}
+              {t.reportTitle} : {clientNom}
             </p>
             <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-black">
               {isWhatsapp ? t.modalChannelWhatsapp : t.modalChannelVocal}
@@ -164,7 +136,6 @@ export function ConversationModal({
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Bouton Voir/Masquer chat — toujours en haut */}
             <button
               onClick={() => setShowChat(!showChat)}
               className={cn(
@@ -173,7 +144,7 @@ export function ConversationModal({
               )}
               style={{
                 background: showChat ? colors.primary : "var(--bg)",
-                color: showChat ? "#fff" : undefined,
+                color:      showChat ? "#fff" : undefined,
               }}
             >
               {showChat
@@ -192,89 +163,64 @@ export function ConversationModal({
           </div>
         </div>
 
-        {/* ── Body ── */}
+        {/* Body */}
         <div className="flex flex-1 overflow-hidden">
 
-          {/* ── Panneau rapport ── */}
+          {/* Panneau bilan */}
           <div className="flex-1 overflow-y-auto p-6 space-y-5 border-r border-[var(--border)]">
-            {report ? (
+            {loading ? (
+              <div className="flex flex-col items-center justify-center h-full gap-3 text-[var(--text-muted)]">
+                <Loader2 className="w-8 h-8 animate-spin opacity-40" />
+                <p className="text-sm italic">Chargement du bilan…</p>
+              </div>
+            ) : (
               <>
-                {/* Résumé */}
-                <section>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-3">
-                    {t.reportSummary}
-                  </p>
-                  <div
-                    className="rounded-2xl p-4 text-sm leading-relaxed text-[var(--text)] border border-[var(--border)]"
-                    style={{ background: "var(--bg)" }}
-                  >
-                    {report.resume}
-                  </div>
+                {/* KPIs */}
+                <section className="grid grid-cols-3 gap-3">
+                  <KpiCard
+                    label="Messages"
+                    value={nbMessages}
+                    icon={<MessageSquare className="w-4 h-4" />}
+                    color={colors.primary}
+                  />
+                  <KpiCard
+                    label="Actions"
+                    value={nbActions}
+                    icon={<Zap className="w-4 h-4" />}
+                    color="#25D366"
+                  />
+                  <KpiCard
+                    label={isTransfere ? "Transféré" : "Erreurs"}
+                    value={isTransfere ? 1 : nbEchecs}
+                    icon={<ArrowRightLeft className="w-4 h-4" />}
+                    color={isTransfere || nbEchecs > 0 ? "#F59E0B" : "#6B7280"}
+                  />
                 </section>
 
-                {/* RDV + Transfert */}
-                <section className="grid grid-cols-2 gap-3">
-                  <div className={cn(
-                    "p-4 rounded-2xl border",
-                    report.rdv_planifies > 0
-                      ? "bg-[#25D366]/5 border-[#25D366]/20"
-                      : "border-[var(--border)]",
-                  )} style={report.rdv_planifies === 0 ? { background: "var(--bg)" } : {}}>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
-                      {t.reportAppointment}
-                    </p>
-                    <p className="text-sm font-bold text-[var(--text)]">
-                      {report.rdv_planifies > 0
-                        ? t.reportAppointmentScheduled
-                        : t.reportNoAppointment}
-                    </p>
-                  </div>
-                  <div className={cn(
-                    "p-4 rounded-2xl border",
-                    report.transferts_humain > 0
-                      ? "bg-amber-500/10 border-amber-500/20"
-                      : "border-[var(--border)]",
-                  )} style={report.transferts_humain === 0 ? { background: "var(--bg)" } : {}}>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">
-                      {t.reportHandoff}
-                    </p>
-                    <p className="text-sm font-bold text-[var(--text)]">
-                      {report.transferts_humain > 0
-                        ? t.reportHandoffTriggered
-                        : t.reportNoHandoff}
-                    </p>
-                  </div>
-                </section>
-
-                {/* Points clés */}
-                {report.points_cles?.length > 0 && (
+                {/* Résumé contexte */}
+                {summary && (
                   <section>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-3">
-                      {t.reportTakeaways}
-                    </p>
-                    <ul className="space-y-2">
-                      {report.points_cles.map((pt, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-[var(--text)]">
-                          <span className="text-[#25D366] mt-0.5 flex-shrink-0">•</span>
-                          <span>{pt}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    <SectionTitle>{t.reportSummary}</SectionTitle>
+                    <div
+                      className="rounded-2xl p-4 text-sm leading-relaxed text-[var(--text)] border border-[var(--border)]"
+                      style={{ background: "var(--bg)" }}
+                    >
+                      {summary}
+                    </div>
                   </section>
                 )}
 
-                {/* Actions */}
-                {report.actions?.length > 0 && (
+                {/* Actions déclenchées */}
+                {actionLogs.length > 0 && (
                   <section>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-3">
-                      {t.reportActions}
-                    </p>
+                    <SectionTitle>{t.reportActions}</SectionTitle>
                     <div className="space-y-2">
-                      {report.actions.map((action, i) => {
-                        const Icon = ACTION_ICONS[action.type] ?? Activity;
+                      {actionLogs.map((log) => {
+                        const Icon = ACTION_ICONS[log.action_slug] ?? Activity;
+                        const ok   = log.statut === "succes";
                         return (
                           <div
-                            key={i}
+                            key={log.id}
                             className="flex items-center gap-3 p-3 rounded-2xl border border-[var(--border)]"
                             style={{ background: "var(--bg)" }}
                           >
@@ -284,13 +230,19 @@ export function ConversationModal({
                             >
                               <Icon className="w-4 h-4" style={{ color: colors.primary }} />
                             </div>
-                            <div className="min-w-0">
-                              <p className="text-xs font-bold text-[var(--text)]">{action.label}</p>
-                              {action.detail && (
-                                <p className="text-[10px] text-[var(--text-muted)] truncate">
-                                  {action.detail}
-                                </p>
-                              )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-[var(--text)]">
+                                {log.action_nom || log.action_slug}
+                              </p>
+                              <p className="text-[10px] text-[var(--text-muted)]">
+                                {log.duree_ms} ms · {formatTime(log.created_at)}
+                              </p>
+                            </div>
+                            <div className="flex-shrink-0">
+                              {ok
+                                ? <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                                : <XCircle     className="w-4 h-4 text-red-400" />
+                              }
                             </div>
                           </div>
                         );
@@ -298,16 +250,30 @@ export function ConversationModal({
                     </div>
                   </section>
                 )}
+
+                {/* Statut conversation */}
+                <section>
+                  <SectionTitle>Statut</SectionTitle>
+                  <div className="flex items-center gap-2">
+                    <StatusBadge statut={conv.statut} />
+                    <span className="text-xs text-[var(--text-muted)]">
+                      {formatDate(conv.created_at)}
+                    </span>
+                  </div>
+                </section>
+
+                {/* État vide */}
+                {!summary && actionLogs.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-10 text-[var(--text-muted)] gap-3">
+                    <Clock className="w-10 h-10 opacity-20" />
+                    <p className="text-sm italic">{t.modalAnalysisPending}</p>
+                  </div>
+                )}
               </>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-[var(--text-muted)] gap-3">
-                <FlaskConical className="w-12 h-12 opacity-20" />
-                <p className="text-sm italic">{t.modalAnalysisPending}</p>
-              </div>
             )}
           </div>
 
-          {/* ── Panneau chat coulissant ── */}
+          {/* Panneau chat coulissant */}
           <div
             className={cn(
               "transition-all duration-500 ease-in-out overflow-hidden flex flex-col",
@@ -315,7 +281,6 @@ export function ConversationModal({
             )}
             style={{ background: "var(--bg)" }}
           >
-            {/* Header chat */}
             <div
               className="p-4 border-b border-[var(--border)] flex-shrink-0"
               style={{ background: "var(--bg-card)" }}
@@ -325,58 +290,61 @@ export function ConversationModal({
               </p>
             </div>
 
-            {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {loadingMessages && chatMessages === null && (
+              {loading && (
                 <div className="flex flex-col items-center justify-center h-full gap-2 text-[var(--text-muted)]">
                   <Loader2 className="w-5 h-5 animate-spin" />
                   <p className="text-xs italic">{t.modalLoadingChat}</p>
                 </div>
               )}
 
-              {chatMessages?.map((msg, i) => (
+              {!loading && messages.length === 0 && (
+                <div className="flex items-center justify-center h-full text-[var(--text-muted)]">
+                  <p className="text-xs italic">Aucun message.</p>
+                </div>
+              )}
+
+              {messages.map((msg: AIMessage) => (
                 <div
-                  key={i}
-                  className={cn("flex", msg.role === "client" ? "justify-end" : "justify-start")}
+                  key={msg.id}
+                  className={cn(
+                    "flex",
+                    msg.role === "user" ? "justify-end" : "justify-start",
+                  )}
                 >
-                  <div className={cn(
-                    "max-w-[85%] px-3 py-2 rounded-2xl text-xs shadow-sm",
-                    msg.role === "client"
-                      ? "text-white rounded-br-none"
-                      : "text-[var(--text)] border border-[var(--border)] rounded-bl-none",
-                  )} style={{
-                    background: msg.role === "client"
-                      ? "#005C4B"
-                      : "var(--bg-card)",
-                  }}>
-                    <p className="leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                  <div
+                    className={cn(
+                      "max-w-[85%] px-3 py-2 rounded-2xl text-xs shadow-sm",
+                      msg.role === "user"
+                        ? "text-white rounded-br-none"
+                        : "text-[var(--text)] border border-[var(--border)] rounded-bl-none",
+                    )}
+                    style={{
+                      background: msg.role === "user"
+                        ? "#005C4B"
+                        : "var(--bg-card)",
+                    }}
+                  >
+                    <p className="leading-relaxed whitespace-pre-wrap">{msg.contenu}</p>
                     <p className={cn(
                       "text-[9px] mt-1 opacity-60",
-                      msg.role === "client" ? "text-right text-white" : "text-[var(--text-muted)]",
+                      msg.role === "user"
+                        ? "text-right text-white"
+                        : "text-[var(--text-muted)]",
                     )}>
-                      {msg.time}
+                      {formatTime(msg.created_at)}
                     </p>
                   </div>
                 </div>
               ))}
 
-              {/* Fin de discussion */}
-              {chatMessages && chatMessages.length > 0 && conversation.statut !== "en_cours" && (
+              {!loading && messages.length > 0 && conv.statut !== "active" && (
                 <div className="py-4 text-center">
                   <span
                     className="text-[9px] px-2 py-1 rounded-full font-bold uppercase text-[var(--text-muted)]"
                     style={{ background: "var(--border)" }}
                   >
                     {t.modalEndDiscussion}
-                  </span>
-                </div>
-              )}
-
-              {/* Indicateur fallback */}
-              {usingFallback && chatMessages && chatMessages.length > 0 && (
-                <div className="py-2 text-center">
-                  <span className="text-[9px] px-2 py-1 bg-amber-500/10 rounded-full text-amber-500 font-bold uppercase tracking-widest border border-amber-500/20">
-                    {t.modalPreviewOnly}
                   </span>
                 </div>
               )}
@@ -390,13 +358,70 @@ export function ConversationModal({
   return createPortal(modal, document.body);
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Sous-composants ──────────────────────────────────────────────────────────
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-3">
+      {children}
+    </p>
+  );
+}
+
+function KpiCard({
+  label, value, icon, color,
+}: {
+  label: string;
+  value: number;
+  icon:  React.ReactNode;
+  color: string;
+}) {
+  return (
+    <div
+      className="p-3 rounded-2xl border border-[var(--border)] flex flex-col gap-1"
+      style={{ background: "var(--bg)" }}
+    >
+      <div className="flex items-center gap-1.5" style={{ color }}>
+        {icon}
+        <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
+          {label}
+        </span>
+      </div>
+      <p className="text-2xl font-black text-[var(--text)]">{value}</p>
+    </div>
+  );
+}
+
+function StatusBadge({ statut }: { statut: string }) {
+  const map: Record<string, { label: string; cls: string }> = {
+    active:    { label: "Active",    cls: "bg-emerald-500/10 text-emerald-600" },
+    terminee:  { label: "Terminée",  cls: "bg-[var(--border)] text-[var(--text-muted)]" },
+    transferee:{ label: "Transférée",cls: "bg-amber-500/10 text-amber-600" },
+    abandonnee:{ label: "Abandonnée",cls: "bg-red-500/10 text-red-500" },
+  };
+  const s = map[statut] ?? { label: statut, cls: "bg-[var(--border)] text-[var(--text-muted)]" };
+  return (
+    <span className={cn("text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full", s.cls)}>
+      {s.label}
+    </span>
+  );
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatTime(iso: string): string {
   try {
     return new Intl.DateTimeFormat("fr-FR", {
-      hour: "2-digit",
-      minute: "2-digit",
+      hour: "2-digit", minute: "2-digit",
+    }).format(new Date(iso));
+  } catch { return ""; }
+}
+
+function formatDate(iso: string): string {
+  try {
+    return new Intl.DateTimeFormat("fr-FR", {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
     }).format(new Date(iso));
   } catch { return ""; }
 }

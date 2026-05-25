@@ -18,11 +18,14 @@ export interface AIMessage {
   created_at: string;
 }
 
+// APRÈS — S68 : action_nom + payload_envoye ajoutés (exposés par AIActionLogSerializer)
 export interface AIActionDeclenchee {
   id:              string;
   action_slug:     string;
+  action_nom?:     string;
   statut:          "succes" | "echec" | "timeout" | "validation_error" | "context_corrected";
   response_recue?: Record<string, unknown>;
+  payload_envoye?: Record<string, unknown>;
   duree_ms?:       number;
   created_at:      string;
 }

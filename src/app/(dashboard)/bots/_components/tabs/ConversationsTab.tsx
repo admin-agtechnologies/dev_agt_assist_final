@@ -1,22 +1,19 @@
 "use client";
 // src/app/(dashboard)/bots/_components/tabs/ConversationsTab.tsx
 // Onglet Conversations — branché sur AIConversation (apps.agent).
-// Remplace l'ancien modèle Conversation (apps.conversations) — code mort supprimé.
-// Modal inline extrait dans tabs/_ui/ConvModal.tsx
-// S59 — migration complète.
+// S68 — ConvModal remplacé par ConversationModal (composant partagé unifié).
 
-import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
 import { MessageSquare, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { Badge, EmptyState } from "@/components/ui";
 import { cn, formatDateTime } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { AIConversation, AIMessage } from "@/types/api/agent.types";
-import { ConvModal } from "./_ui/ConvModal";
+import { ConversationModal } from "@/components/shared/ConversationModal";
 
 const PAGE = 5;
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function getLastMessage(conv: AIConversation): string {
   const last = [...(conv.messages ?? [])].reverse().find(
@@ -49,9 +46,6 @@ export function ConversationsTab({ conversations, d, colors }: ConversationsTabP
   const t = d.bots;
   const [convPage,     setConvPage]     = useState(1);
   const [selectedConv, setSelectedConv] = useState<AIConversation | null>(null);
-  const [mounted,      setMounted]      = useState(false);
-
-  useEffect(() => { setMounted(true); }, []);
 
   const totalPages = Math.ceil(conversations.length / PAGE);
   const pagedConvs = conversations.slice((convPage - 1) * PAGE, convPage * PAGE);
@@ -167,16 +161,14 @@ export function ConversationsTab({ conversations, d, colors }: ConversationsTabP
         </div>
       )}
 
-      {/* Portal modal */}
-      {mounted && selectedConv &&
-        createPortal(
-          <ConvModal
-            conv={selectedConv}
-            onClose={() => setSelectedConv(null)}
-            colors={colors}
-          />,
-          document.body,
-        )}
+      {/* Modal — ConversationModal gère son propre portal */}
+      {selectedConv && (
+        <ConversationModal
+          conversation={selectedConv}
+          onClose={() => setSelectedConv(null)}
+          colors={colors}
+        />
+      )}
     </div>
   );
 }

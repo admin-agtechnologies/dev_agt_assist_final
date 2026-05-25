@@ -49,8 +49,8 @@ export function ConversationsResultTab({ botId }: Props) {
       />
 
       {selected && (
-        <ConversationModal
-          conversation={selected as never}
+       <ConversationModal
+          conversation={selected}
           onClose={() => setSelected(null)}
         />
       )}

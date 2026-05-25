@@ -23,7 +23,7 @@ Avant de commencer, effectue dans l'ordre :
 2. **Lis docs/reports/INDEX.md** — identifie les zones touchées récemment.
    Signale tout conflit potentiel avec d'autres membres actifs.
 
-3. **Lis le rapport de la dernière session** (session_{N-1}_{membre}.md).
+3. **Lis le rapport de la dernière session** (session_{N-1}_{membre}.md) et des 5dernières session précédentes
    Extrais : ce qui a été fait, bugs trouvés, plan prévu.
 
 4. **Lis les contextes de code** via la mémoire du projet :
@@ -66,7 +66,7 @@ Attends ma validation avant toute action."
 Rappels :
 - Tu ne génères rien sans mon accord explicite
 - Pour tout bug : diagnostic complet avant solution · consulter les fichiers existants · concevoir avant de coder
-- Pour le step a : lire + améliorer le skill.md pour le rendre exhaustif (modèle : system_prompt.md)
+- Pour le step a : lire + améliorer le skill.md pour le rendre exhaustif (modèle : system_prompt.md) et prévoyant toujours les formats de données,les scénarios principaux et alternatifs,les cas d'usage,les exemeples à fournir à l'IA
 - Pour les steps b-h : tester sur demo-custom@agt.cm uniquement
 - Zéro initiative propre — tu proposes, je décide toujours
 ```

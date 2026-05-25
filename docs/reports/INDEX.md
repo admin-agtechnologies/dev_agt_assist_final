@@ -1169,7 +1169,23 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Bugs corrigés :** BUG-S66-08 (migration knowledge.0010) · BUG-S66-06 (AIAgentAction 7→47) · ENG-02 (DeepSeek JSON)
 - **Bugs découverts :** BUG-B5-001 à BUG-B5-008 (voir TODO_B5.md)
 - **Zones touchées :** `apps/knowledge/migrations/0010` · `apps/features/services.py` · `apps/agent/signals.py` · `apps/agent/serializers.py` · `apps/agent/views.py` · `apps/agent/urls.py` · `apps/chatbot_bridge/deepseek_provider.py`
-- **Fichiers créés :** `docs/testing/TODO_B5.md` · `docs/prompts/init_feature_test.md` · `docs/prompts/end_feature_test.md`
+- **Fichiers créés :** `docs/testing/TODO_B5.md` · `docs/prompts/b5/init_feature_test.md `docs/prompts/b5/b5/end_feature_test.md
 - **Fichiers modifiés :** services.py (features) · signals.py · serializers.py · views.py · urls.py (agent) · deepseek_provider.py · knowledge/migrations/0010
 - **TODO_B5 :** docs/testing/TODO_B5.md créé — 24 features × 8 steps · 8 bugs actifs
 - **Rapport :** docs/reports/session_67_gabriel.md
+
+---
+---
+## session_68_gabriel
+
+- **Type :** Debug + Fix B5 — Engine LLM · Frontend ConversationModal · Backend stats aggregators
+- **Date :** 2026-05-24
+- **Steps validés :** menu_digital e✅ · menu_digital f✅
+- **Bugs corrigés :** BUG-B5-001 · BUG-B5-002 · BUG-B5-003 · BUG-B5-004 · BUG-B5-005 · BUG-B5-010
+- **Bugs découverts :** Aucun nouveau
+- **Zones touchées :** `apps/agent/engine/core.py` · `apps/agent/serializers.py` · `apps/agent/bot_stats_aggregators.py` · `apps/agent/skills/actions/get_menu.md` · `apps/agent/skills/actions/create_commande.md` · `src/components/shared/ConversationModal.tsx` · `src/app/(dashboard)/bots/_components/tabs/ConversationsTab.tsx` · `src/app/(dashboard)/bots/[id]/test/_components/ConversationPanel.tsx` · `src/app/(dashboard)/results/_components/ConversationsResultTab.tsx` · `src/types/api/agent.types.ts`
+- **Fichiers modifiés :** core.py · serializers.py · bot_stats_aggregators.py · get_menu.md · create_commande.md · ConversationModal.tsx · ConversationsTab.tsx · ConversationPanel.tsx · ConversationsResultTab.tsx · agent.types.ts
+- **Dette créée :** DETTE-S68-01 (TransfertHumain.conversation FK → migrer vers AIConversation)
+- **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "C:\Users\hp\Documents\gabriel\AGT-BOT\dev_agt_assist_final\src\app\(dashboard)\bots\[id]\test\_components\ConversationPanel.tsx" | Set-Clipboard`
+- **Rapport :** docs/reports/session_68_gabriel.md
+- **TODO_B5 :** docs/testing/TODO_B5.md mis à jour — menu_digital e✅ f✅ · 6 bugs résolus
