@@ -1207,3 +1207,19 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Dette créée :** DETTE-S69-01 (apps.conversations nettoyage complet — session dédiée) · DETTE-S69-02 (system_prompt.md reply obligatoire) · DETTE-S69-03 (CardTransfert response enrichir) · DETTE-S69-04 (create_commande.md reply confirmation) · DETTE-S69-05 (_parse_llm_response résidu)
 - **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "C:\Users\hp\Documents\gabriel\AGT-BOT\dev_agt_assist_final\src\app\(dashboard)\bots\[id]\test\_components\WhatsAppSimulator.tsx" | Set-Clipboard`
 - **Rapport :** docs/reports/session_69_gabriel.md
+
+
+---
+---
+## session_70_gabriel
+
+- **Type :** Test B5 + Skills + Fix + Architecture parallélisation
+- **Date :** 2026-05-25
+- **Flux couverts :** menu_digital step a ✅ · DETTE-S69-02 ✅ · DETTE-S69-03 ✅ · DETTE-S69-04 ✅ · step g ✅ · Architecture parallélisation B5 ✅
+- **Bugs corrigés :** DETTE-S69-02 (system_prompt reply obligatoire) · DETTE-S69-03 (CardTransfert enrichie) · DETTE-S69-04 (create_commande reply — intégré skill)
+- **Zones touchées :** `apps/agent/skills/features/menu_digital.md` · `apps/agent/skills/actions/get_menu.md` · `get_item_detail.md` · `create_commande.md` · `skills/_central/system_prompt.md` · `apps/agent/actions/system_extra.py` · `docs/prompts/b5/` · `docs/testing/features/gabriel/`
+- **Fichiers créés :** `repartition_b5.md` · `init_stephane.md` · `init_steven.md` · `init_penka.md` · `init_gabriel_b5.md` · `end_feature.md` · `menu_digital.md` (rapport feature)
+- **Fichiers modifiés :** 4 skills actions/features · `system_prompt.md` · `system_extra.py` · `TODO_B5.md` (step g inline)
+- **Dette créée :** DETTE-S70-01 (DeepSeek JSON instable contexte long — deepseek_provider.py) · DETTE-S69-01 (apps.conversations legacy — reporté)
+- **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "C:\Users\hp\Documents\gabriel\AGT-BOT\agt-assist-backend-final\apps\agent\skills\actions\create_commande.md" | Set-Clipboard`
+- **Rapport :** docs/reports/session_70_gabriel.md
