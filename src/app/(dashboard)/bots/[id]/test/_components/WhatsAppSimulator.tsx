@@ -2,7 +2,9 @@
 // src/app/(dashboard)/bots/[id]/test/_components/WhatsAppSimulator.tsx
 // Simulateur WhatsApp — envoi de messages, rendu du fil de conversation.
 // S65 — suggestions features actives · charger session passée · strings i18n.
-// S66 — ajout prop botId transmis à agentRepository.sendMessage() pour fix persistance.
+// S66 — botId transmis à agentRepository.sendMessage() pour fix persistance.
+// S69 — formatMsgDate() date+heure · cartes pour tous slugs d'écriture
+//        · ActionBadge pour slugs de lecture · CardTransfert cliquable.
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
@@ -15,9 +17,26 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { agentRepository } from "@/repositories/agent.repository";
 import type { ActiveFeature } from "@/repositories/features.repository";
 import type { AIConversation, AIMessage, AIActionDeclenchee } from "@/types/api/agent.types";
-import { CardReservation, CardEmail } from "./_ui/ActionCards";
-import { ModalEmail, ModalReservation } from "./modals/ActionModals";
+import {
+  CardReservation, CardEmail, CardCommande,
+  CardInscription, CardFinance, CardTransfert,
+  ActionBadge,
+} from "./_ui/ActionCards";
+import { ModalEmail, ModalReservation, ModalCommande, ModalFinance, ModalInscriptionDossier } from "./modals/ActionModals";
 import { ModalVideoDemo } from "./modals/SystemModals";
+
+// ── Slugs par type de rendu ───────────────────────────────────────────────────
+
+const SLUGS_RESERVATION = new Set([
+  "create_reservation", "check_disponibilite", "create_demande_conciergerie",
+  "create_rdv", "book_room", "book_table", "book_ticket",
+  "resa_table", "resa_billet",
+]);
+const SLUGS_EMAIL     = new Set(["send_email", "send_reminder", "send_email_rappel"]);
+const SLUGS_COMMANDE  = new Set(["create_commande", "commande_pay"]);
+const SLUGS_INSCR     = new Set(["create_inscription"]);
+const SLUGS_FINANCE   = new Set(["simulate_credit"]);
+const SLUGS_TRANSFERT = new Set(["transfer_to_human", "create_transfert"]);
 
 // ── Suggestions de base par secteur ──────────────────────────────────────────
 
@@ -69,6 +88,46 @@ function buildSuggestions(
   return merged.slice(0, 4);
 }
 
+// ── Helper date ───────────────────────────────────────────────────────────────
+
+function formatMsgDate(isoDate: string | undefined): string {
+  if (!isoDate) return "";
+  const date = new Date(isoDate);
+  if (isNaN(date.getTime())) return "";
+  const now   = new Date();
+  const heure = date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  const isToday =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear();
+  if (isToday) return heure;
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday =
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear();
+  if (isYesterday) return `Hier ${heure}`;
+  const dateStr = date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  return `${dateStr} ${heure}`;
+}
+
+// ── Helper — détermine le type de rendu d'une action ─────────────────────────
+
+type CardType = "reservation" | "email" | "commande" | "inscription" | "finance" | "transfert" | "badge" | null;
+
+function getActionCardType(slug: string, statut: string): CardType {
+  if (statut !== "succes") return null;
+  if (SLUGS_RESERVATION.has(slug)) return "reservation";
+  if (SLUGS_EMAIL.has(slug))       return "email";
+  if (SLUGS_COMMANDE.has(slug))    return "commande";
+  if (SLUGS_INSCR.has(slug))       return "inscription";
+  if (SLUGS_FINANCE.has(slug))     return "finance";
+  if (SLUGS_TRANSFERT.has(slug))   return "transfert";
+  // Toute action réussie non listée ci-dessus → badge si elle a une entrée dans BADGE_META
+  return "badge";
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface DisplayMessage {
@@ -77,15 +136,15 @@ interface DisplayMessage {
   content:     string;
   created_at?: string;
   isTyping?:   boolean;
-  actionCard?: "reservation" | "email";
+  cardType?:   CardType;
   actionData?: AIActionDeclenchee;
 }
 
 interface Props {
-  botId:        string;               // ← S66 : nécessaire pour persister bot sur AIConversation
-  botNom:       string;
-  sectorSlug?:  string;
-  sectorNom?:   string;
+  botId:          string;
+  botNom:         string;
+  sectorSlug?:    string;
+  sectorNom?:     string;
   activeFeatures: ActiveFeature[];
   initialSession?: AIConversation | null;
   onConversationUpdate: (conv: AIConversation) => void;
@@ -110,9 +169,15 @@ export function WhatsAppSimulator({
   const [input,          setInput]       = useState("");
   const [isSending,      setIsSending]   = useState(false);
   const [showVideoModal, setShowVideo]   = useState(false);
-  const [activeRes,      setActiveRes]   = useState<AIActionDeclenchee | null>(null);
-  const [activeEmail,    setActiveEmail] = useState<AIActionDeclenchee | null>(null);
   const [sessionLoaded,  setSessionLoaded] = useState(false);
+
+  // Modals par type de carte
+  const [activeRes,    setActiveRes]    = useState<AIActionDeclenchee | null>(null);
+  const [activeEmail,  setActiveEmail]  = useState<AIActionDeclenchee | null>(null);
+  const [activeCom,    setActiveCom]    = useState<AIActionDeclenchee | null>(null);
+  const [activeInscr,  setActiveInscr]  = useState<AIActionDeclenchee | null>(null);
+  const [activeFin,    setActiveFin]    = useState<AIActionDeclenchee | null>(null);
+  const [activeTrans,  setActiveTrans]  = useState<AIActionDeclenchee | null>(null);
 
   const conversationIdRef = useRef<string | null>(null);
   const shownIdsRef       = useRef<Set<string>>(new Set());
@@ -124,7 +189,21 @@ export function WhatsAppSimulator({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ── Charger une session passée ─────────────────────────────────────────────
+  // ── Helper — fabrique un DisplayMessage depuis une action ─────────────────
+
+  function makeActionMsg(action: AIActionDeclenchee): DisplayMessage | null {
+    const cardType = getActionCardType(action.action_slug, action.statut);
+    if (!cardType) return null;
+    return {
+      id:        `card-${action.id}`,
+      role:      "assistant",
+      content:   "",
+      cardType,
+      actionData: action,
+    };
+  }
+
+  // ── Charger une session passée ────────────────────────────────────────────
 
   useEffect(() => {
     if (!initialSession) return;
@@ -141,15 +220,12 @@ export function WhatsAppSimulator({
       shownIdsRef.current.add(m.id);
     }
     for (const action of initialSession.actions_declenchees ?? []) {
-      if (action.statut !== "succes") continue;
       const cardId = `card-${action.id}`;
-      shownIdsRef.current.add(cardId);
-      const slug = action.action_slug;
-      if (["create_reservation","check_disponibilite","create_demande_conciergerie",
-           "create_rdv","book_room","book_table","book_ticket"].includes(slug)) {
-        loaded.push({ id: cardId, role: "assistant", content: "", actionCard: "reservation", actionData: action });
-      } else if (["send_email","send_reminder"].includes(slug)) {
-        loaded.push({ id: cardId, role: "assistant", content: "", actionCard: "email", actionData: action });
+      if (shownIdsRef.current.has(cardId)) continue;
+      const msg = makeActionMsg(action);
+      if (msg) {
+        shownIdsRef.current.add(cardId);
+        loaded.push(msg);
       }
     }
     setMessages(loaded);
@@ -157,7 +233,7 @@ export function WhatsAppSimulator({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSession?.id]);
 
-  // ── Injection des nouveaux messages IA ────────────────────────────────────
+  // ── Injection des nouveaux messages IA ───────────────────────────────────
 
   const injectAIMessages = useCallback((
     aiMessages: AIMessage[],
@@ -174,22 +250,19 @@ export function WhatsAppSimulator({
 
     for (const action of actions) {
       const cardId = `card-${action.id}`;
-      if (shownIdsRef.current.has(cardId) || action.statut !== "succes") continue;
-      const slug = action.action_slug;
-      if (["create_reservation","check_disponibilite","create_demande_conciergerie",
-           "create_rdv","book_room","book_table","book_ticket"].includes(slug)) {
+      if (shownIdsRef.current.has(cardId)) continue;
+      const msg = makeActionMsg(action);
+      if (msg) {
         shownIdsRef.current.add(cardId);
-        toAdd.push({ id: cardId, role: "assistant", content: "", actionCard: "reservation", actionData: action });
-      } else if (["send_email","send_reminder"].includes(slug)) {
-        shownIdsRef.current.add(cardId);
-        toAdd.push({ id: cardId, role: "assistant", content: "", actionCard: "email", actionData: action });
+        toAdd.push(msg);
       }
     }
 
     setMessages(prev => [...prev.filter(m => m.id !== "typing"), ...toAdd]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Envoi de message ───────────────────────────────────────────────────────
+  // ── Envoi de message ──────────────────────────────────────────────────────
 
   const sendMessage = useCallback(async (text?: string) => {
     const content = (text ?? input).trim();
@@ -208,7 +281,7 @@ export function WhatsAppSimulator({
     try {
       const res = await agentRepository.sendMessage({
         conversation_id: conversationIdRef.current ?? undefined,
-        bot_id:          botId,     // ← S66 : fix persistance session
+        bot_id:          botId,
         message:         content,
         canal:           "whatsapp",
         mode:            "test",
@@ -238,7 +311,7 @@ export function WhatsAppSimulator({
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void sendMessage(); }
   };
 
-  // ── Rendu ──────────────────────────────────────────────────────────────────
+  // ── Rendu ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -262,22 +335,32 @@ export function WhatsAppSimulator({
         )}
 
         {messages.map(msg => {
+          // ── Status ──
           if (msg.role === "status") return (
             <div key={msg.id} className="flex justify-center">
               <span className="text-xs text-[var(--text-muted)] italic bg-[var(--bg)] px-3 py-1 rounded-full border border-[var(--border)] flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-muted)] animate-pulse flex-shrink-0" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-muted)] animate-pulse flex-shrink-0" />
                 {msg.content}
               </span>
             </div>
           );
 
-          if (msg.actionCard === "reservation" && msg.actionData) return (
-            <CardReservation key={msg.id} action={msg.actionData} onClick={() => setActiveRes(msg.actionData!)} />
-          );
-          if (msg.actionCard === "email" && msg.actionData) return (
-            <CardEmail key={msg.id} action={msg.actionData} onClick={() => setActiveEmail(msg.actionData!)} />
-          );
+          // ── Cartes cliquables ──
+          if (msg.cardType && msg.actionData) {
+            const a = msg.actionData;
+            switch (msg.cardType) {
+              case "reservation": return <CardReservation key={msg.id} action={a} onClick={() => setActiveRes(a)}    />;
+              case "email":       return <CardEmail       key={msg.id} action={a} onClick={() => setActiveEmail(a)}  />;
+              case "commande":    return <CardCommande    key={msg.id} action={a} onClick={() => setActiveCom(a)}    />;
+              case "inscription": return <CardInscription key={msg.id} action={a} onClick={() => setActiveInscr(a)} />;
+              case "finance":     return <CardFinance     key={msg.id} action={a} onClick={() => setActiveFin(a)}    />;
+              case "transfert":   return <CardTransfert   key={msg.id} action={a} onClick={() => setActiveTrans(a)}  />;
+              case "badge":       return <ActionBadge     key={msg.id} action={a} />;
+              default: return null;
+            }
+          }
 
+          // ── Bulle texte ──
           const isUser = msg.role === "user";
           return (
             <div key={msg.id} className={cn("flex gap-2", isUser ? "flex-row-reverse" : "flex-row")}>
@@ -304,14 +387,14 @@ export function WhatsAppSimulator({
                       ))}
                     </div>
                   ) : (
-                  <>
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
-                    {msg.created_at && (
-                      <span className="text-[9px] text-[var(--text-muted)] mt-0.5 self-end opacity-70">
-                        {new Date(msg.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                    )}
-                  </>
+                    <>
+                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                      {msg.created_at && (
+                        <span className="text-[9px] text-[var(--text-muted)] mt-0.5 block opacity-70">
+                          {formatMsgDate(msg.created_at)}
+                        </span>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -367,9 +450,14 @@ export function WhatsAppSimulator({
       </div>
 
       {/* ── Modals ── */}
-      <ModalVideoDemo   open={showVideoModal} onClose={() => setShowVideo(false)}  secteurNom={sectorNom} />
-      <ModalReservation open={!!activeRes}    onClose={() => setActiveRes(null)}   action={activeRes} />
-      <ModalEmail       open={!!activeEmail}  onClose={() => setActiveEmail(null)} action={activeEmail} />
+      <ModalVideoDemo          open={showVideoModal} onClose={() => setShowVideo(false)}   secteurNom={sectorNom} />
+      <ModalReservation        open={!!activeRes}    onClose={() => setActiveRes(null)}    action={activeRes} />
+      <ModalEmail              open={!!activeEmail}  onClose={() => setActiveEmail(null)}  action={activeEmail} />
+      <ModalCommande           open={!!activeCom}    onClose={() => setActiveCom(null)}    action={activeCom} />
+      <ModalInscriptionDossier open={!!activeInscr}  onClose={() => setActiveInscr(null)}  action={activeInscr} />
+      <ModalFinance            open={!!activeFin}    onClose={() => setActiveFin(null)}    action={activeFin} />
+      {/* CardTransfert — modal générique via ModalReservation en fallback */}
+      <ModalReservation        open={!!activeTrans}  onClose={() => setActiveTrans(null)}  action={activeTrans} />
     </div>
   );
 }

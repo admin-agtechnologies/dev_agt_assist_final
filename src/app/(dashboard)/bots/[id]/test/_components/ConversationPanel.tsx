@@ -4,6 +4,7 @@
 // S65 — données collectées toujours visible · sessions 3 max + voir plus
 //        · clic session → ConversationModal · callback onLoadSession.
 // S68 — ConvModal remplacé par ConversationModal (composant partagé unifié).
+// S69 — formatSessionDate() : affiche date + heure (Aujourd'hui / Hier / date courte).
 
 import { useState, useCallback, useEffect } from "react";
 import {
@@ -59,11 +60,38 @@ function getSessionLastMsg(conv: AIConversation): string {
   return last?.contenu?.slice(0, 60) ?? "—";
 }
 
-function getSessionHeure(conv: AIConversation): string {
-  const date = (conv as unknown as Record<string, string>).updated_at
-    ?? (conv as unknown as Record<string, string>).created_at;
-  if (!date) return "";
-  return new Date(date).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+/**
+ * S69 — Affiche date + heure intelligemment :
+ * - Même jour       → "21:41"
+ * - Hier            → "Hier 21:41"
+ * - Autre jour      → "23 mai 21:41"
+ */
+function formatSessionDate(isoDate: string | undefined): string {
+  if (!isoDate) return "";
+  const date  = new Date(isoDate);
+  if (isNaN(date.getTime())) return "";
+
+  const now   = new Date();
+  const heure = date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+
+  const isToday =
+    date.getDate()     === now.getDate()     &&
+    date.getMonth()    === now.getMonth()    &&
+    date.getFullYear() === now.getFullYear();
+
+  if (isToday) return heure;
+
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday =
+    date.getDate()     === yesterday.getDate()     &&
+    date.getMonth()    === yesterday.getMonth()    &&
+    date.getFullYear() === yesterday.getFullYear();
+
+  if (isYesterday) return `Hier ${heure}`;
+
+  const dateStr = date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  return `${dateStr} ${heure}`;
 }
 
 // ── Composant ─────────────────────────────────────────────────────────────────
@@ -221,9 +249,16 @@ export function ConversationPanel({
                       <p className="text-[11px] font-medium text-[var(--text)] truncate">
                         {getSessionContact(conversation)}
                       </p>
-                      {getSessionHeure(conversation) && (
+                      {/* S69 — date + heure */}
+                      {formatSessionDate(
+                        (conversation as unknown as Record<string, string>).updated_at ??
+                        (conversation as unknown as Record<string, string>).created_at
+                      ) && (
                         <span className="text-[9px] text-[var(--text-muted)] flex-shrink-0">
-                          {getSessionHeure(conversation)}
+                          {formatSessionDate(
+                            (conversation as unknown as Record<string, string>).updated_at ??
+                            (conversation as unknown as Record<string, string>).created_at
+                          )}
                         </span>
                       )}
                     </div>
@@ -258,9 +293,16 @@ export function ConversationPanel({
                       <p className="text-[11px] font-medium text-[var(--text)] truncate">
                         {getSessionContact(s)}
                       </p>
-                      {getSessionHeure(s) && (
+                      {/* S69 — date + heure */}
+                      {formatSessionDate(
+                        (s as unknown as Record<string, string>).updated_at ??
+                        (s as unknown as Record<string, string>).created_at
+                      ) && (
                         <span className="text-[9px] text-[var(--text-muted)] flex-shrink-0">
-                          {getSessionHeure(s)}
+                          {formatSessionDate(
+                            (s as unknown as Record<string, string>).updated_at ??
+                            (s as unknown as Record<string, string>).created_at
+                          )}
                         </span>
                       )}
                     </div>

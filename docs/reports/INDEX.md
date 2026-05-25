@@ -1189,3 +1189,21 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "C:\Users\hp\Documents\gabriel\AGT-BOT\dev_agt_assist_final\src\app\(dashboard)\bots\[id]\test\_components\ConversationPanel.tsx" | Set-Clipboard`
 - **Rapport :** docs/reports/session_68_gabriel.md
 - **TODO_B5 :** docs/testing/TODO_B5.md mis à jour — menu_digital e✅ f✅ · 6 bugs résolus
+
+
+---
+---
+## session_69_gabriel
+
+- **Type :** Debug + Nettoyage technique + Génération frontend
+- **Date :** 2026-05-25
+- **Flux couverts :** DETTE-S68-01 (TransfertHumain legacy) · BUG-B5-006 (cartes inline) · BUG-B5-007 (timestamps) · BUG-B5-008 (suggestions) · Nettoyage chatbot_bridge · agg_transfert_humain fix
+- **Bugs corrigés :** DETTE-S68-01 · BUG-B5-006 · BUG-B5-007 · BUG-B5-008 · BUG-S69-K · BUG-S69-AGG · BUG-S69-STR
+- **Zones touchées :** `apps/conversations/` · `apps/chatbot_bridge/` · `apps/agent/bot_stats_aggregators.py` · `src/app/(dashboard)/bots/[id]/test/_components/` · `src/app/(dashboard)/bots/_components/`
+- **Fichiers créés :** `apps/conversations/migrations/0004_delete_transferthumain.py`
+- **Fichiers modifiés :** `conversations/models.py` · `conversations/serializers.py` · `conversations/views.py` · `conversations/urls.py` · `conversations/tests.py` · `conversations/admin.py` · `chatbot_bridge/local.py` · `chatbot_bridge/strategy.py` · `agent/bot_stats_aggregators.py` · `WhatsAppSimulator.tsx` · `ConversationPanel.tsx` · `ActionCards.tsx`
+- **Fichiers supprimés :** `src/app/(dashboard)/bots/_components/ConversationReportModal.tsx`
+- **Specs traitées :** DETTE-S68-01 ✅ · BUG-B5-006 ✅ · BUG-B5-007 ✅ · BUG-B5-008 ✅ (confirmé déjà résolu) · Nettoyage chatbot_bridge ✅
+- **Dette créée :** DETTE-S69-01 (apps.conversations nettoyage complet — session dédiée) · DETTE-S69-02 (system_prompt.md reply obligatoire) · DETTE-S69-03 (CardTransfert response enrichir) · DETTE-S69-04 (create_commande.md reply confirmation) · DETTE-S69-05 (_parse_llm_response résidu)
+- **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "C:\Users\hp\Documents\gabriel\AGT-BOT\dev_agt_assist_final\src\app\(dashboard)\bots\[id]\test\_components\WhatsAppSimulator.tsx" | Set-Clipboard`
+- **Rapport :** docs/reports/session_69_gabriel.md
