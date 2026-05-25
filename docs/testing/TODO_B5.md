@@ -26,14 +26,14 @@
 
 | Step | Statut | Notes |
 |---|---|---|
-| a. Skill.md — Lire & Améliorer | ⏳ | |
-| b. KB & données guide | ⏳ | |
-| c. Config bot | ⏳ | |
-| d. Agent → lit | ⏳ | |
-| e. Agent → écrit | ⏳ | |
-| f. Résultats visibles | ⏳ | |
-| g. E2E complet | ⏳ | |
-| h. Validation Gabriel | ⏳ | |
+| a. Skill.md — Lire & Améliorer | ✅ S75 | faq.md + search_faq.md v2 — notion deux couches statique/dynamique |
+| b. KB & données guide | ✅ S75 | 9 QuestionFrequente en base demo-custom |
+| c. Config bot | ✅ S75 | Bot actif, feature faq ACTIVE |
+| d. Agent → lit | ✅ S75 | Réponses correctes depuis FAQ statique injectée |
+| e. Agent → écrit | N/A | Lecture seule — bot_ecrit_result=False |
+| f. Résultats visibles | ⚠️ S75 | Tab FAQ visible mais vide — BUG-FAQ-01 |
+| g. E2E complet | ✅ S75 | Simulateur — WAHA reporté |
+| h. Validation Gabriel | ✅ S75 | Validé avec notes BUG-FAQ-01 + BUG-FAQ-02 |
 
 ---
 
@@ -42,16 +42,17 @@
 
 | Step | Statut | Notes |
 |---|---|---|
-| a. Skill.md — Lire & Améliorer | ⏳ | |
-| b. KB & données guide | ⏳ | |
-| c. Config bot | ⏳ | |
-| d. Agent → lit | ⏳ | |
-| e. Agent → écrit | ⏳ | |
-| f. Résultats visibles | ⏳ | |
-| g. E2E complet | ⏳ | |
-| h. Validation Gabriel | ⏳ | |
+| a. Skill.md — Lire & Améliorer | ✅ S75 | 4 skills v2 + manage_contact créé — fix crm_signals payload |
+| b. KB & données guide | N/A | Pas de KB propre |
+| c. Config bot | ✅ S75 | 3 actions liées à l'agent |
+| d. Agent → lit | ✅ S75 | create_contact + update_context fonctionnels |
+| e. Agent → écrit | ⚠️ S75 | manage_contact non déclenché — BUG-CRM-01 |
+| f. Résultats visibles | ✅ S75 | Thomas visible dans /résultats onglet Clients |
+| g. E2E complet | ✅ S75 | Simulateur — WAHA reporté |
+| h. Validation Gabriel | ✅ S75 | Validé avec notes BUG-CRM-01/02/03 |
 
 ---
+
 
 ### 3. capture_prospect
 **Secteur(s) :** Tous | **Actions :** `create_contact`, `create_prospect`
@@ -424,6 +425,11 @@
 | ID | Feature | Scope | Gravité | Description | Statut | Session |
 |---|---|---|---|---|---|---|
 | BUG-B5-001 | menu_digital | Backend | 🔴 | `create_commande` — LLM envoie item_id=nom au lieu d'UUID · skill get_menu ne précise pas que l'UUID doit être mémorisé | 🔄 En cours S67 | S67 |
+| BUG-FAQ-01 | faq | Backend | 🟡 | `search_faq` jamais appelé dynamiquement — bot répond toujours depuis couche statique — ConsultationFAQ jamais créée | ⏳ À corriger | S75 |
+| BUG-FAQ-02 | faq | Backend | 🟡 | Bot dit "je vais vérifier" sans exécuter l'action dans le même tour — nécessite relance client | ⏳ À corriger | S75 |
+| BUG-CRM-01 | gestion_crm | Backend | 🟡 | `manage_contact` jamais déclenché pour correction de coordonnées — bot préfère transfer_to_human | ⏳ À corriger | S75 |
+| BUG-CRM-02 | gestion_crm | Backend | 🟡 | LLM retourne réponse vide après transfert — ni reply ni action | ⏳ À diagnostiquer | S75 |
+| BUG-CRM-03 | gestion_crm | Frontend | 🟢 | Liste Clients affiche created_at au lieu de derniere_visite | ⏳ À corriger | S75 |
 | BUG-B5-002 | — | Backend | 🟡 | `agg_commande error: No module named 'apps.commandes'` — aggregator stats pointe vers un mauvais module | ⏳ À diagnostiquer | S67 |
 | BUG-B5-003 | — | Backend | 🟡 | `agg_orientation_patient error: Cannot resolve keyword 'entreprise_id'` — champ absent sur OrientationPatient | ⏳ À diagnostiquer | S67 |
 | BUG-B5-004 | — | Backend | 🟡 | `agg_simulation_credit error: No module named 'apps.banking'` — mauvais import dans aggregator | ⏳ À diagnostiquer | S67 |
@@ -439,3 +445,4 @@
 | Session | Actions |
 |---|---|
 | S67 | Création document · fix AIAgentAction sync · fix response_format DeepSeek · menu_digital d✅ · BUG-B5-001 à 008 identifiés |
+| S75 | faq ✅ (steps a-h) · gestion_crm ✅ (steps a-h) · manage_contact implémenté · fix crm_signals payload · BUG-FAQ-01/02 + BUG-CRM-01/02/03 identifiés |

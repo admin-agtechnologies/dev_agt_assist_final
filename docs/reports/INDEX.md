@@ -1240,3 +1240,15 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Dette créée :** MedicalTab · CitoyensTab · ProduitFinancierTab · CatalogueTrajetTab non redesignés
 - **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "src\components\reservations\RessourceManager\index.tsx" | Set-Clipboard`
 - **Rapport :** `docs/reports/session_71_donpk.md`
+
+---
+## session_75_gabriel
+
+- **Type :** Test & validation — B5 socle
+- **Date :** 2026-05-25
+- **Features validées :** `faq` ✅, `gestion_crm` ✅
+- **Bugs identifiés :** BUG-FAQ-01, BUG-FAQ-02, BUG-CRM-01, BUG-CRM-02, BUG-CRM-03
+- **Bugs corrigés :** fix crm_signals payload (strings → dicts), manage_contact implémenté
+- **Zones touchées :** `apps/agent/actions/system.py`, `apps/agent/skills/features/`, `apps/agent/skills/actions/`, `apps/tenants/seeders/agent_seeder.py`
+- **Fichiers créés :** `manage_contact.md` (skill + action), rapports faq.md + gestion_crm.md
+- **Rapport :** `docs/reports/session_75_gabriel.md`
