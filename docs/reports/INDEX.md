@@ -1240,3 +1240,19 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Dette créée :** MedicalTab · CitoyensTab · ProduitFinancierTab · CatalogueTrajetTab non redesignés
 - **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "src\components\reservations\RessourceManager\index.tsx" | Set-Clipboard`
 - **Rapport :** `docs/reports/session_71_donpk.md`
+
+---
+
+## session_72_donpk
+
+- **Type :** Test B5 + Debug engine + Génération skills prise_rdv
+- **Date :** 2026-05-25
+- **Flux couverts :** prise_rdv phase a ✅ · prise_rdv phase b ⏳ partiel · phases c-e ❌ reportées
+- **Bugs corrigés :** BUG-S72-01 (reply espaces → bulle vide) · BUG-S72-02 (max_tokens 1024→4096) · BUG-S72-03 (retry→transfer_to_human immédiat) · BUG-S72-04 (double create_contact lors retry) · BUG-S72-05 (prise_rdv.md séquence incorrecte) · BUG-S72-06 (convert_prospect.md absent) · BUG-S72-07 (encodage cassé 9 skills)
+- **Zones touchées :** `apps/agent/engine/` · `apps/chatbot_bridge/` · `apps/agent/skills/features/prise_rdv.md` · `apps/agent/skills/actions/` (9 fichiers)
+- **Fichiers créés :** `apps/agent/skills/actions/convert_prospect.md`
+- **Fichiers modifiés :** `core.py` · `llm.py` · `deepseek_provider.py` · `prise_rdv.md` (v4) · 8 actions .md
+- **Specs traitées :** prise_rdv phase a ✅ · retry engine ✅ · fix bulles vides ✅
+- **Dette créée :** DETTE-S72-01 (bot dédié prise_rdv — activer actions check_dispo/create_reservation) · DETTE-S72-02 (system_prompt.md diff anti-reply-vide) · DETTE-S72-03 (ContextBuilder optimisation longueur prompt) · DETTE-S72-04 (Widget RDV prématuré) · DETTE-S72-05 (datetime naive Reservation)
+- **⚠️ Fichiers partagés — signalés à Gabriel :** `core.py` · `llm.py` · `deepseek_provider.py` · 5 actions système .md · `convert_prospect.md` (nouveau) — voir `docs/reports/session_72_donpk.md` section "Remontée Gabriel"
+- **Rapport :** `docs/reports/session_72_donpk.md`
