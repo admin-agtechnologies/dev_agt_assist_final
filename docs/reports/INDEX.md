@@ -1256,3 +1256,24 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Dette créée :** DETTE-S72-01 (bot dédié prise_rdv — activer actions check_dispo/create_reservation) · DETTE-S72-02 (system_prompt.md diff anti-reply-vide) · DETTE-S72-03 (ContextBuilder optimisation longueur prompt) · DETTE-S72-04 (Widget RDV prématuré) · DETTE-S72-05 (datetime naive Reservation)
 - **⚠️ Fichiers partagés — signalés à Gabriel :** `core.py` · `llm.py` · `deepseek_provider.py` · 5 actions système .md · `convert_prospect.md` (nouveau) — voir `docs/reports/session_72_donpk.md` section "Remontée Gabriel"
 - **Rapport :** `docs/reports/session_72_donpk.md`
+---
+## session_74_steven
+
+- **Type :** Test B5 — Feature catalogue_services
+- **Date :** 2026-05-25
+- **Flux couverts :** catalogue_services (feature 10) — steps a→h ✅
+- **Bugs corrigés :** BUG-B5-S75-02 (UUID inventé sans get_services préalable) · BUG-B5-S75-03 (réponse vide sur count=0)
+- **Bugs ouverts :** BUG-B5-S75-01 (action_suivante="aucune" sur items KB — correction données Gabriel)
+- **Zones touchées :** `AgentSkill` BD (slug=catalogue_services) · `AIAgentAction` agent demo-custom · `apps/agent/skills/features/catalogue_services.md`
+- **Rapport :** `docs/testing/features/steven/catalogue_services.md`
+
+## session_75_gabriel
+
+- **Type :** Test & validation — B5 socle
+- **Date :** 2026-05-25
+- **Features validées :** `faq` ✅, `gestion_crm` ✅
+- **Bugs identifiés :** BUG-FAQ-01, BUG-FAQ-02, BUG-CRM-01, BUG-CRM-02, BUG-CRM-03
+- **Bugs corrigés :** fix crm_signals payload (strings → dicts), manage_contact implémenté
+- **Zones touchées :** `apps/agent/actions/system.py`, `apps/agent/skills/features/`, `apps/agent/skills/actions/`, `apps/tenants/seeders/agent_seeder.py`
+- **Fichiers créés :** `manage_contact.md` (skill + action), rapports faq.md + gestion_crm.md
+- **Rapport :** `docs/reports/session_75_gabriel.md`
