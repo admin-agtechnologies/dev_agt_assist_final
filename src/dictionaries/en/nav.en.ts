@@ -14,6 +14,7 @@ export const nav = {
   help: "Get help",
   tutorial: "Interface tutorial",
   knowledge: "Knowledge base",
+  statistiques: "Statistics",
   feedback: "Leave a testimonial",
   bug: "Report an issue",
   conversations: "Conversations",

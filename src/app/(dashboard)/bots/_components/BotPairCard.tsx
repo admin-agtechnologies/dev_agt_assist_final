@@ -7,14 +7,14 @@ import {
 import { Badge } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { type BotPair, getSectorColor } from "./bots.types";
+import { useSector } from "@/hooks/useSector";
 import { BotPairDetailPanel } from "./BotPairDetailPanel";
+import { type BotPair } from "./bots.types";
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 interface BotPairCardProps {
   pair: BotPair;
   isExpanded: boolean;
-  sector: string;
   onToggleExpand: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -27,11 +27,11 @@ interface BotPairCardProps {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function BotPairCard({
-  pair, isExpanded, sector,
+  pair, isExpanded,
   onToggleExpand, onEdit, onDelete, onPublishToggle, onTest, onRefresh, d,
 }: BotPairCardProps) {
   const t = d.bots;
-  const colors       = getSectorColor(sector);
+  const { theme: colors } = useSector();
   const isActive     = pair.waBot.statut === "actif";
   const mainName     = pair.waBot.nom;
   const phoneDisplay = pair.waBot.numero_value ?? null;

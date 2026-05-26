@@ -1,45 +1,47 @@
 // src/dictionaries/en/index.ts
-import { common } from "./common.en";
-import { dashboard } from "./dashboard.en";
-import { auth } from "./auth.en";
-import { landing } from "./landing.en";
-import { onboarding } from "./onboarding.en";
-import { bots } from "./bots.en";
-import { services } from "./services.en";
-import { reservations } from "./reservations.en";
-import { billing } from "./billing.en";
-import { knowledge } from "./knowledge.en";
-import { contacts } from "./contacts.en";
-import { conversations } from "./conversations.en";
-import { catalogue } from "./catalogue.en";
-import { commandes } from "./commandes.en";
-import { profile } from "./profile.en";
-import { feedback } from "./feedback.en";
-import { dossiers } from "./dossiers.en";
-import { inscriptions } from "./inscriptions.en";
-import { nav } from "./nav.en";
-import { errors } from "./errors.en";
-import { plans } from "./plans.en";
-import { pending } from "./pending.en";
-import { verifyEmail } from "./verifyEmail.en";
-import { resetPassword } from "./resetPassword.en";
-import { magicLink } from "./magicLink.en";
-import { faq } from "./faq.en";
-import { support } from "./support.en";
-import { help } from "./help.en";
-import { tutorial } from "./tutorial.en";
-import { bug } from "./bug.en";
-import { appointments } from "./appointments.en";
-import { settings } from "./settings.en";
-import { restaurant } from "./restaurant.en";
-import { banking } from "./banking.en"
-import { school } from "./school.en"
-import { ecommerce } from './ecommerce.en';
-import { hotel }     from './hotel.en';
-import { transport } from './transport.en';
-import { clinical } from "./clinical.en";
-import { pme } from "./pme.en";
-import { public_ } from "./public.en";
+import { common }         from "./common.en";
+import { dashboard }      from "./dashboard.en";
+import { auth }           from "./auth.en";
+import { landing }        from "./landing.en";
+import { onboarding }     from "./onboarding.en";
+import { bots }           from "./bots.en";
+import { services }       from "./services.en";
+import { reservations }   from "./reservations.en";
+import { billing }        from "./billing.en";
+import { knowledge }      from "./knowledge.en";
+import { contacts }       from "./contacts.en";
+import { conversations }  from "./conversations.en";
+import { catalogue }      from "./catalogue.en";
+import { commandes }      from "./commandes.en";
+import { profile }        from "./profile.en";
+import { feedback }       from "./feedback.en";
+import { dossiers }       from "./dossiers.en";
+import { inscriptions }   from "./inscriptions.en";
+import { nav }            from "./nav.en";
+import { errors }         from "./errors.en";
+import { plans }          from "./plans.en";
+import { pending }        from "./pending.en";
+import { verifyEmail }    from "./verifyEmail.en";
+import { resetPassword }  from "./resetPassword.en";
+import { magicLink }      from "./magicLink.en";
+import { faq }            from "./faq.en";
+import { support }        from "./support.en";
+import { help }           from "./help.en";
+import { tutorial }       from "./tutorial.en";
+import { bug }            from "./bug.en";
+import { appointments }   from "./appointments.en";
+import { settings }       from "./settings.en";
+import { restaurant }     from "./restaurant.en";
+import { banking }        from "./banking.en";
+import { school }         from "./school.en";
+import { ecommerce }      from "./ecommerce.en";
+import { hotel }          from "./hotel.en";
+import { transport }      from "./transport.en";
+import { clinical }       from "./clinical.en";
+import { pme }            from "./pme.en";
+import { public_ }        from "./public.en";
+import { results }        from "./results.en";       // S57 — align with fr
+import { statsEn }        from "./stats.en";          // S57 — stats 3 niveaux
 
 export const en = {
   common,
@@ -83,6 +85,8 @@ export const en = {
   clinical,
   pme,
   public_,
+  results,
+  stats: statsEn, // S57 — même clé que fr pour alignement Dictionary
 } as const;
 
 export type EnDict = typeof en;

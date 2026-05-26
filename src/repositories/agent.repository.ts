@@ -41,6 +41,7 @@ interface ConversationFilters {
   canal?: string;
   agence_id?: string;
   mode?: "live" | "test";
+  bot_id?: string;
 }
 
 async function listConversations(
@@ -51,6 +52,7 @@ async function listConversations(
   if (filters?.canal)     params.set("canal",     filters.canal);
   if (filters?.agence_id) params.set("agence_id", filters.agence_id);
   if (filters?.mode)      params.set("mode",      filters.mode);
+  if (filters?.bot_id)    params.set("bot_id",    filters.bot_id);
   const qs = params.toString();
   return api.get(`${BASE}/${qs ? `?${qs}` : ""}`) as Promise<PaginatedResponse<AIConversation>>;
 }

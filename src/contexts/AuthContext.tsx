@@ -103,20 +103,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Espace client PME uniquement — jamais d'admin ici
   // Recharge le user depuis /auth/me/ — utile après une mise à jour de profil
-  const refreshUser = async (): Promise<void> => {
+const refreshUser = async (): Promise<void> => {
     try {
       const u = await authRepository.me();
       ensureEntreprise(u);
       setUser(u);
-    } catch {
-      // Token invalide → on ne déconnecte pas, on laisse le refresh auto gérer
+    } catch (err) {
+      // Si le token est déjà cleared (refresh échoué), on nettoie le state React.
+      // L'event auth:session-expired gérera la redirection.
+      if (!tokenStorage.getAccess()) {
+        setUser(null);
+      }
+      // Sinon : erreur réseau passagère → on ne déconnecte pas
     }
   };
+
 
   // Espace client PME uniquement — jamais d'admin ici
   const isAdmin = false;
   const isPme = user !== null;
   
+    // ── Session expirée détectée par api-client (refresh échoué) ────────────
+  useEffect(() => {
+    const handler = () => {
+      tokenStorage.clear();
+      setUser(null);
+      window.location.href = ROUTES.login;
+    };
+    window.addEventListener("auth:session-expired", handler);
+    return () => window.removeEventListener("auth:session-expired", handler);
+  }, []);
+
   return (
     <AuthContext.Provider value={{ user, isLoading, login, loginWithGoogle, logout, isAdmin, isPme , refreshUser}}>
       {children}

@@ -1,248 +1,240 @@
-// src/app/pme/bots/_components/tabs/StatsTab.tsx
 "use client";
-import { useState, useMemo } from "react";
-import { ChevronDown, Globe } from "lucide-react";
-import { Badge } from "@/components/ui";
-import { cn } from "@/lib/utils";
-import { useLanguage } from "@/contexts/LanguageContext";
-import type { Conversation } from "@/types/api";
-import {
-  AreaChart, Area, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell,
-} from "recharts";
-import { METRIC_DEFS, type MetricId, type VisibleMetrics } from "../bots.types";
+// src/app/(dashboard)/bots/_components/tabs/StatsTab.tsx
+// Tab Stats — Niveau 1 — Refonte S62.
+// Filtres : Aujourd'hui / 7j / 30j / 3m / 6m / 1an / Personnalisée
+// Par feature : KPIs + AreaChart historique + BarChart semaines + 3 entrées + lien résultats
+// S56 création — S57 fix — S62 refonte
+
+import { useState, useEffect, useCallback } from "react";
+import { Calendar, RefreshCw, Eye, EyeOff } from "lucide-react";
+import { Spinner }              from "@/components/ui";
+import { cn }                   from "@/lib/utils";
+import { useLanguage }          from "@/contexts/LanguageContext";
+import { useSector }            from "@/hooks/useSector";
+import { botStatsRepository }   from "@/repositories/stats.repository";
+import { FEATURES_MASTER_MAP }  from "@/config/features-master-config";
+import { FeatureStatsSection }  from "@/app/(dashboard)/stats/_components/FeatureStatsSection";
+import { StatsHistoriqueChart } from "./stats/StatsHistoriqueChart";
+import { StatsRecentEntries }   from "./stats/StatsRecentEntries";
+import type { BotStatsResponse, FeatureStatData, StatPeriodParams } from "@/types/api/stats.types";
+
+// ── Types & config période ─────────────────────────────────────────────────────
 
 interface StatsTabProps {
-  conversations: Conversation[];
-  d: ReturnType<typeof useLanguage>["dictionary"];
+  botId: string;
+  d:     ReturnType<typeof useLanguage>["dictionary"];
 }
 
-// ── Génère les données par jour depuis les conversations réelles ──────────────
-function buildWeekData(conversations: Conversation[], days: number, offsetDays: number) {
-  const JOURS_FR = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
-  const result = [];
+type PeriodKey = "1d" | "7d" | "30d" | "90d" | "180d" | "365d" | "custom";
 
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i - offsetDays * days);
-    const dateStr = d.toISOString().split("T")[0];
-    const dayLabel = JOURS_FR[d.getDay()];
+const PERIODS: { key: PeriodKey; fr: string; en: string; days?: number }[] = [
+  { key: "1d",    fr: "Aujourd'hui",  en: "Today",    days: 1   },
+  { key: "7d",    fr: "7 jours",      en: "7 days",   days: 7   },
+  { key: "30d",   fr: "30 jours",     en: "30 days",  days: 30  },
+  { key: "90d",   fr: "3 mois",       en: "3 months", days: 90  },
+  { key: "180d",  fr: "6 mois",       en: "6 months", days: 180 },
+  { key: "365d",  fr: "1 an",         en: "1 year",   days: 365 },
+  { key: "custom",fr: "Personnalisée",en: "Custom"              },
+];
 
-    const dayConvs = conversations.filter(c =>
-      c.created_at?.startsWith(dateStr)
-    );
-
-    result.push({
-      day: dayLabel,
-      messages:     dayConvs.reduce((acc, c) => acc + c.nb_messages, 0),
-      calls:        dayConvs.filter(c => c.bot_type === "vocal").length,
-      appointments: dayConvs.reduce((acc, c) => acc + (c.rapport?.rdv_planifies ?? 0), 0),
-      emails:       dayConvs.reduce((acc, c) => acc + (c.rapport?.emails_envoyes ?? 0), 0),
-      handoffs:     dayConvs.filter(c => c.human_handoff).length,
-    });
-  }
-
-  return result;
+function toPeriodParams(key: PeriodKey, from: string, to: string): StatPeriodParams {
+  if (key === "custom") return { date_from: from, date_to: to };
+  if (key === "7d" || key === "30d" || key === "90d") return { period: key };
+  const days  = PERIODS.find((p) => p.key === key)?.days ?? 30;
+  const toDay = new Date();
+  const frDay = new Date();
+  frDay.setDate(frDay.getDate() - days);
+  return {
+    date_from: frDay.toISOString().split("T")[0],
+    date_to:   toDay.toISOString().split("T")[0],
+  };
 }
 
-export function StatsTab({ conversations }: StatsTabProps) {
-  const [periodFilter, setPeriodFilter]     = useState<number>(7);
-  const [timeOffset, setTimeOffset]         = useState<number>(0);
-  const [visibleMetrics, setVisibleMetrics] = useState<VisibleMetrics>({
-    messages: true, calls: true, appointments: true, emails: true, handoffs: true,
-  });
+// ── Sous-composant : carte d'une feature ──────────────────────────────────────
 
-  const toggleMetric = (id: MetricId) =>
-    setVisibleMetrics(prev => ({ ...prev, [id]: !prev[id] }));
+interface FeatureCardProps {
+  slug:     string;
+  data:     FeatureStatData;
+  botId:    string;
+  locale:   string;
+  primary:  string;
+  hidden:   boolean;
+  onToggle: () => void;
+}
 
-  // ── Données réelles calculées depuis les conversations ────────────────────
-  const weekData = useMemo(
-    () => buildWeekData(conversations, periodFilter, timeOffset),
-    [conversations, periodFilter, timeOffset]
+function FeatureCard({ slug, data, botId, locale, primary, hidden, onToggle }: FeatureCardProps) {
+  const meta = FEATURES_MASTER_MAP.get(slug);
+  return (
+    <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+        <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
+          {meta ? (locale === "fr" ? meta.label.fr : meta.label.en) : slug}
+        </span>
+        <button
+          onClick={onToggle}
+          className="p-1 rounded-lg text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+          title={hidden
+            ? (locale === "fr" ? "Afficher" : "Show")
+            : (locale === "fr" ? "Masquer" : "Hide")}
+        >
+          {hidden ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+        </button>
+      </div>
+      {/* Corps */}
+      {!hidden && (
+        <div className="p-4 space-y-4">
+          <FeatureStatsSection slug={slug} data={data} hidden={false} />
+          <StatsHistoriqueChart slug={slug} data={data} locale={locale} primaryColor={primary} />
+          <StatsRecentEntries   slug={slug} botId={botId} locale={locale} primaryColor={primary} />
+        </div>
+      )}
+    </div>
   );
+}
 
-  // ── Totaux pour le donut et le compteur emails ────────────────────────────
-  const totals = useMemo(() => ({
-    messages:     conversations.reduce((acc, c) => acc + c.nb_messages, 0),
-    calls:        conversations.filter(c => c.bot_type === "vocal").length,
-    appointments: conversations.reduce((acc, c) => acc + (c.rapport?.rdv_planifies ?? 0), 0),
-    emails:       conversations.reduce((acc, c) => acc + (c.rapport?.emails_envoyes ?? 0), 0),
-    handoffs:     conversations.filter(c => c.human_handoff).length,
-  }), [conversations]);
+// ── Composant principal ───────────────────────────────────────────────────────
 
-  // ── Données donut ─────────────────────────────────────────────────────────
-  const donutData = METRIC_DEFS
-    .filter(m => visibleMetrics[m.id as MetricId])
-    .map(m => ({
-      name:  m.label,
-      value: totals[m.id as MetricId] || 0,
-      color: m.color,
-    }))
-    .filter(d => d.value > 0);
+export function StatsTab({ botId, d }: StatsTabProps) {
+  const { locale } = useLanguage();
+  const { theme }  = useSector();
+  const primary    = theme?.primary ?? "var(--primary)";
+
+  // Silence TS — d est passé par BotPairDetailPanel mais non utilisé ici directement
+  void d;
+
+  const [period,      setPeriod]      = useState<PeriodKey>("30d");
+  const [dateFrom,    setDateFrom]    = useState("");
+  const [dateTo,      setDateTo]      = useState("");
+  const [stats,       setStats]       = useState<BotStatsResponse | null>(null);
+  const [loading,     setLoading]     = useState(true);
+  const [hiddenSlugs, setHiddenSlugs] = useState<Set<string>>(new Set());
+
+  const fetchStats = useCallback(async () => {
+    if (!botId) return;
+    setLoading(true);
+    try {
+      setStats(await botStatsRepository.getStats(botId, toPeriodParams(period, dateFrom, dateTo)));
+    } finally {
+      setLoading(false);
+    }
+  }, [botId, period, dateFrom, dateTo]);
+
+  useEffect(() => { fetchStats(); }, [fetchStats]);
+
+  const toggleHide = (slug: string) =>
+    setHiddenSlugs((prev) => {
+      const next = new Set(prev);
+      next.has(slug) ? next.delete(slug) : next.add(slug);
+      return next;
+    });
+
+  const featureSlugs = stats
+    ? Object.keys(stats.features).sort((a, b) => {
+        const keys = Array.from(FEATURES_MASTER_MAP.keys());
+        const ia   = keys.indexOf(a);
+        const ib   = keys.indexOf(b);
+        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+      })
+    : [];
 
   return (
-    <div className="space-y-6">
-      {/* ── Contrôles ── */}
-      <div className="flex flex-col lg:flex-row gap-4 bg-[var(--bg)] p-4 rounded-3xl border border-[var(--border)]">
-        <div className="flex-1">
-          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-3">
-            Afficher / Masquer les métriques
+    <div className="space-y-4">
+
+      {/* ── Filtres période ── */}
+      <div className="flex flex-wrap items-center gap-2 p-3 bg-[var(--bg)] rounded-2xl border border-[var(--border)]">
+        {PERIODS.map((p) => (
+          <button
+            key={p.key}
+            onClick={() => setPeriod(p.key)}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all whitespace-nowrap",
+              period === p.key
+                ? "text-white border-transparent"
+                : "text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--text-muted)] bg-[var(--bg-card)]",
+            )}
+            style={period === p.key ? { background: primary } : {}}
+          >
+            {p.key === "custom" && <Calendar className="w-3.5 h-3.5" />}
+            {locale === "fr" ? p.fr : p.en}
+          </button>
+        ))}
+        <button
+          onClick={fetchStats}
+          disabled={loading}
+          className="ml-auto p-2 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text)] disabled:opacity-40 transition-all"
+          title={locale === "fr" ? "Actualiser" : "Refresh"}
+        >
+          <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
+        </button>
+      </div>
+
+      {/* ── Date picker personnalisée ── */}
+      {period === "custom" && (
+        <div className="flex flex-wrap gap-3 p-3 bg-[var(--bg)] rounded-2xl border border-[var(--border)]">
+          {(["from", "to"] as const).map((dir) => (
+            <div key={dir} className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
+                {dir === "from"
+                  ? (locale === "fr" ? "Du" : "From")
+                  : (locale === "fr" ? "Au" : "To")}
+              </label>
+              <input
+                type="date"
+                value={dir === "from" ? dateFrom : dateTo}
+                onChange={(e) =>
+                  dir === "from" ? setDateFrom(e.target.value) : setDateTo(e.target.value)
+                }
+                className="px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-xs text-[var(--text)] focus:outline-none"
+              />
+            </div>
+          ))}
+          <button
+            onClick={fetchStats}
+            disabled={!dateFrom || !dateTo}
+            className="self-end px-4 py-1.5 rounded-xl text-xs font-bold text-white disabled:opacity-40 transition-all"
+            style={{ background: primary }}
+          >
+            {locale === "fr" ? "Appliquer" : "Apply"}
+          </button>
+        </div>
+      )}
+
+      {/* ── Contenu ── */}
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <Spinner />
+        </div>
+      ) : featureSlugs.length === 0 ? (
+        <div className="flex flex-col items-center py-16 text-[var(--text-muted)]">
+          <p className="text-sm font-bold">
+            {locale === "fr"
+              ? "Aucune activité sur cette période."
+              : "No activity for this period."}
           </p>
-          <div className="flex flex-wrap gap-2">
-            {METRIC_DEFS.map(m => (
-              <button
-                key={m.id}
-                onClick={() => toggleMetric(m.id as MetricId)}
-                className={cn(
-                  "px-3 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-2",
-                  visibleMetrics[m.id as MetricId]
-                    ? "bg-white border-transparent shadow-sm shadow-black/5"
-                    : "opacity-40 grayscale border-dashed border-[var(--border)]",
-                )}
-              >
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: m.color }} />
-                {m.label}
-              </button>
-            ))}
-          </div>
+          <p className="text-xs mt-1 opacity-60">
+            {locale === "fr"
+              ? "Les statistiques apparaîtront dès que le bot aura traité des conversations."
+              : "Stats will appear once the bot processes conversations."}
+          </p>
         </div>
-        <div className="flex items-center gap-2 border-l border-[var(--border)] pl-4">
-          <div className="flex bg-[var(--bg-card)] rounded-xl p-1 border border-[var(--border)]">
-            {[7, 30, 90].map(n => (
-              <button key={n} onClick={() => { setPeriodFilter(n); setTimeOffset(0); }}
-                className={cn(
-                  "px-3 py-1 rounded-lg text-[10px] font-black transition-all",
-                  periodFilter === n ? "bg-[#075E54] text-white" : "text-[var(--text-muted)]",
-                )}>
-                {n}J
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-1">
-            <button onClick={() => setTimeOffset(prev => prev + 1)}
-              className="p-2 bg-white rounded-xl border border-[var(--border)]">
-              <ChevronDown className="w-4 h-4 rotate-90" />
-            </button>
-            <button onClick={() => setTimeOffset(prev => prev - 1)}
-              disabled={timeOffset === 0}
-              className="p-2 bg-white rounded-xl border border-[var(--border)] disabled:opacity-30">
-              <ChevronDown className="w-4 h-4 -rotate-90" />
-            </button>
-          </div>
+      ) : (
+        <div className="space-y-3">
+          {featureSlugs.map((slug) => (
+            <FeatureCard
+              key={slug}
+              slug={slug}
+              data={stats!.features[slug]}
+              botId={botId}
+              locale={locale}
+              primary={primary}
+              hidden={hiddenSlugs.has(slug)}
+              onToggle={() => toggleHide(slug)}
+            />
+          ))}
         </div>
-      </div>
+      )}
 
-      {/* ── AreaChart ── */}
-      <div className="card p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-sm font-black uppercase tracking-tight">Courbes d&apos;évolution</h3>
-          <Badge variant="slate">Vue Cumulative</Badge>
-        </div>
-        <div className="h-[250px]">
-          {weekData.every(d => d.messages === 0 && d.calls === 0) ? (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-sm text-[var(--text-muted)] italic">Aucune donnée sur cette période.</p>
-            </div>
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={weekData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-                <Tooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)" }} />
-                {METRIC_DEFS.map(m => visibleMetrics[m.id as MetricId] && (
-                  <Area key={m.id} type="monotone" dataKey={m.id}
-                    stroke={m.color} fill={m.color} fillOpacity={0.1} strokeWidth={2} />
-                ))}
-              </AreaChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-      </div>
-
-      {/* ── BarChart ── */}
-      <div className="card p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-sm font-black uppercase tracking-tight">Comparaison par volume</h3>
-          <Badge variant="slate">Vue en bandes</Badge>
-        </div>
-        <div className="h-[250px]">
-          {weekData.every(d => d.messages === 0 && d.calls === 0) ? (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-sm text-[var(--text-muted)] italic">Aucune donnée sur cette période.</p>
-            </div>
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weekData} barGap={4}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-                <Tooltip cursor={{ fill: "transparent" }} contentStyle={{ borderRadius: "12px", border: "none" }} />
-                {METRIC_DEFS.map(m => visibleMetrics[m.id as MetricId] && (
-                  <Bar key={m.id} dataKey={m.id} fill={m.color} radius={[4, 4, 0, 0]} barSize={8} />
-                ))}
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-      </div>
-
-      {/* ── Donut + Email ── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="card p-6 col-span-1 md:col-span-2">
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-6">
-            Répartition globale des actions
-          </h3>
-          {donutData.length === 0 ? (
-            <div className="flex items-center justify-center py-8">
-              <p className="text-sm text-[var(--text-muted)] italic">Aucune donnée disponible.</p>
-            </div>
-          ) : (
-            <div className="flex items-center justify-around">
-              <div className="w-40 h-40">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={donutData}
-                      innerRadius={45} outerRadius={65} paddingAngle={5} dataKey="value"
-                    >
-                      {donutData.map((entry, index) => (
-                        <Cell key={index} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{ borderRadius: "12px", border: "none" }}
-                      formatter={(value, name) => [value, name]}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="grid grid-cols-1 gap-3">
-                {METRIC_DEFS.map(m => visibleMetrics[m.id as MetricId] && (
-                  <div key={m.id} className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: m.color }} />
-                    <span className="text-xs font-bold text-[var(--text)]">{m.label}</span>
-                    <span className="text-xs text-[var(--text-muted)] ml-auto">
-                      {totals[m.id as MetricId]}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Compteur emails réel */}
-        <div className="card p-6 flex flex-col items-center justify-center text-center bg-sky-50 border-sky-100 dark:bg-sky-900/10 dark:border-sky-800">
-          <div className="w-12 h-12 rounded-2xl bg-sky-500 text-white flex items-center justify-center mb-4 shadow-lg shadow-sky-200">
-            <Globe className="w-6 h-6" />
-          </div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-sky-600 mb-1">Emails envoyés</p>
-          <p className="text-5xl font-black text-sky-900 dark:text-sky-100">{totals.emails}</p>
-          <p className="text-[10px] text-sky-600/70 mt-2 font-bold italic">Total cumulé</p>
-        </div>
-      </div>
     </div>
   );
 }

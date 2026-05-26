@@ -83,6 +83,9 @@ export function RessourceManager({
     finally { setDeletingId(null); }
   };
 
+  // Ressource dont le panneau dispo est actuellement ouvert
+  const dispoRessource = ressources.find((r) => r.id === dispoId) ?? null;
+
   const labelAdd = {
     table:     locale === "fr" ? "Ajouter une table"   : "Add table",
     trajet:    locale === "fr" ? "Ajouter un trajet"   : "Add route",
@@ -131,7 +134,7 @@ export function RessourceManager({
         </div>
       )}
 
-      {/* Grid de cards */}
+      {/* Grid de cards — l'accordéon dispo est SORTI du grid (voir panneau ci-dessous) */}
       {ressources.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {ressources.map((r) => {
@@ -158,7 +161,9 @@ export function RessourceManager({
 
             return (
               <div key={r.id} className={cn(
-                "bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] overflow-hidden flex flex-col hover:shadow-md transition-all",
+                // Hauteur fixe : les cards ne s'étirent plus avec le grid
+                "bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] overflow-hidden flex flex-col",
+                "hover:shadow-md transition-all self-start",
                 !r.est_active && "opacity-60",
               )}>
                 {/* Header coloré */}
@@ -200,8 +205,12 @@ export function RessourceManager({
                         : <><ToggleLeft  className="w-3.5 h-3.5 text-[var(--text-muted)]" />Inactif</>}
                     </button>
                     <div className="flex gap-1">
+                      {/* Bouton CalendarClock — toggle panneau dispo SOUS le grid */}
                       <button type="button"
-                        onClick={() => setDispoId((p) => p === r.id ? null : r.id)}
+                        onClick={() => {
+                          setDispoId((p) => p === r.id ? null : r.id);
+                          setEditId(null);
+                        }}
                         className={cn(
                           "p-1.5 rounded-lg transition-colors",
                           dispoId === r.id
@@ -224,24 +233,45 @@ export function RessourceManager({
                     </div>
                   </div>
                 </div>
-
-                {/* Accordion disponibilités */}
-                {dispoId === r.id && (
-                  <div className="border-t border-[var(--border)] px-4 py-4">
-                    <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">
-                      {locale === "fr" ? "Disponibilités hebdomadaires" : "Weekly availability"}
-                    </p>
-                    <DisponibiliteGrid
-                      ressource={r}
-                      locale={locale}
-                      onLoad={() => onLoadDisponibilites(r.id)}
-                      onSave={(dispo) => onSaveDisponibilites(r.id, dispo)}
-                    />
-                  </div>
-                )}
+                {/* ⚠️ Plus d'accordéon ici — déplacé sous le grid */}
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* ── Panneau disponibilités — EN DEHORS du grid, pleine largeur ── */}
+      {dispoRessource && (
+        <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] overflow-hidden">
+          {/* Header du panneau */}
+          <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)]">
+            <div className="flex items-center gap-2">
+              <CalendarClock className="w-4 h-4 text-[var(--primary)]" />
+              <p className="text-sm font-semibold text-[var(--text)]">
+                {locale === "fr" ? "Disponibilités hebdomadaires" : "Weekly availability"}
+                <span className="ml-2 text-[var(--text-muted)] font-normal">
+                  — {dispoRessource.nom}
+                </span>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDispoId(null)}
+              className="text-xs text-[var(--text-muted)] hover:text-[var(--text)] transition-colors px-2 py-1 rounded-lg hover:bg-[var(--bg)]"
+            >
+              {locale === "fr" ? "Fermer" : "Close"} ×
+            </button>
+          </div>
+
+          {/* Grille dispo */}
+          <div className="px-5 py-4">
+            <DisponibiliteGrid
+              ressource={dispoRessource}
+              locale={locale}
+              onLoad={() => onLoadDisponibilites(dispoRessource.id)}
+              onSave={(dispo) => onSaveDisponibilites(dispoRessource.id, dispo)}
+            />
+          </div>
         </div>
       )}
     </div>

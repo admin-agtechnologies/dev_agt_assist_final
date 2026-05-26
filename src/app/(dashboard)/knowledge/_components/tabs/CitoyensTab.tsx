@@ -1,4 +1,6 @@
 // src/app/(dashboard)/knowledge/_components/tabs/CitoyensTab.tsx
+// S46 — CATEGORIES CSS vars sémantiques + hover lift + i18n complet
+// Fix TS: t typé en any dans les sous-composants privés (categories est un sous-objet)
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
@@ -8,6 +10,7 @@ import {
 } from "lucide-react";
 import { useSector }                from "@/hooks/useSector";
 import { useToast }                 from "@/components/ui/Toast";
+import { useLanguage }              from "@/contexts/LanguageContext";
 import { serviceCitoyenRepository } from "@/repositories/p5.repository";
 import { KnowledgeCardSkeleton }    from "../KnowledgeSkeleton";
 import { cn } from "@/lib/utils";
@@ -15,13 +18,14 @@ import type {
   ServiceCitoyen, EtapeProcedure, CategorieServiceCitoyen,
 } from "@/types/api/p5.types";
 
-const CATEGORIES: Record<CategorieServiceCitoyen, { label: string; color: string }> = {
-  etat_civil: { label: "État civil",             color: "bg-blue-100 text-blue-700 border-blue-200" },
-  permis:     { label: "Permis & autorisations", color: "bg-amber-100 text-amber-700 border-amber-200" },
-  fiscal:     { label: "Fiscal & taxes",         color: "bg-rose-100 text-rose-700 border-rose-200" },
-  social:     { label: "Action sociale",         color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-  justice:    { label: "Justice",                color: "bg-violet-100 text-violet-700 border-violet-200" },
-  autre:      { label: "Autre",                  color: "bg-gray-100 text-gray-600 border-gray-200" },
+// ── Catégories — CSS vars sémantiques ────────────────────────────────────────
+const CATEGORY_STYLE: Record<CategorieServiceCitoyen, { bg: string; text: string }> = {
+  etat_civil: { bg: "var(--status-info-bg)",    text: "var(--status-info-text)" },
+  permis:     { bg: "var(--status-warning-bg)", text: "var(--status-warning-text)" },
+  fiscal:     { bg: "var(--status-error-bg)",   text: "var(--status-error-text)" },
+  social:     { bg: "var(--status-success-bg)", text: "var(--status-success-text)" },
+  justice:    { bg: "color-mix(in srgb, var(--color-primary) 12%, transparent)", text: "var(--color-primary)" },
+  autre:      { bg: "var(--bg)",                text: "var(--text-muted)" },
 };
 
 const EMPTY = {
@@ -31,31 +35,22 @@ const EMPTY = {
   duree_traitement:     "",
   frais:                "",
   lieu:                 "",
-  etapes_procedure:     "",  // une étape par ligne
-  horaires_service:     "",  // texte libre ex: "Lun-Ven 8h-17h"
+  etapes_procedure:     "",
+  horaires_service:     "",
   delai_relance_jours:  "7",
 };
 type FormState = typeof EMPTY;
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-const parseDocs  = (s: string): string[] =>
-  s.split(",").map((d) => d.trim()).filter(Boolean);
-
-const docsToStr  = (docs: string[]): string => docs.join(", ");
-
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const parseDocs   = (s: string): string[] => s.split(",").map((d) => d.trim()).filter(Boolean);
+const docsToStr   = (docs: string[]): string => docs.join(", ");
 const parseEtapes = (s: string): EtapeProcedure[] =>
-  s.split("\n").map((e, i) => e.trim()).filter(Boolean).map((etape, i) => ({ ordre: i + 1, etape }));
-
-const etapesToStr = (etapes: EtapeProcedure[]): string =>
-  (etapes ?? []).map((e) => e.etape).join("\n");
-
+  s.split("\n").map((e) => e.trim()).filter(Boolean).map((etape, i) => ({ ordre: i + 1, etape }));
+const etapesToStr = (etapes: EtapeProcedure[]): string => (etapes ?? []).map((e) => e.etape).join("\n");
 const parseHoraires = (s: string): Record<string, string> => {
   if (!s.trim()) return {};
-  try   { return JSON.parse(s); }
-  catch { return { general: s.trim() }; }
+  try { return JSON.parse(s); } catch { return { general: s.trim() }; }
 };
-
 const horairesToStr = (h: Record<string, string> | undefined): string => {
   if (!h || Object.keys(h).length === 0) return "";
   return h.general ?? JSON.stringify(h);
@@ -64,8 +59,11 @@ const horairesToStr = (h: Record<string, string> | undefined): string => {
 // ── Composant principal ───────────────────────────────────────────────────────
 
 export function CitoyensTab() {
-  const { theme }  = useSector();
-  const toast      = useToast();
+  const { theme }         = useSector();
+  const toast             = useToast();
+  const { dictionary: d } = useLanguage();
+  const t                 = d.knowledge.citoyens;
+
   const [items,   setItems]   = useState<ServiceCitoyen[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
@@ -76,12 +74,11 @@ export function CitoyensTab() {
   useEffect(() => {
     serviceCitoyenRepository.getList()
       .then(setItems)
-      .catch(() => toast.error("Erreur chargement"))
+      .catch(() => toast.error(t.errorLoad))
       .finally(() => setLoading(false));
   }, []); // eslint-disable-line
 
-  const onChange = (k: keyof FormState, v: string) =>
-    setForm((f) => ({ ...f, [k]: v }));
+  const onChange = (k: keyof FormState, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   const toPayload = (f: FormState) => ({
     nom_fr:              f.nom_fr.trim(),
@@ -115,8 +112,8 @@ export function CitoyensTab() {
     try {
       const created = await serviceCitoyenRepository.create(toPayload(form));
       setItems((p) => [...p, created]); setShowAdd(false); setForm(EMPTY);
-      toast.success("Service ajouté");
-    } catch { toast.error("Erreur lors de l'ajout"); }
+      toast.success(t.createSuccess);
+    } catch { toast.error(t.createError); }
   });
 
   const handleUpdate = () => {
@@ -126,8 +123,8 @@ export function CitoyensTab() {
         const updated = await serviceCitoyenRepository.update(editId, toPayload(form));
         setItems((p) => p.map((i) => (i.id === editId ? updated : i)));
         setEditId(null); setForm(EMPTY);
-        toast.success("Service mis à jour");
-      } catch { toast.error("Erreur lors de la mise à jour"); }
+        toast.success(t.updateSuccess);
+      } catch { toast.error(t.updateError); }
     });
   };
 
@@ -135,15 +132,15 @@ export function CitoyensTab() {
     try {
       await serviceCitoyenRepository.delete(id);
       setItems((p) => p.filter((i) => i.id !== id));
-      toast.success("Service supprimé");
-    } catch { toast.error("Erreur lors de la suppression"); }
+      toast.success(t.deleteSuccess);
+    } catch { toast.error(t.deleteError); }
   });
 
   const handleToggle = (item: ServiceCitoyen) => startSave(async () => {
     try {
       const u = await serviceCitoyenRepository.update(item.id, { is_available: !item.is_available });
       setItems((p) => p.map((i) => (i.id === item.id ? u : i)));
-    } catch { toast.error("Erreur"); }
+    } catch { toast.error(t.updateError); }
   });
 
   if (loading) return (
@@ -161,34 +158,60 @@ export function CitoyensTab() {
         {!showAdd && !editId && (
           <button type="button" onClick={() => setShowAdd(true)}
             className="btn-primary flex items-center gap-2 px-4 py-2 text-sm">
-            <Plus className="w-4 h-4" /> Ajouter un service
+            <Plus className="w-4 h-4" /> {t.addBtn}
           </button>
         )}
       </div>
 
       {showAdd && (
-        <ServiceForm form={form} onChange={onChange}
+        <ServiceForm
+          form={form} onChange={onChange} theme={theme}
+          addBtn={t.addBtn} editTitle={t.editTitle} newTitle={t.newTitle}
+          nomLabel={t.nomLabel} descriptionLabel={t.descriptionLabel}
+          categorieLabel={t.categorieLabel} documentsLabel={t.documentsLabel}
+          documentsPlh={t.documentsPlh} dureeLabel={t.dureeLabel} dureePlh={t.dureePlh}
+          fraisLabel={t.fraisLabel} lieuLabel={t.lieuLabel} lieuPlh={t.lieuPlh}
+          etapesLabel={t.etapesLabel} etapesPlh={t.etapesPlh}
+          horairesLabel={t.horairesLabel} horairesPlh={t.horairesPlh}
+          delaiLabel={t.delaiLabel} cancelLabel={d.common.cancel} saveLabel={d.common.save}
+          catLabels={t.categories}
           onSave={handleAdd} onCancel={() => { setShowAdd(false); setForm(EMPTY); }}
-          saving={saving} theme={theme} />
+          saving={saving} isEdit={false} />
       )}
 
       {items.length === 0 && !showAdd ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-3 text-center
+        <div className="flex flex-col items-center justify-center py-20 gap-4 text-center
           bg-[var(--bg-card)] rounded-2xl border border-dashed border-[var(--border)]">
-          <Landmark className="w-10 h-10 text-[var(--text-muted)]" />
-          <p className="text-sm text-[var(--text-muted)]">Aucun service configuré.</p>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
+            style={{ background: `color-mix(in srgb, ${theme.primary} 10%, transparent)` }}>
+            <Landmark className="w-7 h-7" style={{ color: theme.primary }} />
+          </div>
+          <p className="text-sm text-[var(--text-muted)]">{t.empty}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {items.map((item) => editId === item.id ? (
             <div key={item.id} className="sm:col-span-2 xl:col-span-3">
-              <ServiceForm form={form} onChange={onChange}
-                onSave={handleUpdate}
-                onCancel={() => { setEditId(null); setForm(EMPTY); }}
-                saving={saving} theme={theme} isEdit />
+              <ServiceForm
+                form={form} onChange={onChange} theme={theme}
+                addBtn={t.addBtn} editTitle={t.editTitle} newTitle={t.newTitle}
+                nomLabel={t.nomLabel} descriptionLabel={t.descriptionLabel}
+                categorieLabel={t.categorieLabel} documentsLabel={t.documentsLabel}
+                documentsPlh={t.documentsPlh} dureeLabel={t.dureeLabel} dureePlh={t.dureePlh}
+                fraisLabel={t.fraisLabel} lieuLabel={t.lieuLabel} lieuPlh={t.lieuPlh}
+                etapesLabel={t.etapesLabel} etapesPlh={t.etapesPlh}
+                horairesLabel={t.horairesLabel} horairesPlh={t.horairesPlh}
+                delaiLabel={t.delaiLabel} cancelLabel={d.common.cancel} saveLabel={d.common.save}
+                catLabels={t.categories}
+                onSave={handleUpdate} onCancel={() => { setEditId(null); setForm(EMPTY); }}
+                saving={saving} isEdit />
             </div>
           ) : (
-            <ServiceCard key={item.id} item={item} theme={theme} saving={saving}
+            <ServiceCard
+              key={item.id} item={item} theme={theme} saving={saving}
+              dispo={t.dispo} indispo={t.indispo}
+              etapeSingular={t.etapeSingular} etapePlural={t.etapePlural}
+              relance={t.relance} catLabels={t.categories}
               onToggle={() => handleToggle(item)}
               onEdit={() => { setEditId(item.id); setForm(fillForm(item)); setShowAdd(false); }}
               onDelete={() => handleDelete(item.id)} />
@@ -199,30 +222,38 @@ export function CitoyensTab() {
   );
 }
 
-// ── Card ──────────────────────────────────────────────────────────────────────
+// ── ServiceCard ───────────────────────────────────────────────────────────────
 
-function ServiceCard({ item, theme, saving, onToggle, onEdit, onDelete }: {
+type CatLabels = Record<CategorieServiceCitoyen, string>;
+
+function ServiceCard({ item, theme, saving, dispo, indispo, etapeSingular, etapePlural,
+  relance, catLabels, onToggle, onEdit, onDelete }: {
   item: ServiceCitoyen;
   theme: { primary: string };
   saving: boolean;
+  dispo: string; indispo: string;
+  etapeSingular: string; etapePlural: string;
+  relance: string;
+  catLabels: CatLabels;
   onToggle: () => void; onEdit: () => void; onDelete: () => void;
 }) {
-  const etapes   = item.etapes_procedure ?? [];
-  const horaires = item.horaires_service;
+  const etapes        = item.etapes_procedure ?? [];
+  const horaires      = item.horaires_service;
   const horairesLabel = horaires?.general ?? (Object.keys(horaires ?? {}).length > 0 ? "Voir horaires" : null);
+  const style         = CATEGORY_STYLE[item.categorie] ?? CATEGORY_STYLE.autre;
+  const catLabel      = catLabels[item.categorie] ?? item.categorie;
 
   return (
     <div className={cn(
-      "bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] p-4 flex flex-col gap-2 hover:shadow-md transition-all",
-      !item.is_available && "opacity-60"
+      "bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] p-4 flex flex-col gap-2",
+      "hover:shadow-md hover:-translate-y-0.5 transition-all duration-200",
+      !item.is_available && "opacity-60",
     )}>
       <div className="flex items-start justify-between gap-2">
         <p className="font-semibold text-sm text-[var(--text)]">{item.nom_fr}</p>
-        <span className={cn(
-          "text-[10px] px-1.5 py-0.5 rounded-full border font-medium flex-shrink-0",
-          CATEGORIES[item.categorie]?.color,
-        )}>
-          {CATEGORIES[item.categorie]?.label}
+        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0"
+          style={{ background: style.bg, color: style.text }}>
+          {catLabel}
         </span>
       </div>
 
@@ -248,12 +279,11 @@ function ServiceCard({ item, theme, saving, onToggle, onEdit, onDelete }: {
         )}
       </div>
 
-      {/* Étapes + Horaires */}
       <div className="flex flex-wrap gap-2 text-xs text-[var(--text-muted)]">
         {etapes.length > 0 && (
           <span className="flex items-center gap-1">
             <FileText className="w-3 h-3" />
-            {etapes.length} étape{etapes.length > 1 ? "s" : ""}
+            {etapes.length} {etapes.length > 1 ? etapePlural : etapeSingular}
           </span>
         )}
         {horairesLabel && (
@@ -263,26 +293,29 @@ function ServiceCard({ item, theme, saving, onToggle, onEdit, onDelete }: {
         )}
         {item.delai_relance_jours && (
           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--bg)] border border-[var(--border)]">
-            Relance : {item.delai_relance_jours}j
+            {relance} : {item.delai_relance_jours}j
           </span>
         )}
       </div>
 
       <div className="flex items-center justify-between mt-auto pt-1">
         <button type="button" onClick={onToggle} disabled={saving}
-          className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold bg-[var(--bg)]">
+          className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold transition-all"
+          style={item.is_available
+            ? { background: "var(--status-success-bg)", color: "var(--status-success-text)" }
+            : { background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
           {item.is_available
-            ? <><ToggleRight className="w-3.5 h-3.5 text-green-500" />Dispo</>
-            : <><ToggleLeft  className="w-3.5 h-3.5 text-[var(--text-muted)]" />Indispo</>}
+            ? <><ToggleRight className="w-3.5 h-3.5" />{dispo}</>
+            : <><ToggleLeft  className="w-3.5 h-3.5" />{indispo}</>}
         </button>
         <div className="flex gap-1">
           <button type="button" onClick={onEdit}
-            className="p-1.5 rounded-lg hover:bg-[var(--bg)]">
+            className="p-1.5 rounded-lg hover:bg-[var(--bg)] transition-colors">
             <Pencil className="w-3.5 h-3.5 text-[var(--text-muted)]" />
           </button>
           <button type="button" onClick={onDelete} disabled={saving}
-            className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
-            <Trash2 className="w-3.5 h-3.5 text-red-400" />
+            className="p-1.5 rounded-lg hover:bg-[var(--status-danger-bg)] transition-colors">
+            <Trash2 className="w-3.5 h-3.5 text-[var(--text-muted)]" />
           </button>
         </div>
       </div>
@@ -290,13 +323,28 @@ function ServiceCard({ item, theme, saving, onToggle, onEdit, onDelete }: {
   );
 }
 
-// ── Formulaire ────────────────────────────────────────────────────────────────
+// ── ServiceForm ───────────────────────────────────────────────────────────────
 
-function ServiceForm({ form, onChange, onSave, onCancel, saving, theme, isEdit = false }: {
+function ServiceForm({
+  form, onChange, onSave, onCancel, saving, theme, isEdit,
+  addBtn, editTitle, newTitle, nomLabel, descriptionLabel, categorieLabel,
+  documentsLabel, documentsPlh, dureeLabel, dureePlh, fraisLabel,
+  lieuLabel, lieuPlh, etapesLabel, etapesPlh, horairesLabel, horairesPlh,
+  delaiLabel, cancelLabel, saveLabel, catLabels,
+}: {
   form: FormState;
   onChange: (k: keyof FormState, v: string) => void;
   onSave: () => void; onCancel: () => void;
   saving: boolean; theme: { primary: string }; isEdit?: boolean;
+  addBtn: string; editTitle: string; newTitle: string;
+  nomLabel: string; descriptionLabel: string; categorieLabel: string;
+  documentsLabel: string; documentsPlh: string;
+  dureeLabel: string; dureePlh: string; fraisLabel: string;
+  lieuLabel: string; lieuPlh: string;
+  etapesLabel: string; etapesPlh: string;
+  horairesLabel: string; horairesPlh: string;
+  delaiLabel: string; cancelLabel: string; saveLabel: string;
+  catLabels: CatLabels;
 }) {
   const inp = (k: keyof FormState) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -306,64 +354,62 @@ function ServiceForm({ form, onChange, onSave, onCancel, saving, theme, isEdit =
     <div className="bg-[var(--bg-card)] rounded-2xl border-2 p-5 space-y-3"
       style={{ borderColor: theme.primary }}>
       <p className="text-sm font-semibold text-[var(--text)]">
-        {isEdit ? "Modifier le service" : "Nouveau service"}
+        {isEdit ? editTitle : newTitle}
       </p>
-
-      <Row label="Nom du service *">
+      <Row label={nomLabel}>
         <input className="input-base" value={form.nom_fr} onChange={inp("nom_fr")} autoFocus />
       </Row>
-      <Row label="Description">
+      <Row label={descriptionLabel}>
         <textarea className="input-base resize-none" rows={2}
           value={form.description_fr} onChange={inp("description_fr")} />
       </Row>
-      <Row label="Catégorie">
+      <Row label={categorieLabel}>
         <select className="input-base" value={form.categorie} onChange={inp("categorie")}>
-          {Object.entries(CATEGORIES).map(([v, { label }]) => (
-            <option key={v} value={v}>{label}</option>
+          {(["etat_civil","permis","fiscal","social","justice","autre"] as CategorieServiceCitoyen[]).map((v) => (
+            <option key={v} value={v}>{catLabels[v]}</option>
           ))}
         </select>
       </Row>
-      <Row label="Documents requis (séparés par virgule)">
-        <input className="input-base" placeholder="CNI, Acte de naissance"
+      <Row label={documentsLabel}>
+        <input className="input-base" placeholder={documentsPlh}
           value={form.documents_requis} onChange={inp("documents_requis")} />
       </Row>
       <div className="grid grid-cols-2 gap-3">
-        <Row label="Durée de traitement">
-          <input className="input-base" placeholder="3 jours ouvrables"
+        <Row label={dureeLabel}>
+          <input className="input-base" placeholder={dureePlh}
             value={form.duree_traitement} onChange={inp("duree_traitement")} />
         </Row>
-        <Row label="Frais (XAF)">
+        <Row label={fraisLabel}>
           <input className="input-base" type="number" min="0"
             value={form.frais} onChange={inp("frais")} />
         </Row>
       </div>
-      <Row label="Lieu / Bureau">
-        <input className="input-base" placeholder="Guichet 3, Bâtiment A"
+      <Row label={lieuLabel}>
+        <input className="input-base" placeholder={lieuPlh}
           value={form.lieu} onChange={inp("lieu")} />
       </Row>
-      <Row label="Étapes de la démarche (une par ligne)">
+      <Row label={etapesLabel}>
         <textarea className="input-base resize-none" rows={3}
-          placeholder={"Se présenter au guichet 3\nFournir les documents requis\nPayer les frais"}
-          value={form.etapes_procedure} onChange={inp("etapes_procedure")} />
+          placeholder={etapesPlh} value={form.etapes_procedure} onChange={inp("etapes_procedure")} />
       </Row>
-      <Row label="Horaires du service (ex: Lun-Ven 8h-17h)">
-        <input className="input-base" placeholder="Lun-Ven 8h-17h, Sam 8h-12h"
+      <Row label={horairesLabel}>
+        <input className="input-base" placeholder={horairesPlh}
           value={form.horaires_service} onChange={inp("horaires_service")} />
       </Row>
-      <Row label="Délai de relance (jours)">
+      <Row label={delaiLabel}>
         <input className="input-base w-24" type="number" min="1"
           value={form.delai_relance_jours} onChange={inp("delai_relance_jours")} />
       </Row>
-
       <div className="flex justify-end gap-2 pt-1">
         <button type="button" onClick={onCancel}
-          className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-xl border border-[var(--border)] hover:bg-[var(--bg)] text-[var(--text-muted)]">
-          <X className="w-4 h-4" /> Annuler
+          className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-xl
+            border border-[var(--border)] hover:bg-[var(--bg)] text-[var(--text-muted)]">
+          <X className="w-4 h-4" /> {cancelLabel}
         </button>
         <button type="button" onClick={onSave} disabled={saving || !form.nom_fr.trim()}
           className="btn-primary flex items-center gap-1.5 px-4 py-2 text-sm disabled:opacity-60">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-          Enregistrer
+          {saveLabel}
         </button>
       </div>
     </div>

@@ -1,14 +1,14 @@
 // src/components/conversations/ConversationStatus.tsx
 "use client";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import type { StatusVariant } from "@/components/ui/StatusBadge";
-import type { AIConversation } from "@/types/api";
+import { StatusBadge }          from "@/components/ui/StatusBadge";
+import type { StatusVariant }   from "@/components/ui/StatusBadge";
+import type { AIConversation }  from "@/types/api/agent.types";
 
 interface ConversationStatusProps {
   statut: AIConversation["statut"];
   labels: {
-    active: string;
-    terminee: string;
+    active:     string;
+    terminee:   string;
     transferee: string;
   };
   size?: "xs" | "sm" | "md";
