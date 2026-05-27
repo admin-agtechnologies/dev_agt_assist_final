@@ -3,57 +3,85 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, LogOut, User, Globe } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useLanguage } from "@/hooks/useLanguage";
-import { useSector } from "@/hooks/useSector";
-import { ROUTES } from "@/lib/constants";
-import { common as commonFr } from "@/dictionaries/fr/common.fr";
-import { common as commonEn } from "@/dictionaries/en/common.en";
+import { ChevronDown, LogOut, User } from "lucide-react";
+import { useAuth }     from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext"; // ← CORRECT : même contexte que la Sidebar
+import { useTheme }    from "@/components/ui/ThemeProvider";
+import { useSector }   from "@/hooks/useSector";
+import { ROUTES }      from "@/lib/constants";
+import { initials }    from "@/lib/utils";
 
-// ── LangSwitcher ─────────────────────────────────────────────────────────────
+// ── LangSwitcher ──────────────────────────────────────────────────────────────
+// Utilise setLocale du LanguageContext — même état que la Sidebar → changement
+// instantané et global dans toute l'app.
 function LangSwitcher() {
-  const { lang, setLang } = useLanguage();
-  const common = lang === "fr" ? commonFr : commonEn;
+  const { locale, setLocale } = useLanguage();
 
   return (
-    <div className="flex items-center gap-1 border border-gray-200 rounded-lg p-1">
+    <div className="flex items-center gap-0.5 border border-[var(--border)] rounded-lg p-1 bg-[var(--bg-sidebar)]">
       <button
-        onClick={() => setLang("fr")}
+        onClick={() => setLocale("fr")}
         className={[
-          "px-2 py-0.5 rounded text-xs font-medium transition-colors",
-          lang === "fr"
-            ? "bg-gray-900 text-white"
-            : "text-gray-500 hover:text-gray-800",
+          "px-2.5 py-0.5 rounded text-xs font-bold transition-all",
+          locale === "fr"
+            ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)]"
+            : "text-[var(--text-muted)] hover:text-[var(--text)]",
         ].join(" ")}
       >
-        {common.fr}
+        FR
       </button>
       <button
-        onClick={() => setLang("en")}
+        onClick={() => setLocale("en")}
         className={[
-          "px-2 py-0.5 rounded text-xs font-medium transition-colors",
-          lang === "en"
-            ? "bg-gray-900 text-white"
-            : "text-gray-500 hover:text-gray-800",
+          "px-2.5 py-0.5 rounded text-xs font-bold transition-all",
+          locale === "en"
+            ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)]"
+            : "text-[var(--text-muted)] hover:text-[var(--text)]",
         ].join(" ")}
       >
-        {common.en}
+        EN
       </button>
     </div>
   );
 }
 
+// ── ThemeSwitcher ─────────────────────────────────────────────────────────────
+// Même toggle que la Sidebar — cohérence totale.
+function ThemeSwitcher() {
+  const { theme, toggle } = useTheme();
+  const { dictionary: d } = useLanguage();
+
+  return (
+    <button
+      onClick={toggle}
+      title={theme === "dark" ? d.common.lightMode : d.common.darkMode}
+      className="p-2 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg)] hover:text-[var(--text)] transition-all"
+    >
+      {theme === "dark" ? (
+        // Icône soleil inline — évite import supplémentaire
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+        </svg>
+      ) : (
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      )}
+    </button>
+  );
+}
+
 // ── ProfileMenu ───────────────────────────────────────────────────────────────
+// Toutes les couleurs via CSS vars — s'adapte automatiquement light/dark
+// et aux couleurs sectorielles via sectorTheme.primary.
 function ProfileMenu() {
-  const { user, logout } = useAuth();
-  const { lang } = useLanguage();
+  const { user, logout }  = useAuth();
+  const { dictionary: d } = useLanguage();
+  const { theme: sectorTheme } = useSector();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const common = lang === "fr" ? commonFr : commonEn;
 
-  // Fermer si clic extérieur
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
@@ -64,61 +92,51 @@ function ProfileMenu() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const handleLogout = async () => {
-    setOpen(false);
-    await logout();
-  };
-
-  const handleProfile = () => {
-    setOpen(false);
-    router.push(ROUTES.profile);
-  };
-
   const displayName = user?.entreprise?.name ?? user?.name ?? "—";
-  const initials = displayName
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .join("");
+  const userInitials = initials(user?.name ?? "");
+
+  const handleLogout = async () => { setOpen(false); await logout(); };
+  const handleProfile = () => { setOpen(false); router.push(ROUTES.profile); };
 
   return (
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-[var(--bg)] transition-colors"
       >
-        {/* Avatar initiales */}
-        <span className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold text-gray-700">
-          {initials || <User size={14} />}
+        {/* Avatar couleur sectorielle — cohérent avec la sidebar */}
+        <span
+          className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+          style={{ backgroundColor: sectorTheme.primary }}
+        >
+          {userInitials || <User size={13} />}
         </span>
-        <span className="text-sm font-medium text-gray-700 max-w-[140px] truncate hidden sm:block">
+        <span className="text-sm font-medium text-[var(--text)] max-w-[140px] truncate hidden sm:block">
           {displayName}
         </span>
         <ChevronDown
           size={14}
-          className={[
-            "text-gray-400 transition-transform",
-            open ? "rotate-180" : "",
-          ].join(" ")}
+          className={["text-[var(--text-muted)] transition-transform duration-200", open ? "rotate-180" : ""].join(" ")}
         />
       </button>
 
+      {/* Dropdown — mêmes variables que sidebar */}
       {open && (
-        <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
+        <div className="absolute right-0 mt-1 w-48 bg-[var(--bg-sidebar)] rounded-xl shadow-lg border border-[var(--border)] py-1 z-50">
           <button
             onClick={handleProfile}
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-[var(--text)] hover:bg-[var(--bg)] transition-colors"
           >
-            <User size={15} className="text-gray-400" />
-            {common.profile}
+            <User size={15} className="text-[var(--text-muted)] flex-shrink-0" />
+            {d.common.profile}
           </button>
-          <div className="h-px bg-gray-100 my-1" />
+          <div className="h-px bg-[var(--border)] my-1" />
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+            className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors"
           >
-            <LogOut size={15} className="text-red-400" />
-            {common.logout}
+            <LogOut size={15} className="text-red-400 flex-shrink-0" />
+            {d.common.logout}
           </button>
         </div>
       )}
@@ -127,30 +145,41 @@ function ProfileMenu() {
 }
 
 // ── Header principal ──────────────────────────────────────────────────────────
+// bg-[var(--bg-sidebar)] : même fond que la sidebar → cohérence visuelle
+// border-[var(--border)]  : s'adapte au thème light/dark automatiquement
 export function Header() {
   const { user } = useAuth();
-  const { theme } = useSector();
-  const { lang } = useLanguage();
-  const common = lang === "fr" ? commonFr : commonEn;
+  const { theme: sectorTheme } = useSector();
+  const { dictionary: d, locale } = useLanguage();
 
-  const entrepriseName = user?.entreprise?.name ?? common.espacePME;
+  const entrepriseName = user?.entreprise?.name ?? d.common.espacePME;
 
   return (
-    <header className="flex items-center justify-between h-16 px-6 bg-white border-b border-gray-100">
-      {/* Nom de l'entreprise */}
-      <div className="flex items-center gap-2">
-        <Globe size={16} style={{ color: theme.accent }} />
+    <header className="flex items-center justify-between h-16 px-6 bg-[var(--bg-sidebar)] border-b border-[var(--border)] flex-shrink-0">
+
+      {/* Nom entreprise + indicateur secteur */}
+      <div className="flex items-center gap-2 min-w-0">
+        <div
+          className="w-2 h-2 rounded-full flex-shrink-0"
+          style={{ backgroundColor: sectorTheme.accent }}
+        />
         <span
-          className="text-sm font-semibold truncate max-w-[200px]"
-          style={{ color: theme.primary }}
+          className="text-sm font-semibold truncate max-w-[220px]"
+          style={{ color: sectorTheme.primary }}
         >
           {entrepriseName}
+        </span>
+        <span className="text-xs text-[var(--text-muted)] hidden md:block flex-shrink-0">
+          — {sectorTheme.label}
         </span>
       </div>
 
       {/* Actions droite */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <ThemeSwitcher />
+        <div className="w-px h-5 bg-[var(--border)]" />
         <LangSwitcher />
+        <div className="w-px h-5 bg-[var(--border)]" />
         <ProfileMenu />
       </div>
     </header>

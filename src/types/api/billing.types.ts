@@ -73,6 +73,32 @@ export interface ServicePaiement {
   is_active: boolean;
 }
 
+
+// ── Purchase Metadata (stocké sur Transaction après un achat) ─────────────────
+
+export interface PurchaseModuleEntry {
+  slug:             string;
+  nom_fr:           string;
+  quantite:         number;
+  quota_total:      number;
+  prix_ligne:       string;
+  included_in_plan: boolean;
+  is_unlimited:     boolean;
+}
+
+export interface PurchaseMetadata {
+  plan:             { slug: string; nom: string; prix: string };
+  modules_actives:  PurchaseModuleEntry[];
+  modules_inclus:   PurchaseModuleEntry[];
+  plan_prix:        string;
+  modules_total:    string;
+  grand_total:      string;
+  devise:           string;
+  upgrade_plan:     boolean;
+}
+
+
+
 export interface Transaction {
   id: string;
   wallet: string;
@@ -90,6 +116,7 @@ export interface Transaction {
   external_reference: string | null;
   label: string;
   created_at: string;
+  metadata?: PurchaseMetadata | Record<string, never> | null;
 }
 
 export interface TransactionFilters {

@@ -1,17 +1,17 @@
 // src/components/conversations/MessageBubble.tsx
 "use client";
-import type { MessageRole } from "@/types/api";
+import type { AIMessageRole as MessageRole } from "@/types/api/agent.types";
 
 interface MessageBubbleProps {
-  role: MessageRole;
-  content: string;
-  time?: string;
+  role:       MessageRole;
+  content:    string;
+  time?:      string;
   roleLabel?: string;
 }
 
 export function MessageBubble({ role, content, time, roleLabel }: MessageBubbleProps) {
   const isAssistant = role === "assistant";
-  const isStatus = role === "status";
+  const isStatus    = role === "status";
 
   if (isStatus) {
     return (
@@ -33,7 +33,9 @@ export function MessageBubble({ role, content, time, roleLabel }: MessageBubbleP
         {isAssistant ? "B" : "U"}
       </div>
       <div className="flex flex-col gap-1">
-        {roleLabel && <span className="text-xs text-[var(--text-muted)] px-1">{roleLabel}</span>}
+        {roleLabel && (
+          <span className="text-xs text-[var(--text-muted)] px-1">{roleLabel}</span>
+        )}
         <div
           className={[
             "px-4 py-2.5 rounded-2xl text-sm leading-relaxed",
@@ -46,7 +48,10 @@ export function MessageBubble({ role, content, time, roleLabel }: MessageBubbleP
           {content}
         </div>
         {time && (
-          <span className={["text-xs text-[var(--text-muted)] px-1", isAssistant ? "text-left" : "text-right"].join(" ")}>
+          <span className={[
+            "text-xs text-[var(--text-muted)] px-1",
+            isAssistant ? "text-left" : "text-right",
+          ].join(" ")}>
             {time}
           </span>
         )}

@@ -1,206 +1,168 @@
-// src/app/pme/dashboard/page.tsx
 "use client";
+// src/app/(dashboard)/dashboard/page.tsx
+// Dashboard central — N3. Data-driven, sectoriel, branché sur vraies données.
+// S56 refonte — S57 fix — S63 enrichissement (DashboardQuickActions, FeaturesChart,
+//   RecentFeatures, Subscription).
+// S64 FIX — BUG-S64-04 : conversationsRepository → agentRepository.listConversations
+//           Les conversations live sont sur /api/v1/agent/conversations/, pas /api/v1/conversations/
+
 import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useLanguage } from "@/contexts/LanguageContext";
-import {
-  statsRepository,
-  conversationsRepository,
-  subscriptionsRepository,
-  rendezVousRepository,
-  type WeeklyDataPoint,
-} from "@/repositories";
-import { PageLoader } from "@/components/ui";
-import { PLANS_CONFIG } from "@/lib/constants";
-import type {
-  TenantStats,
-  Conversation,
-  Subscription,
-  RendezVous,
-} from "@/types/api";
+import { useRouter }    from "next/navigation";
+import { useAuth }      from "@/contexts/AuthContext";
+import { useLanguage }  from "@/contexts/LanguageContext";
+import { useSector }    from "@/hooks/useSector";
+import { agentRepository }           from "@/repositories/agent.repository";
+import { subscriptionsRepository }   from "@/repositories";
+import { entrepriseStatsRepository } from "@/repositories/stats.repository";
+import { Spinner }                   from "@/components/ui";
+import { DashboardHeroKPIs }         from "./_components/DashboardHeroKPIs";
+import { DashboardSectorWidgets }    from "./_components/DashboardSectorWidgets";
+import { DashboardQuickActions }     from "./_components/DashboardQuickActions";
+import { DashboardFeaturesChart }    from "./_components/DashboardFeaturesChart";
+import { DashboardRecentFeatures }   from "./_components/DashboardRecentFeatures";
+import { DashboardSubscription }     from "./_components/DashboardSubscription";
+import type { Subscription }         from "@/types/api";
+import type { AIConversation }       from "@/types/api/agent.types";
+import type { EntrepriseStats }      from "@/types/api/stats.types";
 
-import { KpiCards } from "./_components/KpiCards";
-import { WeekChart } from "./_components/WeekChart";
-import { ActiveConversations } from "./_components/ActiveConversations";
-import { RecentConversations } from "./_components/RecentConversations";
-import { SubscriptionUsage } from "./_components/SubscriptionUsage";
-import { TodayAppointments } from "./_components/TodayAppointments";
-import { EmailStats } from "./_components/EmailStats";
-import { QuickLinks } from "./_components/QuickLinks";
-import { ConversationReportModal } from "../bots/_components/ConversationReportModal";
-import { SECTOR_COLORS } from "../bots/_components/bots.types";
-// ─────────────────────────────────────────────────────────────────────────────
+export default function DashboardPage() {
+  const router                    = useRouter();
+  const { user }                  = useAuth();
+  const { locale, dictionary: d } = useLanguage();
+  const { theme }                 = useSector();
 
-export default function PmeDashboardPage() {
-  const { user } = useAuth();
-  const { dictionary: d } = useLanguage();
   const t = d.dashboard.pme;
 
-  const [stats, setStats] = useState<TenantStats | null>(null);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [todayAppointments, setTodayAppointments] = useState<RendezVous[]>([]);
-  const [weeklyData, setWeeklyData] = useState<WeeklyDataPoint[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
+  const [loading,       setLoading]       = useState(true);
+  const [stats,         setStats]         = useState<EntrepriseStats | null>(null);
+  const [conversations, setConversations] = useState<AIConversation[]>([]);
+  const [sub,           setSub]           = useState<Subscription | null>(null);
 
-  const fetchAll = useCallback(async () => {
+  // Suppression de la variable locale inutilisée
+  void locale;
+
+  const loadAll = useCallback(async () => {
     setLoading(true);
-    const today = new Date().toISOString().split("T")[0];
-    const [s, c, sub, appts, weekly] = await Promise.all([
-      statsRepository.getByTenant().catch(() => null),
-      conversationsRepository.getList().catch(() => ({
-        results: [] as Conversation[],
-        count: 0,
-        next: null,
-        previous: null,
-      })),
-      subscriptionsRepository.getMine().catch(() => null),
-      rendezVousRepository.getList().catch(() => ({
-        results: [] as RendezVous[],
-        count: 0,
-        next: null,
-        previous: null,
-      })),
-      statsRepository.getWeekly().catch(() => []),
-    ]);
-    setStats(s);
-    setConversations((c.results ?? []).slice(0, 5));
-    setSubscription(sub);
-    setTodayAppointments(
-      (appts.results ?? [])
-        .filter((a: RendezVous) => a.scheduled_at?.startsWith(today))
-        .slice(0, 3),
-    );
-    setWeeklyData(weekly);
-    setLoading(false);
+    try {
+      const [statsRes, convsRes, subRes] = await Promise.all([
+        entrepriseStatsRepository.getStats(),
+        // S64 FIX — agentRepository.listConversations (endpoint /api/v1/agent/conversations/)
+        // l'ancien conversationsRepository pointait vers /api/v1/conversations/ (déprécié)
+        agentRepository.listConversations({ mode: "live" }).catch(() => ({ results: [] as AIConversation[], count: 0, next: null, previous: null })),
+        subscriptionsRepository.getMine().catch((): null => null),
+      ]);
+      setStats(statsRes);
+      const convList = Array.isArray(convsRes)
+        ? (convsRes as AIConversation[])
+        : (convsRes as { results: AIConversation[] }).results ?? [];
+      setConversations(convList.slice(0, 5));
+      setSub(subRes);
+    } catch {
+      /* fail silently */
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+  useEffect(() => { loadAll(); }, [loadAll]);
 
-  if (loading) return <PageLoader />;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Spinner className="border-[var(--border)] border-t-[var(--color-primary)]" />
+      </div>
+    );
+  }
 
-  // ── Plan courant (pour UsageBar) ─────────────────────────────────────────
-  const currentPlan = subscription
-    ? (PLANS_CONFIG.find((p) => p.slug === subscription.plan?.slug) ?? null)
-    : null;
+  const featuresActives = stats?.features_actives ?? [];
 
   return (
-    <>
-      <div className="space-y-6 animate-fade-in">
-        {/* ── Header ──────────────────────────────────────────────────────── */}
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--text)]">{t.title}</h1>
-          <p className="text-sm text-[var(--text-muted)] mt-0.5">
-            {t.welcome},{" "}
-            <span className="font-semibold text-[var(--text)]">
-              {user?.name}
-            </span>
-          </p>
-        </div>
+    <div className="space-y-6 p-6">
 
-        {/* ── KPI Cards ───────────────────────────────────────────────────── */}
-        <KpiCards
-          stats={stats}
-          labels={{
-            messagesToday: t.messagesToday,
-            callsToday: t.callsToday,
-            appointmentsToday: t.appointmentsToday,
-            thisWeek: t.thisWeek,
-          }}
-        />
-
-        {/* ── Conversations actives ────────────────────────────────────────── */}
-        {stats && (
-          <ActiveConversations
-            stats={stats}
-            label={t.activeConversations ?? "Conversations actives"}
-          />
-        )}
-
-        {/* ── Accès rapides ────────────────────────────────────────────────── */}
-        <QuickLinks
-          labels={{
-            title: t.quickLinks,
-            bots: d.nav.bots,
-            services: d.nav.services,
-            appointments: d.nav.appointments,
-            billing: d.nav.billing,
-          }}
-        />
-
-        {/* ── Contenu principal 2 colonnes ─────────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Colonne gauche 3/5 */}
-          <div className="lg:col-span-3 space-y-6">
-            <WeekChart data={weeklyData} title={t.thisWeek} />
-            <RecentConversations
-              conversations={conversations}
-              onSelect={setSelectedConv}
-              labels={{
-                title: t.recentConversations,
-                empty: t.noConversations,
-                channelWhatsapp: t.channel_whatsapp,
-                channelVoice: t.channel_voice,
-              }}
-            />
-          </div>
-
-          {/* Colonne droite 2/5 */}
-          <div className="lg:col-span-2 space-y-6">
-            <SubscriptionUsage
-              subscription={subscription}
-              stats={stats}
-              currentPlan={currentPlan}
-              labels={{
-                title: t.subscription,
-                active: d.billing.statusActive,
-                suspended: d.billing.statusSuspended,
-                renewsOn: d.billing.renewsOn,
-                changePlan: d.billing.changePlan,
-                usageMessages: t.usageMessages,
-                usageCalls: t.usageCalls,
-                noSubscription: t.noSubscription,
-              }}
-            />
-            <TodayAppointments
-              appointments={todayAppointments}
-              labels={{
-                title: t.todayAppointments,
-                viewAgenda: t.viewAgenda,
-                none: t.noAppointmentsToday,
-                statuses: {
-                  confirme: d.appointments.statuses.confirmed,
-                  en_attente: d.appointments.statuses.pending,
-                  termine: d.appointments.statuses.done,
-                  annule: d.appointments.statuses.cancelled,
-                },
-              }}
-            />
-            <EmailStats
-              stats={stats}
-              labels={{
-                title: t.emailStats,
-                sentWeek: t.emailsSentWeek,
-                opened: t.emailsOpened,
-                failed: t.emailsFailed,
-              }}
-            />
-          </div>
-        </div>
+      {/* ── Titre ── */}
+      <div>
+        <h1 className="text-2xl font-black text-[var(--text)]">
+          {t.welcome}{user?.name ? `, ${user.name.split(" ")[0]}` : ""} 👋
+        </h1>
+        <p className="text-sm text-[var(--text-muted)] mt-1">{t.subtitle}</p>
       </div>
 
-      {/* ── Modale conversation (rapport détaillé + chat coulissant) ───────── */}
-      {selectedConv && (
-        <ConversationReportModal
-          conversation={selectedConv}
-          onClose={() => setSelectedConv(null)}
-          d={d}
-          colors={SECTOR_COLORS.default}
-        />
-      )}
-    </>
+      {/* ── Actions rapides ── */}
+      <DashboardQuickActions featuresActives={featuresActives} />
+
+      {/* ── Hero KPIs ── */}
+      <DashboardHeroKPIs stats={stats} />
+
+      {/* ── Widgets sectoriels ── */}
+      <DashboardSectorWidgets stats={stats} featuresActives={featuresActives} />
+
+      {/* ── Graphique multi-features ── */}
+      <DashboardFeaturesChart featuresActives={featuresActives} />
+
+      {/* ── Grille principale ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+        {/* Conversations récentes — 2/3 */}
+        <div className="lg:col-span-2 bg-[var(--bg-card)] rounded-2xl border border-[var(--border)]">
+          <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
+            <h2 className="text-sm font-bold text-[var(--text)]">
+              {t.recentConversations}
+            </h2>
+            <span className="text-xs font-bold text-[var(--text-muted)]">
+              {t.thisWeek}
+            </span>
+          </div>
+          {conversations.length === 0 ? (
+            <div className="flex items-center justify-center py-10 text-[var(--text-muted)]">
+              <p className="text-sm">{t.noConversations}</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-[var(--border)]">
+              {conversations.map((conv) => (
+                <div
+                  key={conv.id}
+                  className="px-5 py-3 flex items-center gap-3 hover:bg-[var(--bg)] transition-colors cursor-pointer"
+                  onClick={() => router.push("/conversations")}
+                >
+                  <div
+                    className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-black text-white"
+                    style={{ background: theme?.primary ?? "var(--color-primary)" }}
+                  >
+                    {conv.contact?.nom?.[0]?.toUpperCase() ?? "?"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-[var(--text)] truncate">
+                      {conv.contact?.nom ?? conv.contact?.phone ?? "—"}
+                    </p>
+                    <p className="text-xs text-[var(--text-muted)]">
+                      {conv.canal === "vocal" ? t.channel_voice : t.channel_whatsapp}
+                    </p>
+                  </div>
+                  <span
+                    className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                    style={{
+                      background: conv.statut === "active"
+                        ? "color-mix(in srgb, var(--color-primary) 15%, transparent)"
+                        : "var(--bg)",
+                      color: conv.statut === "active"
+                        ? "var(--color-primary)"
+                        : "var(--text-muted)",
+                    }}
+                  >
+                    {conv.statut}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Colonne droite — 1/3 */}
+        <div className="space-y-4">
+          <DashboardSubscription sub={sub} />
+          <DashboardRecentFeatures featuresActives={featuresActives} />
+        </div>
+      </div>
+    </div>
   );
 }

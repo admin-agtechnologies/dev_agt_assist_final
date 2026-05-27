@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AGT — Page Test Bot v3 — Maquette validée S49</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--grn:#059669;--gl:#d1fae5;--gd:#065f46;--org:#d97706;--ol:#fef3c7;--od:#92400e;--bg:#ffffff;--bg2:#f9fafb;--txt:#111827;--txt2:#6b7280;--bdr:#e5e7eb;--rm:8px;--rl:12px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f3f4f6;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.page{display:flex;height:680px;width:1100px;border:0.5px solid var(--bdr);border-radius:var(--rl);overflow:hidden;background:var(--bg);position:relative;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.sim{flex:1;display:flex;flex-direction:column;border-right:0.5px solid var(--bdr);min-width:0}
+.sim-top{padding:12px 16px;border-bottom:0.5px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.sim-left{display:flex;align-items:center;gap:10px}
+.bav{width:34px;height:34px;border-radius:50%;background:var(--gl);display:flex;align-items:center;justify-content:center}
+.bname{font-size:14px;font-weight:500;color:var(--txt)}
+.bsub{font-size:11px;color:var(--txt2)}
+.sim-actions{display:flex;align-items:center;gap:6px}
+.pill-on{font-size:10px;padding:3px 9px;border-radius:12px;background:#ecfdf5;color:var(--gd);border:0.5px solid #a7f3d0;display:flex;align-items:center;gap:3px}
+.tab-wa{font-size:11px;padding:5px 11px;border-radius:20px;background:var(--grn);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;gap:4px}
+.tvw{position:relative;display:inline-flex}
+.tab-vc{font-size:11px;padding:5px 11px;border-radius:20px;background:transparent;color:var(--txt2);border:0.5px solid var(--bdr);cursor:pointer;display:flex;align-items:center;gap:4px}
+.tvw:hover .tab-vc{border-color:var(--grn);color:var(--grn)}
+.dh{display:none;position:absolute;top:115%;left:50%;transform:translateX(-50%);background:var(--bg);border:0.5px solid var(--bdr);border-radius:var(--rm);padding:9px 13px;white-space:nowrap;z-index:5;text-align:center}
+.tvw:hover .dh{display:block}
+.dh-lbl{font-size:10px;color:var(--txt2);margin-bottom:6px}
+.dh-btn{font-size:11px;padding:5px 11px;background:var(--grn);color:#fff;border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:5px;margin:0 auto}
+.tab-rst{font-size:11px;padding:5px 11px;border-radius:20px;background:transparent;color:var(--txt2);border:0.5px solid var(--bdr);cursor:pointer;display:flex;align-items:center;gap:4px}
+.messages{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.mu{align-self:flex-end;background:var(--grn);color:#fff;padding:9px 13px;border-radius:16px 16px 4px 16px;font-size:13px;max-width:68%;line-height:1.4}
+.mb{align-self:flex-start;background:var(--bg2);color:var(--txt);padding:10px 13px;border-radius:16px 16px 16px 4px;font-size:13px;max-width:74%;border:0.5px solid var(--bdr);line-height:1.5}
+.mb strong{font-weight:500}
+.tk{font-size:10px;color:var(--txt2);display:flex;align-items:center;gap:3px;margin-top:2px}
+.tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+.tag{font-size:10px;padding:2px 8px;border-radius:10px;display:flex;align-items:center;gap:3px;border:0.5px solid}
+.tg{background:var(--gl);color:var(--gd);border-color:#a7f3d0}
+.tb{background:#dbeafe;color:#1e40af;border-color:#93c5fd}
+.tag i{font-size:11px}
+.acard{border-radius:var(--rm);border:0.5px solid #a7f3d0;background:#f0fdf4;overflow:hidden;max-width:74%;align-self:flex-start}
+.acard-h{padding:9px 12px;display:flex;align-items:center;justify-content:space-between}
+.acard-t{font-size:12px;font-weight:500;color:var(--gd);display:flex;align-items:center;gap:6px}
+.acard-sub{font-size:9px;color:var(--gd);opacity:.7;display:block;margin-top:1px}
+.acard-ok{font-size:20px;color:var(--grn)}
+.acard-b{padding:2px 12px 10px}
+.ar{display:flex;align-items:center;gap:7px;padding:3px 0;font-size:12px;color:var(--txt2)}
+.ar i{font-size:13px;width:15px;flex-shrink:0}
+.ar span{color:var(--txt)}
+.ar-warn{font-size:10px;color:var(--od);background:var(--ol);padding:4px 9px;border-radius:6px;display:flex;align-items:center;gap:5px;margin-top:5px}
+.ecard{border-radius:var(--rm);border:0.5px solid #bfdbfe;background:#eff6ff;max-width:74%;align-self:flex-start;cursor:pointer}
+.ecard:hover{opacity:.9}
+.ecard-h{padding:9px 12px;display:flex;align-items:center;justify-content:space-between}
+.ecard-t{font-size:12px;font-weight:500;color:#1e40af;display:flex;align-items:center;gap:5px}
+.ecard-badge{font-size:9px;padding:2px 7px;border-radius:8px;background:#dbeafe;color:#1e40af;font-weight:500}
+.ecard-pre{font-size:10px;padding:0 12px 5px;color:#1e40af;opacity:.75}
+.ecard-see{font-size:10px;padding:0 12px 9px;display:flex;align-items:center;gap:4px;color:var(--grn);font-weight:500}
+.sugs{padding:8px 14px;display:flex;gap:6px;flex-wrap:wrap;border-top:0.5px solid var(--bdr)}
+.slbl{font-size:10px;color:var(--txt2);align-self:center;flex-shrink:0}
+.sbtn{font-size:11px;padding:4px 10px;border:0.5px solid var(--bdr);border-radius:12px;background:transparent;color:var(--txt2);cursor:pointer}
+.sbtn:hover{border-color:var(--grn);color:var(--grn)}
+.irow{padding:10px 14px;border-top:0.5px solid var(--bdr);display:flex;gap:8px}
+.irow input{flex:1;font-size:13px;padding:8px 13px;border-radius:20px;border:0.5px solid var(--bdr);background:var(--bg2);color:var(--txt);outline:none}
+.snd{width:32px;height:32px;border-radius:50%;background:var(--grn);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.snd i{color:#fff;font-size:14px}
+.panel{width:280px;display:flex;flex-direction:column;background:var(--bg);flex-shrink:0}
+.pbody{flex:1;overflow-y:auto}
+.acc{border-bottom:0.5px solid var(--bdr)}
+.ach{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;cursor:pointer;user-select:none}
+.acl{font-size:10px;font-weight:500;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:5px}
+.acl i{font-size:13px}
+.ach .chv{font-size:13px;color:var(--txt2);transition:transform .2s}
+.ach .chv.open{transform:rotate(180deg)}
+.acb{padding:0 13px 11px}
+.dr{display:flex;justify-content:space-between;align-items:flex-start;padding:3px 0}
+.dl{font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:4px}
+.dl i{font-size:12px}
+.dv{font-size:12px;color:var(--txt);font-weight:500;text-align:right;max-width:160px;word-break:break-word}
+.dv.mt{color:var(--txt2);font-weight:400;font-size:11px}
+.fbox{margin-top:6px;padding:8px 10px;background:var(--bg2);border-radius:var(--rm);font-size:11px;color:var(--txt2);line-height:1.5;border:0.5px solid var(--bdr)}
+.iter{font-size:10px;padding:2px 8px;border-radius:8px;background:var(--bg2);color:var(--txt2);border:0.5px solid var(--bdr)}
+.act-row{display:flex;align-items:center;gap:7px;padding:5px 3px;border-bottom:0.5px solid var(--bdr);cursor:pointer;border-radius:5px}
+.act-row:last-child{border-bottom:none}
+.act-row:hover{background:var(--bg2)}
+.aico{width:25px;height:25px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.aico.ok{background:var(--gl);color:var(--grn)}
+.aico.ml{background:#dbeafe;color:#1d4ed8}
+.aico i{font-size:12px}
+.ain{flex:1;min-width:0}
+.an{font-size:11px;font-weight:500;color:var(--txt)}
+.am{font-size:10px;color:var(--txt2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:145px}
+.eye{font-size:11px;color:var(--grn)}
+.pfooter{padding:10px 13px;border-top:0.5px solid var(--bdr)}
+.cfgbtn{width:100%;padding:8px;border-radius:var(--rm);border:0.5px solid var(--bdr);background:transparent;color:var(--txt);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.cfgbtn:hover{background:var(--bg2)}
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);align-items:center;justify-content:center;z-index:100}
+.ov.show{display:flex}
+.modal{background:var(--bg);border-radius:var(--rl);border:0.5px solid var(--bdr);width:400px;max-height:560px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.15)}
+.modal-sm{width:380px}
+.mhd{padding:12px 16px;border-bottom:0.5px solid var(--bdr);display:flex;align-items:center;justify-content:space-between}
+.mt2{font-size:13px;font-weight:500;color:var(--txt)}
+.mcl{background:none;border:none;cursor:pointer;color:var(--txt2);font-size:18px;padding:0;line-height:1}
+.mbody{padding:15px 16px;display:flex;flex-direction:column;gap:12px}
+.flbl{font-size:10px;font-weight:500;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;display:block}
+.fta{width:100%;font-size:12px;padding:9px 11px;border-radius:var(--rm);border:0.5px solid var(--bdr);background:var(--bg2);color:var(--txt);resize:vertical;height:78px;font-family:inherit;line-height:1.5}
+.adt{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);cursor:pointer;border:none;background:none;padding:4px 0;width:100%}
+.adt i.cv{transition:transform .2s}
+.adt.open i.cv{transform:rotate(90deg)}
+.ada{display:none;flex-direction:column;gap:10px}
+.ada.show{display:flex}
+.rr{display:flex;align-items:center;gap:10px}
+.rr input[type=range]{flex:1}
+.rv{font-size:12px;font-weight:500;color:var(--txt);min-width:26px;text-align:right}
+.mft{padding:11px 16px;border-top:0.5px solid var(--bdr);display:flex;align-items:center;justify-content:space-between}
+.back-cfg{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--grn);cursor:pointer;border:none;background:none;padding:0}
+.bc{padding:6px 13px;border-radius:var(--rm);border:0.5px solid var(--bdr);background:transparent;color:var(--txt2);font-size:11px;cursor:pointer}
+.bs{padding:6px 13px;border-radius:var(--rm);border:none;background:var(--grn);color:#fff;font-size:11px;cursor:pointer;font-weight:500}
+.res-card{border-radius:var(--rm);border:0.5px solid #a7f3d0;background:#f0fdf4;overflow:hidden;margin:14px 16px}
+.rch{padding:10px 13px;display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid #a7f3d0}
+.rct{font-size:13px;font-weight:500;color:var(--gd);display:flex;align-items:center;gap:7px}
+.rct-sub{font-size:9px;color:var(--gd);opacity:.7;display:block;margin-top:1px}
+.rck{font-size:22px;color:var(--grn)}
+.rcb{padding:8px 13px 13px}
+.rcr{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;color:var(--txt2)}
+.rcr i{font-size:14px;width:16px;flex-shrink:0;color:var(--grn)}
+.rcr span{color:var(--txt)}
+.rc-warn{font-size:10px;color:var(--od);background:var(--ol);padding:4px 10px;border-radius:6px;display:flex;align-items:center;gap:5px;margin-top:6px}
+.faq-note{margin:0 16px 10px;font-size:10px;color:var(--txt2);padding:6px 10px;background:var(--bg2);border-radius:var(--rm);display:flex;align-items:center;gap:5px;border:0.5px solid var(--bdr)}
+.faq-list{padding:0 16px 14px;display:flex;flex-direction:column;gap:9px}
+.faq-item{border:0.5px solid var(--bdr);border-radius:var(--rm);overflow:hidden}
+.faq-q{padding:9px 12px;background:var(--bg2);display:flex;align-items:flex-start;gap:7px;font-size:12px;color:var(--txt);font-weight:500;line-height:1.4}
+.faq-q i{font-size:14px;color:var(--grn);flex-shrink:0;margin-top:1px}
+.faq-a{padding:9px 12px;font-size:12px;color:var(--txt2);line-height:1.5;display:flex;align-items:flex-start;gap:7px}
+.faq-a i{font-size:14px;flex-shrink:0;margin-top:1px}
+.eml-c{padding:14px 16px}
+.eml-to{font-size:11px;color:var(--txt2);margin-bottom:10px}
+.eml-sub{font-size:13px;font-weight:500;color:var(--txt);margin-bottom:10px;padding-bottom:9px;border-bottom:0.5px solid var(--bdr)}
+.eml-body{font-size:12px;color:var(--txt);line-height:1.6}
+.vbox{background:#111;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;padding:20px}
+.vbox i{font-size:36px;color:#fff;opacity:.5}
+.vbox p{font-size:11px;color:#fff;opacity:.4;text-align:center}
+.vsec{font-size:10px;background:rgba(255,255,255,.12);color:#fff;padding:3px 10px;border-radius:9px;margin-top:4px}
+.vinfo{padding:11px 16px;font-size:11px;color:var(--txt2)}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="sim">
+    <div class="sim-top">
+      <div class="sim-left">
+        <div class="bav"><i class="ti ti-robot" style="font-size:16px;color:#059669"></i></div>
+        <div><div class="bname">Bot WhatsApp Demo</div><div class="bsub">Simulez une conversation avec votre assistant.</div></div>
+      </div>
+      <div class="sim-actions">
+        <span class="pill-on"><i class="ti ti-wifi"></i>En ligne</span>
+        <button class="tab-wa"><i class="ti ti-brand-whatsapp"></i>WhatsApp</button>
+        <div class="tvw">
+          <button class="tab-vc"><i class="ti ti-microphone"></i>Assistant Vocal</button>
+          <div class="dh">
+            <div class="dh-lbl">Fonctionnalité bientôt disponible</div>
+            <button class="dh-btn" onclick="openM('vidM')"><i class="ti ti-player-play"></i>Voir la démo</button>
+          </div>
+        </div>
+        <button class="tab-rst"><i class="ti ti-refresh"></i>Réinitialiser</button>
+      </div>
+    </div>
+    <div class="messages">
+      <div class="mu">Je voudrais réserver une chambre pour demain à 14h</div>
+      <div style="align-self:flex-start;max-width:74%;display:flex;flex-direction:column;gap:3px">
+        <div class="mb">Bien sûr ! Voici nos chambres :<br>1. Chambre Standard — 2000 XAF<br>2. Suite Deluxe — 10 000 XAF<br><br>Laquelle vous intéresse ?</div>
+        <div class="tk"><i class="ti ti-coin"></i>2 364 tokens utilisés</div>
+      </div>
+      <div class="mu">chambre standard, Gabriel Nomo, +237655585975, nomo@mail.com, 25 ans</div>
+      <div style="align-self:flex-start;max-width:74%;display:flex;flex-direction:column;gap:3px">
+        <div class="mb">Parfait Gabriel ! Votre réservation pour une <strong>Chambre Standard</strong> est confirmée pour le <strong>22 mai à 14h00</strong>. Un email vous a été envoyé à nomo@mail.com. À bientôt !</div>
+        <div class="tags">
+          <span class="tag tg"><i class="ti ti-user-check"></i>Contact collecté</span>
+          <span class="tag tg"><i class="ti ti-calendar-check"></i>RDV planifié</span>
+          <span class="tag tb"><i class="ti ti-mail"></i>FAQ répondue</span>
+        </div>
+        <div class="tk"><i class="ti ti-coin"></i>3 279 tokens utilisés</div>
+      </div>
+      <div class="acard">
+        <div class="acard-h">
+          <div><span class="acard-t"><i class="ti ti-calendar-check"></i>RDV planifié</span><span class="acard-sub">ACTION EXÉCUTÉE</span></div>
+          <i class="ti ti-circle-check acard-ok"></i>
+        </div>
+        <div class="acard-b">
+          <div class="ar"><i class="ti ti-user"></i><span>[TEST] Gabriel Nomo</span></div>
+          <div class="ar"><i class="ti ti-phone"></i><span>+237655585975</span></div>
+          <div class="ar"><i class="ti ti-clock"></i><span>22 mai 2026, 14:00</span></div>
+          <div class="ar"><i class="ti ti-key"></i><span>Chambre Standard</span></div>
+          <div class="ar"><i class="ti ti-map-pin"></i><span>Hotel Hilltop Yaounde — Siège</span></div>
+          <div class="ar-warn"><i class="ti ti-alert-triangle"></i>Mode test — aucun RDV réel.</div>
+        </div>
+      </div>
+      <div class="ecard" onclick="openM('emlM')">
+        <div class="ecard-h">
+          <span class="ecard-t"><i class="ti ti-mail"></i>Email de confirmation</span>
+          <span class="ecard-badge">ENVOYÉ</span>
+        </div>
+        <div class="ecard-pre">À : nomo@mail.com — "Confirmation de votre réservation..."</div>
+        <div class="ecard-see"><i class="ti ti-eye"></i>Voir le contenu de l'email</div>
+      </div>
+    </div>
+    <div class="sugs">
+      <span class="slbl">Suggestions :</span>
+      <button class="sbtn">Réserver une chambre</button>
+      <button class="sbtn">Nos tarifs ?</button>
+      <button class="sbtn">Disponibilités</button>
+      <button class="sbtn">Parler à quelqu'un</button>
+    </div>
+    <div class="irow">
+      <input placeholder="Écrivez un message..." type="text"/>
+      <button class="snd"><i class="ti ti-send"></i></button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="pbody">
+      <div class="acc">
+        <div class="ach" onclick="tA(this)"><span class="acl"><i class="ti ti-database"></i>Données collectées</span><i class="ti ti-chevron-down chv open"></i></div>
+        <div class="acb">
+          <div class="dr"><span class="dl"><i class="ti ti-user"></i>Nom</span><span class="dv">Gabriel Nomo</span></div>
+          <div class="dr"><span class="dl"><i class="ti ti-phone"></i>Tél</span><span class="dv">+237 655 585 975</span></div>
+          <div class="dr"><span class="dl"><i class="ti ti-mail"></i>Email</span><span class="dv">nomo@mail.com</span></div>
+          <div class="dr"><span class="dl">Itération</span><span class="iter">3 messages</span></div>
+          <div class="fbox">Gabriel Nomo, +237655585975. A réservé une Chambre Standard le 22/05 à 14h00. Email envoyé.</div>
+        </div>
+      </div>
+      <div class="acc">
+        <div class="ach" onclick="tA(this)"><span class="acl"><i class="ti ti-bolt"></i>Actions effectuées</span><i class="ti ti-chevron-down chv open"></i></div>
+        <div class="acb">
+          <div class="act-row" onclick="openM('faqM')">
+            <div class="aico ml"><i class="ti ti-message-circle"></i></div>
+            <div class="ain"><div class="an">FAQ consultée</div><div class="am">"Chambres disponibles"</div></div>
+            <i class="ti ti-eye eye"></i>
+          </div>
+          <div class="act-row" onclick="openM('resM')">
+            <div class="aico ok"><i class="ti ti-calendar-check"></i></div>
+            <div class="ain"><div class="an">Réservation créée</div><div class="am">Chambre Standard · 14h00</div></div>
+            <i class="ti ti-eye eye"></i>
+          </div>
+          <div class="act-row" onclick="openM('emlM')">
+            <div class="aico ml"><i class="ti ti-mail"></i></div>
+            <div class="ain"><div class="an">Email envoyé</div><div class="am">nomo@mail.com</div></div>
+            <i class="ti ti-eye eye"></i>
+          </div>
+        </div>
+      </div>
+      <div class="acc">
+        <div class="ach" onclick="tA(this)"><span class="acl"><i class="ti ti-settings"></i>Configuration IA</span><i class="ti ti-chevron-down chv"></i></div>
+        <div class="acb" style="display:none">
+          <div class="dr"><span class="dl">Statut</span><span style="font-size:10px;background:var(--gl);color:var(--gd);padding:2px 8px;border-radius:8px">En ligne</span></div>
+          <div class="dr"><span class="dl">Température</span><span class="dv">0.7</span></div>
+          <div class="dr"><span class="dl">Tokens max</span><span class="dv">1 000</span></div>
+        </div>
+      </div>
+      <div class="acc">
+        <div class="ach" onclick="tA(this)"><span class="acl"><i class="ti ti-clock-history"></i>Sessions de test</span><i class="ti ti-chevron-down chv"></i></div>
+        <div class="acb" style="display:none"><div style="font-size:11px;color:var(--txt2)">1 session active</div></div>
+      </div>
+    </div>
+    <div class="pfooter">
+      <button class="cfgbtn" onclick="openM('cfgM')"><i class="ti ti-adjustments-horizontal"></i>Ajuster la configuration</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Réservation -->
+<div class="ov" id="resM" onclick="cB(event,'resM')">
+  <div class="modal modal-sm">
+    <div class="mhd"><span class="mt2">Détail — Réservation créée</span><button class="mcl" onclick="closeM('resM')"><i class="ti ti-x"></i></button></div>
+    <div class="res-card">
+      <div class="rch">
+        <div><span class="rct"><i class="ti ti-calendar-check"></i>RDV planifié</span><span class="rct-sub">ACTION EXÉCUTÉE</span></div>
+        <i class="ti ti-circle-check rck"></i>
+      </div>
+      <div class="rcb">
+        <div class="rcr"><i class="ti ti-user"></i><span>[TEST] Gabriel Nomo</span></div>
+        <div class="rcr"><i class="ti ti-phone"></i><span>+237655585975</span></div>
+        <div class="rcr"><i class="ti ti-clock"></i><span>22 mai 2026, 14:00</span></div>
+        <div class="rcr"><i class="ti ti-key"></i><span>Chambre Standard</span></div>
+        <div class="rcr"><i class="ti ti-map-pin"></i><span>Hotel Hilltop Yaounde — Siège</span></div>
+        <div class="rc-warn"><i class="ti ti-alert-triangle"></i>Mode test — aucun RDV réel enregistré.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal FAQ -->
+<div class="ov" id="faqM" onclick="cB(event,'faqM')">
+  <div class="modal modal-sm">
+    <div class="mhd"><span class="mt2">Détail — FAQ consultée</span><button class="mcl" onclick="closeM('faqM')"><i class="ti ti-x"></i></button></div>
+    <div class="faq-note"><i class="ti ti-list-search"></i>2 questions traitées durant cette session</div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q"><i class="ti ti-question-mark"></i>Quelles chambres sont disponibles demain ?</div>
+        <div class="faq-a"><i class="ti ti-check"></i>Nous proposons la Chambre Standard (2 000 XAF) et la Suite Deluxe (10 000 XAF). Les deux sont disponibles le 22 mai.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q"><i class="ti ti-question-mark"></i>Comment confirmer une réservation ?</div>
+        <div class="faq-a"><i class="ti ti-check"></i>La réservation est confirmée automatiquement après fourniture de vos coordonnées. Un email de confirmation est envoyé immédiatement.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Email -->
+<div class="ov" id="emlM" onclick="cB(event,'emlM')">
+  <div class="modal modal-sm">
+    <div class="mhd"><span class="mt2">Contenu de l'email envoyé</span><button class="mcl" onclick="closeM('emlM')"><i class="ti ti-x"></i></button></div>
+    <div class="eml-c">
+      <div class="eml-to">De : bot@agt-platform.com &nbsp;·&nbsp; À : nomo@mail.com</div>
+      <div class="eml-sub">Confirmation de votre réservation — Chambre Standard</div>
+      <div class="eml-body">Bonjour Gabriel,<br><br>Nous vous confirmons votre réservation :<br><br><strong>Chambre Standard</strong><br>Date : 22 mai 2026 à 14h00<br>Établissement : Hotel Hilltop Yaoundé — Siège<br><br>Pour toute modification, contactez-nous directement.<br><br>À bientôt,<br>L'équipe Hotel Hilltop Yaoundé</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Configuration -->
+<div class="ov" id="cfgM" onclick="cB(event,'cfgM')">
+  <div class="modal">
+    <div class="mhd"><span class="mt2">Configuration du bot</span><button class="mcl" onclick="closeM('cfgM')"><i class="ti ti-x"></i></button></div>
+    <div class="mbody">
+      <div><label class="flbl">Prompt système</label><textarea class="fta">Tu es le bot de test AGT BOT. Toutes les features sont activées. Sois précis et exhaustif dans tes réponses.</textarea></div>
+      <div>
+        <button class="adt" id="adtBtn" onclick="tAdv()"><i class="ti ti-chevron-right cv"></i>Paramètres avancés (température, tokens)</button>
+        <div class="ada" id="adaDiv">
+          <div><label class="flbl">Température</label><div class="rr"><input type="range" min="0" max="1" step="0.1" value="0.7" oninput="document.getElementById('tv').textContent=parseFloat(this.value).toFixed(1)"><span class="rv" id="tv">0.7</span></div><div style="font-size:10px;color:var(--txt2);margin-top:2px">0 = déterministe · 1 = créatif</div></div>
+          <div><label class="flbl">Tokens max</label><input type="number" value="1000" style="width:100%;font-size:12px"></div>
+        </div>
+      </div>
+    </div>
+    <div class="mft">
+      <button class="back-cfg" onclick="window.location.href='#bot-config'"><i class="ti ti-arrow-left"></i>Retourner à la configuration du bot</button>
+      <div style="display:flex;gap:8px"><button class="bc" onclick="closeM('cfgM')">Annuler</button><button class="bs">Enregistrer</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Vidéo Démo -->
+<div class="ov" id="vidM" onclick="cB(event,'vidM')">
+  <div class="modal modal-sm">
+    <div class="mhd"><span class="mt2">Démo — Assistant Vocal AGT</span><button class="mcl" onclick="closeM('vidM')"><i class="ti ti-x"></i></button></div>
+    <div class="vbox"><i class="ti ti-player-play"></i><span class="vsec">Hôtel &amp; Hébergement</span><p>Vidéo de démo adaptée à votre secteur<br>chargée dynamiquement</p></div>
+    <div class="vinfo">L'assistant vocal AGT s'adapte à votre secteur, votre catalogue et votre langue. Disponible prochainement.</div>
+  </div>
+</div>
+
+<script>
+function tA(h){var b=h.nextElementSibling,c=h.querySelector('.chv'),o=b.style.display!=='none';b.style.display=o?'none':'block';if(c)c.classList.toggle('open',!o)}
+function openM(id){document.getElementById(id).classList.add('show')}
+function closeM(id){document.getElementById(id).classList.remove('show')}
+function cB(e,id){if(e.target===document.getElementById(id))closeM(id)}
+function tAdv(){var t=document.getElementById('adtBtn'),a=document.getElementById('adaDiv'),o=t.classList.toggle('open');a.classList.toggle('show',o)}
+</script>
+</body>
+</html>

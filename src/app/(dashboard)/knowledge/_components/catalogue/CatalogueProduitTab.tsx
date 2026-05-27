@@ -1,149 +1,341 @@
 // src/app/(dashboard)/knowledge/_components/catalogue/CatalogueProduitTab.tsx
+// S71 — Redesign grid cards image hero + ImagePreviewModal (BUG 2 & 3)
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
-import { Plus, Loader2, Package, ToggleLeft, ToggleRight, Pencil, Trash2, Check, X } from "lucide-react";
-import { useSector } from "@/hooks/useSector";
-import { useToast }  from "@/components/ui/Toast";
+import {
+  Plus, Loader2, Package,
+  Pencil, Trash2, Check, X, Eye,
+  ToggleLeft, ToggleRight,
+} from "lucide-react";
+import { useSector }   from "@/hooks/useSector";
+import { useToast }    from "@/components/ui/Toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { catalogueProduitRepository } from "@/repositories/catalogue.repository";
 import { KnowledgeCardSkeleton }      from "../KnowledgeSkeleton";
+import { resolveImage }               from "@/lib/image-placeholder";
+import { ImagePreviewModal }          from "../ImagePreviewModal";
 import { cn } from "@/lib/utils";
-import type { CatalogueProduit } from "@/types/api/catalogue.types";
+import type { CatalogueItemKB } from "@/types/api/catalogue.types";
 
-const EMPTY = { nom_fr:"", nom_en:"", description_fr:"", prix:"", reference:"", stock:"-1", image_url:"" };
+const EMPTY = {
+  nom: "", description: "", prix: "",
+  reference_sku: "", stock: "0", image_url: "",
+};
 
 export function CatalogueProduitTab() {
-  const { theme } = useSector();
-  const toast     = useToast();
-  const [items, setItems]   = useState<CatalogueProduit[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showAdd, setShowAdd] = useState(false);
-  const [editId,  setEditId]  = useState<string|null>(null);
-  const [form,    setForm]    = useState(EMPTY);
-  const [saving,  startSave]  = useTransition();
+  const { theme }         = useSector();
+  const { locale }        = useLanguage();
+  const toast             = useToast();
+
+  const [items,      setItems]      = useState<CatalogueItemKB[]>([]);
+  const [loading,    setLoading]    = useState(true);
+  const [showAdd,    setShowAdd]    = useState(false);
+  const [editId,     setEditId]     = useState<string | null>(null);
+  const [form,       setForm]       = useState(EMPTY);
+  const [saving,     startSave]     = useTransition();
+  const [previewSrc, setPreviewSrc] = useState<{ src: string; alt: string } | null>(null);
 
   useEffect(() => {
-    catalogueProduitRepository.getList().then(setItems).catch(() => toast.error("Erreur chargement"))
+    catalogueProduitRepository.getList()
+      .then(setItems)
+      .catch(() => toast.error(locale === "fr" ? "Erreur chargement" : "Loading error"))
       .finally(() => setLoading(false));
   }, []); // eslint-disable-line
 
-  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement|HTMLTextAreaElement>) =>
-    setForm((f) => ({ ...f, [k]: e.target.value }));
+  const set = (k: string) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const toPayload = (f: typeof EMPTY) => ({
-    nom_fr: f.nom_fr.trim(), nom_en: f.nom_en.trim()||undefined,
-    description_fr: f.description_fr.trim()||undefined,
-    prix: Number(f.prix), reference: f.reference.trim()||undefined,
-    stock: Number(f.stock)||0, image_url: f.image_url.trim()||undefined,
-    is_available: true, ordre: items.length,
+    nom:           f.nom.trim(),
+    description:   f.description.trim() || undefined,
+    prix:          f.prix ? Number(f.prix) : null,
+    reference_sku: f.reference_sku.trim() || undefined,
+    stock:         Number(f.stock) || 0,
+    image_url:     f.image_url.trim() || "",
+    disponible:    true,
+    ordre:         items.length,
   });
 
   const handleCreate = () => startSave(async () => {
-    if (!form.nom_fr.trim()||!form.prix) return;
-    try { const c = await catalogueProduitRepository.create(toPayload(form)); setItems(p=>[...p,c]); setShowAdd(false); setForm(EMPTY); toast.success("Produit ajouté"); }
-    catch { toast.error("Erreur"); }
+    if (!form.nom.trim() || !form.prix) return;
+    try {
+      const c = await catalogueProduitRepository.create(toPayload(form));
+      setItems((p) => [...p, c]); setShowAdd(false); setForm(EMPTY);
+      toast.success(locale === "fr" ? "Produit ajouté" : "Product added");
+    } catch { toast.error(locale === "fr" ? "Erreur lors de l'ajout" : "Error adding"); }
   });
 
   const handleUpdate = (id: string) => startSave(async () => {
-    if (!form.nom_fr.trim()||!form.prix) return;
-    try { const u = await catalogueProduitRepository.update(id, toPayload(form)); setItems(p=>p.map(x=>x.id===id?u:x)); setEditId(null); toast.success("Produit mis à jour"); }
-    catch { toast.error("Erreur"); }
+    if (!form.nom.trim() || !form.prix) return;
+    try {
+      const u = await catalogueProduitRepository.update(id, toPayload(form));
+      setItems((p) => p.map((x) => x.id === id ? u : x)); setEditId(null);
+      toast.success(locale === "fr" ? "Produit mis à jour" : "Product updated");
+    } catch { toast.error(locale === "fr" ? "Erreur mise à jour" : "Error updating"); }
   });
 
   const handleDelete = (id: string) => startSave(async () => {
-    try { await catalogueProduitRepository.delete(id); setItems(p=>p.filter(x=>x.id!==id)); toast.success("Produit supprimé"); }
-    catch { toast.error("Erreur"); }
+    try {
+      await catalogueProduitRepository.delete(id);
+      setItems((p) => p.filter((x) => x.id !== id));
+      toast.success(locale === "fr" ? "Produit supprimé" : "Product deleted");
+    } catch { toast.error(locale === "fr" ? "Erreur suppression" : "Error deleting"); }
   });
 
-  const handleToggle = (item: CatalogueProduit) => startSave(async () => {
-    try { const u = await catalogueProduitRepository.update(item.id, {is_available:!item.is_available}); setItems(p=>p.map(x=>x.id===item.id?u:x)); }
-    catch { toast.error("Erreur"); }
+  const handleToggle = (item: CatalogueItemKB) => startSave(async () => {
+    try {
+      const u = await catalogueProduitRepository.update(item.id, { disponible: !item.disponible });
+      setItems((p) => p.map((x) => x.id === item.id ? u : x));
+    } catch { toast.error("Erreur"); }
   });
 
-  const startEdit = (item: CatalogueProduit) => {
+  const startEdit = (item: CatalogueItemKB) => {
     setEditId(item.id); setShowAdd(false);
-    setForm({ nom_fr:item.nom_fr, nom_en:item.nom_en??'', description_fr:item.description_fr??'', prix:String(item.prix), reference:item.reference??'', stock:String(item.stock), image_url:item.image_url??'' });
+    setForm({
+      nom:           item.nom,
+      description:   item.description   ?? "",
+      prix:          item.prix != null   ? String(item.prix) : "",
+      reference_sku: item.reference_sku ?? "",
+      stock:         item.stock != null  ? String(item.stock) : "0",
+      image_url:     item.image_url      ?? "",
+    });
   };
 
-  if (loading) return <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">{[1,2,3].map(i=><KnowledgeCardSkeleton key={i}/>)}</div>;
+  if (loading) return (
+    <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
+      {[1, 2, 3].map((i) => <KnowledgeCardSkeleton key={i} />)}
+    </div>
+  );
+
+  const countLabel = locale === "fr"
+    ? `${items.length} produit${items.length !== 1 ? "s" : ""}`
+    : `${items.length} product${items.length !== 1 ? "s" : ""}`;
 
   return (
     <div className="space-y-5">
+
+      {/* Preview modal */}
+      {previewSrc && (
+        <ImagePreviewModal
+          src={previewSrc.src}
+          alt={previewSrc.alt}
+          onClose={() => setPreviewSrc(null)}
+        />
+      )}
+
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-[var(--text-muted)]">{items.length} produit{items.length!==1?"s":""}</p>
-        {!showAdd && <button type="button" onClick={()=>{setShowAdd(true);setEditId(null);setForm(EMPTY);}} className="btn-primary flex items-center gap-2 px-4 py-2 text-sm"><Plus className="w-4 h-4"/> Ajouter un produit</button>}
+        <p className="text-sm text-[var(--text-muted)]">{countLabel}</p>
+        {!showAdd && !editId && (
+          <button type="button"
+            onClick={() => { setShowAdd(true); setEditId(null); setForm(EMPTY); }}
+            className="btn-primary flex items-center gap-2 px-4 py-2 text-sm">
+            <Plus className="w-4 h-4" />
+            {locale === "fr" ? "Ajouter un produit" : "Add product"}
+          </button>
+        )}
       </div>
 
-      {showAdd && <ProduitForm form={form} set={set} onSave={handleCreate} onCancel={()=>setShowAdd(false)} saving={saving} theme={theme} label="Nouveau produit" />}
+      {/* Formulaire ajout */}
+      {showAdd && (
+        <ProduitForm form={form} set={set} onSave={handleCreate}
+          onCancel={() => setShowAdd(false)} saving={saving} theme={theme}
+          label={locale === "fr" ? "Nouveau produit" : "New product"} locale={locale} />
+      )}
 
-      {items.length===0&&!showAdd ? (
-        <EmptyState icon={<Package className="w-10 h-10 text-[var(--text-muted)]"/>} msg="Aucun produit. Commencez par en ajouter un." />
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          {items.map((item) => editId===item.id ? (
-            <div key={item.id} className="sm:col-span-2 xl:col-span-3">
-              <ProduitForm form={form} set={set} onSave={()=>handleUpdate(item.id)} onCancel={()=>setEditId(null)} saving={saving} theme={theme} label="Modifier le produit" />
-            </div>
-          ) : (
-            <div key={item.id} className={cn("bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] overflow-hidden flex flex-col hover:shadow-md transition-all", !item.is_available&&"opacity-60")}>
-              <div className="h-28 flex items-center justify-center relative" style={{background:`linear-gradient(135deg,${theme.primary}20,${theme.primary}40)`}}>
-                {item.image_url?<img src={item.image_url} alt={item.nom_fr} className="w-full h-full object-cover"/>:<Package className="w-8 h-8 opacity-40" style={{color:theme.primary}}/>}
-                <button type="button" onClick={()=>handleToggle(item)} disabled={saving}
-                  className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold backdrop-blur-sm bg-white/80 dark:bg-black/40">
-                  {item.is_available?<><ToggleRight className="w-3.5 h-3.5 text-green-500"/>Dispo</>:<><ToggleLeft className="w-3.5 h-3.5 text-[var(--text-muted)]"/>Indispo</>}
-                </button>
+      {/* État vide */}
+      {items.length === 0 && !showAdd && (
+        <div className="flex flex-col items-center justify-center py-20 gap-4 text-center
+          bg-[var(--bg-card)] rounded-2xl border border-dashed border-[var(--border)]">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+            style={{ background: "color-mix(in srgb, var(--color-primary) 10%, transparent)" }}>
+            <Package className="w-7 h-7" style={{ color: "var(--color-primary)" }} />
+          </div>
+          <p className="text-sm font-semibold text-[var(--text)] px-4">
+            {locale === "fr" ? "Aucun produit. Commencez par en ajouter un." : "No products yet. Add one to get started."}
+          </p>
+        </div>
+      )}
+
+      {/* Grid cards */}
+      {items.length > 0 && (
+        <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
+          {items.map((item) => {
+            // Formulaire édition — pleine largeur
+            if (editId === item.id) return (
+              <div key={item.id} className="col-span-2 xl:col-span-3">
+                <ProduitForm form={form} set={set}
+                  onSave={() => handleUpdate(item.id)} onCancel={() => setEditId(null)}
+                  saving={saving} theme={theme}
+                  label={locale === "fr" ? "Modifier le produit" : "Edit product"} locale={locale} />
               </div>
-              <div className="p-4 flex flex-col gap-1.5 flex-1">
-                <p className="font-semibold text-sm text-[var(--text)]">{item.nom_fr}</p>
-                {item.reference&&<p className="text-[10px] text-[var(--text-muted)] font-mono">#{item.reference}</p>}
-                {item.description_fr&&<p className="text-xs text-[var(--text-muted)] line-clamp-2">{item.description_fr}</p>}
-                <div className="flex items-center gap-2 mt-auto pt-1">
-                  <span className="text-sm font-bold" style={{color:theme.primary}}>{Number(item.prix).toLocaleString("fr-FR")} XAF</span>
-                  {item.stock===-1?<span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded">Illimité</span>:item.stock===0?<span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded">Rupture</span>:<span className="text-[10px] bg-[var(--bg)] text-[var(--text-muted)] px-1.5 py-0.5 rounded">{item.stock} en stock</span>}
+            );
+
+            const imgSrc = resolveImage(item.image_url, "produit", item.nom);
+
+            return (
+              <div key={item.id}
+                className={cn(
+                  "group bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] overflow-hidden",
+                  "hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 self-start",
+                  !item.disponible && "opacity-60",
+                )}>
+
+                {/* Image hero */}
+                <div className="relative h-40 overflow-hidden bg-[var(--bg)]">
+                  <img
+                    src={imgSrc}
+                    alt={item.nom}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    loading="lazy"
+                  />
+
+                  {/* Overlay actions au hover */}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100
+                    transition-opacity duration-200 flex items-center justify-center gap-2">
+                    {/* Preview */}
+                    <button type="button"
+                      onClick={() => setPreviewSrc({ src: imgSrc, alt: item.nom })}
+                      className="w-8 h-8 rounded-full bg-white/90 hover:bg-white flex items-center justify-center
+                        transition-colors shadow-md">
+                      <Eye className="w-4 h-4 text-gray-800" />
+                    </button>
+                    {/* Edit */}
+                    <button type="button" onClick={() => startEdit(item)}
+                      className="w-8 h-8 rounded-full bg-white/90 hover:bg-white flex items-center justify-center
+                        transition-colors shadow-md">
+                      <Pencil className="w-4 h-4 text-gray-800" />
+                    </button>
+                    {/* Delete */}
+                    <button type="button" onClick={() => handleDelete(item.id)} disabled={saving}
+                      className="w-8 h-8 rounded-full bg-red-500/90 hover:bg-red-500 flex items-center justify-center
+                        transition-colors shadow-md">
+                      <Trash2 className="w-4 h-4 text-white" />
+                    </button>
+                  </div>
+
+                  {/* Badge disponible */}
+                  <div className="absolute top-2 left-2">
+                    <button type="button" onClick={() => handleToggle(item)} disabled={saving}
+                      className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold
+                        bg-white/90 backdrop-blur-sm shadow-sm transition-colors"
+                      style={{ color: item.disponible ? "var(--status-success-text)" : "var(--text-muted)" }}>
+                      {item.disponible
+                        ? <><ToggleRight className="w-3 h-3" />{locale === "fr" ? "Actif" : "Active"}</>
+                        : <><ToggleLeft  className="w-3 h-3" />{locale === "fr" ? "Inactif" : "Inactive"}</>}
+                    </button>
+                  </div>
                 </div>
-                <div className="flex justify-end gap-1">
-                  <button type="button" onClick={()=>startEdit(item)} className="p-1.5 rounded-lg hover:bg-[var(--bg)]"><Pencil className="w-3.5 h-3.5 text-[var(--text-muted)]"/></button>
-                  <button type="button" onClick={()=>handleDelete(item.id)} disabled={saving} className="p-1.5 rounded-lg hover:bg-red-50"><Trash2 className="w-3.5 h-3.5 text-red-400"/></button>
+
+                {/* Contenu */}
+                <div className="p-3 space-y-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-semibold text-sm text-[var(--text)] line-clamp-1">{item.nom}</p>
+                    {item.reference_sku && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0"
+                        style={{ background: "var(--bg)", color: "var(--text-muted)" }}>
+                        {item.reference_sku}
+                      </span>
+                    )}
+                  </div>
+                  {item.description && (
+                    <p className="text-xs text-[var(--text-muted)] line-clamp-2">{item.description}</p>
+                  )}
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-sm font-bold" style={{ color: theme.primary }}>
+                      {item.prix != null
+                        ? `${Number(item.prix).toLocaleString("fr-FR")} XAF`
+                        : (locale === "fr" ? "Sur devis" : "On quote")}
+                    </span>
+                    {item.stock != null && item.stock >= 0 && (
+                      <span className="text-[10px] text-[var(--text-muted)]">
+                        Stock: {item.stock}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
 
-function ProduitForm({ form, set, onSave, onCancel, saving, theme, label }: {
-  form: Record<string,string>; set: (k:string)=>(e:React.ChangeEvent<HTMLInputElement|HTMLTextAreaElement>)=>void;
-  onSave:()=>void; onCancel:()=>void; saving:boolean; theme:{primary:string}; label:string;
+// ── Formulaire ────────────────────────────────────────────────────────────────
+
+function ProduitForm({ form, set, onSave, onCancel, saving, theme, label, locale }: {
+  form:     Record<string, string>;
+  set:      (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onSave:   () => void;
+  onCancel: () => void;
+  saving:   boolean;
+  theme:    { primary: string };
+  label:    string;
+  locale:   string;
 }) {
+  const imgPreview = resolveImage(form.image_url?.trim() || "", "produit", form.nom);
   return (
-    <div className="bg-[var(--bg-card)] rounded-2xl border-2 p-5 space-y-3" style={{borderColor:theme.primary}}>
+    <div className="bg-[var(--bg-card)] rounded-2xl border-2 p-5 space-y-3"
+      style={{ borderColor: theme.primary }}>
       <p className="text-sm font-semibold text-[var(--text)]">{label}</p>
+      <Row label={locale === "fr" ? "Nom *" : "Name *"}>
+        <input className="input-base" value={form.nom} onChange={set("nom")} autoFocus />
+      </Row>
+      <Row label="Description">
+        <textarea className="input-base resize-none" rows={2}
+          value={form.description} onChange={set("description")} />
+      </Row>
       <div className="grid grid-cols-2 gap-3">
-        <Row label="Nom (FR) *"><input className="input-base" value={form.nom_fr} onChange={set("nom_fr")} autoFocus/></Row>
-        <Row label="Nom (EN)"><input className="input-base" value={form.nom_en} onChange={set("nom_en")}/></Row>
+        <Row label={locale === "fr" ? "Prix (XAF) *" : "Price (XAF) *"}>
+          <input className="input-base" type="number" min="0" value={form.prix} onChange={set("prix")} />
+        </Row>
+        <Row label="Stock">
+          <input className="input-base" type="number" min="0" value={form.stock} onChange={set("stock")} />
+        </Row>
       </div>
-      <Row label="Description (FR)"><textarea className="input-base resize-none" rows={2} value={form.description_fr} onChange={set("description_fr")}/></Row>
-      <div className="grid grid-cols-3 gap-3">
-        <Row label="Prix (XAF) *"><input className="input-base" type="number" min="0" value={form.prix} onChange={set("prix")}/></Row>
-        <Row label="Référence"><input className="input-base" value={form.reference} onChange={set("reference")}/></Row>
-        <Row label="Stock (-1=illimité)"><input className="input-base" type="number" value={form.stock} onChange={set("stock")}/></Row>
+      <div className="grid grid-cols-2 gap-3">
+        <Row label="SKU">
+          <input className="input-base" value={form.reference_sku} onChange={set("reference_sku")}
+            placeholder="REF-001" />
+        </Row>
+        <Row label="Image URL">
+          <div className="flex items-center gap-2">
+            <input className="input-base flex-1" value={form.image_url} onChange={set("image_url")}
+              placeholder="https://…" />
+            <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 ring-1 ring-[var(--border)]">
+              <img src={imgPreview} alt="preview" className="w-full h-full object-cover" />
+            </div>
+          </div>
+        </Row>
       </div>
-      <Row label="URL image"><input className="input-base" type="url" placeholder="https://..." value={form.image_url} onChange={set("image_url")}/></Row>
       <div className="flex justify-end gap-2 pt-1">
-        <button type="button" onClick={onCancel} className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-xl border border-[var(--border)] hover:bg-[var(--bg)] text-[var(--text-muted)]"><X className="w-4 h-4"/> Annuler</button>
-        <button type="button" onClick={onSave} disabled={saving||!form.nom_fr.trim()||!form.prix} className="btn-primary flex items-center gap-1.5 px-4 py-2 text-sm disabled:opacity-60">{saving?<Loader2 className="w-4 h-4 animate-spin"/>:<Check className="w-4 h-4"/>} Enregistrer</button>
+        <button type="button" onClick={onCancel}
+          className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-xl
+            border border-[var(--border)] hover:bg-[var(--bg)] text-[var(--text-muted)]">
+          <X className="w-4 h-4" /> {locale === "fr" ? "Annuler" : "Cancel"}
+        </button>
+        <button type="button" onClick={onSave}
+          disabled={saving || !form.nom.trim() || !form.prix}
+          className="btn-primary flex items-center gap-1.5 px-4 py-2 text-sm disabled:opacity-60">
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+          {locale === "fr" ? "Enregistrer" : "Save"}
+        </button>
       </div>
     </div>
   );
 }
 
-function Row({ label, children }: { label:string; children:React.ReactNode }) {
-  return <div><label className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-1 block">{label}</label>{children}</div>;
-}
-
-function EmptyState({ icon, msg }: { icon:React.ReactNode; msg:string }) {
-  return <div className="flex flex-col items-center justify-center py-20 gap-3 text-center bg-[var(--bg-card)] rounded-2xl border border-dashed border-[var(--border)]">{icon}<p className="text-sm text-[var(--text-muted)]">{msg}</p></div>;
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-1 block">
+        {label}
+      </label>
+      {children}
+    </div>
+  );
 }

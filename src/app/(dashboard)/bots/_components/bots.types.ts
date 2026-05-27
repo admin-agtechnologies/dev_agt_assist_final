@@ -1,5 +1,4 @@
-// Types et constantes locaux au module Bots — portée strictement locale.
-
+// src/app/(dashboard)/bots/_components/bots.types.ts
 import type { Bot } from "@/types/api";
 
 export type BotData = Bot;
@@ -9,33 +8,56 @@ export interface BotPair {
   voiceBot: BotData | null;
 }
 
-// "settings" remplacé par "configuration" (onglet riche S22)
-export type DetailTab =
-  | "configuration"
-  | "conversations"
-  | "agenda"
-  | "stats"
-  | "whatsapp";
+// ── S54 — tabs dynamiques (clients retiré des fixes → feature gestion_crm) ───
+export type FixedTab = "configuration" | "conversations" | "stats" | "whatsapp";
+export type FeatureTab = `feature:${string}`;
+export type DetailTab = FixedTab | FeatureTab;
 
+export interface FeatureTabDef {
+  slug: string;
+  label: { fr: string; en: string };
+  icon: React.ElementType;
+  special?: "chatbot";
+  fetcher?: (params: {
+    page: number;
+    page_size: number;
+    bot_id: string;
+  }) => Promise<import("@/types/api").PaginatedResponse<{ id: string }>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ResultCard?: React.ComponentType<{ item: any }>;
+  emptyMessage: { fr: string; en: string };
+  emptyHint:    { fr: string; en: string };
+}
+
+// ── S51 — Métriques Stats ─────────────────────────────────────────────────────
+export type MetricId = "messages" | "calls" | "appointments" | "emails" | "handoffs";
+export type VisibleMetrics = Record<MetricId, boolean>;
+
+export const METRIC_DEFS: Array<{ id: MetricId; label: string; color: string }> = [
+  { id: "messages",     label: "Messages",   color: "#6366f1" },
+  { id: "calls",        label: "Appels",     color: "#8b5cf6" },
+  { id: "appointments", label: "RDV",        color: "#10b981" },
+  { id: "emails",       label: "Emails",     color: "#f59e0b" },
+  { id: "handoffs",     label: "Transferts", color: "#ef4444" },
+];
+
+// ── Legacy (conservé pour compatibilité) ─────────────────────────────────────
 export const SECTOR_COLORS: Record<string, { primary: string; accent: string }> = {
-  sante:        { primary: "#0EA5E9", accent: "#38BDF8" },
-  santé:        { primary: "#0EA5E9", accent: "#38BDF8" },
-  juridique:    { primary: "#1E3A5F", accent: "#3B82F6" },
-  beaute:       { primary: "#EC4899", accent: "#F9A8D4" },
-  beauté:       { primary: "#EC4899", accent: "#F9A8D4" },
+  sante: { primary: "#0EA5E9", accent: "#38BDF8" },
+  santé: { primary: "#0EA5E9", accent: "#38BDF8" },
+  juridique: { primary: "#1E3A5F", accent: "#3B82F6" },
+  beaute: { primary: "#EC4899", accent: "#F9A8D4" },
+  beauté: { primary: "#EC4899", accent: "#F9A8D4" },
   restauration: { primary: "#F97316", accent: "#FDBA74" },
-  commerce:     { primary: "#8B5CF6", accent: "#C4B5FD" },
-  finance:      { primary: "#059669", accent: "#34D399" },
-  education:    { primary: "#6366F1", accent: "#A5B4FC" },
-  transport:    { primary: "#64748B", accent: "#94A3B8" },
-  default:      { primary: "#075E54", accent: "#25D366" },
+  commerce: { primary: "#8B5CF6", accent: "#C4B5FD" },
+  finance: { primary: "#059669", accent: "#34D399" },
+  education: { primary: "#6366F1", accent: "#A5B4FC" },
+  transport: { primary: "#64748B", accent: "#94A3B8" },
+  default: { primary: "#075E54", accent: "#25D366" },
 };
 
 export function getSectorColor(sector: string): { primary: string; accent: string } {
-  const key = (sector ?? "")
-    .toLowerCase()
-    .replace(/[éè]/g, "e")
-    .replace(/[àâ]/g, "a");
+  const key = (sector ?? "").toLowerCase().replace(/[éè]/g, "e").replace(/[àâ]/g, "a");
   return SECTOR_COLORS[key] ?? SECTOR_COLORS.default;
 }
 
@@ -61,14 +83,3 @@ export const MOCK_HISTORY: Record<string, MockMessage[]> = {
     { role: "bot",    text: "RDV confirmé pour demain à 10h. Vous recevrez un rappel.", time: "14:04" },
   ],
 };
-
-export const METRIC_DEFS = [
-  { id: "messages",     label: "Messages",  color: "#25D366" },
-  { id: "calls",        label: "Appels",    color: "#6C3CE1" },
-  { id: "appointments", label: "RDV",       color: "#F59E0B" },
-  { id: "emails",       label: "Emails",    color: "#0EA5E9" },
-  { id: "handoffs",     label: "Transferts",color: "#EF4444" },
-] as const;
-
-export type MetricId      = "messages" | "calls" | "appointments" | "emails" | "handoffs";
-export type VisibleMetrics = Record<MetricId, boolean>;

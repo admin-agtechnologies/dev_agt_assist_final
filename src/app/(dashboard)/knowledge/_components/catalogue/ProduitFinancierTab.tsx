@@ -1,123 +1,197 @@
 // src/app/(dashboard)/knowledge/_components/catalogue/ProduitFinancierTab.tsx
+// S46 — hover lift + hover:-translate-y-0.5 + empty state sectoriel + i18n complet
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
-import { Plus, Loader2, Landmark, ToggleLeft, ToggleRight, Pencil, Trash2, Check, X } from "lucide-react";
-import { useSector } from "@/hooks/useSector";
-import { useToast }  from "@/components/ui/Toast";
+import {
+  Plus, Loader2, Landmark, ToggleLeft, ToggleRight,
+  Pencil, Trash2, Check, X,
+} from "lucide-react";
+import { useSector }   from "@/hooks/useSector";
+import { useToast }    from "@/components/ui/Toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { produitFinancierRepository } from "@/repositories/catalogue.repository";
 import { KnowledgeCardSkeleton }      from "../KnowledgeSkeleton";
 import { cn } from "@/lib/utils";
-import type { ProduitFinancier, TypeProduitFinancier } from "@/types/api/catalogue.types";
+import type { ProduitFinancierKB } from "@/types/api/catalogue.types";
 
-const TYPE_LABELS: Record<TypeProduitFinancier, string> = {
-  compte_courant: "Compte courant", compte_epargne: "Compte épargne",
-  credit: "Crédit / Prêt", assurance: "Assurance", investissement: "Investissement",
-};
-
-const EMPTY = { nom_fr:"", nom_en:"", description_fr:"", type_produit:"compte_courant", taux_interet:"", montant_min:"", montant_max:"", conditions:"" };
+const EMPTY = { nom: "", description: "", prix: "" };
 
 export function ProduitFinancierTab() {
-  const { theme } = useSector();
-  const toast     = useToast();
-  const [items,   setItems]   = useState<ProduitFinancier[]>([]);
+  const { theme }         = useSector();
+  const toast             = useToast();
+  const { dictionary: d } = useLanguage();
+  const t                 = d.knowledge.produitFinancier;
+
+  const [items,   setItems]   = useState<ProduitFinancierKB[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
-  const [editId,  setEditId]  = useState<string|null>(null);
+  const [editId,  setEditId]  = useState<string | null>(null);
   const [form,    setForm]    = useState(EMPTY);
   const [saving,  startSave]  = useTransition();
 
   useEffect(() => {
-    produitFinancierRepository.getList().then(setItems).catch(()=>toast.error("Erreur chargement"))
-      .finally(()=>setLoading(false));
+    produitFinancierRepository.getList()
+      .then(setItems)
+      .catch(() => toast.error(t.errorLoad))
+      .finally(() => setLoading(false));
   }, []); // eslint-disable-line
 
-  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>) =>
-    setForm(f=>({...f,[k]:e.target.value}));
+  const set = (k: string) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const toPayload = (f: typeof EMPTY) => ({
-    nom_fr: f.nom_fr.trim(), nom_en: f.nom_en.trim()||undefined,
-    description_fr: f.description_fr.trim()||undefined,
-    type_produit: f.type_produit as TypeProduitFinancier,
-    taux_interet: f.taux_interet?Number(f.taux_interet):null,
-    montant_min: f.montant_min?Number(f.montant_min):null,
-    montant_max: f.montant_max?Number(f.montant_max):null,
-    conditions: f.conditions.trim()||undefined,
-    is_available: true, ordre: items.length,
+    nom:         f.nom.trim(),
+    description: f.description.trim() || undefined,
+    prix:        f.prix ? Number(f.prix) : null,
+    disponible:  true,
+    ordre:       items.length,
   });
 
   const handleCreate = () => startSave(async () => {
-    if (!form.nom_fr.trim()) return;
-    try { const c = await produitFinancierRepository.create(toPayload(form)); setItems(p=>[...p,c]); setShowAdd(false); setForm(EMPTY); toast.success("Produit ajouté"); }
-    catch { toast.error("Erreur"); }
+    if (!form.nom.trim()) return;
+    try {
+      const c = await produitFinancierRepository.create(toPayload(form));
+      setItems((p) => [...p, c]);
+      setShowAdd(false); setForm(EMPTY);
+      toast.success(t.createSuccess);
+    } catch { toast.error(t.createError); }
   });
 
   const handleUpdate = (id: string) => startSave(async () => {
-    if (!form.nom_fr.trim()) return;
-    try { const u = await produitFinancierRepository.update(id, toPayload(form)); setItems(p=>p.map(x=>x.id===id?u:x)); setEditId(null); toast.success("Produit mis à jour"); }
-    catch { toast.error("Erreur"); }
+    if (!form.nom.trim()) return;
+    try {
+      const u = await produitFinancierRepository.update(id, toPayload(form));
+      setItems((p) => p.map((x) => x.id === id ? u : x));
+      setEditId(null);
+      toast.success(t.updateSuccess);
+    } catch { toast.error(t.updateError); }
   });
 
   const handleDelete = (id: string) => startSave(async () => {
-    try { await produitFinancierRepository.delete(id); setItems(p=>p.filter(x=>x.id!==id)); toast.success("Produit supprimé"); }
-    catch { toast.error("Erreur"); }
+    try {
+      await produitFinancierRepository.delete(id);
+      setItems((p) => p.filter((x) => x.id !== id));
+      toast.success(t.deleteSuccess);
+    } catch { toast.error(t.deleteError); }
   });
 
-  const handleToggle = (item: ProduitFinancier) => startSave(async () => {
-    try { const u = await produitFinancierRepository.update(item.id, {is_available:!item.is_available}); setItems(p=>p.map(x=>x.id===item.id?u:x)); }
-    catch { toast.error("Erreur"); }
+  const handleToggle = (item: ProduitFinancierKB) => startSave(async () => {
+    try {
+      const u = await produitFinancierRepository.update(item.id, { disponible: !item.disponible });
+      setItems((p) => p.map((x) => x.id === item.id ? u : x));
+    } catch { toast.error(t.updateError); }
   });
 
-  const startEdit = (item: ProduitFinancier) => {
+  const startEdit = (item: ProduitFinancierKB) => {
     setEditId(item.id); setShowAdd(false);
-    setForm({ nom_fr:item.nom_fr, nom_en:item.nom_en??'', description_fr:item.description_fr??'', type_produit:item.type_produit, taux_interet:item.taux_interet!=null?String(item.taux_interet):"", montant_min:item.montant_min!=null?String(item.montant_min):"", montant_max:item.montant_max!=null?String(item.montant_max):"", conditions:item.conditions??'' });
+    setForm({
+      nom:         item.nom,
+      description: item.description ?? "",
+      prix:        item.prix != null ? String(item.prix) : "",
+    });
   };
 
-  if (loading) return <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">{[1,2,3].map(i=><KnowledgeCardSkeleton key={i}/>)}</div>;
+  if (loading) return (
+    <div className="space-y-3">{[1, 2, 3].map((i) => <KnowledgeCardSkeleton key={i} />)}</div>
+  );
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-[var(--text-muted)]">{items.length} produit{items.length!==1?"s":""}</p>
-        {!showAdd && <button type="button" onClick={()=>{setShowAdd(true);setEditId(null);setForm(EMPTY);}} className="btn-primary flex items-center gap-2 px-4 py-2 text-sm"><Plus className="w-4 h-4"/> Ajouter un produit</button>}
+        <p className="text-sm text-[var(--text-muted)]">
+          {items.length} produit{items.length !== 1 ? "s" : ""} financier{items.length !== 1 ? "s" : ""}
+        </p>
+        {!showAdd && !editId && (
+          <button type="button"
+            onClick={() => { setShowAdd(true); setEditId(null); setForm(EMPTY); }}
+            className="btn-primary flex items-center gap-2 px-4 py-2 text-sm">
+            <Plus className="w-4 h-4" /> {t.addBtn}
+          </button>
+        )}
       </div>
 
-      {showAdd && <ProduitFinForm form={form} set={set} onSave={handleCreate} onCancel={()=>setShowAdd(false)} saving={saving} theme={theme} label="Nouveau produit financier"/>}
+      {showAdd && (
+        <FinancierForm form={form} set={set} theme={theme} t={t} d={d}
+          onSave={handleCreate} onCancel={() => setShowAdd(false)}
+          saving={saving} label={t.newTitle} />
+      )}
 
-      {items.length===0&&!showAdd ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-3 text-center bg-[var(--bg-card)] rounded-2xl border border-dashed border-[var(--border)]">
-          <Landmark className="w-10 h-10 text-[var(--text-muted)]"/><p className="text-sm text-[var(--text-muted)]">Aucun produit financier. Commencez par en ajouter un.</p>
+      {/* Empty state sectoriel */}
+      {items.length === 0 && !showAdd ? (
+        <div className="flex flex-col items-center justify-center py-20 gap-4 text-center
+          bg-[var(--bg-card)] rounded-2xl border border-dashed border-[var(--border)]">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
+            style={{ background: `color-mix(in srgb, ${theme.primary} 10%, transparent)` }}>
+            <Landmark className="w-7 h-7" style={{ color: theme.primary }} />
+          </div>
+          <p className="text-sm text-[var(--text-muted)]">{t.empty}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          {items.map((item) => editId===item.id ? (
-            <div key={item.id} className="sm:col-span-2 xl:col-span-3">
-              <ProduitFinForm form={form} set={set} onSave={()=>handleUpdate(item.id)} onCancel={()=>setEditId(null)} saving={saving} theme={theme} label="Modifier le produit"/>
-            </div>
+        <div className="space-y-3">
+          {items.map((item) => editId === item.id ? (
+            <FinancierForm key={item.id} form={form} set={set} theme={theme} t={t} d={d}
+              onSave={() => handleUpdate(item.id)} onCancel={() => setEditId(null)}
+              saving={saving} label={t.editTitle} />
           ) : (
-            <div key={item.id} className={cn("bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] p-5 flex flex-col gap-2 hover:shadow-md transition-all",!item.is_available&&"opacity-60")}>
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="font-semibold text-sm text-[var(--text)]">{item.nom_fr}</p>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded font-medium mt-0.5 inline-block" style={{backgroundColor:`${theme.primary}20`,color:theme.primary}}>
-                    {TYPE_LABELS[item.type_produit]}
-                  </span>
+            <div key={item.id} className={cn(
+              "bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] p-4",
+              "flex items-center gap-4",
+              "hover:shadow-md hover:-translate-y-0.5 transition-all duration-200",
+              !item.disponible && "opacity-60",
+            )}>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <Landmark className="w-4 h-4 flex-shrink-0" style={{ color: theme.primary }} />
+                  <span className="font-semibold text-[var(--text)] truncate">{item.nom}</span>
                 </div>
-                <button type="button" onClick={()=>handleToggle(item)} disabled={saving}
-                  className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold bg-[var(--bg)] flex-shrink-0">
-                  {item.is_available?<><ToggleRight className="w-3.5 h-3.5 text-green-500"/>Dispo</>:<><ToggleLeft className="w-3.5 h-3.5 text-[var(--text-muted)]"/>Indispo</>}
+                {item.description && (
+                  <p className="text-xs text-[var(--text-muted)] mt-1 line-clamp-2">{item.description}</p>
+                )}
+                {item.details_financiers && (
+                  <div className="flex flex-wrap gap-2 mt-1.5">
+                    {item.details_financiers.taux_annuel_min != null && (
+                      <span className="text-[10px] px-1.5 py-0.5 bg-[var(--bg)] rounded text-[var(--text-muted)]">
+                        {t.taux} : {item.details_financiers.taux_annuel_min}%
+                        {item.details_financiers.taux_annuel_max
+                          ? ` – ${item.details_financiers.taux_annuel_max}%`
+                          : ""}
+                      </span>
+                    )}
+                    {item.details_financiers.montant_min != null && (
+                      <span className="text-[10px] px-1.5 py-0.5 bg-[var(--bg)] rounded text-[var(--text-muted)]">
+                        {t.montantMin} : {Number(item.details_financiers.montant_min).toLocaleString("fr-FR")} XAF
+                      </span>
+                    )}
+                  </div>
+                )}
+                {item.prix != null && (
+                  <p className="text-sm font-bold mt-1.5" style={{ color: theme.primary }}>
+                    {Number(item.prix).toLocaleString("fr-FR")} XAF
+                  </p>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button type="button" onClick={() => handleToggle(item)} disabled={saving}
+                  className="transition-colors"
+                  style={{ color: item.disponible ? "var(--status-success-text)" : "var(--text-muted)" }}>
+                  {item.disponible
+                    ? <ToggleRight className="w-5 h-5" />
+                    : <ToggleLeft  className="w-5 h-5" />}
                 </button>
-              </div>
-              {item.description_fr&&<p className="text-xs text-[var(--text-muted)] line-clamp-2">{item.description_fr}</p>}
-              <div className="grid grid-cols-2 gap-2 text-xs text-[var(--text-muted)] mt-1">
-                {item.taux_interet!=null&&<span>Taux : <strong className="text-[var(--text)]">{item.taux_interet}%</strong></span>}
-                {item.montant_min!=null&&<span>Min : <strong className="text-[var(--text)]">{Number(item.montant_min).toLocaleString("fr-FR")} XAF</strong></span>}
-                {item.montant_max!=null&&<span>Max : <strong className="text-[var(--text)]">{Number(item.montant_max).toLocaleString("fr-FR")} XAF</strong></span>}
-              </div>
-              {item.conditions&&<p className="text-xs text-[var(--text-muted)] bg-[var(--bg)] rounded-lg px-3 py-2 line-clamp-2">{item.conditions}</p>}
-              <div className="flex justify-end gap-1 mt-auto pt-1">
-                <button type="button" onClick={()=>startEdit(item)} className="p-1.5 rounded-lg hover:bg-[var(--bg)]"><Pencil className="w-3.5 h-3.5 text-[var(--text-muted)]"/></button>
-                <button type="button" onClick={()=>handleDelete(item.id)} disabled={saving} className="p-1.5 rounded-lg hover:bg-red-50"><Trash2 className="w-3.5 h-3.5 text-red-400"/></button>
+                <button type="button" onClick={() => startEdit(item)}
+                  className="p-1.5 rounded-lg hover:bg-[var(--bg)] text-[var(--text-muted)]
+                    hover:text-[var(--text)] transition-colors">
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button type="button" onClick={() => handleDelete(item.id)} disabled={saving}
+                  className="p-1.5 rounded-lg hover:bg-[var(--status-danger-bg)]
+                    text-[var(--text-muted)] hover:text-[var(--status-danger-text)] transition-colors">
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             </div>
           ))}
@@ -127,36 +201,56 @@ export function ProduitFinancierTab() {
   );
 }
 
-function ProduitFinForm({ form, set, onSave, onCancel, saving, theme, label }: {
-  form:Record<string,string>; set:(k:string)=>(e:React.ChangeEvent<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>)=>void;
-  onSave:()=>void; onCancel:()=>void; saving:boolean; theme:{primary:string}; label:string;
+// ── Formulaire ────────────────────────────────────────────────────────────────
+
+function FinancierForm({ form, set, onSave, onCancel, saving, theme, t, d, label }: {
+  form: Record<string, string>;
+  set: (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onSave: () => void; onCancel: () => void;
+  saving: boolean; theme: { primary: string };
+  t: Record<string, string>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  d: any; label: string;
 }) {
   return (
-    <div className="bg-[var(--bg-card)] rounded-2xl border-2 p-5 space-y-3" style={{borderColor:theme.primary}}>
+    <div className="bg-[var(--bg-card)] rounded-2xl border-2 p-5 space-y-3"
+      style={{ borderColor: theme.primary }}>
       <p className="text-sm font-semibold text-[var(--text)]">{label}</p>
-      <div className="grid grid-cols-2 gap-3">
-        <Row label="Nom (FR) *"><input className="input-base" value={form.nom_fr} onChange={set("nom_fr")} autoFocus/></Row>
-        <Row label="Type *">
-          <select className="input-base" value={form.type_produit} onChange={set("type_produit")}>
-            {Object.entries(TYPE_LABELS).map(([k,v])=><option key={k} value={k}>{v}</option>)}
-          </select>
-        </Row>
-      </div>
-      <Row label="Description"><textarea className="input-base resize-none" rows={2} value={form.description_fr} onChange={set("description_fr")}/></Row>
-      <div className="grid grid-cols-3 gap-3">
-        <Row label="Taux (%)"><input className="input-base" type="number" step="0.01" value={form.taux_interet} onChange={set("taux_interet")}/></Row>
-        <Row label="Montant min (XAF)"><input className="input-base" type="number" value={form.montant_min} onChange={set("montant_min")}/></Row>
-        <Row label="Montant max (XAF)"><input className="input-base" type="number" value={form.montant_max} onChange={set("montant_max")}/></Row>
-      </div>
-      <Row label="Conditions d'éligibilité"><textarea className="input-base resize-none" rows={2} value={form.conditions} onChange={set("conditions")}/></Row>
+      <Row label={t.nomLabel}>
+        <input className="input-base" value={form.nom} onChange={set("nom")}
+          placeholder={t.nomPH} autoFocus />
+      </Row>
+      <Row label={t.descriptionLabel}>
+        <textarea className="input-base resize-none" rows={3} value={form.description}
+          onChange={set("description")} placeholder={t.descriptionPH} />
+      </Row>
+      <Row label={t.prixLabel}>
+        <input className="input-base" type="number" min="0" value={form.prix}
+          onChange={set("prix")} placeholder={t.prixPH} />
+      </Row>
       <div className="flex justify-end gap-2 pt-1">
-        <button type="button" onClick={onCancel} className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-xl border border-[var(--border)] hover:bg-[var(--bg)] text-[var(--text-muted)]"><X className="w-4 h-4"/> Annuler</button>
-        <button type="button" onClick={onSave} disabled={saving||!form.nom_fr.trim()} className="btn-primary flex items-center gap-1.5 px-4 py-2 text-sm disabled:opacity-60">{saving?<Loader2 className="w-4 h-4 animate-spin"/>:<Check className="w-4 h-4"/>} Enregistrer</button>
+        <button type="button" onClick={onCancel}
+          className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-xl
+            border border-[var(--border)] hover:bg-[var(--bg)] text-[var(--text-muted)]">
+          <X className="w-4 h-4" /> {d.common.cancel}
+        </button>
+        <button type="button" onClick={onSave} disabled={saving || !form.nom.trim()}
+          className="btn-primary flex items-center gap-1.5 px-4 py-2 text-sm disabled:opacity-60">
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+          {d.common.save}
+        </button>
       </div>
     </div>
   );
 }
 
-function Row({ label, children }: { label:string; children:React.ReactNode }) {
-  return <div><label className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-1 block">{label}</label>{children}</div>;
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-1 block">
+        {label}
+      </label>
+      {children}
+    </div>
+  );
 }

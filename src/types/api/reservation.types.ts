@@ -81,10 +81,11 @@ export interface UpdateReservationStatutPayload {
 }
 
 export interface ReservationFilters {
-  statut?: ReservationStatut;
-  date_from?: string;    // format "YYYY-MM-DD"
-  date_to?: string;      // format "YYYY-MM-DD"
+  statut?:       ReservationStatut;
+  date_from?:    string;
+  date_to?:      string;
   ressource_id?: string;
-  page?: number;
-  page_size?: number;
+  feature_slug?: string; 
+  page?:         number;
+  page_size?:    number;
 }

@@ -13,11 +13,15 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const auth = request.cookies.get(COOKIE_NAME)?.value;
 
-  // ── Bloquer tout accès /admin ─────────────────────────────────────────────
-  if (pathname.startsWith("/admin")) {
-    return NextResponse.redirect(new URL(DASHBOARD, request.url));
-  }
+// ── Exception DEV — matrice features B5 (S34 — retirer après B6) ──────────
+if (pathname.startsWith("/admin/features-matrix")) {
+  return NextResponse.next();
+}
 
+// ── Bloquer tout accès /admin ──────────────────────────────────────────────
+if (pathname.startsWith("/admin")) {
+  return NextResponse.redirect(new URL(DASHBOARD, request.url));
+}
   // ── Landing "/" ───────────────────────────────────────────────────────────
   if (pathname === "/") {
     if (auth) return NextResponse.redirect(new URL(DASHBOARD, request.url));

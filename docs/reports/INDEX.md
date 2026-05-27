@@ -460,7 +460,6 @@
 
 ---
 
-
 ## session_24_gabriel
 
 - **Type :** Conception produit + Génération full-stack — Refonte Plans & Features
@@ -493,7 +492,9 @@
 - **Dettes créées :** BUG-S24-04 (setup.py plan gratuit), BUG-S24-05 (conciergerie bootstrap), DETTE-S24-01 à 04
 - **Rapport :** `docs/reports/session_24_gabriel.md`
 - **Session suivante (S25) :** Stabiliser build + corriger onboarding + Page Modules + Billing
+
 ---
+
 ## session_25_gabriel
 
 - **Type :** Debug + Génération — Stabilisation build + Onboarding pré-register
@@ -508,8 +509,11 @@
 - **Seed :** flush + seed validé ✅
 - **Rapport :** `docs/reports/session_25_gabriel.md`
 - **Session suivante (S26) :** BUG-S25-01 is_default seeder → onboarding pré-register E2E → page.tsx sectorSlug prop
+
 ---
+
 ## session_26_gabriel
+
 - **Type :** Debug + Génération — Onboarding E2E complet
 - **Date :** 2026-05-15
 - **Flux couverts :** Onboarding pré-register (FeaturePicker v3 ✅), onboarding post-register (WelcomeScreen2/3/4 ✅), flux paiement welcome ✅, gardiens /welcome ✅
@@ -542,9 +546,10 @@
 - **Zones touchées :** `apps/features/views.py`, `apps/features/urls.py`, `src/repositories/features.repository.ts`, `src/hooks/useModuleMarket.ts`, `src/components/modules/ModuleCartCheckout.tsx`, `src/components/modules/ModuleCard.tsx`, `src/components/modules/ModuleFilters.tsx`, `src/components/modules/ModuleMarketplace.tsx`, `src/components/layout/Sidebar.tsx`
 - **Décisions clés :** Catalogue ouvert (tous secteurs), endpoint purchase/ atomique, choix quota par module, flag upgrade_plan à implémenter S2
 - **Dette technique ouverte :** BUG-S1-01 à BUG-S1-06 (voir rapport)
-- **Rapport :** docs/reports/session_28__donpk+stephane+gabriel.md
+- **Rapport :** docs/reports/session_28\_\_donpk+stephane+gabriel.md
 
 ---
+
 ## session_30_gabriel
 
 - **Type :** Debug + Refactor + UX — Finalisation des bugs S1_stephane + modularisation
@@ -586,6 +591,7 @@
 - **Rapport :** `docs/reports/session_30_gabriel.md`
 
 ---
+
 ---
 
 ## Session 32 — Gabriel — 18/05/2026
@@ -595,12 +601,12 @@
 
 ### Fichiers produits
 
-| Fichier | Description |
-|---|---|
-| `docs/reports/sessions/session_32_gabriel.md` | Ce rapport |
-| `docs/notes/b5_phase0_01_audit_kb.md` | Note de référence Phase 0 — À LIRE avant toute session B5 |
-| `agt_b5_conception_features_1_12.pdf` | Conception features 1-12 (dans outputs S32) |
-| `agt_b5_conception_features_13_28.pdf` | Conception features 13-28 + banking (dans outputs S32) |
+| Fichier                                       | Description                                               |
+| --------------------------------------------- | --------------------------------------------------------- |
+| `docs/reports/sessions/session_32_gabriel.md` | Ce rapport                                                |
+| `docs/notes/b5_phase0_01_audit_kb.md`         | Note de référence Phase 0 — À LIRE avant toute session B5 |
+| `agt_b5_conception_features_1_12.pdf`         | Conception features 1-12 (dans outputs S32)               |
+| `agt_b5_conception_features_13_28.pdf`        | Conception features 13-28 + banking (dans outputs S32)    |
 
 ### Zones modifiées / décisions prises
 
@@ -632,11 +638,690 @@ Tâche : Migrations (0.2) + Seeders mis à jour
 Démarrer avec : `apps/agent/engine/context.py` (correction FAQ) + `apps/features/models/` (4 booléens)
 
 ---
+
 ## Session 33 — Gabriel — 18/05/2026
+
 **Statut :** ✅ Complétée
 **Branche :** main
 **Tâche :** B5 Phase 0.2 — Migrations schéma complet
 **Fichiers touchés :** apps/features/models/feature.py, apps/reservations/models.py, apps/catalogue/models.py, apps/knowledge/models.py, apps/contacts/models.py, apps/inscriptions/models.py, apps/bots/models.py, apps/payments/models.py, apps/dossiers/models.py, apps/notifications/models.py
 **Migrations :** bots.0007, features.0008, contacts.0004, catalogue.0002, dossiers.0002, inscriptions.0002, knowledge.0009, notifications.0003, payments.0002, reservations.0002
 **Prochaine session (S34) :** Discussion + génération seeders (seed_banking + seed_demo) + test non-régression frontend
+
 ---
+
+---
+
+**Session 34** — Gabriel — 18/05/2026 — ✅ Terminée
+**Tâche :** B5 Phase 0.3 — Refactoring seeders (Groupe 1/2) + Interface admin features-matrix
+**Fichiers touchés :**
+apps/tenants/seeders/features_seeder.py, billing_seeder.py, agent_seeder.py,
+apps/tenants/management/commands/seed.py,  
+apps/tenants/seeders/demo/ (13 fichiers),
+apps/features/views/admin_views.py, apps/features/urls.py,
+src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
+**Supprimés :** seed_bank.py, seed_agent.py
+**Tests :** seed --demo ✅ · non-régression frontend ✅
+**Prochaine session (S35) :** Socle KB + fix context.py FAQ
+
+---
+
+## session_35_gabriel
+
+- Type : Génération + Debug + Tests
+- Date : 2026-05-19
+- Flux couverts : B2 (Onboarding/Welcome), B3 (C5→C10 Facturation)
+- Bugs corrigés : UnboundLocalError \_purchase_logic, ModuleNotFoundError check_quota, TypeScript Transaction metadata, usage_rdv/emails non remis à 0
+- Zones touchées : apps/billing/, apps/features/views/, src/components/onboarding/, src/components/welcome/, src/app/(dashboard)/billing/, src/lib/pdf/, src/types/api/
+- Rapport : docs/reports/session_35_gabriel.md
+
+---
+
+| S36 | 19/05/2026 | Gabriel | KB Socle + Seeders fonctionnement | i18n fix ComingSoonKbTab/CaptureProspectTab/RessourceKbTab · knowledge.fr/en.ts sections comingSoon/captureProspect/ressource · KnowledgeTabs flèches scroll · page.tsx 18 tabs (billets ajouté) · bootstrap.py nouveau (3 exemples/feature idempotent) · tenant.py toggle→bootstrap · demo/base.py run()→bootstrap · billing_seeder.py +28 PLAN_SECTOR_FEATURES custom · 15 tabs ✅ 200 · 3 bugs 500 serializers à corriger S37 (ChambreType:image_url · CatalogueProduit:description_en · SpecialiteMedicale:description_fr) |
+
+---
+
+| S37 | 19/05/2026 | Gabriel+Penka | KB Socle complet + Serializers fix | 3 conversations : audit plan B5 KB · serializers.py fix complet (5 bugs 500 : ChambreType image_url, CatalogueProduit description_en/stock/reference, SpecialiteMedicale description_fr→description, CatalogueTrajet prix→tarif, CatalogueService description_en) · MenuCategorieSerializer nested plats · ScenarioProspection backend (serializer+view+url) · knowledge.types.ts + knowledge.repository.ts · ComingSoonKbTab/CaptureProspectTab/RessourceKbTab créés · KnowledgeTabs flèches scroll · page.tsx 18 tabs · bootstrap.py 3 exemples/feature idempotent · tenant.py toggle→bootstrap · demo/base.py run()→bootstrap · billing_seeder.py +28 PLAN_SECTOR_FEATURES custom · ChambresTab corrigé · MedicalTab corrigé +S33 (mots_cles_symptomes, contact_urgence) · 15/18 tabs ✅ 200 · Reste S38 : CatalogueProduit/Service/TrajetTab forms, CitoyensTab/InscriptionsTab/FaqTab S33, Étape 6 migration ItemCatalogue |
+
+---
+
+## session_38_gabriel
+
+- **Type :** Génération + Debug — Migration S1/S2→S3 catalogue + Plan B5
+- **Date :** 2026-05-20
+- **Flux couverts :** B5 Étape 1 (socle KB — migration catalogue S3)
+- **Bugs corrigés :** paiement_en_ligne catalogues, ProfilEntreprise message_accueil (setup.py + bootstrap_sector.py), noms entreprise vides (tenants_seeder.py), upsert_catalogue_item feature hardcodée
+- **Zones touchées :** `apps/knowledge/`, `apps/tenants/seeders/demo/`, `apps/agent/services/`, `src/repositories/`, `src/types/api/`
+- **Fichiers modifiés :** 13 (9 backend + 2 frontend + 2 docs)
+- **Décision clé :** Plan B5 en 9 étapes — ordre non négociable — `b5_plan_execution.md` uploadé dans PK
+- **Note :** conteneur Docker = `api` (pas `backend`), `--reset` n'existe pas dans seed
+- **Rapport :** `docs/reports/session_38_gabriel.md`
+
+---
+
+## session_39_gabriel
+
+- **Type :** Debug + Génération — Migration S3 tabs catalogue + Bugs KB + Seeder custom complet
+- **Date :** 2026-05-20
+- **Flux couverts :** B5 Étape 1 fin + corrections KB visuelles
+- **Bugs corrigés :** Menu 404 (MenuTab→S3), Conciergerie noms vides (S2→S3), Disponibilités POST 500 (metadata serializer), 10 erreurs TypeScript (catalogue.types.ts + ProduitFinancierTab + catalogue.repository.ts + page.tsx), Billets vide (seeder), Abonnement 404 custom (Pro billing), Wallet insuffisant custom
+- **Zones touchées :** `src/app/(dashboard)/knowledge/_components/`, `src/repositories/`, `src/types/api/`, `apps/reservations/`, `apps/tenants/seeders/demo/`
+- **Fichiers créés/modifiés :** 15 + 3 à supprimer (MenuCategoriePanel, MenuPlatGrid, menu.repository.ts — dead code)
+- **Décision clé :** Seeder custom = compte Pro complet (29 features, 5M XAF, 33 items, 15 ressources) — référence de validation B5
+- **TypeScript :** 0 erreur ✅
+- **Seed :** flush + seed validé ✅ — custom Pro actif jusqu'au 20/05/2027
+- **Rapport :** `docs/reports/session_39_gabriel.md`
+
+---
+
+## session_40_donpk
+
+- **Type :** Backend — Modèles Results + Migrations + Serializers + Views + Seeder + Tests API
+- **Date :** 2026-05-20
+- **Flux couverts :** B5 Étape 1 fin + Étape 2 backend Results complet
+- **Bugs corrigés :** `DemandeConciergerie` doublon knowledge/reservations · `statut_crm` → `statut` · filtre `Reservation.feature` → `ressource__feature__slug` · filtres `feature__slug` inexistants (inscriptions + dossiers) · `service_libre` invalide (DemandeConciergericSerializer) · `service_id NOT NULL` (seeder conciergerie) · `display_name()` inexistant (ContactListSerializer) · container reload manquant
+- **Zones touchées :** `apps/knowledge/` · `apps/reservations/` · `apps/inscriptions/` · `apps/dossiers/` · `apps/notifications/` · `apps/contacts/` · `apps/tenants/seeders/`
+- **Fichiers créés :** migration `0010_transferthumain` · `results_seeder.py`
+- **Fichiers modifiés :** 8 backend
+- **Endpoints testés ✅ :** transferts-humains (3) · email-logs (5) · reservations filtrées (7) · commandes (4) · inscriptions (3) · dossiers (3)
+- **Endpoints fix livré ⏳ :** demandes-conciergerie · contacts
+- **Seeder :** 34 enregistrements Results en base
+- **Rapport :** `docs/reports/session_40_donpk.md`
+
+---
+
+## session_41_gabriel
+
+- **Type :** Debug + Génération — B5 Étapes 2 & 3 (Conception + Génération pages Résultats)
+- **Date :** 2026-05-20
+- **Flux couverts :** B5 Étape 2 ✅ (conception Results validée) · B5 Étape 3 ✅ (19 tabs Results générés)
+- **Bugs corrigés :** `service_libre`/`source`/`updated_at` inexistants (DemandeConciergericSerializer) · `display_name()` manquant (ContactSerializer) · `.telephone`→`.phone` (2 serializers) · `DEV_TOKEN` export illégal (admin page)
+- **Endpoints créés :** `/api/v1/knowledge/consultations-faq/` (ConsultationFAQViewSet)
+- **Zones touchées :**
+  - **Backend :** `apps/knowledge/serializers.py` · `apps/knowledge/views.py` · `apps/knowledge/urls.py` · `apps/contacts/serializers.py` · `apps/tenants/seeders/demo/custom.py` · `src/app/admin/features-matrix/page.tsx`
+  - **Frontend :** `src/types/api/results.types.ts` (NEW) · `src/repositories/results.repository.ts` (NEW) · `src/app/(dashboard)/results/` (NEW — page + 11 composants) · `src/app/(dashboard)/knowledge/_components/tabs/ChatbotResultTab.tsx` (NEW) · `src/app/(dashboard)/knowledge/_components/results/ChatbotConversationCard.tsx` (NEW) · `src/components/layout/Sidebar.tsx` · `src/components/layout/Sidebar.config.ts`
+- **Fichiers créés :** 16 frontend + 3 backend
+- **Fichiers modifiés :** 5 backend + 3 frontend
+- **TypeScript :** 0 erreur ✅
+- **Validation visuelle :** Page /results ✅ · 19 tabs ✅ · Modal rapport+chat ✅
+- **Seeder :** 5 conversations WhatsApp démo ajoutées au compte custom (custom.py)
+- **Navigation :** Ordre sidebar revu — Dashboard → Bots → Résultats → KB → Clients → Facturation → Profil
+- **Rapport :** `docs/reports/session_41_gabriel.md`
+- **⚠️ Organisation parallèle S42+ :**
+  - **Gabriel :** B5 Étapes 4→9 (agent actions, skills, tests, webhook) — zones `apps/agent/`
+  - **Penka :** Amélioration interfaces KB + Results + seeders — zones `src/app/(dashboard)/knowledge/` + `src/app/(dashboard)/results/`
+  - **Règle :** Gabriel ne touche pas KB/Results · Penka ne touche pas `apps/agent/` · modèles partagés → concertation
+  - **S42 Gabriel :** démarrer directement Étape 4 (audit + conception actions bot) — lire `b5_plan_execution.md` + `b5_phase0_01_audit_kb.md`
+
+  ***
+
+  ***
+
+## session_42_gabriel
+
+- **Type :** Audit + Conception + Génération — B5 Étapes 4 & 5 (Actions bot complètes)
+- **Date :** 2026-05-20
+- **Flux couverts :** B5 Étape 4 ✅ (audit actions) · B5 Étape 5 ✅ (40 actions implémentées)
+- **Bugs corrigés :** `transfer_to_human` → `apps.knowledge.TransfertHumain` (S40) · `create_commande` feature `commande_paiement` → `menu_digital` · `send_email` → crée `EmailLog` · 5 actions enrichies champs S33
+- **Zones touchées :** `apps/agent/actions/` (7 modifiés + 8 créés) · `apps/tenants/seeders/agent_seeder.py`
+- **Fichiers créés :** `faq.py` · `catalogue_sectoriel.py` · `suivi.py` · `concierger
+
+---
+
+## session_43_donpk
+
+- **Type :** UX Frontend — Dark mode, scroll, langue, logo, quota illimité
+- **Date :** 2026-05-20
+- **Flux couverts :** Dashboard UX complet
+- **Bugs corrigés :** Scroll sidebar (layout), dark mode fond (layout), langue Header (contexte wrong), dark mode Header (couleurs hardcodées), quota -1 illimité (SubscriptionUsage), bulles chat dark mode (ConversationReportModal), logo sidebar "AGT Platform" supprimé (Sidebar)
+- **Zones touchées :** `src/app/(dashboard)/layout.tsx` · `src/components/layout/Header.tsx` · `src/components/layout/Sidebar.tsx` · `src/app/pme/dashboard/_components/SubscriptionUsage.tsx` · `src/app/pme/bots/_components/ConversationReportModal.tsx`
+- **Règles permanentes établies :** Light→fond sectoriel / Dark→var(--bg) · CSS vars only · Logo sidebar getLogoAssets · useLanguage depuis LanguageContext uniquement · quota -1→∞
+- **Rapport :** `docs/reports/session_43_donpk.md`
+
+---
+
+## Session 43 — donpk (suite) — 20/05/2026
+
+**Fichiers modifiés (frontend) :**
+
+- `src/app/(dashboard)/bots/_components/tabs/BotSettingsPanel.tsx` — dark mode, bg-white purgés
+- `src/app/(dashboard)/bots/_components/tabs/ConversationsTab.tsx` — dark mode, UX WAOUH
+- `src/app/(dashboard)/bots/_components/tabs/StatsTab.tsx` — dark mode, tooltip CSS vars
+- `src/app/(dashboard)/bots/_components/tabs/BotConfigTab.tsx` — dark mode, inputs sectoriels
+- `src/app/(dashboard)/results/_components/ReservationResultCard.tsx` — suppression ressource_nom
+- `src/app/(dashboard)/bots/_components/ConversationReportModal.tsx` — re-export vers shared
+- `src/app/(dashboard)/knowledge/_components/tabs/ChatbotResultTab.tsx` — modal unifié
+- `src/components/shared/ConversationModal.tsx` — NOUVEAU composant partagé
+- `src/dictionaries/fr/bots.fr.ts` — nouvelles clés modal i18n
+- `src/dictionaries/en/bots.en.ts` — nouvelles clés modal i18n
+
+**Fichiers modifiés (backend) :**
+
+- `apps/tenants/seeders/demo/custom.py` — ajout \_seed_prospects() 4 contacts CRM
+
+**Décisions prises :**
+
+- ConversationModal → composant partagé unique pour /bots et /results
+- Éditabilité résultats → reportée après production
+- globals.css btn-primary + input-base → décision pendante (voir rapport S44)
+
+**Zones à risque :**
+
+- `src/components/shared/` — nouveau dossier, vérifier imports dans autres membres
+- `src/dictionaries/` — si un autre membre ajoute des clés bots, merger avec S44
+
+**Prochaine priorité : Session 45**
+→ Redesign UX WAOUH page /results — tous les tabs
+→ Même règles : zéro hardcode couleur, zéro hardcode texte, useLanguage, CSS vars
+
+---
+
+## session_44_gabriel
+
+- **Type :** Génération — B5 Étape 6 Skills
+- **Date :** 2026-05-20
+- **Flux couverts :** B5 Étape 6 ✅ (génération complète) — tests partiels ⚠️
+- **Bugs corrigés :** SkillsSeeder.**init**, mélange features/actions disque
+- **Zones touchées :** `apps/agent/models/`, `apps/agent/migrations/`, `apps/agent/engine/`, `apps/agent/skills/`, `apps/tenants/seeders/`
+- **Fichiers créés :** 4 Python + 78 Markdown
+- **Dette ouverte :** Migration django_celery_results DuplicateTable à fixer S45 avant seed skills
+- **Rapport :** `docs/reports/session_44_gabriel.md`
+
+---
+
+## session_45_donpk
+
+- **Type :** Génération — Frontend UX WAOUH /results + /knowledge (partiel)
+- **Date :** 2026-05-21
+- **Flux couverts :** B5 Étape 3 UX ✅ (/results 11 cards) · B5 /knowledge Batch 1-2 ✅
+- **Bugs corrigés :** `confirm()` natif AgenceCard → modal inline · MenuTab filtre `feature_slug` manquant · `image_url` absent de `ChambreType` backend
+- **Zones touchées :** `src/app/(dashboard)/results/_components/` · `src/app/(dashboard)/knowledge/_components/` · `src/lib/image-placeholder.ts` · `src/app/globals.css` · `src/dictionaries/` · `apps/knowledge/models.py` · `apps/knowledge/serializers.py` · `apps/knowledge/migrations/`
+- **Fichiers créés :** `results.fr.ts` · `results.en.ts` · `image-placeholder.ts` · `0012_chambretype_image_url.py`
+- **Fichiers modifiés :** 23 frontend + 2 backend
+- **Migration appliquée :** `0012_chambretype_image_url` ✅
+- **Batches restants S46 :** ChambreCard · FaqTab · CitoyensTab · MedicalTab · InscriptionsTab · ChatbotConversationCard · KnowledgeSkeleton · ProduitFinancierTab
+- **Rapport :** `docs/reports/session_45_donpk.md`
+
+---
+
+## session_46_gabriel
+
+- **Type :** Debug + Génération — B5 Étape 7 (Architecture de test + Niveau 1)
+- **Date :** 2026-05-21
+- **Flux couverts :** B5 Étape 7 ✅ (40/40 Niveau 1 validé)
+- **Bugs corrigés :** BUG-S46-01 à BUG-S46-13 (migration **latest**, TacheRelance agence, EmailLog FK, Reservation feature, Inscription est_hors_periode, SpecialiteMedicale is_active, ProgrammeAdmission champs, FAQ champs, QuestionFrequente champs, ChambreType import, get_trajets ville_depart, update_context required_fields, initiate_payment dispatch)
+- **Zones touchées :** `apps/agent/tests_e2e/` · `apps/agent/actions/` · `apps/agent/management/commands/` · `apps/tenants/seeders/` · `apps/knowledge/migrations/`
+- **Fichiers créés :** `scenarios.py` (NEW) · `docs/tests/TEST_SCENARIOS.md` (NEW)
+- **Fichiers modifiés :** 15 fichiers backend
+- **Fichiers supprimés :** `scenarios_system.py` · `scenarios_commerce.py` · `scenarios_admin.py`
+- **Résultat :** 40/40 Niveau 1 ✅ · Architecture 3 niveaux en place
+- **⚠️ Organisation parallèle S47 :**
+  - **Gabriel :** B5 Étape 7 suite — Niveau 2 (24 features) + Niveau 3 (secteurs) — zones `apps/agent/tests_e2e/`
+  - **Penka :** KB + Results frontend — zones `src/app/(dashboard)/knowledge/` + `src/app/(dashboard)/results/`
+- **Rapport :** `docs/reports/session_46_gabriel.md`
+
+---
+
+## session_47_gabriel
+
+- **Type :** Debug + Génération — B5 Étape 7 Niveaux 2 & 3
+- **Date :** 2026-05-21
+- **Flux couverts :** B5 Étape 7 ✅ complète (68/68)
+- **Bugs corrigés :** BUG-S47-01 à BUG-S47-18 (16 bugs scénarios Niveau 2 + 2 résiduels)
+- **Zones touchées :** `apps/agent/tests_e2e/features/` · `apps/agent/tests_e2e/sectors/` (NEW)
+- **Fichiers créés :** 3 (sectors/**init**.py · runner_sectors.py · scenarios_sectors.py)
+- **Fichiers modifiés :** 2 (scenarios_features_a.py · scenarios_features_b.py)
+- **Résultat :** 40/40 N1 ✅ · 24/24 N2 ✅ · 4/4 N3 ✅ — **68/68 tous niveaux**
+- **⚠️ Organisation parallèle S48 :**
+  - **Gabriel :** B5 Étape 8 — 28 itérations features sur interface interne — zones `apps/agent/` + features
+  - **Penka :** KB + Results frontend — zones `src/app/(dashboard)/knowledge/` + `results/`
+- **Rapport :** `docs/reports/session_47_gabriel.md`
+
+---
+
+## session_48_donpk
+
+- **Type :** Génération — Frontend UX WAOUH /knowledge Batches 3-4 + Bugfixes
+- **Date :** 2026-05-21
+- **Flux couverts :** B5 /knowledge Batch 3 ✅ · B5 /knowledge Batch 4 ✅
+- **Bugs corrigés :** BUG-S48-P01 (MenuTab URL) · BUG-S48-P02 (serializer categorie) · BUG-S48-P03 (image_url clear) · BUG-S48-P04 (AgenceCard modal)
+- **Zones touchées :** `src/app/(dashboard)/knowledge/_components/` · `src/repositories/` · `src/types/api/` · `src/dictionaries/` · `apps/knowledge/serializers.py`
+- **Fichiers créés :** `MenuDishCard.tsx`
+- **Fichiers modifiés :** 16 frontend + 1 backend
+- **Rapport :** `docs/reports/session_48_donpk.md`
+
+---
+
+## session_49_gabriel
+
+- **Type :** Planification + Conception + Design
+- **Date :** 2026-05-21
+- **Flux couverts :** B5 Étape 8 — conception socle test parallélisé (aucun code généré)
+- **Bugs corrigés :** Aucun
+- **Zones touchées :** `docs/testing/` (nouveaux fichiers) · `docs/bugs/` (à créer) · `src/app/(dashboard)/bots/_components/tabs/BotConfigTab.tsx` (conception) · `src/app/(dashboard)/bots/[id]/test/_components/ConversationPanel.tsx` (conception) · `apps/agent/serializers.py` (conception) · `apps/features/serializers.py` (conception)
+- **Fichiers créés :** `conception_socle_test_b5_etape8.md` (NEW) · `test_page_v3_valide_S49.html` (NEW — maquette validée)
+- **Fichiers modifiés :** Aucun
+- **Résultat :** Conception complète validée ✅ · Maquette HTML page test validée ✅ · Prêt pour implémentation
+- **⚠️ Organisation parallèle S49/S50 :**
+  - **Gabriel :** B5 Étape 8 socle — implémenter `conception_socle_test_b5_etape8.md` — zones `apps/agent/` + `apps/features/` + `bots/[id]/test/`
+  - **Penka (S48) :** KB + Results frontend — zones `src/app/(dashboard)/knowledge/` + `results/` — **ne pas toucher**
+- **Rapport :** `docs/reports/session_49_gabriel.md`
+
+---
+
+## session_50_gabriel
+
+- **Type :** Génération full-stack + Debug
+- **Date :** 2026-05-22
+- **Flux couverts :** B5 Étape 8 — socle interface test (backend sérialiseurs + frontend complet)
+- **Bugs corrigés :** BUG-S50-01 (description_fr AttributeError) · BUG-S50-02 (TS2322 ActionModals) · BUG-S50-03 (EntrepriseInUser.secteur_slug)
+- **Zones touchées :** `apps/agent/serializers.py` · `apps/features/serializers.py` · `apps/features/services.py` · `src/types/api/agent.types.ts` · `src/app/(dashboard)/bots/[id]/test/_components/` · `src/app/(dashboard)/bots/_components/tabs/BotConfigTab.tsx` · `src/app/(dashboard)/bots/[id]/test/page.tsx`
+- **Fichiers créés :** `action-helpers.ts` · `ActionModals.tsx`
+- **Fichiers modifiés :** 8
+- **Bug résiduel :** BUG-S50-04 (boucle 401 page test — fix S51)
+- **Rapport :** `docs/reports/session_50_gabriel.md`
+
+---
+
+---
+
+## session_51_gabriel
+
+- **Type :** Debug + Refactoring — Auth/Refresh + Modularisation pages bots
+- **Date :** 2026-05-22
+- **Flux couverts :** B5 (pages /bots et /bots/[id]/test — modularisation)
+- **Bugs corrigés :** BUG-S50-04 (boucle 401 — session fantôme après expiration token)
+- **Zones touchées :**
+  - `src/app/(dashboard)/bots/_components/tabs/` — BotConfigTab, StatsTab, BotSettingsPanel (supprimé)
+  - `src/app/(dashboard)/bots/[id]/test/_components/` — ConversationPanel, WhatsAppSimulator, VoiceDemoPlayer + nouveaux modules \_ui/ et modals/
+  - `src/contexts/AuthContext.tsx`, `src/lib/api-client.ts`
+  - `config/settings.py`, `apps/auth_bridge/views.py`
+  - `src/dictionaries/fr/bots.fr.ts`, `src/dictionaries/en/bots.en.ts`
+  - `src/app/(dashboard)/dashboard/page.tsx`
+- **Fichiers créés :** `statsData.ts`, `bot-config.constants.ts`, `BotConfigElements.tsx`, `StatsCharts.tsx`, `demo-transcript.ts`, `modal-primitives.tsx`, `ActionCards.tsx`, `PanelAccordion.tsx`, `ActionsLog.tsx`, `modals/ActionModals.tsx`, `modals/SystemModals.tsx`
+- **Fichiers refactorisés :** `BotConfigTab.tsx`, `StatsTab.tsx`, `ConversationPanel.tsx`, `WhatsAppSimulator.tsx`, `VoiceDemoPlayer.tsx`, `AuthContext.tsx`
+- **Fichiers supprimés :** `BotSettingsPanel.tsx` (fichier mort — jamais importé)
+- **Specs transversales notées pour S52 :** (1) i18n strict — zéro string hardcodée FR/EN dans les composants bots ; (2) couleurs sectorielles — zéro hexadécimal hardcodé, tout via `useSector().theme`
+- **Rapport :** `docs/reports/session_51_gabriel.md`
+
+---
+
+---
+
+## session_52_gabriel
+
+- **Type :** Conception + Génération + Debug — Backend tabs dynamiques /bots
+- **Date :** 2026-05-22
+- **Flux couverts :** B5 Étape 8 — architecture tabs dynamiques + traçabilité bot (backend complet ✅)
+- **Bugs corrigés :** Aucun (session feature)
+- **Zones touchées :** `apps/agent/models/` · `apps/agent/serializers.py` · `apps/agent/views.py` · `apps/agent/actions/` (5 fichiers) · `apps/reservations/` · `apps/catalogue/` · `apps/inscriptions/` · `apps/dossiers/` · `apps/notifications/` · `apps/knowledge/views.py` · `apps/contacts/views.py`
+- **Fichiers créés :** 6 migrations · `docs/s53_implementation.md`
+- **Fichiers modifiés :** 20 fichiers backend
+- **Décisions clés :** FK `AIConversation.bot` · FK `conversation` sur 5 modèles résultats · filtre `?bot_id=` sur 8 ViewSets · architecture tabs dynamiques `feature:${slug}` validée · seeders mock AIConversation décidés
+- **⚠️ Organisation S53 :** Frontend complet `/bots` tabs + `/results` filtre bot — voir `docs/s53_implementation.md`
+- **Rapport :** `docs/reports/session_52_gabriel.md`
+
+---
+
+## session_53_gabriel
+
+- **Type :** Génération — Backend seeders + Frontend tabs dynamiques /bots + filtre bot /results
+- **Date :** 2026-05-23
+- **Flux couverts :** Seeders demo (10 secteurs), tabs feature /bots, filtre bot /results, i18n bots FR/EN
+- **Bugs corrigés :** type_ressource→type, date_debut dans defaults (6 seeders), METRIC_DEFS manquant, colors prop BotConfigTab, bot_id ConversationFilters, doublon Bot/BotIcon
+- **Zones touchées :** `apps/tenants/seeders/demo/`, `src/app/(dashboard)/bots/_components/`, `src/app/(dashboard)/results/`, `src/repositories/results.repository.ts`, `src/types/api/conversation.types.ts`, `src/dictionaries/`
+- **Rapport :** `docs/reports/session_53_gabriel.md`
+
+---
+
+---
+
+---
+
+## session_54_gabriel
+
+- **Type :** Debug + Génération + Architecture — Build TS, Seeder modulaire, Cohérence /bots ↔ /results
+- **Date :** 2026-05-23
+- **Flux couverts :** B5 Étape 8 — Socle UI /bots + /results (suite S53)
+- **Bugs corrigés :**
+  - BUG-S54-01 : 31 erreurs TypeScript (fichiers S53 jamais placés + doublon BotPairDetailPanel swappé)
+  - BUG-S54-02 : Bot custom sans `features_autorisees` → 0 tab feature sur /bots → `upsert_demo_bot()`
+  - BUG-S54-03 : Labels "Dossiers" ×3 → labels distincts (Citoyens / Suivi dossier / Documents)
+  - BUG-S54-04 : Tabs FAQ/Emails/Conciergerie/Transferts vides → 4 nouveaux modules seeder
+  - BUG-S54-05 : Seeders conciergerie + FAQ (champs incorrects) → corrigés en 3 itérations
+- **Zones touchées :**
+  - `src/config/features-master-config.ts` (NEW — source de vérité 22 features)
+  - `src/app/(dashboard)/bots/_components/` — BotPairDetailPanel, bots.types, feature-tab-manifest
+  - `src/app/(dashboard)/bots/_components/whatsapp/hooks/useWhatsAppConnection.ts`
+  - `src/app/(dashboard)/bots/_components/tabs/BotFeatureResultTab.tsx`
+  - `src/app/(dashboard)/results/` — page, \_config/results-tab-config, \_components/ResultsTabContent, BotFilterDropdown
+  - `src/app/(dashboard)/conversations/page.tsx`
+  - `src/components/conversations/` — ConversationStatus, MessageBubble
+  - `src/repositories/bots.repository.ts`
+  - `apps/tenants/seeders/demo/base.py` (+upsert_demo_bot)
+  - `apps/tenants/seeders/demo/custom.py` (refactorisé modulaire)
+  - `apps/tenants/seeders/demo/results_modules/` (9 fichiers NEW)
+- **Fichiers créés :** `features-master-config.ts`, `ResultsTabContent.tsx`, `BotFilterDropdown.tsx`, `results-tab-config.ts`, `results_modules/__init__.py`, `results_modules/reservations.py`, `results_modules/commandes.py`, `results_modules/inscriptions.py`, `results_modules/dossiers.py`, `results_modules/contacts_crm.py`, `results_modules/faq_consultations.py`, `results_modules/emails.py`, `results_modules/transferts.py`, `results_modules/conciergerie.py`
+- **Décisions clés :**
+  - ⚠️ **PLAN B5 VERROUILLÉ** : 28 itérations features démarrent UNIQUEMENT après validation UI-1 (/bots) ET UI-2 (/test) par Gabriel — toute session Claude doit respecter cette séquence
+  - `gestion_crm` → nom unique "Clients" partout — toujours visible — à passer en feature de base dans seeder + billing (S55+)
+  - `chatbot_whatsapp` → renommé "Sessions test" (≠ "Conversations" = conversations WhatsApp réelles)
+  - Source de vérité unique `features-master-config.ts` — 22 features partagées /bots + /results
+  - Tabs FIXES /bots : Conversations · Stats · Config · WhatsApp (4 — "Clients" géré par feature `gestion_crm`)
+  - Stats dynamiques (depuis features actives) + page statistiques transversale → S55+
+- **Séquence restante B5 :** UI-1 validation → UI-2 validation → 28 features → WAHA réel
+- **Rapport :** `docs/reports/session_54_gabriel.md`
+
+---
+
+---
+
+## session_55_gabriel
+
+- **Type :** Conception + Génération + Debug — Frontend Tab Config + Page Test
+- **Date :** 2026-05-23
+- **Flux couverts :** B5 Étape 8 — enrichissement UI tab Config bots + page test (specs Gabriel)
+- **Bugs corrigés :** BUG-S55-01 (chemins relatifs modals 4 niveaux) · BUG-S55-02 (SectorColors→SectionColors) · BUG-S55-03 (any implicite) · BUG-S55-04 (botId→pair page.tsx) · BUG-S55-05 (couleurs hardcodées page.tsx) · BUG-S55-06 (bouton 404 SystemModals) · BUG-S55-07 (texte en dur ModalVideoDemo) · BUG-S55-08 (props toggle→onToggle)
+- **Zones touchées :** `src/app/(dashboard)/bots/_components/tabs/` · `src/app/(dashboard)/bots/[id]/test/` · `src/repositories/bots.repository.ts` · `src/dictionaries/fr/bots.fr.ts` · `src/dictionaries/en/bots.en.ts` · `docs/prompts/`
+- **Fichiers créés :** `BotConfigSections.tsx` · `_sections/types.ts` · `_sections/SectionBasics.tsx` · `_sections/SectionIA.tsx` · `_sections/SectionKB.tsx` · `_sections/SectionReadonly.tsx` · `docs/prompts/frontend_specs.md`
+- **Fichiers modifiés :** `BotConfigTab.tsx` · `bot-config.constants.ts` · `SystemModals.tsx` · `ConversationPanel.tsx` · `page.tsx` (test) · `bots.repository.ts` · `bots.fr.ts` · `bots.en.ts` · `init_session.md` · `end_session.md`
+- **Specs traitées :** Tab Config 5 sections ✅ · patches auto checkboxes ✅ · 2 Save séparés ✅ · signature+langues ✅ · page test accordéon readonly ✅ · modale Ajuster enrichie ✅
+- **Dette créée :** Aucune
+- **⚠️ PowerShell LiteralPath :** Les fichiers dans `[id]/test/` nécessitent `-LiteralPath` :
+  `Get-Content -LiteralPath "C:\...\src\app\(dashboard)\bots\[id]\test\page.tsx" | Set-Clipboard`
+- **Rapport :** `docs/reports/session_55_gabriel.md`
+
+---
+
+## session_56_gabriel
+
+- **Type :** Conception + Génération full-stack — Stats 3 niveaux + Dashboard
+- **Date :** 2026-05-23
+- **Flux couverts :** B6 Stats N1/N2/N3 (backend ✅ · frontend généré ⏳ 33 erreurs TS)
+- **Bugs corrigés :** BUG-S56-01 (agent.views pas un package) · BUG-S56-02 (date_debut→periode_debut, partiel) · BUG-S56-03 (get_or_create mock conversations)
+- **Zones touchées :** `apps/agent/` · `apps/dashboard/` · `apps/tenants/seeders/demo/` · `src/types/api/` · `src/repositories/` · `src/app/(dashboard)/stats/` · `src/app/(dashboard)/statistiques/` · `src/app/(dashboard)/bots/_components/tabs/StatsTab.tsx` · `src/app/(dashboard)/dashboard/` · `src/dictionaries/`
+- **Fichiers créés :** `bot_stats.py` · `mock_stats.py` · `stats.repository.ts` · `stats-feature-config.ts` · `FeatureStatsSection.tsx` · `stats.fr.ts` · `stats.en.ts` · `statistiques/page.tsx` · `DashboardHeroKPIs.tsx` · `DashboardSectorWidgets.tsx`
+- **Fichiers modifiés :** `custom.py` · `agent/urls.py` · `dashboard/views.py` · `dashboard/urls.py` · `stats.types.ts` · `StatsTab.tsx` · `dashboard/page.tsx`
+- **Dette créée :** DETTE-S56-01 (abonnement periode_debut) · DETTE-S56-02 (33 erreurs TS) · DETTE-S56-04/05 (index.ts + Sidebar)
+- **Rapport :** docs/reports/session_56_gabriel.md
+
+```
+
+---
+## session_57_gabriel
+
+- **Type :** Debug + Génération — Fix TS + Seeder modulaire
+- **Date :** 2026-05-23
+- **Flux couverts :** 0 erreur tsc stats 3 niveaux ✅ · seeder custom Pro actif ✅
+- **Bugs corrigés :** BUG-S57-01 (33 erreurs TS) · BUG-S57-02 (api.get<T>()) · BUG-S57-03 (Abonnement barrel) · BUG-S57-04/05 (periode_debut/fin + Pro actif) · BUG-S57-06 (adminStatsRepository retiré client)
+- **Zones touchées :** `src/dictionaries/` · `src/repositories/stats.repository.ts` · `src/app/(dashboard)/bots/` · `src/app/(dashboard)/stats/` · `src/app/(dashboard)/statistiques/` · `src/app/(dashboard)/dashboard/` · `apps/tenants/seeders/demo/`
+- **Fichiers créés :** `account_patch.py` · `kb_custom.py` · `conversations_demo.py` · `results_bundle.py` · `statistiques/_components/FeatureStatsSection.tsx`
+- **Fichiers modifiés :** `custom.py` · `results_modules/__init__.py` · `stats.repository.ts` · `BotPairDetailPanel.tsx` · `StatsTab.tsx` · `FeatureStatsSection.tsx` · `DashboardHeroKPIs.tsx` · `dashboard/page.tsx` · `statistiques/page.tsx` · `fr/index.ts` · `en/index.ts`
+- **Dette créée :** `adminStatsRepository` à recréer côté admin · design stats/dashboard S58
+- **Rapport :** `docs/reports/session_57_gabriel.md`
+
+---
+## session_58_gabriel
+
+- **Type :** Conception + Génération — Backend Seeder v3
+- **Date :** 2026-05-24
+- **Flux couverts :** Seeder démo complet (10 secteurs) — pattern open/closed
+- **Bugs corrigés :** BUG-S58-01 (TestSession import chatbot_bridge) · BUG-S58-02 (slugs mock_stats incorrects) · BUG-S58-03 (conv_map non passé aux stats)
+- **Zones touchées :** `apps/tenants/seeders/demo/` · `apps/tenants/seeders/demo/results_modules/`
+- **Fichiers créés :** `conv_scenarios.py` · `test_sessions.py` · `restaurant.py`
+- **Fichiers modifiés :** 25 fichiers (conversations_demo, kb_custom, results_bundle, __init__, reservations, commandes, contacts_crm, dossiers, inscriptions, transferts, conciergerie, faq_consultations, emails, account_patch, mock_stats, custom, hotel, banque, sante, education, ecommerce, transport, pme, public)
+- **Décisions clés :** conv_scenarios.py source de vérité pure data · SECTOR_FEATURES importé dynamiquement depuis features_seeder.SECTOR_MATRIX · patch_demo_account générique (plan_slug + wallet_amount) · abonnements adaptés par secteur · mock_stats 2 couches (conv_map + historique 90j) · Option A migration 6.20 pour Conversations/Sessions test vides
+- **Dette créée :** DETTE-S58-01 (Conversations/Sessions test vides → migration 6.20) · DETTE-S58-02 (test_sessions à migrer vers AIConversation mode=test) · DETTE-S58-03 (stats couche 1 non régénérées au second seed)
+- **Rapport :** docs/reports/session_58_gabriel.md
+
+---
+---
+## session_59_gabriel
+
+- **Type :** Debug + Migration + Génération — Frontend
+- **Date :** 2026-05-24
+- **Flux couverts :** Migration Conversation→AIConversation sur /bots, /bots/[id]/test, /results · Tab Conversations live ajouté dans /results
+- **Bugs corrigés :** BUG-S59-01 · BUG-S59-02 · BUG-S59-03 · BUG-S59-04 · BUG-S59-05 · BUG-S59-06
+- **Zones touchées :** `src/app/(dashboard)/bots/_components/` · `src/app/(dashboard)/bots/[id]/test/_components/` · `src/app/(dashboard)/knowledge/_components/` · `src/app/(dashboard)/results/` · `src/repositories/agent.repository.ts`
+- **Fichiers créés :** `ConvModal.tsx` · `ConversationsResultTab.tsx`
+- **Fichiers modifiés :** `ConversationsTab.tsx` · `ConversationPanel.tsx` · `ChatbotConversationCard.tsx` · `ChatbotResultTab.tsx` · `BotPairDetailPanel.tsx` · `BotFeatureResultTab.tsx` · `agent.repository.ts` · `results-tab-config.ts` · `results/page.tsx` · `ResultsTabContent.tsx`
+- **Dette créée :** `ConversationModal` encore sur ancien type (`as never`) · `ConversationReportModal` code mort à supprimer · UI-2 validation à faire · Plan B5 verrouillé
+- **⚠️ Chemin frontend correct :** `C:\Users\hp\Documents\gabriel\AGT-BOT\dev_agt_assist_final\`
+- **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "C:\Users\hp\Documents\gabriel\AGT-BOT\dev_agt_assist_final\src\app\(dashboard)\bots\[id]\test\page.tsx" | Set-Clipboard`
+- **Rapport :** `docs/reports/session_59_gabriel.md`
+
+
+---
+---
+## session_60_gabriel
+
+- **Type :** conception + génération + debug
+- **Date :** 24/05/2026
+- **Flux couverts :** Audit modèles résultats 28 features · Conception Stats B6 v2 (N1/N2/N3) · Migrations M2/M5/M6/M7 · App sante créée
+- **Bugs corrigés :** BUG-S60-01 (knowledge.0010 dépendance tenants) · BUG-S60-02 (container crash loop)
+- **Zones touchées :** apps/sante/ · apps/catalogue/models.py · apps/tenants/models.py · apps/dossiers/models.py · apps/contacts/models.py · apps/knowledge/migrations/ · config/settings.py
+- **Fichiers créés :** sante/apps.py · sante/models.py · sante/migrations/0001_initial.py · catalogue/migrations/0004 · tenants/migrations/0004 · dossiers/migrations/0004
+- **Fichiers modifiés :** catalogue/models.py · tenants/models.py · dossiers/models.py · contacts/models.py · knowledge/migrations/0010 · config/settings.py
+- **Specs traitées :** Conception Stats B6 v2 ✅ · Audit modèles 28 features ✅ · 4 migrations appliquées ✅
+- **Dette créée :** DETTE-S60-01 (5 actions agent) · DETTE-S60-02 (seeders nouvelles tables) · DETTE-S60-03 (tests invoque-request) · DETTE-S60-04 (admin+serializers nouvelles tables)
+- **Rapport :** docs/reports/session_60_gabriel.md
+
+---
+---
+## session_61_gabriel
+
+- **Type :** Debug + Génération — Backend
+- **Date :** 2026-05-24
+- **Flux couverts :** DETTE-S60-01 (5 actions agent) ✅ · DETTE-S60-02 (seeders nouvelles tables) ✅ · DETTE-S60-03 (tests invoque-request) ✅ · B6 backend stats v2 (historique + kpis_sectoriels 10 secteurs) ✅
+- **Bugs corrigés :** BUG-S61-01 (ConsultationCatalogue.action_slug max_length) · BUG-S61-02 (DashboardStatsView 0 partout — entreprise_id) · BUG-S61-03 (TransfertHumain mauvais import)
+- **Zones touchées :** `apps/agent/actions/` · `apps/agent/bot_stats.py` · `apps/agent/bot_stats_aggregators.py` · `apps/dashboard/views.py` · `apps/catalogue/migrations/` · `apps/tenants/seeders/demo/results_modules/`
+- **Fichiers créés :** `bot_stats_aggregators.py` · `0005_consultationcatalogue_action_slug_max100.py` · `consultations_catalogue.py` · `consultations_agence.py` · `orientations_patient.py` · `simulations_credit.py`
+- **Fichiers modifiés :** `catalogue.py` · `agences.py` · `sante.py` · `banking.py` · `bot_stats.py` · `dashboard/views.py` · `results_bundle.py` · `results_modules/__init__.py`
+- **Specs traitées :** DETTE-S60-01/02/03 ✅ · B6 stats v2 backend ✅
+- **Dette créée :** DETTE-S61-01 (admin+serializers nouvelles tables — reporté) · NOTE-S61-01 (seed --demo --only custom non supporté — flush+seed --demo obligatoire)
+- **Rapport :** docs/reports/session_61_gabriel.md
+
+
+---
+---
+## session_62_gabriel
+
+- **Type :** Génération + Debug — Frontend
+- **Date :** 2026-05-24
+- **Flux couverts :** B6 N1 — StatsTab refondu (/bots tab Stats)
+- **Bugs corrigés :** BUG-S62-01 (toEntries types stricts) · BUG-S62-02 (EntrepriseStats régression S56)
+- **Zones touchées :** `src/types/api/stats.types.ts` · `src/dictionaries/fr/stats.fr.ts` · `src/dictionaries/en/stats.en.ts` · `src/app/(dashboard)/bots/_components/tabs/StatsTab.tsx` · `src/app/(dashboard)/bots/_components/tabs/stats/`
+
+---
+---
+## session_63_gabriel
+
+- **Type :** Génération + Debug + Backend
+- **Date :** 2026-05-24
+- **Flux couverts :** B6 N2 `/statistiques` refondu ✅ · B6 N3 `/dashboard` enrichi + validé ✅ · Seeder exhaustif 3 ans ⏳
+- **Bugs corrigés :** BUG-S63-01 (nav.statistiques TS2339) · BUG-S63-02 (fr/index.ts corrompu) · BUG-S63-03 (AIActionLog champs incorrects) · BUG-S63-04 (BotPair typage)
+- **Zones touchées :** `src/components/layout/` · `src/dictionaries/fr/nav.fr.ts` · `src/dictionaries/en/nav.en.ts` · `src/app/(dashboard)/statistiques/page.tsx` · `src/app/(dashboard)/bots/_components/tabs/stats/StatsRecentEntries.tsx` · `src/app/(dashboard)/dashboard/` · `apps/tenants/seeders/demo/results_modules/mock_stats.py`
+- **Fichiers créés :** `DashboardQuickActions.tsx` · `DashboardFeaturesChart.tsx` · `DashboardRecentFeatures.tsx` · `DashboardSubscription.tsx`
+- **Fichiers modifiés :** `Sidebar.config.ts` · `Sidebar.tsx` · `nav.fr.ts` · `nav.en.ts` · `statistiques/page.tsx` · `StatsRecentEntries.tsx` · `dashboard/page.tsx` · `mock_stats.py`
+- **Dette créée :** DETTE-S63-01 (10 features sans AIAction) · DETTE-S63-02 (3 aggregators imports incorrects) · DETTE-S63-03 (conversations dashboard vides)
+- **Rapport :** docs/reports/session_63_gabriel.md
+---
+
+---
+## session_64_gabriel
+
+- **Type :** Debug Backend + Diagnostic
+- **Date :** 2026-05-24
+- **Flux couverts :** B6 debug seeder + B6 debug aggregators + B6 N3 dashboard conversations fix
+- **Bugs corrigés :** BUG-S64-mock-01 (slugs uniques MISSING_ACTIONS) · BUG-S63-04 (conversations dashboard endpoint)
+- **Bugs identifiés non corrigés :** BUG-S64-01→05 (5 aggregators imports/fields incorrects)
+- **Zones touchées :** `apps/tenants/seeders/demo/results_modules/mock_stats.py` · `src/app/(dashboard)/dashboard/page.tsx`
+- **Décision architecture :** Option A validée — `_historique_from_logs` via AIActionLog (50 965 logs 3 ans en base)
+- **État seed :** 7414 AIConversation live + 50 965 AIActionLog bot demo-custom ✅
+- **Dette créée :** DETTE-S64-01 (5 bugs aggregators) · DETTE-S64-02 (_historique_from_logs) · DETTE-S64-03 (contact serializer)
+- **Rapport :** docs/reports/session_64_gabriel.md
+
+
+---
+---
+## session_65_gabriel
+
+- **Type :** Génération + Debug — Frontend UI-2
+- **Date :** 2026-05-24
+- **Flux couverts :** UI-2 `/bots/[id]/test` — maquette S49 ✅
+- **Bugs corrigés :** BUG-S65-01 (path ConvModal) · BUG-S65-02 (session Active sans Charger) · BUG-S65-03 (strings hardcodés) · BUG-S65-04 (espace mort header)
+- **Zones touchées :** `src/app/(dashboard)/bots/[id]/test/` · `src/dictionaries/fr/bots.fr.ts` · `src/dictionaries/en/bots.en.ts`
+- **Fichiers modifiés :** `page.tsx` · `WhatsAppSimulator.tsx` · `ConversationPanel.tsx` · `ActionCards.tsx` · `bots.fr.ts` · `bots.en.ts`
+- **Fichiers créés :** Aucun
+- **Specs traitées :** UI-2 header compact ✅ · suggestions dynamiques ✅ · sessions navigables ✅ · resize panel ✅ · cartes inline ⏳ (bloqué backend)
+- **Dette créée :** DETTE-S65-01 (LLM JSON Deepseek) · DETTE-S65-02 (italique messages status)
+- **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "C:\Users\hp\Documents\gabriel\AGT-BOT\dev_agt_assist_final\src\app\(dashboard)\bots\[id]\test\page.tsx" | Set-Clipboard`
+- **Rapport :** docs/reports/session_65_gabriel.md
+
+---
+---
+## session_66_gabriel
+
+- **Type :** Debug + Conception + Génération — Backend + Frontend
+- **Date :** 2026-05-24
+- **Flux couverts :** Fix persistance sessions bot · Audit system prompt LLM · Conception contrat JSON itératif · Socle engine fixes · Frontend heure bulles + status italique
+- **Bugs corrigés :** BUG-S66-01 (bot_id non persisté → session disparaît) · BUG-S66-02 (HandleMessagePayload sans bot_id) · BUG-S66-03/04 (botId non propagé frontend) · BUG-S66-05 (RESPONSE_SCHEMA absent system prompt) · ENG-03 (CRM signal crash) · FE-01 (heure bulles)
+- **Zones touchées :** `apps/agent/views.py` · `apps/agent/engine/context.py` · `apps/agent/engine/core.py` · `apps/agent/skills/_central/system_prompt.md` · `apps/chatbot_bridge/urls.py` · `apps/chatbot_bridge/views.py` · `src/types/api/agent.types.ts` · `src/app/(dashboard)/bots/[id]/test/_components/WhatsAppSimulator.tsx` · `src/app/(dashboard)/bots/[id]/test/page.tsx`
+- **Fichiers créés :** Aucun
+- **Fichiers modifiés :** views.py (agent) · context.py · core.py · system_prompt.md · chatbot_bridge/urls.py · chatbot_bridge/views.py · agent.types.ts · WhatsAppSimulator.tsx · page.tsx (diff)
+- **Specs traitées :** DETTE-S65-01 (LLM JSON) ⏳ Partiel · DETTE-S65-02 (italique status) ⏳ Partiel · ENG-01/02/03 ✅ · FE-01/03 ✅
+- **Dette créée :** BUG-S66-06 (LLM n'actionne pas) · BUG-S66-07 (phone non persisté) · BUG-S66-08 (InconsistentMigrationHistory knowledge.0010↔contacts.0005) · BUG-S66-09 (feedback non systématique) · BUG-S66-10 (suggestions incorrectes) · ENG-04 (skill files actions à auditer)
+- **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "C:\Users\hp\Documents\gabriel\AGT-BOT\dev_agt_assist_final\src\app\(dashboard)\bots\[id]\test\page.tsx" | Set-Clipboard`
+- **Rapport :** docs/reports/session_66_gabriel.md
+
+---
+---
+## session_67_gabriel
+
+- **Type :** Debug + Architecture + Outillage B5
+- **Date :** 2026-05-24
+- **Steps B5 validés :** menu_digital b✅ · c✅ · d✅ · e❌ (BUG-B5-001)
+- **Bugs corrigés :** BUG-S66-08 (migration knowledge.0010) · BUG-S66-06 (AIAgentAction 7→47) · ENG-02 (DeepSeek JSON)
+- **Bugs découverts :** BUG-B5-001 à BUG-B5-008 (voir TODO_B5.md)
+- **Zones touchées :** `apps/knowledge/migrations/0010` · `apps/features/services.py` · `apps/agent/signals.py` · `apps/agent/serializers.py` · `apps/agent/views.py` · `apps/agent/urls.py` · `apps/chatbot_bridge/deepseek_provider.py`
+- **Fichiers créés :** `docs/testing/TODO_B5.md` · `docs/prompts/b5/init_feature_test.md `docs/prompts/b5/b5/end_feature_test.md
+- **Fichiers modifiés :** services.py (features) · signals.py · serializers.py · views.py · urls.py (agent) · deepseek_provider.py · knowledge/migrations/0010
+- **TODO_B5 :** docs/testing/TODO_B5.md créé — 24 features × 8 steps · 8 bugs actifs
+- **Rapport :** docs/reports/session_67_gabriel.md
+
+---
+---
+## session_68_gabriel
+
+- **Type :** Debug + Fix B5 — Engine LLM · Frontend ConversationModal · Backend stats aggregators
+- **Date :** 2026-05-24
+- **Steps validés :** menu_digital e✅ · menu_digital f✅
+- **Bugs corrigés :** BUG-B5-001 · BUG-B5-002 · BUG-B5-003 · BUG-B5-004 · BUG-B5-005 · BUG-B5-010
+- **Bugs découverts :** Aucun nouveau
+- **Zones touchées :** `apps/agent/engine/core.py` · `apps/agent/serializers.py` · `apps/agent/bot_stats_aggregators.py` · `apps/agent/skills/actions/get_menu.md` · `apps/agent/skills/actions/create_commande.md` · `src/components/shared/ConversationModal.tsx` · `src/app/(dashboard)/bots/_components/tabs/ConversationsTab.tsx` · `src/app/(dashboard)/bots/[id]/test/_components/ConversationPanel.tsx` · `src/app/(dashboard)/results/_components/ConversationsResultTab.tsx` · `src/types/api/agent.types.ts`
+- **Fichiers modifiés :** core.py · serializers.py · bot_stats_aggregators.py · get_menu.md · create_commande.md · ConversationModal.tsx · ConversationsTab.tsx · ConversationPanel.tsx · ConversationsResultTab.tsx · agent.types.ts
+- **Dette créée :** DETTE-S68-01 (TransfertHumain.conversation FK → migrer vers AIConversation)
+- **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "C:\Users\hp\Documents\gabriel\AGT-BOT\dev_agt_assist_final\src\app\(dashboard)\bots\[id]\test\_components\ConversationPanel.tsx" | Set-Clipboard`
+- **Rapport :** docs/reports/session_68_gabriel.md
+- **TODO_B5 :** docs/testing/TODO_B5.md mis à jour — menu_digital e✅ f✅ · 6 bugs résolus
+
+
+---
+---
+## session_69_gabriel
+
+- **Type :** Debug + Nettoyage technique + Génération frontend
+- **Date :** 2026-05-25
+- **Flux couverts :** DETTE-S68-01 (TransfertHumain legacy) · BUG-B5-006 (cartes inline) · BUG-B5-007 (timestamps) · BUG-B5-008 (suggestions) · Nettoyage chatbot_bridge · agg_transfert_humain fix
+- **Bugs corrigés :** DETTE-S68-01 · BUG-B5-006 · BUG-B5-007 · BUG-B5-008 · BUG-S69-K · BUG-S69-AGG · BUG-S69-STR
+- **Zones touchées :** `apps/conversations/` · `apps/chatbot_bridge/` · `apps/agent/bot_stats_aggregators.py` · `src/app/(dashboard)/bots/[id]/test/_components/` · `src/app/(dashboard)/bots/_components/`
+- **Fichiers créés :** `apps/conversations/migrations/0004_delete_transferthumain.py`
+- **Fichiers modifiés :** `conversations/models.py` · `conversations/serializers.py` · `conversations/views.py` · `conversations/urls.py` · `conversations/tests.py` · `conversations/admin.py` · `chatbot_bridge/local.py` · `chatbot_bridge/strategy.py` · `agent/bot_stats_aggregators.py` · `WhatsAppSimulator.tsx` · `ConversationPanel.tsx` · `ActionCards.tsx`
+- **Fichiers supprimés :** `src/app/(dashboard)/bots/_components/ConversationReportModal.tsx`
+- **Specs traitées :** DETTE-S68-01 ✅ · BUG-B5-006 ✅ · BUG-B5-007 ✅ · BUG-B5-008 ✅ (confirmé déjà résolu) · Nettoyage chatbot_bridge ✅
+- **Dette créée :** DETTE-S69-01 (apps.conversations nettoyage complet — session dédiée) · DETTE-S69-02 (system_prompt.md reply obligatoire) · DETTE-S69-03 (CardTransfert response enrichir) · DETTE-S69-04 (create_commande.md reply confirmation) · DETTE-S69-05 (_parse_llm_response résidu)
+- **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "C:\Users\hp\Documents\gabriel\AGT-BOT\dev_agt_assist_final\src\app\(dashboard)\bots\[id]\test\_components\WhatsAppSimulator.tsx" | Set-Clipboard`
+- **Rapport :** docs/reports/session_69_gabriel.md
+
+
+---
+---
+## session_70_gabriel
+
+- **Type :** Test B5 + Skills + Fix + Architecture parallélisation
+- **Date :** 2026-05-25
+- **Flux couverts :** menu_digital step a ✅ · DETTE-S69-02 ✅ · DETTE-S69-03 ✅ · DETTE-S69-04 ✅ · step g ✅ · Architecture parallélisation B5 ✅
+- **Bugs corrigés :** DETTE-S69-02 (system_prompt reply obligatoire) · DETTE-S69-03 (CardTransfert enrichie) · DETTE-S69-04 (create_commande reply — intégré skill)
+- **Zones touchées :** `apps/agent/skills/features/menu_digital.md` · `apps/agent/skills/actions/get_menu.md` · `get_item_detail.md` · `create_commande.md` · `skills/_central/system_prompt.md` · `apps/agent/actions/system_extra.py` · `docs/prompts/b5/` · `docs/testing/features/gabriel/`
+- **Fichiers créés :** `repartition_b5.md` · `init_stephane.md` · `init_steven.md` · `init_penka.md` · `init_gabriel_b5.md` · `end_feature.md` · `menu_digital.md` (rapport feature)
+- **Fichiers modifiés :** 4 skills actions/features · `system_prompt.md` · `system_extra.py` · `TODO_B5.md` (step g inline)
+- **Dette créée :** DETTE-S70-01 (DeepSeek JSON instable contexte long — deepseek_provider.py) · DETTE-S69-01 (apps.conversations legacy — reporté)
+- **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "C:\Users\hp\Documents\gabriel\AGT-BOT\agt-assist-backend-final\apps\agent\skills\actions\create_commande.md" | Set-Clipboard`
+- **Rapport :** docs/reports/session_70_gabriel.md
+
+---
+
+---
+## session_71_donpk
+
+- **Type :** Debug + Génération — Frontend UX /knowledge + Backend fix
+- **Date :** 2026-05-25
+- **Flux couverts :** B5 /knowledge UX V2 ✅ (BUG 1-2-3-4 + Inscriptions bonus)
+- **Bugs corrigés :** BUG-S71-01 (405 GET disponibilites — @action DRF conflit url_path) · BUG-S71-02 (expansion cascade grid — accordéon hors grid) · BUG-S71-03 (FAQ badge → toggle switch iOS) · BUG-S71-04 (Produits/Services liste → grid cards hero) · BUG-S71-05 (ImagePreviewModal Eye sur tous les onglets images) · BUG-S71-06 (InscriptionsTab cards hauteur — items-start + expandable)
+- **Zones touchées :** `src/components/reservations/RessourceManager/` · `src/app/(dashboard)/knowledge/_components/tabs/` · `src/app/(dashboard)/knowledge/_components/catalogue/` · `src/app/(dashboard)/knowledge/_components/chambres/` · `apps/reservations/views.py`
+- **Fichiers créés :** `ImagePreviewModal.tsx`
+- **Fichiers modifiés :** `RessourceManager/index.tsx` · `FaqTab.tsx` · `CatalogueProduitTab.tsx` · `CatalogueServiceTab.tsx` · `ConciergerieKbTab.tsx` · `MenuDishCard.tsx` · `MenuTab.tsx` · `ChambreCard.tsx` · `ChambresTab.tsx` · `InscriptionsTab.tsx` · `apps/reservations/views.py`
+- **Patterns établis :** `items-start` grid pour cards variables · accordéon hors grid (pleine largeur) · `ImagePreviewModal` pattern réutilisable · `@action` DRF fusionner GET+POST même url_path
+- **Dette créée :** MedicalTab · CitoyensTab · ProduitFinancierTab · CatalogueTrajetTab non redesignés
+- **⚠️ PowerShell LiteralPath :** `Get-Content -LiteralPath "src\components\reservations\RessourceManager\index.tsx" | Set-Clipboard`
+- **Rapport :** `docs/reports/session_71_donpk.md`
+
+---
+
+## session_72_donpk
+
+- **Type :** Test B5 + Debug engine + Génération skills prise_rdv
+- **Date :** 2026-05-25
+- **Flux couverts :** prise_rdv phase a ✅ · prise_rdv phase b ⏳ partiel · phases c-e ❌ reportées
+- **Bugs corrigés :** BUG-S72-01 (reply espaces → bulle vide) · BUG-S72-02 (max_tokens 1024→4096) · BUG-S72-03 (retry→transfer_to_human immédiat) · BUG-S72-04 (double create_contact lors retry) · BUG-S72-05 (prise_rdv.md séquence incorrecte) · BUG-S72-06 (convert_prospect.md absent) · BUG-S72-07 (encodage cassé 9 skills)
+- **Zones touchées :** `apps/agent/engine/` · `apps/chatbot_bridge/` · `apps/agent/skills/features/prise_rdv.md` · `apps/agent/skills/actions/` (9 fichiers)
+- **Fichiers créés :** `apps/agent/skills/actions/convert_prospect.md`
+- **Fichiers modifiés :** `core.py` · `llm.py` · `deepseek_provider.py` · `prise_rdv.md` (v4) · 8 actions .md
+- **Specs traitées :** prise_rdv phase a ✅ · retry engine ✅ · fix bulles vides ✅
+- **Dette créée :** DETTE-S72-01 (bot dédié prise_rdv — activer actions check_dispo/create_reservation) · DETTE-S72-02 (system_prompt.md diff anti-reply-vide) · DETTE-S72-03 (ContextBuilder optimisation longueur prompt) · DETTE-S72-04 (Widget RDV prématuré) · DETTE-S72-05 (datetime naive Reservation)
+- **⚠️ Fichiers partagés — signalés à Gabriel :** `core.py` · `llm.py` · `deepseek_provider.py` · 5 actions système .md · `convert_prospect.md` (nouveau) — voir `docs/reports/session_72_donpk.md` section "Remontée Gabriel"
+- **Rapport :** `docs/reports/session_72_donpk.md`
+---
+## session_73_stephane
+
+- **Type :** Génération Skills LLM + Audit qualité + Test B5 steps b→g (4 features sur 5)
+- **Date :** 2026-05-26
+- **Steps validés :** catalogue_produits b✅ c✅ d✅ e✅ f✅ · catalogue_trajets b✅ c✅ d✅ e✅ f✅ · reservation_table b✅ c✅ d✅ · reservation_billet b✅ c✅ d✅
+- **Bugs corrigés :** DETTE-S70-01 (DeepSeek JSON instable — fix Gabriel pulé et confirmé)
+- **Bugs découverts :** BUG-S74-01 (features→actions non sync à l'activation) · BUG-S74-02 (features→actions non sync à la désactivation) · BUG-S74-03 (check_disponibilite sans détection conflit créneau) · BUG-S74-04 (carte ActionCards INFOS MANQUANTES) · BUG-S74-05 (get_trajets filtre sens inverse) · BUG-S74-06 (suggestions simulateur non filtrées = BUG-B5-008)
+- **Zones touchées :** `apps/agent/skills/features/catalogue_produits.md` · `apps/agent/skills/features/catalogue_trajets.md` · `apps/agent/skills/features/reservation_table.md` · `apps/agent/skills/features/reservation_billet.md` · `apps/agent/skills/actions/get_item_detail.md`
+- **Fichiers modifiés :** 5 skills features/actions · `docs/testing/features/stephane/catalogue_produits.md` (NEW) · `docs/testing/features/stephane/catalogue_trajets.md` (NEW) · `docs/testing/features/stephane/reservation_table.md` (NEW) · `docs/testing/features/stephane/reservation_billet.md` (NEW)
+- **Rapport :** docs/reports/session_73_stephane.md
+- **TODO_B5 :** docs/testing/TODO_B5.md — à mettre à jour par Gabriel
+---
+## session_74_steven
+
+- **Type :** Test B5 — Feature catalogue_services
+- **Date :** 2026-05-25
+- **Flux couverts :** catalogue_services (feature 10) — steps a→h ✅
+- **Bugs corrigés :** BUG-B5-S75-02 (UUID inventé sans get_services préalable) · BUG-B5-S75-03 (réponse vide sur count=0)
+- **Bugs ouverts :** BUG-B5-S75-01 (action_suivante="aucune" sur items KB — correction données Gabriel)
+- **Zones touchées :** `AgentSkill` BD (slug=catalogue_services) · `AIAgentAction` agent demo-custom · `apps/agent/skills/features/catalogue_services.md`
+- **Rapport :** `docs/testing/features/steven/catalogue_services.md`
+
+## session_75_gabriel
+
+- **Type :** Test & validation — B5 socle
+- **Date :** 2026-05-25
+- **Features validées :** `faq` ✅, `gestion_crm` ✅
+- **Bugs identifiés :** BUG-FAQ-01, BUG-FAQ-02, BUG-CRM-01, BUG-CRM-02, BUG-CRM-03
+- **Bugs corrigés :** fix crm_signals payload (strings → dicts), manage_contact implémenté
+- **Zones touchées :** `apps/agent/actions/system.py`, `apps/agent/skills/features/`, `apps/agent/skills/actions/`, `apps/tenants/seeders/agent_seeder.py`
+- **Fichiers créés :** `manage_contact.md` (skill + action), rapports faq.md + gestion_crm.md
+- **Rapport :** `docs/reports/session_75_gabriel.md`
+```

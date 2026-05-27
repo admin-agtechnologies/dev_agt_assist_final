@@ -46,7 +46,9 @@ export const DASHBOARD_ROUTES = {
   conversations: "/conversations",
   contacts:      "/contacts",
   bots:          "/bots",
-  knowledge:     "/knowledge",   // ← MODIFIÉ (était /faq)
+  knowledge:     "/knowledge",
+  results:       "/results",  
+  statistiques:  "/statistiques",
   billing:       "/billing",
   profile:       "/profile",
   modules:       "/modules",

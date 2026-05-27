@@ -1,4 +1,5 @@
 // src/app/(dashboard)/knowledge/_components/tabs/ChambresTab.tsx
+// S71 — Ajout ImagePreviewModal + prop onPreview sur ChambreCard (BUG 3)
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
@@ -8,21 +9,27 @@ import { useSector }          from "@/hooks/useSector";
 import { useToast }           from "@/components/ui/Toast";
 import { chambreRepository }  from "@/repositories/chambre.repository";
 import { ChambreCard }        from "../chambres/ChambreCard";
+import { ImagePreviewModal }  from "../ImagePreviewModal";
 import { KnowledgeCardSkeleton } from "../KnowledgeSkeleton";
 import type { ChambreType, CreateChambreTypePayload } from "@/types/api/chambre.types";
 
-const EMPTY = { nom_fr: "", nom_en: "", description_fr: "", capacite: "2", prix_nuit: "", equipements: "", image_url: "" };
+const EMPTY = {
+  nom_fr: "", nom_en: "",
+  description_fr: "", description_en: "",
+  capacite: "2", prix_nuit: "", equipements: "",
+};
 
 export function ChambresTab() {
   const { dictionary: d } = useLanguage();
   const { theme }         = useSector();
   const toast             = useToast();
 
-  const [chambres, setChambres] = useState<ChambreType[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [showAdd, setShowAdd]   = useState(false);
-  const [form, setForm]         = useState(EMPTY);
-  const [saving, startSave]     = useTransition();
+  const [chambres,   setChambres]   = useState<ChambreType[]>([]);
+  const [loading,    setLoading]    = useState(true);
+  const [showAdd,    setShowAdd]    = useState(false);
+  const [form,       setForm]       = useState(EMPTY);
+  const [saving,     startSave]     = useTransition();
+  const [previewSrc, setPreviewSrc] = useState<{ src: string; alt: string } | null>(null);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const t = ((d.knowledge as unknown as any).chambres as Record<string, string>) ?? {};
@@ -42,14 +49,14 @@ export function ChambresTab() {
     if (!form.nom_fr.trim() || !form.prix_nuit) return;
     try {
       const payload: CreateChambreTypePayload = {
-        nom_fr:        form.nom_fr.trim(),
-        nom_en:        form.nom_en.trim() || undefined,
+        nom_fr:         form.nom_fr.trim(),
+        nom_en:         form.nom_en.trim()         || undefined,
         description_fr: form.description_fr.trim() || undefined,
-        capacite:      Number(form.capacite) || 1,
-        prix_nuit:     Number(form.prix_nuit),
-        equipements:   form.equipements.split(",").map((e) => e.trim()).filter(Boolean),
-        image_url:     form.image_url.trim() || undefined,
-        ordre:         chambres.length,
+        description_en: form.description_en.trim() || undefined,
+        capacite:       Number(form.capacite) || 1,
+        prix_nuit:      Number(form.prix_nuit),
+        equipements:    form.equipements.split(",").map((e) => e.trim()).filter(Boolean),
+        ordre:          chambres.length,
       };
       const created = await chambreRepository.create(payload);
       setChambres((prev) => [...prev, created]);
@@ -67,13 +74,21 @@ export function ChambresTab() {
 
   return (
     <div className="space-y-5">
+
+      {/* Preview modal */}
+      {previewSrc && (
+        <ImagePreviewModal
+          src={previewSrc.src}
+          alt={previewSrc.alt}
+          onClose={() => setPreviewSrc(null)}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-[var(--text-muted)]">
-            {chambres.length} {tCommon.typeLabel ?? "type(s) de chambre"}
-          </p>
-        </div>
+        <p className="text-sm text-[var(--text-muted)]">
+          {chambres.length} {tCommon.typeLabel ?? "type(s) de chambre"}
+        </p>
         {!showAdd && (
           <button type="button" onClick={() => setShowAdd(true)}
             className="btn-primary flex items-center gap-2 px-4 py-2 text-sm">
@@ -82,30 +97,51 @@ export function ChambresTab() {
         )}
       </div>
 
-      {/* Formulaire d'ajout inline */}
+      {/* Formulaire ajout */}
       {showAdd && (
         <div className="bg-[var(--bg-card)] rounded-2xl border-2 p-5 space-y-3"
           style={{ borderColor: theme.primary }}>
           <p className="text-sm font-semibold text-[var(--text)]">{tCommon.newTitle}</p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Row label={tCommon.nomFr + " *"}><input className="input-base" value={form.nom_fr} onChange={set("nom_fr")} autoFocus /></Row>
-            <Row label={tCommon.nomEn}><input className="input-base" value={form.nom_en} onChange={set("nom_en")} /></Row>
+            <Row label={tCommon.nomFr + " *"}>
+              <input className="input-base" value={form.nom_fr} onChange={set("nom_fr")} autoFocus />
+            </Row>
+            <Row label={tCommon.nomEn}>
+              <input className="input-base" value={form.nom_en} onChange={set("nom_en")} />
+            </Row>
           </div>
-          <Row label={tCommon.description}><textarea className="input-base resize-none" rows={2} value={form.description_fr} onChange={set("description_fr")} /></Row>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Row label={tCommon.descriptionFr ?? "Description (FR)"}>
+              <textarea className="input-base resize-none" rows={2}
+                value={form.description_fr} onChange={set("description_fr")} />
+            </Row>
+            <Row label={tCommon.descriptionEn ?? "Description (EN)"}>
+              <textarea className="input-base resize-none" rows={2}
+                value={form.description_en} onChange={set("description_en")} />
+            </Row>
+          </div>
           <div className="grid grid-cols-2 gap-3">
-            <Row label={tCommon.capacite + " *"}><input className="input-base" type="number" min="1" value={form.capacite} onChange={set("capacite")} /></Row>
-            <Row label={tCommon.prixNuit + " *"}><input className="input-base" type="number" min="0" value={form.prix_nuit} onChange={set("prix_nuit")} /></Row>
+            <Row label={(tCommon.capacite ?? "Capacité") + " *"}>
+              <input className="input-base" type="number" min="1"
+                value={form.capacite} onChange={set("capacite")} />
+            </Row>
+            <Row label={(tCommon.prixNuit ?? "Prix / nuit (XAF)") + " *"}>
+              <input className="input-base" type="number" min="0"
+                value={form.prix_nuit} onChange={set("prix_nuit")} />
+            </Row>
           </div>
-          <Row label={tCommon.equipements}>
-            <input className="input-base" placeholder="WiFi, Clim, TV, Baignoire..." value={form.equipements} onChange={set("equipements")} />
+          <Row label={tCommon.equipements ?? "Équipements (séparés par virgule)"}>
+            <input className="input-base" placeholder="WiFi, Clim, TV, Baignoire..."
+              value={form.equipements} onChange={set("equipements")} />
           </Row>
-          <Row label={tCommon.imageUrl}><input className="input-base" type="url" placeholder="https://..." value={form.image_url} onChange={set("image_url")} /></Row>
           <div className="flex justify-end gap-2 pt-1">
             <button type="button" onClick={() => { setShowAdd(false); setForm(EMPTY); }}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-xl border border-[var(--border)] hover:bg-[var(--bg)] text-[var(--text-muted)]">
+              className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-xl
+                border border-[var(--border)] hover:bg-[var(--bg)] text-[var(--text-muted)]">
               <X className="w-4 h-4" /> {tCommon.cancel}
             </button>
-            <button type="button" onClick={handleCreate} disabled={saving || !form.nom_fr.trim() || !form.prix_nuit}
+            <button type="button" onClick={handleCreate}
+              disabled={saving || !form.nom_fr.trim() || !form.prix_nuit}
               className="btn-primary flex items-center gap-1.5 px-4 py-2 text-sm disabled:opacity-60">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
               {tCommon.save}
@@ -129,6 +165,7 @@ export function ChambresTab() {
               chambre={chambre}
               onUpdated={(updated) => setChambres((prev) => prev.map((c) => c.id === updated.id ? updated : c))}
               onDeleted={(id) => setChambres((prev) => prev.filter((c) => c.id !== id))}
+              onPreview={(src, alt) => setPreviewSrc({ src, alt })}
               t={tCommon}
             />
           ))}
@@ -141,7 +178,9 @@ export function ChambresTab() {
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-1 block">{label}</label>
+      <label className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-1 block">
+        {label}
+      </label>
       {children}
     </div>
   );

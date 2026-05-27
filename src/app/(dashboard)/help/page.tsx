@@ -36,22 +36,23 @@ export default function HelpPage() {
   const { theme } = useSector();
   const t = d.help;
 
-  const [entries, setEntries]           = useState<HelpEntry[]>([]);
-  const [expanded, setExpanded]         = useState<string | null>(null);
-  const [search, setSearch]             = useState("");
+  const [entries, setEntries]               = useState<HelpEntry[]>([]);
+  const [expanded, setExpanded]             = useState<string | null>(null);
+  const [search, setSearch]                 = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
 
   useEffect(() => {
     platformHelpRepository.getList().then(setEntries).catch(() => setEntries([]));
   }, []);
 
-  const categories = ["all", ...Array.from(new Set(entries.map(e => e.categorie)))];
+  const categories = ["all", ...Array.from(new Set(entries.map((e) => e.categorie)))];
 
-  const filtered = entries.filter(entry => {
+  const filtered = entries.filter((entry) => {
     const matchCat = activeCategory === "all" || entry.categorie === activeCategory;
-    const q = search.toLowerCase();
-    const question = locale === "fr" ? entry.question_fr : entry.question_en;
-    const reponse  = locale === "fr" ? entry.reponse_fr  : entry.reponse_en;
+    const q        = search.toLowerCase();
+    // Garde ?? "" : question_en et reponse_en sont optionnels
+    const question = (locale === "fr" ? entry.question_fr : entry.question_en) ?? "";
+    const reponse  = (locale === "fr" ? entry.reponse_fr  : entry.reponse_en)  ?? "";
     const matchSearch = !q || question.toLowerCase().includes(q) || reponse.toLowerCase().includes(q);
     return matchCat && matchSearch;
   });
@@ -70,9 +71,8 @@ export default function HelpPage() {
         <button
           onClick={openSupportChat}
           className="group flex items-center gap-4 p-5 bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] hover:shadow-md transition-all text-left"
-          style={{ ["--hover-border" as string]: theme.primary }}
-          onMouseEnter={e => (e.currentTarget.style.borderColor = theme.primary)}
-          onMouseLeave={e => (e.currentTarget.style.borderColor = "")}
+          onMouseEnter={(e) => (e.currentTarget.style.borderColor = theme.primary)}
+          onMouseLeave={(e) => (e.currentTarget.style.borderColor = "")}
         >
           <div
             className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-colors"
@@ -92,9 +92,8 @@ export default function HelpPage() {
           target="_blank"
           rel="noopener noreferrer"
           className="group flex items-center gap-4 p-5 bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] hover:shadow-md transition-all"
-          style={{ ["--hover-border" as string]: WA_GREEN }}
-          onMouseEnter={e => (e.currentTarget.style.borderColor = WA_GREEN)}
-          onMouseLeave={e => (e.currentTarget.style.borderColor = "")}
+          onMouseEnter={(e) => (e.currentTarget.style.borderColor = WA_GREEN)}
+          onMouseLeave={(e) => (e.currentTarget.style.borderColor = "")}
         >
           <div
             className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-colors"
@@ -126,13 +125,13 @@ export default function HelpPage() {
             className="input-base pl-9 text-sm"
             placeholder={locale === "fr" ? "Rechercher dans la FAQ…" : "Search FAQ…"}
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
-        {/* Filtres catégories — couleur sectorielle */}
+        {/* Filtres catégories */}
         <div className="flex gap-2 flex-wrap">
-          {categories.map(cat => (
+          {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
@@ -140,7 +139,7 @@ export default function HelpPage() {
                 "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all",
                 activeCategory === cat
                   ? "text-white"
-                  : "bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border)]"
+                  : "bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border)]",
               )}
               style={
                 activeCategory === cat
@@ -150,8 +149,7 @@ export default function HelpPage() {
             >
               {cat === "all"
                 ? (t.categories?.all ?? "Toutes")
-                : <><Tag className="w-3 h-3" />{categoryLabel(cat, locale)}</>
-              }
+                : <><Tag className="w-3 h-3" />{categoryLabel(cat, locale)}</>}
             </button>
           ))}
         </div>
@@ -169,9 +167,10 @@ export default function HelpPage() {
               <HelpCircle className="w-8 h-8 text-[var(--text-muted)] mx-auto mb-3 opacity-40" />
               <p className="text-sm text-[var(--text-muted)]">{t.faqEmpty}</p>
             </div>
-          ) : filtered.map(entry => {
-            const question = locale === "fr" ? entry.question_fr : entry.question_en;
-            const reponse  = locale === "fr" ? entry.reponse_fr  : entry.reponse_en;
+          ) : filtered.map((entry) => {
+            // Garde ?? "" sur les champs optionnels
+            const question = (locale === "fr" ? entry.question_fr : entry.question_en) ?? "";
+            const reponse  = (locale === "fr" ? entry.reponse_fr  : entry.reponse_en)  ?? "";
             return (
               <div key={entry.id} className="card overflow-hidden">
                 <button
@@ -194,7 +193,7 @@ export default function HelpPage() {
                   </div>
                   <ChevronDown className={cn(
                     "w-4 h-4 text-[var(--text-muted)] transition-transform flex-shrink-0 ml-3",
-                    expanded === entry.id && "rotate-180"
+                    expanded === entry.id && "rotate-180",
                   )} />
                 </button>
 

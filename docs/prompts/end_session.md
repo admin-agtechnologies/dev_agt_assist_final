@@ -1,9 +1,7 @@
-# end_session.md — Prompt de fin de session
-
+# end_session.md — Prompt de fin de session AGT BOT
 > Copie-colle ce prompt pour clore une session.
 > Claude génère le rapport, puis met à jour INDEX.md.
-> C'est toi qui décides du moment de clore — Claude peut le suggérer
-> si le contexte devient lourd, mais n'impose jamais.
+> C'est toi qui décides du moment de clore.
 
 ---
 
@@ -11,8 +9,7 @@
 
 ```
 ⚠️ Contexte lourd détecté. Je suggère de rédiger le rapport de fin de session
-avant de continuer. Tu gardes le dernier mot — dis-moi si tu veux continuer
-ou clore la session.
+avant de continuer. Tu gardes le dernier mot.
 ```
 
 ---
@@ -26,57 +23,92 @@ Nous clôturons la session. Génère le rapport de fin de session.
 **Session N° :** {numéro}
 **Date :** {date}
 
-Le rapport doit suivre exactement ce format :
+Le rapport doit suivre exactement ce format, dans l'ordre chronologique strict :
 
 ---
 
 # Rapport de session — session_{N}_{prénom}
 
 ## Métadonnées
-- Membre, date, type de session (debug / génération / planning), durée estimée, statut
+| Champ | Valeur |
+|---|---|
+| Membre | {prénom} |
+| Session N° | {numéro} |
+| Date | {date} |
+| Type | debug / génération / conception / planning |
+| Durée estimée | {durée} |
+| Statut | Terminée / Partielle |
 
 ## Objectif de la session
-(1-3 phrases)
+(1-3 phrases — ce qu'on voulait accomplir)
 
-## Ce qui a été fait
-(liste chronologique des actions)
+## Ce qui a été fait — ordre chronologique
+(Liste numérotée dans l'ordre exact des actions réalisées pendant la session.
+Chaque item = une action concrète avec son résultat.
+Exemple :
+1. Audit du modèle Bot — constat : ChatbotViewSet inaccessible aux PME
+2. Décision : ajouter action @chatbot dans BotViewSet avec ChatbotPMESerializer
+3. Génération BotConfigSections.tsx — composant partagé 5 sections
+4. Bug TS2305 : SectorColors → SectionColors — corrigé
+5. Validation visuelle — 0 erreur tsc confirmé par Gabriel)
 
 ## Décisions prises
-(tableau : décision | rationale)
+| Décision | Rationale |
+|---|---|
+| ... | ... |
 
-## Difficultés rencontrées
-(liste, ou "Aucune")
-
-## Problèmes résolus
-(pour chaque bug : ID du bug log, description, solution appliquée, fichiers modifiés)
+## Bugs corrigés
+| ID | Description | Fichier(s) | Solution |
+|---|---|---|---|
+| BUG-S{N}-01 | ... | ... | ... |
 
 ## Zones du code touchées
 (liste des dossiers / fichiers significatifs)
 
 ## Fichiers créés / modifiés
-(tableau : fichier | action)
+| Fichier | Chemin complet | Action | Lignes |
+|---|---|---|---|
+| ... | src/app/... | Créé / Modifié | ~xxx |
 
-## Prompt de la session suivante
-(suggestion de point de départ pour la prochaine session,
-en référence à la TODO)
+## Specs traitées cette session
+(Si la session traitait des specs Gabriel — lister les specs abordées et leur statut)
+| Spec | Statut |
+|---|---|
+| ... | ✅ Terminé / ⏳ Partiel / ❌ Reporté |
 
-## Notes libres
-(observations, risques identifiés, recommandations)
+## Décisions reportées / dette créée
+(Points volontairement non traités, avec la raison)
+
+## Plan d'action S+1
+(Ce que la prochaine session doit faire en premier, dans l'ordre)
+1. ...
+2. ...
+
+## Prompt de début de S+1
+(Prompt prêt à copier-coller pour la prochaine session — compléter les {variables})
 
 ---
 
 Une fois le rapport généré et validé par moi :
 
 1. Place-le dans docs/reports/session_{N}_{prénom}.md
-2. Ajoute une entrée à docs/reports/INDEX.md (APPEND ONLY) :
+2. Ajoute une entrée à la fin de docs/reports/INDEX.md (APPEND ONLY — jamais de réécriture) :
 
+---
 ## session_{N}_{prénom}
-- Type : {type}
-- Date : {date}
-- Flux couverts : {liste}
-- Bugs corrigés : {IDs ou "Aucun"}
-- Zones touchées : {dossiers/fichiers}
-- Rapport : docs/reports/session_{N}_{prénom}.md
+
+- **Type :** {type}
+- **Date :** {date}
+- **Flux couverts :** {liste}
+- **Bugs corrigés :** {IDs ou "Aucun"}
+- **Zones touchées :** {dossiers/fichiers}
+- **Fichiers créés :** {liste ou "Aucun"}
+- **Fichiers modifiés :** {liste ou "Aucun"}
+- **Specs traitées :** {liste ou "Aucune"}
+- **Dette créée :** {liste ou "Aucune"}
+- **⚠️ PowerShell LiteralPath :** Pour lire les fichiers touchés avec [id] dans le chemin,
+  utiliser : Get-Content -LiteralPath "C:\chemin\complet\fichier" | Set-Clipboard
+- **Rapport :** docs/reports/session_{N}_{prénom}.md
 
 Ne modifie aucune entrée existante dans INDEX.md.
 ```
