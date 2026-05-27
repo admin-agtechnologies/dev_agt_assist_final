@@ -1341,3 +1341,28 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Dette créée :** DETTE-S76-01 (prise_rdv create_reservation non exécuté) · DETTE-S76-02 (send_reminder.md trop long) · DETTE-S76-03 (reservation_chambre à valider)
 - **Rapport :** `docs/reports/session_76_donpk.md` 
 ```
+
+## Session 77 — Steven — 27 mai 2026
+**Feature :** reservation_chambre (16)
+**Statut :** ⚠️ Partiellement validée
+**Rapport :** docs/testing/features/steven/reservation_chambre.md
+
+### Fichiers modifiés
+- `apps/agent/actions/catalogue_sectoriel.py` — GetRoomTypesAction : ajout `ressource_id` dans le résultat
+- `apps/agent/skills/features/reservation_chambre.md` — directives renforcées (ressource_id obligatoire, send_email post-réservation)
+
+### BD modifiée
+- 3 `Ressource` type `chambre` créées pour AGT BOT Démo Complète (liées aux ChambreType)
+- `create_reservation` → `is_system=True`, `feature=None`
+- `AIAgentAction` : `create_reservation` ajoutée au bot AGT BOT Démo Complète
+- `seed --only skills` relancé (index 27 features)
+
+### Bugs corrigés
+- BUG-S77-01 : create_reservation absente des AIAgentAction du bot
+- BUG-S77-02 : skill create_reservation absent de la BD
+- BUG-S77-03 : Ressources chambre absentes pour le tenant custom
+- BUG-S77-04 : get_room_types retournait ChambreType.id au lieu de ressource_id
+
+### Bugs ouverts (périmètre Gabriel)
+- BUG-S77-05 : create_reservation non chargée par le Bloc6 → engine/core.py à corriger
+- BUG-S77-06 : Timeouts LLM récurrents sur reservation_chambre
