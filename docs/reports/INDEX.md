@@ -1277,3 +1277,19 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Zones touchées :** `apps/agent/actions/system.py`, `apps/agent/skills/features/`, `apps/agent/skills/actions/`, `apps/tenants/seeders/agent_seeder.py`
 - **Fichiers créés :** `manage_contact.md` (skill + action), rapports faq.md + gestion_crm.md
 - **Rapport :** `docs/reports/session_75_gabriel.md`
+
+---
+
+---
+## session_76_donpk
+
+- **Type :** Conception + Génération + Debug — Backend Agent Engine (Lazy Loading)
+- **Date :** 2026-05-26
+- **Flux couverts :** Optimisation contexte LLM — lazy loading skills features/actions · Limite 20 messages · detected_feature · prise_rdv (partiel)
+- **Bugs corrigés :** BUG-S76-01 (overcontexte skills) · BUG-S76-02 (prise_rdv appelée comme action) · BUG-S76-03 (boucle infinie detected_feature) · BUG-S76-04 (actions système absentes bloc6) · BUG-S76-05 (provider_empty efface bloc6) · BUG-S76-06 (index niveau incorrect)
+- **Zones touchées :** `apps/agent/engine/` · `apps/agent/models/ai_skill.py` · `apps/agent/migrations/` · `apps/agent/skills/_central/system_prompt.md` · `apps/agent/skills/features/prise_rdv.md` · `apps/agent/skills/actions/` · `apps/tenants/seeders/skills_seeder.py`
+- **Fichiers créés :** `summarizer.py` · `0005_agentskill_add_index_niveau.py` · `0006_alter_agentskill_slug.py`
+- **Fichiers modifiés :** `core.py` · `context.py` · `llm.py` · `ai_skill.py` · `system_prompt.md` · `prise_rdv.md` · `check_disponibilite.md` · `create_reservation.md` · `skills_seeder.py`
+- **Décisions clés :** Index léger en BD · detected_feature dans contrat JSON LLM · bloc6 éphémère · SYSTEM_ACTIONS_UTILES · MAX_USER_MESSAGES=20 · MAX_INVALID_RETRIES=4
+- **Dette créée :** DETTE-S76-01 (prise_rdv create_reservation non exécuté) · DETTE-S76-02 (send_reminder.md trop long) · DETTE-S76-03 (reservation_chambre à valider)
+- **Rapport :** `docs/reports/session_76_donpk.md` 
