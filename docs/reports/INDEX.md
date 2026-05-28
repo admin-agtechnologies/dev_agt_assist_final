@@ -1397,3 +1397,13 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Architecture confirmée :** modèle utilisé = `apps.knowledge.TransfertHumain` (nouveau système) · `apps.conversations.TransfertHumain` legacy non utilisé
 - **Décision clé :** `FIRE_AND_FORGET_ACTIONS` (9 actions) — liste définie en constante dans `core.py` — fix transversal bénéfique à toutes les features
 - **Rapport :** `docs/reports/session_80_gabriel.md`
+## session_78_stephane
+
+- **Type :** Test B5 + Debug skills + Audit engine
+- **Date :** 2026-05-28
+- **Flux couverts :** `suivi_commande` ✅ (confirmée) · `prise_rdv` ⚠️ S1✅ S2✅ S3⚠️ S4✅ S5❌
+- **Bugs corrigés :** BUG-S57-03 (annulation → transfer_to_human) · BUG-S57-05 (double send_email)
+- **Bugs ouverts :** BUG-S57-01 (reply verbal avant check_disponibilite) · BUG-S57-02 (créneau passé accepté) · BUG-S57-04 (switch hors périmètre = GAP-S55-01) · BUG-S56-04b (phone absent commande inexistante)
+- **Zones touchées :** `apps/agent/skills/features/prise_rdv.md`
+- **Fichiers modifiés :** `prise_rdv.md` (v5)
+- **Rapport :** `docs/reports/session_78_stephane.md`
