@@ -1,9 +1,9 @@
 # Rapport de test B5 — Feature `reservation_chambre`
-**Feature ID :** 16  
-**Membre :** Steven  
-**Session :** 77  
-**Date :** 27 mai 2026  
-**Statut final :** ⚠️ Partiellement validée — 2 bugs ouverts (périmètre Gabriel)
+**Feature ID :** 16
+**Membre :** Steven
+**Session :** 77
+**Date :** 28 mai 2026
+**Statut final :** ⚠️ Partiellement validée — bugs résiduels périmètre Gabriel
 
 ---
 
@@ -14,8 +14,9 @@ via WhatsApp. Le bot interroge la base de connaissance (ChambreType), présente 
 chambres disponibles, collecte les informations du client, crée la réservation et
 envoie un email de confirmation.
 
-Le flux principal est fonctionnel et validé. Deux bugs bloquants sur des fichiers
-centraux (engine/core.py) empêchent la validation complète du step send_email.
+Le flux principal est fonctionnel et validé quand DeepSeek retourne du JSON valide.
+Les bugs résiduels sont liés à l'instabilité JSON de DeepSeek en contexte long
+(DETTE-S70-01 — périmètre Gabriel) et à une inversion de dates par le LLM.
 
 ---
 
@@ -28,8 +29,8 @@ centraux (engine/core.py) empêchent la validation complète du step send_email.
 | c | Config bot — feature visible et cochée | ✅ |
 | d | Agent lit la KB (get_room_types déclenché, chambres listées) | ✅ |
 | e | Agent écrit le résultat (create_reservation ✅, 0 erreurs) | ✅ |
-| f | Page Résultats onglet Chambres — réservation Fatou visible | ✅ |
-| g | E2E partiel — réservation créée et persistée | ⚠️ |
+| f | Page Résultats onglet Chambres — réservation visible | ✅ |
+| g | E2E partiel — réservation créée + email envoyé avec contenu | ⚠️ |
 | h | Validation Gabriel | ⏳ |
 
 ---
@@ -37,64 +38,75 @@ centraux (engine/core.py) empêchent la validation complète du step send_email.
 ## 3. Bugs corrigés en session
 
 ### BUG-S77-01 — `create_reservation` absente des AIAgentAction du bot demo-custom
-- **Symptôme :** Action inconnue dans les logs, LLM appelait `create_booking`
-- **Cause :** `create_reservation` non ajoutée aux actions du bot AGT BOT Démo Complète
-- **Correction :** Ajout manuel via shell (`AIAgentAction.objects.get_or_create`)
+- **Cause :** Action non ajoutée aux actions du bot AGT BOT Démo Complète
+- **Correction :** Ajout via shell (`AIAgentAction.objects.get_or_create`)
 - **Fichier :** BD uniquement
 
 ### BUG-S77-02 — Skill `create_reservation` absent de la BD
-- **Symptôme :** WARNING `[skills] Index features introuvable` à chaque requête
 - **Cause :** `seed --only skills` jamais relancé depuis ajout du skill
 - **Correction :** `python manage.py seed --only skills`
-- **Fichier :** BD uniquement
 
 ### BUG-S77-03 — Ressources type chambre absentes pour le tenant custom
-- **Symptôme :** `create_reservation` échoue — "ressource introuvable"
-- **Cause :** Les `Ressource` de type `chambre` n'existaient pas pour AGT BOT Démo Complète
+- **Cause :** `Ressource` de type chambre inexistantes pour AGT BOT Démo Complète
 - **Correction :** Création via shell — 3 ressources liées aux ChambreType existants
 - **Fichier :** BD uniquement
 
-### BUG-S77-04 — `get_room_types` retournait l'ID du ChambreType au lieu du ressource_id
-- **Symptôme :** `create_reservation` échoue — "ressource_id invalide"
-- **Cause :** Le LLM passait l'ID du ChambreType à create_reservation qui attend un ID de Ressource
-- **Correction :** `catalogue_sectoriel.py` — ajout de `ressource_id` dans le résultat de `get_room_types`
+### BUG-S77-04 — `get_room_types` retournait ChambreType.id au lieu de ressource_id
+- **Cause :** Le LLM passait l'ID du ChambreType à create_reservation
+- **Correction :** `catalogue_sectoriel.py` — ajout `ressource_id` dans le résultat
 - **Fichier :** `apps/agent/actions/catalogue_sectoriel.py`
 
----
-
-## 4. Bugs ouverts (périmètre Gabriel)
-
 ### BUG-S77-05 — `create_reservation` non chargée par le Bloc6
-- **Symptôme :** Bloc6 chargé sans `create_reservation` :
-  `actions=['get_room_types', 'create_contact', 'send_reminder', 'send_email', 'convert_prospect']`
-- **Cause :** Le Bloc6 filtre les actions par FK feature. `create_reservation` passée
-  en `is_system=True` + `feature=None` mais le Bloc6 ne charge pas les actions système.
-- **Impact :** Le bot ne peut pas appeler `create_reservation` en conditions normales.
-  Fonctionne uniquement quand l'action est dans les `AIAgentAction` du bot ET chargée
-  par le Bloc6 (prouvé lors des tests précédents de cette session).
-- **Correction nécessaire :** `apps/agent/engine/core.py` — inclure les actions
-  `is_system=True` dans le chargement Bloc6
-- **Périmètre :** Gabriel
+- **Cause :** Le Bloc6 ne charge que les actions liées à la feature par FK.
+  `create_reservation` liée à `prise_rdv` uniquement.
+- **Correction 1 :** `create_reservation` → `is_system=True`, `feature=None` (BD)
+- **Correction 2 :** Ajout de `"create_reservation"` dans `SYSTEM_ACTIONS_UTILES` de `core.py`
+- **Fichier :** `apps/agent/engine/core.py`
 
-### BUG-S77-06 — Timeouts LLM récurrents sur reservation_chambre
-- **Symptôme :** Bot dit "Je vérifie les chambres disponibles" puis se bloque
-  sans appeler `get_room_types`. Timeout silencieux, aucune erreur dans les logs.
-- **Cause probable :** Prompt Bloc6 trop lourd ou timeout DeepSeek sur cette feature
-- **Impact :** Scénario E2E complet non reproductible de manière fiable
-- **Périmètre :** Gabriel
+### BUG-S77-06 — `send_email` payload vide (mismatch noms de champs)
+- **Cause :** `send_email.md` utilisait `destinataire_email/sujet/corps`
+  mais l'action attend `to/subject/body`
+- **Correction :** `send_email.md` mis à jour avec les bons noms de champs
+- **Fichier :** `apps/agent/skills/actions/send_email.md`
+
+### BUG-S77-07 — ValidationError Django sur ressource_id invalide (slug au lieu d'UUID)
+- **Cause :** LLM inventait `chambre_confort` comme ressource_id
+- **Correction :** Validation UUID avant interrogation BD dans `validate_business`
+- **Fichier :** `apps/agent/actions/reservations.py`
+
+### BUG-S77-08 — Dates inversées (date_debut > date_fin)
+- **Cause :** LLM inverse systématiquement arrivée/départ
+- **Correction :** Validation `d_debut < d_fin` dans `execute` de `CreateReservationAction`
+- **Fichier :** `apps/agent/actions/reservations.py`
 
 ---
 
-## 5. Améliorations du skill apportées en session
+## 4. Améliorations skills apportées en session
 
-### `reservation_chambre.md` — mis à jour
-- Ajout directive obligatoire : utiliser `ressource_id` (pas `id` du ChambreType)
-- Ajout séquence obligatoire post-réservation : `send_email` si email collecté
-- Ajout section gardes-fous : ne jamais inventer un ressource_id
+| Fichier | Changement |
+|---------|-----------|
+| `reservation_chambre.md` | Séquence stricte, règles JAMAIS/TOUJOURS, mémorisation ressource_id |
+| `get_room_types.md` | Déclenchement immédiat, payload vide, mémorisation ressource_id |
+| `send_email.md` | Correction noms de champs (to/subject/body), exemple reservation_chambre |
 
-### `catalogue_sectoriel.py` — `GetRoomTypesAction` corrigée (S77)
-- Ajout de `ressource_id` dans le résultat de `get_room_types`
-- Lookup : `Ressource.objects.filter(entreprise=e, chambre_type=c, est_active=True).first()`
+---
+
+## 5. Bugs ouverts (périmètre Gabriel)
+
+### DETTE-S70-01 (existante) — DeepSeek JSON instable contexte long
+- **Symptôme :** `LLM n'a pas retourné de JSON valide — fallback texte brut`
+  `provider_empty signalé` / `Réponse LLM invalide — ni reply ni action`
+- **Impact :** Bot répète ses réponses, email envoyé vide, flux bloqué
+- **Fichier :** `apps/chatbot_bridge/deepseek_provider.py`
+- **Périmètre :** Gabriel
+
+### BUG-S77-09 — Inversion dates LLM résiduelle
+- **Symptôme :** RuntimeWarning `date_debut=2026-06-13 > date_fin=2026-06-09`
+  malgré la validation ajoutée — le LLM continue d'inverser
+- **Cause probable :** DeepSeek interprète "du 9 juin au 13 juin" comme
+  date_debut=13, date_fin=9 (inversion logique)
+- **Périmètre :** Gabriel — peut nécessiter une correction dans le skill
+  `create_reservation.md` pour forcer l'ordre des dates
 
 ---
 
@@ -104,17 +116,17 @@ centraux (engine/core.py) empêchent la validation complète du step send_email.
 |-------|--------|
 | Compte | demo-custom@agt.cm |
 | Bot ID | 5355336a-b6da-4328-8a75-7b1e195d4b42 |
-| Client test | Fatou · 699000001 · fatou@gmail.com |
-| Séjour testé | 30 mai → 2 juin 2026, 2 personnes |
-| Chambre | Standard (25 000 XAF/nuit) |
-| Réservation créée | ✅ visible onglet Chambres |
+| Clients test | Fatou · 699000001 · fatou@gmail.com |
+| | Kofi · 691000003 · 60t6tea7g0@Inovic.com |
+| Séjour testé | 10 juin → 13 juin 2026, 2 personnes |
+| Chambres | Standard (25 000), Confort (45 000), Suite Junior (75 000) |
 
 ---
 
 ## 7. Points ouverts pour Gabriel
 
-1. Corriger `engine/core.py` pour inclure les actions `is_system=True` dans le Bloc6
-2. Investiguer les timeouts LLM sur `reservation_chambre` (BUG-S77-06)
-3. Valider la feature après correction du Bloc6 (step h)
-4. Confirmer si `send_email` doit être conditionnel à la config email de l'entreprise
-   (champ `payment_configs` ou `profil_entreprise` ?)
+1. Corriger `deepseek_provider.py` — instabilité JSON contexte long (DETTE-S70-01)
+2. Investiguer inversion dates LLM (BUG-S77-09)
+3. Valider la feature après correction DeepSeek (step h)
+4. Confirmer comportement attendu quand contact déjà connu en BD
+   (bot saute la collecte nom/téléphone — est-ce souhaitable ?)

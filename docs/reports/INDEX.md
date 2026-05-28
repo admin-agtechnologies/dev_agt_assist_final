@@ -1342,27 +1342,25 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Rapport :** `docs/reports/session_76_donpk.md` 
 ```
 
-## Session 77 — Steven — 27 mai 2026
+## Session 77 — Steven — 28 mai 2026
 **Feature :** reservation_chambre (16)
-**Statut :** ⚠️ Partiellement validée
+**Statut :** ⚠️ Partiellement validée — bugs résiduels périmètre Gabriel
 **Rapport :** docs/testing/features/steven/reservation_chambre.md
 
 ### Fichiers modifiés
-- `apps/agent/actions/catalogue_sectoriel.py` — GetRoomTypesAction : ajout `ressource_id` dans le résultat
-- `apps/agent/skills/features/reservation_chambre.md` — directives renforcées (ressource_id obligatoire, send_email post-réservation)
+- `apps/agent/actions/catalogue_sectoriel.py` — GetRoomTypesAction : ajout ressource_id
+- `apps/agent/actions/reservations.py` — validation UUID + validation dates + next_action
+- `apps/agent/engine/core.py` — ajout create_reservation dans SYSTEM_ACTIONS_UTILES
+- `apps/agent/skills/features/reservation_chambre.md` — séquence stricte + règles
+- `apps/agent/skills/actions/get_room_types.md` — déclenchement immédiat
+- `apps/agent/skills/actions/send_email.md` — correction noms champs payload
+- `apps/agent/skills/_central/system_prompt.md` — exception actions déclenchement immédiat
 
 ### BD modifiée
-- 3 `Ressource` type `chambre` créées pour AGT BOT Démo Complète (liées aux ChambreType)
-- `create_reservation` → `is_system=True`, `feature=None`
-- `AIAgentAction` : `create_reservation` ajoutée au bot AGT BOT Démo Complète
-- `seed --only skills` relancé (index 27 features)
+- 3 Ressource type chambre créées pour AGT BOT Démo Complète
+- create_reservation → is_system=True, feature=None
+- AIAgentAction : create_reservation ajoutée au bot
+- seed --only skills relancé (index 27 features)
 
-### Bugs corrigés
-- BUG-S77-01 : create_reservation absente des AIAgentAction du bot
-- BUG-S77-02 : skill create_reservation absent de la BD
-- BUG-S77-03 : Ressources chambre absentes pour le tenant custom
-- BUG-S77-04 : get_room_types retournait ChambreType.id au lieu de ressource_id
-
-### Bugs ouverts (périmètre Gabriel)
-- BUG-S77-05 : create_reservation non chargée par le Bloc6 → engine/core.py à corriger
-- BUG-S77-06 : Timeouts LLM récurrents sur reservation_chambre
+### Bugs corrigés : BUG-S77-01 à BUG-S77-08
+### Bugs ouverts : DETTE-S70-01 (DeepSeek JSON) · BUG-S77-09 (dates inversées) → Gabriel
