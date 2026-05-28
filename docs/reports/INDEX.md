@@ -1339,5 +1339,19 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Fichiers modifiés :** `core.py` · `context.py` · `llm.py` · `ai_skill.py` · `system_prompt.md` · `prise_rdv.md` · `check_disponibilite.md` · `create_reservation.md` · `skills_seeder.py`
 - **Décisions clés :** Index léger en BD · detected_feature dans contrat JSON LLM · bloc6 éphémère · SYSTEM_ACTIONS_UTILES · MAX_USER_MESSAGES=20 · MAX_INVALID_RETRIES=4
 - **Dette créée :** DETTE-S76-01 (prise_rdv create_reservation non exécuté) · DETTE-S76-02 (send_reminder.md trop long) · DETTE-S76-03 (reservation_chambre à valider)
-- **Rapport :** `docs/reports/session_76_donpk.md` 
+- **Rapport :** `docs/reports/session_76_donpk.md`
 ```
+
+## session_79_gabriel
+
+- **Type :** debug
+- **Date :** 2026-05-28
+- **Flux couverts :** gestion_crm — scénarios : nouveau contact, client connu, correction email, correction numéro
+- **Bugs corrigés :** BUG-CRM-001, BUG-CRM-002, BUG-CRM-003, BUG-CRM-004, BUG-CRM-005, BUG-CRM-006, BUG-CRM-007, BUG-CRM-008
+- **Zones touchées :** apps/agent/engine/, apps/agent/actions/, apps/agent/skills/\_central/
+- **Fichiers créés :** Aucun
+- **Fichiers modifiés :** core.py, context.py, llm.py, views.py, system.py, system_prompt.md
+- **Specs traitées :** gestion_crm phases 1-3 ✅ — phases 4-5 reportées S80
+- **Dette créée :** DETTE-CRM-001 (WAHA phone injection), DETTE-CRM-002 (skill menu_digital get_menu automatique)
+- **⚠️ PowerShell LiteralPath :** Pour lire les fichiers touchés avec [id] dans le chemin, utiliser : Get-Content -LiteralPath "C:\chemin\complet\fichier" | Set-Clipboard
+- **Rapport :** docs/reports/session_79_gabriel.md
