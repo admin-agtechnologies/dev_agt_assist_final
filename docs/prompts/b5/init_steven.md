@@ -16,7 +16,6 @@ Mes features B5 :
 - reservation_chambre (16)
 - conciergerie (17)
 - catalogue_produits_financiers (18)
-- simulation_credit (19)
 - orientation_patient (20)
 
 Avant de commencer, effectue dans l'ordre :
