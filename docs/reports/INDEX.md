@@ -1355,12 +1355,15 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Dette créée :** DETTE-CRM-001 (WAHA phone injection), DETTE-CRM-002 (skill menu_digital get_menu automatique)
 - **⚠️ PowerShell LiteralPath :** Pour lire les fichiers touchés avec [id] dans le chemin, utiliser : Get-Content -LiteralPath "C:\chemin\complet\fichier" | Set-Clipboard
 - **Rapport :** docs/reports/session_79_gabriel.md
+
 ## Session 77 — Steven — 28 mai 2026
+
 **Feature :** reservation_chambre (16)
 **Statut :** ⚠️ Partiellement validée — bugs résiduels périmètre Gabriel
 **Rapport :** docs/testing/features/steven/reservation_chambre.md
 
 ### Fichiers modifiés
+
 - `apps/agent/actions/catalogue_sectoriel.py` — GetRoomTypesAction : ajout ressource_id
 - `apps/agent/actions/reservations.py` — validation UUID + validation dates + next_action
 - `apps/agent/engine/core.py` — ajout create_reservation dans SYSTEM_ACTIONS_UTILES
@@ -1370,10 +1373,27 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - `apps/agent/skills/_central/system_prompt.md` — exception actions déclenchement immédiat
 
 ### BD modifiée
+
 - 3 Ressource type chambre créées pour AGT BOT Démo Complète
 - create_reservation → is_system=True, feature=None
 - AIAgentAction : create_reservation ajoutée au bot
 - seed --only skills relancé (index 27 features)
 
 ### Bugs corrigés : BUG-S77-01 à BUG-S77-08
+
 ### Bugs ouverts : DETTE-S70-01 (DeepSeek JSON) · BUG-S77-09 (dates inversées) → Gabriel
+
+---
+
+## session_80_gabriel
+
+- **Type :** Test B5 + Debug engine + Skills
+- **Date :** 2026-05-28
+- **Flux couverts :** transfert_humain — phases 1-5 ✅
+- **Bugs corrigés :** BUG-TH-001 (`_transfer_human()` ne persistait pas TransfertHumain en BD) · BUG-TH-002 (transfer_to_human ignoré quand LLM envoie reply+action simultanément) · BUG-TH-003 (actions transactionnelles exécutées sans cycle ACTION_RESULT) · BUG-TH-004 (prise_rdv.md annulation C1 — boucle infinie) · BUG-TH-005 (orientation_patient.md urgence déclarée non détectée)
+- **Zones touchées :** `apps/agent/engine/core.py` · `apps/agent/skills/features/prise_rdv.md` · `apps/agent/skills/features/orientation_patient.md`
+- **Fichiers modifiés :** `core.py` (FIRE_AND_FORGET_ACTIONS + \_transfer_human fix) · `prise_rdv.md` (règle annulation C1) · `orientation_patient.md` (règle urgence déclarée)
+- **Tests E2E :** 5/5 scénarios PASS (demande explicite · client en colère · hors périmètre · annulation RDV · urgence médicale) — TransfertHumain persisté en BD pour chaque scénario ✅
+- **Architecture confirmée :** modèle utilisé = `apps.knowledge.TransfertHumain` (nouveau système) · `apps.conversations.TransfertHumain` legacy non utilisé
+- **Décision clé :** `FIRE_AND_FORGET_ACTIONS` (9 actions) — liste définie en constante dans `core.py` — fix transversal bénéfique à toutes les features
+- **Rapport :** `docs/reports/session_80_gabriel.md`
