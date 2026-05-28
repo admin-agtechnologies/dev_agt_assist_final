@@ -1355,12 +1355,15 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Dette créée :** DETTE-CRM-001 (WAHA phone injection), DETTE-CRM-002 (skill menu_digital get_menu automatique)
 - **⚠️ PowerShell LiteralPath :** Pour lire les fichiers touchés avec [id] dans le chemin, utiliser : Get-Content -LiteralPath "C:\chemin\complet\fichier" | Set-Clipboard
 - **Rapport :** docs/reports/session_79_gabriel.md
+
 ## Session 77 — Steven — 28 mai 2026
+
 **Feature :** reservation_chambre (16)
 **Statut :** ⚠️ Partiellement validée — bugs résiduels périmètre Gabriel
 **Rapport :** docs/testing/features/steven/reservation_chambre.md
 
 ### Fichiers modifiés
+
 - `apps/agent/actions/catalogue_sectoriel.py` — GetRoomTypesAction : ajout ressource_id
 - `apps/agent/actions/reservations.py` — validation UUID + validation dates + next_action
 - `apps/agent/engine/core.py` — ajout create_reservation dans SYSTEM_ACTIONS_UTILES
@@ -1370,10 +1373,23 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - `apps/agent/skills/_central/system_prompt.md` — exception actions déclenchement immédiat
 
 ### BD modifiée
+
 - 3 Ressource type chambre créées pour AGT BOT Démo Complète
 - create_reservation → is_system=True, feature=None
 - AIAgentAction : create_reservation ajoutée au bot
 - seed --only skills relancé (index 27 features)
 
 ### Bugs corrigés : BUG-S77-01 à BUG-S77-08
+
 ### Bugs ouverts : DETTE-S70-01 (DeepSeek JSON) · BUG-S77-09 (dates inversées) → Gabriel
+
+## session_78_stephane
+
+- **Type :** Test B5 + Debug skills + Audit engine
+- **Date :** 2026-05-28
+- **Flux couverts :** `suivi_commande` ✅ (confirmée) · `prise_rdv` ⚠️ S1✅ S2✅ S3⚠️ S4✅ S5❌
+- **Bugs corrigés :** BUG-S57-03 (annulation → transfer_to_human) · BUG-S57-05 (double send_email)
+- **Bugs ouverts :** BUG-S57-01 (reply verbal avant check_disponibilite) · BUG-S57-02 (créneau passé accepté) · BUG-S57-04 (switch hors périmètre = GAP-S55-01) · BUG-S56-04b (phone absent commande inexistante)
+- **Zones touchées :** `apps/agent/skills/features/prise_rdv.md`
+- **Fichiers modifiés :** `prise_rdv.md` (v5)
+- **Rapport :** `docs/reports/session_78_stephane.md`
