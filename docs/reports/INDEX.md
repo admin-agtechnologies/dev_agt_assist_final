@@ -1437,3 +1437,14 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Tests :** S1 email standalone ✅ · S2 rappel Celery ✅ · S3 email post-réservation ⚠️ (bloqué context overload)
 - **Dette créée :** DETTE-S82-01 (templates HTML email par secteur) · DETTE-S82-02 (modal affichage email frontend) · BUG-S82-05 (context overload après create_reservation → send_email non chainé)
 - **Rapport :** docs/reports/session_82_gabriel.md
+
+
+## session_84_steven
+
+- **Type :** Test B5 — Feature conciergerie
+- **Date :** 2026-05-29
+- **Flux couverts :** conciergerie (feature 17) — phases 1-5 ✅
+- **Bugs corrigés :** BUG-S84-01 (déclenchement tardif get_services_conciergerie) · BUG-S84-02 (create_reservation au lieu de create_demande_conciergerie) · BUG-S84-03 (catalogue conciergerie vide) · BUG-S84-04 (urgence chambre sans transfer_to_human automatique) · BUG-S84-05 (chambre non transmise dans payload)
+- **Zones touchées :** `apps/agent/skills/features/conciergerie.md` · `apps/agent/skills/actions/create_demande_conciergerie.md` · `apps/agent/skills/_central/system_prompt.md` · `apps/agent/engine/core.py` · `apps/agent/engine/llm.py` · `apps/agent/actions/conciergerie.py` · BD AIAgentAction · BD ItemCatalogue
+- **Fichiers créés :** `docs/testing/features/steven/conciergerie.md`
+- **Rapport :** docs/testing/features/steven/conciergerie.md
