@@ -1397,6 +1397,7 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Architecture confirmée :** modèle utilisé = `apps.knowledge.TransfertHumain` (nouveau système) · `apps.conversations.TransfertHumain` legacy non utilisé
 - **Décision clé :** `FIRE_AND_FORGET_ACTIONS` (9 actions) — liste définie en constante dans `core.py` — fix transversal bénéfique à toutes les features
 - **Rapport :** `docs/reports/session_80_gabriel.md`
+
 ## session_78_stephane
 
 - **Type :** Test B5 + Debug skills + Audit engine
@@ -1407,7 +1408,6 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Zones touchées :** `apps/agent/skills/features/prise_rdv.md`
 - **Fichiers modifiés :** `prise_rdv.md` (v5)
 - **Rapport :** `docs/reports/session_78_stephane.md`
-
 
 ## session_80_steven
 
@@ -1420,3 +1420,18 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Fichiers créés :** `docs/testing/features/steven/catalogue_produits_financiers.md`
 - **Fichiers modifiés :** `apps/agent/actions/banking.py`
 - **Rapport :** `docs/testing/features/steven/catalogue_produits_financiers.md`
+
+---
+
+## session_82_gabriel
+
+- **Type :** Génération + Debug + Tests — Backend
+- **Date :** 2026-05-29
+- **Flux couverts :** `emails_rappel` — skill feature + Celery rappels + fixes engine
+- **Bugs corrigés :** BUG-S82-01 (date_echeance non persistée TacheRelance) · BUG-S82-02 (required_fields send_email bloquait envois) · BUG-S82-03 (skills système absents bloc5) · BUG-S82-04 (alias LLM recipient→to)
+- **Zones touchées :** `apps/agent/actions/system_extra.py` · `apps/agent/engine/context.py` · `apps/agent/skills/features/emails_rappel.md` · `apps/agent/skills/actions/send_email.md` · `apps/notifications/tasks.py` · `config/celery.py` · `apps/tenants/seeders/agent_seeder.py`
+- **Fichiers créés :** `emails_rappel.md` · `apps/notifications/tasks.py`
+- **Fichiers modifiés :** `system_extra.py` · `context.py` · `send_email.md` · `celery.py` · `agent_seeder.py`
+- **Tests :** S1 email standalone ✅ · S2 rappel Celery ✅ · S3 email post-réservation ⚠️ (bloqué context overload)
+- **Dette créée :** DETTE-S82-01 (templates HTML email par secteur) · DETTE-S82-02 (modal affichage email frontend) · BUG-S82-05 (context overload après create_reservation → send_email non chainé)
+- **Rapport :** docs/reports/session_82_gabriel.md
