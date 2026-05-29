@@ -1407,3 +1407,16 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Zones touchées :** `apps/agent/skills/features/prise_rdv.md`
 - **Fichiers modifiés :** `prise_rdv.md` (v5)
 - **Rapport :** `docs/reports/session_78_stephane.md`
+
+
+## session_80_steven
+
+- **Type :** Test B5 — Feature catalogue_produits_financiers
+- **Date :** 2026-05-29
+- **Flux couverts :** catalogue_produits_financiers (feature 18) — phases 1-5 ✅
+- **Bugs corrigés :** BUG-S80-01 (actions catalogue non liées agent) · BUG-S80-02 (simulate_credit sans taux → fallback auto) · BUG-S80-03 (IndentationError banking.py)
+- **Bugs ouverts :** BUG-S80-04 (list_catalogue_items non déclenché étape 1 — Gabriel) · BUG-S80-05 (suggestions génériques — Gabriel)
+- **Zones touchées :** `apps/agent/actions/banking.py` · `AgentSkill` BD (catalogue_produits_financiers + simulation_credit) · `AIAgentAction` BD (agent demo-custom)
+- **Fichiers créés :** `docs/testing/features/steven/catalogue_produits_financiers.md`
+- **Fichiers modifiés :** `apps/agent/actions/banking.py`
+- **Rapport :** `docs/testing/features/steven/catalogue_produits_financiers.md`
