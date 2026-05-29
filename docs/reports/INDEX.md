@@ -1437,3 +1437,15 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Tests :** S1 email standalone ✅ · S2 rappel Celery ✅ · S3 email post-réservation ⚠️ (bloqué context overload)
 - **Dette créée :** DETTE-S82-01 (templates HTML email par secteur) · DETTE-S82-02 (modal affichage email frontend) · BUG-S82-05 (context overload après create_reservation → send_email non chainé)
 - **Rapport :** docs/reports/session_82_gabriel.md
+
+---
+
+## session_85_gabriel
+
+- **Type :** Debug + Test — Feature multi_agences (skills & prompt)
+- **Date :** 2026-05-29
+- **Flux couverts :** multi_agences — skills `get_agences`, `multi_agences.md`, prompt agences, action `GetAgencesAction`
+- **Bugs corrigés :** BUG-S85-01 (sections_actives clés obsolètes), BUG-S85-02 (\_section_profil champs inexistants), BUG-S85-03 (horaires JSONB illisibles prompt_builder), BUG-S85-04 (champ telephone→phone dans action), BUG-S85-05 (horaires JSONB illisibles action)
+- **Zones touchées :** `apps/chatbot_bridge/prompt_builder.py`, `apps/agent/actions/agences.py`
+- **Fichiers modifiés :** 2
+- **Rapport :** `docs/reports/session_85_gabriel.md`
