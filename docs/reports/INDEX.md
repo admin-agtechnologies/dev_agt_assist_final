@@ -1409,7 +1409,7 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Rapport :** `docs/reports/session_78_stephane.md`
 
 
-## session_80_steven
+## session_81_steven
 
 - **Type :** Test B5 — Feature catalogue_produits_financiers
 - **Date :** 2026-05-29
