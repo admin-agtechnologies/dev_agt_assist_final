@@ -1409,7 +1409,7 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Fichiers modifiés :** `prise_rdv.md` (v5)
 - **Rapport :** `docs/reports/session_78_stephane.md`
 
-## session_80_steven
+
 
 ## session_81_steven
 
@@ -1459,3 +1459,30 @@ src/app/admin/features-matrix/ (3 fichiers), src/middleware.ts, README.md
 - **Zones touchées :** `apps/agent/skills/features/conciergerie.md` · `apps/agent/skills/actions/create_demande_conciergerie.md` · `apps/agent/skills/_central/system_prompt.md` · `apps/agent/engine/core.py` · `apps/agent/engine/llm.py` · `apps/agent/actions/conciergerie.py` · BD AIAgentAction · BD ItemCatalogue
 - **Fichiers créés :** `docs/testing/features/steven/conciergerie.md`
 - **Rapport :** docs/testing/features/steven/conciergerie.md
+
+## session_86_steven
+
+- **Type :** Test B5 — Feature simulation_credit
+- **Date :** 2026-05-29
+- **Flux couverts :** simulation_credit (feature 19) — phases 1-5 ✅
+- **Bugs corrigés :** Aucun — feature fonctionnelle sans correction nécessaire
+- **Bugs ouverts :** BUG-S86-01 (freeze UI simulator après 2e message — frontend — périmètre Gabriel)
+- **Zones touchées :** `AgentSkill` BD (slug=simulation_credit) · `AIAgentAction` BD (agent demo-custom) · `apps/agent/actions/banking.py` (inchangé — fallback taux validé)
+- **Fichiers créés :** `docs/testing/features/steven/simulation_credit.md`
+- **Fichiers modifiés :** Aucun
+- **Rapport :** `docs/testing/features/steven/simulation_credit.md`
+
+
+---
+
+## session_87_steven
+
+- **Type :** Test B5 — orientation_patient (phases 1-5 complètes)
+- **Date :** 2026-05-30
+- **Flux couverts :** orientation_patient ✅ (steps a-h)
+- **Bugs corrigés :** BUG-S87-01 (reply avant action — immediate_action_hint), BUG-S87-02 (send_email required_fields template), BUG-S87-03 (date oubliée après create_contact)
+- **Zones touchées :** `apps/agent/skills/features/orientation_patient.md`, `apps/agent/skills/features/gestion_crm.md`, `apps/agent/skills/_central/system_prompt.md`, `apps/agent/engine/core.py`, `apps/agent/models (AIAction send_email required_fields)`, `apps/knowledge/models (SpecialiteMedicale mots_cles_symptomes)`
+- **Fichiers créés :** `docs/testing/features/steven/orientation_patient.md`
+- **Fichiers modifiés :** `orientation_patient.md` (v2), `gestion_crm.md` (section post-create_contact), `system_prompt.md` (immediate_action_hint), `core.py` (FIRE_AND_FORGET + immediate_action_hint + RAPPEL user_message)
+- **Bugs ouverts :** BUG-S87-04 (ACTION_RESULT affiché en bulle chat — périmètre Gabriel)
+- **Rapport :** `docs/testing/features/steven/orientation_patient.md`
