@@ -124,7 +124,6 @@ function getActionCardType(slug: string, statut: string): CardType {
   if (SLUGS_INSCR.has(slug))       return "inscription";
   if (SLUGS_FINANCE.has(slug))     return "finance";
   if (SLUGS_TRANSFERT.has(slug))   return "transfert";
-  // Toute action réussie non listée ci-dessus → badge si elle a une entrée dans BADGE_META
   return "badge";
 }
 
@@ -287,18 +286,56 @@ export function WhatsAppSimulator({
         mode:            "test",
       });
       conversationIdRef.current = res.conversation_id;
-      const conv = await agentRepository.getConversation(res.conversation_id);
-      onConversationUpdate(conv);
-      injectAIMessages(conv.messages, conv.actions_declenchees);
 
-      if (conv.statut === "transferee") {
-        const tid = `transfer-${Date.now()}`;
-        shownIdsRef.current.add(tid);
-        setMessages(prev => [
-          ...prev,
-          { id: tid, role: "status", content: t.testSessionTransferred },
-        ]);
-      }
+      // S09 — Afficher la bulle bot directement depuis res.reply
+      setMessages(prev => [
+        ...prev.filter(m => m.id !== "typing"),
+        {
+          id:         res.message_id,
+          role:       "assistant" as const,
+          content:    res.reply,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      shownIdsRef.current.add(res.message_id);
+
+      // Panel droit — fire & forget, non bloquant
+      agentRepository.getConversation(res.conversation_id)
+    .then(conv => {
+        onConversationUpdate(conv);
+        // S09 — insérer feedbacks AVANT la reply (ordre chronologique)
+        const replyId = res.message_id;
+        const toInsert: DisplayMessage[] = [];
+        for (const m of conv.messages) {
+            if (shownIdsRef.current.has(m.id)) continue;
+            shownIdsRef.current.add(m.id);
+            if (m.role === "user") continue;
+            toInsert.push({ id: m.id, role: m.role as "assistant" | "status", content: m.contenu, created_at: m.created_at });
+        }
+        for (const action of conv.actions_declenchees ?? []) {
+            const cardId = `card-${action.id}`;
+            if (shownIdsRef.current.has(cardId)) continue;
+            const msg = makeActionMsg(action);
+            if (msg) { shownIdsRef.current.add(cardId); toInsert.push(msg); }
+        }
+        if (toInsert.length > 0) {
+            setMessages(prev => {
+                const idx = prev.findIndex(m => m.id === replyId);
+                if (idx === -1) return [...prev, ...toInsert];
+                return [...prev.slice(0, idx), ...toInsert, ...prev.slice(idx)];
+            });
+        }
+          if (conv.statut === "transferee") {
+            const tid = `transfer-${Date.now()}`;
+            shownIdsRef.current.add(tid);
+            setMessages(prev => [
+              ...prev,
+              { id: tid, role: "status" as const, content: t.testSessionTransferred, created_at: new Date().toISOString() },
+            ]);
+          }
+        })
+        .catch(() => {/* panel droit non critique */});
+
     } catch {
       setMessages(prev => prev.filter(m => m.id !== "typing"));
       toast.error(t.testSendError);
